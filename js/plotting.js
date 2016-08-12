@@ -1,17 +1,53 @@
 (function() {
-  var LinePlot;
+  if (!Object.mergeDefaults) {
+    Object.mergeDefaults = function(args, defaults) {
+      var i, j, len, len1, merge, sub, sub1;
+      merge = {};
+      for (i = 0, len = defaults.length; i < len; i++) {
+        sub = defaults[i];
+        merge[sub] = defaults[sub];
+      }
+      for (j = 0, len1 = args.length; j < len1; j++) {
+        sub1 = args[j];
+        merge[sub1] = args[sub1];
+      }
+      return merge;
+    };
+  }
+
+}).call(this);
+
+(function() {
+  var LinePlot,
+    slice = [].slice;
 
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.LinePlot = LinePlot = (function() {
-    function LinePlot() {
-      var defaults, target;
-      this.preError = "Plotting.LinePlot.";
-      defaults = target = null;
+    function LinePlot(data, options) {
+      var defaults;
+      this.preError = "LinePlot.";
+      defaults = {
+        debug: true,
+        target: null
+      };
+      this.options = Object.mergeDefaults(options, defaults);
+      this.log = function() {
+        var log;
+        log = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+      };
+      if (this.options.debug) {
+        this.log = function() {
+          var log;
+          log = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+          return console.log(log);
+        };
+      }
     }
 
     LinePlot.prototype.responsive = function() {
-      var dim, i, len, plot, ref, results;
+      var dim, i, len, plot, preError, ref, results;
+      preError = this.preError + ".responsive()";
       dim = {
         width: $(window).width(),
         height: $(window).height()
@@ -20,10 +56,20 @@
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        results.push(this.log("Cats"));
+        results.push(this.log(plot));
       }
       return results;
     };
+
+    LinePlot.prototype.append = function() {
+      var _;
+      ({
+        preError: this.preError + ".append()"
+      });
+      return _ = this;
+    };
+
+    LinePlot.prototype.update = function(data) {};
 
     return LinePlot;
 

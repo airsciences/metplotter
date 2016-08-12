@@ -1,5 +1,5 @@
 #
-#   NWAC - Plotting & Authentication handler.
+#   NWAC Plotting & Authentication handler.
 #
 
 window.Plotting ||= {}

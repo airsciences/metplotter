@@ -5,17 +5,35 @@
 window.Plotting ||= {}
 
 window.Plotting.LinePlot = class LinePlot
-  constructor: () ->
-    @preError = "Plotting.LinePlot."
+  constructor: (data, options) ->
+    @preError = "LinePlot."
     
     # Default Configuration
     defaults =
-      target = null
+      debug: true
+      target: null
+    @options = Object.mergeDefaults options, defaults
+    
+    # Wrapped Logging Functions
+    @log = (log...) ->
+    if @options.debug
+      @log = (log...) -> console.log(log)
       
-  responsive: () ->
+  responsive: ->
+    preError = "#{@preError}.responsive()"
     dim =
       width: $(window).width()
       height: $(window).height()
 
     for plot in @plots
-      @log "Cats"
+      @log plot
+
+  append: ->
+    preError: "#{@preError}.append()"
+    _ = @
+    
+    
+    
+      
+  update: (data) ->
+      
