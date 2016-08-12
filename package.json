@@ -1,0 +1,27 @@
+{
+  "name": "nwac",
+  "version": "1.0.0",
+  "description": "NWAC D3 Plotting Tools",
+  "main": "index.js",
+  "dependencies": {
+    "grunt": "^1.0.1"
+  },
+  "devDependencies": {
+    "grunt-contrib-coffee": "^1.0.0",
+    "grunt-contrib-uglify": "^2.0.0",
+    "grunt-contrib-watch": "^1.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/airsciences/nwac.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/airsciences/nwac/issues"
+  },
+  "homepage": "https://github.com/airsciences/nwac#readme"
+}
