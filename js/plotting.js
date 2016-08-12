@@ -83,8 +83,7 @@
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.Handler = Handler = (function() {
-    function Handler(auth, options, plots) {
-      var access;
+    function Handler(access, options, plots) {
       this.endpoint = null;
       access = {
         token: null,

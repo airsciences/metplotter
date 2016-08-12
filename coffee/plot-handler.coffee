@@ -5,7 +5,7 @@
 window.Plotting ||= {}
 
 window.Plotting.Handler = class Handler
-  constructor: (auth, options, plots) ->
+  constructor: (access, options, plots) ->
     @endpoint = null
     access =
       token: null
