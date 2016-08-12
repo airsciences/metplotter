@@ -4,7 +4,6 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
         <title>NWAC D3 Plotting</title>
         <link href="style/bootstrap.min.css" rel="stylesheet">
     </head>
@@ -12,14 +11,26 @@
         <div class="container">
             <div class="row-sm-12">
                 <h1>NWAC D3 Plotting Tool</h1>
+                <div id="d3-plot-target"></div>
             </div>
-            
         </div>
-        
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
         <script src="js/jquery.min.js"></script>
         <script src="js/bootstrap.min.js"></script>
         <script src="js/d3.min.js"></script>
         <script src="js/plotting.js"></script>
+        <script type="text/javascript">
+            var options = {
+                "target": "#d3-plot-target"
+            };
+            
+            var access = {
+                "token": "T66lJx97D7VcwT/ROg0jiR7tSe+muVbptxZADPNx79gZFZVLgQiroVF6PSDLddRiIEd6m8/Y4KquV5IMdYjazpCzIc1kRgsJW+EkI4Gg9l87G2n8c7jZlnzZTG96VpSRy/zTLNFnjq9LkNjL5eoCrn9E",
+                "expires": "2016-08-12 24:00:00"
+            };
+            
+            var plotter = {
+                "handler": new Plotting.Handler(access, options)
+            };
+        </script>
     </body>
 </html>
