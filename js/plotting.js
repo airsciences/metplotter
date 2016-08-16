@@ -1,15 +1,15 @@
 (function() {
   if (!Object.mergeDefaults) {
     Object.mergeDefaults = function(args, defaults) {
-      var i, j, len, len1, merge, sub, sub1;
+      var key, key1, merge, val, val1;
       merge = {};
-      for (i = 0, len = defaults.length; i < len; i++) {
-        sub = defaults[i];
-        merge[sub] = defaults[sub];
+      for (key in defaults) {
+        val = defaults[key];
+        merge[key] = val;
       }
-      for (j = 0, len1 = args.length; j < len1; j++) {
-        sub1 = args[j];
-        merge[sub1] = args[sub1];
+      for (key1 in args) {
+        val1 = args[key1];
+        merge[key1] = val1;
       }
       return merge;
     };
@@ -45,9 +45,15 @@
       }
     }
 
+    LinePlot.prototype.getDefinition = function() {
+      var preError;
+      preError = this.preError + "getDefinition():";
+      return this.log(this.preError + (preError + "JeffIsCool"), "cat", 8);
+    };
+
     LinePlot.prototype.responsive = function() {
       var dim, i, len, plot, preError, ref, results;
-      preError = this.preError + ".responsive()";
+      preError = this.preError + "responsive()";
       dim = {
         width: $(window).width(),
         height: $(window).height()
@@ -62,11 +68,11 @@
     };
 
     LinePlot.prototype.append = function() {
-      var _;
-      ({
-        preError: this.preError + ".append()"
-      });
-      return _ = this;
+      var _, preError;
+      preError = this.preError + "append()";
+      _ = this;
+      this.log("" + preError, this.options);
+      return this.svg = d3.select(this.options.target).append("svg");
     };
 
     LinePlot.prototype.update = function(data) {};
