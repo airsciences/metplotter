@@ -5,8 +5,8 @@
 if !Object.mergeDefaults
   Object.mergeDefaults = (args, defaults) ->
     merge = {}
-    for sub in defaults
-      merge[sub] = defaults[sub]
-    for sub1 in args
-      merge[sub1] = args[sub1]
+    for key, val of defaults
+      merge[key] = val
+    for key1, val1 of args
+      merge[key1] = val1
     merge
