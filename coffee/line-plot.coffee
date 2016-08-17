@@ -27,18 +27,21 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}getDefinition():"
     @log(@preError + "#{preError}JeffIsCool", "cat", 8)
 ########## Does this need to be defined here?#################################
+### [Response:] No, this only used in callback type functions. We likely don't need it here. ##
     _ = @
 ########### What does the dollar sign do?###################################
+### [Response:] The $ represents jQuery, $(htmlElementIdorClass) selects an html element by name. ##
     width = Math.round($(@options.target).width())
     height = Math.round(width/4)
 ####### where is the theme set?##############################################
+### [Response:] Theme is an option that will be specified, airsci & minimum were for salton, we will modify this with responsive. ##
     if @options.theme is 'minimum'
       margin =
         top: height * 0.28
         right: width * 0.03
         bottom: height * 0.18
         left: width * 0.03
-####### What does this represent? How far the object is from the left? ########
+####### What does this represent? How far the object is from the left? xOffset was for those additional plot addons & can be deleted. ########
         xOffset: 0
     else
       margin =
@@ -50,6 +53,7 @@ window.Plotting.LinePlot = class LinePlot
 
     ######### is this everything that I need in this log section? ##########
     ######### considering we are only plotting on a linear axis #######
+    ### [Response:] log() is the wrong yDef function, we will want linear() ##
 
     @log("#{preError} (margin):", margin)
     yDef = d3.scale.log().range([(height-margin.bottom-margin.xOffset),
@@ -59,6 +63,7 @@ window.Plotting.LinePlot = class LinePlot
       @options.x.ticks = d3.time.format(@options.x.format)
 
 ########## why is this not an else if?################################
+### [Response:] because we want to use the category10() color scale when nothing is defined for theme as a catch-all/backup ##
     if @options.theme is 'airsci'
       colorScale = d3.scale
     else
@@ -66,6 +71,7 @@ window.Plotting.LinePlot = class LinePlot
 
 ########### why is the drawing the svg element done in an append function ####
 ####### rather than a draw function #####################################
+### [Response:] append is just a better name for draw, no other reason. ##
     # Begin the Definition
     @definition =
       dimensions:
@@ -100,6 +106,7 @@ window.Plotting.LinePlot = class LinePlot
     # Append the X-Axis
     #
     ################ what is "g"? and what is exactly happening here?######
+    ### [Response:] a "g" element represents a group within an svg svg>g ##
     @svg.append("g")
         .attr("class", "line-plot-axis-x")
         .attr("transform",
@@ -108,10 +115,12 @@ window.Plotting.LinePlot = class LinePlot
         .style("fill", "none")
         .stroke("stroke", @options.axisColor)
         ######are we appending @definition here?##################
+        ### [Response:] no, we are "calling" it's 'xAxis' function to return a D3 axis definition ##
         .call(@definition.xAxis)
 
     if @options.theme isnt 'minimum'
 ##############why is this erroring?#############
+### [Response:] probably missing the period in the line plot, since it's a class, "line-plot-axis-x" should be ".line-plot-axis-x". ##
         @svg.select("line-plot-axis-x")
         .selectAll("text")
         .style("font-weight", @options.font.weight)
