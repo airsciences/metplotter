@@ -43,53 +43,12 @@
           return console.log(log);
         };
       }
-      this.getDefinition();
     }
 
     LinePlot.prototype.getDefinition = function() {
-      var _, colorScale, height, margin, preError, width, yDef;
+      var preError;
       preError = this.preError + "getDefinition():";
-      this.log(this.preError + (preError + "JeffIsCool"), "cat", 8);
-      _ = this;
-      width = Math.round($(this.options.target).width());
-      height = Math.round(width / 4);
-      if (this.options.theme === 'minimum') {
-        margin = {
-          top: height * 0.28,
-          right: width * 0.03,
-          bottom: height * 0.18,
-          left: width * 0.03,
-          xOffset: 0
-        };
-      } else {
-        margin = {
-          top: height * 0.07,
-          right: width * 0.03,
-          bottom: height * 0.07,
-          left: width * 0.03,
-          xOffset: 0
-        };
-      }
-      this.log(preError + " (margin):", margin);
-      yDef = d3.scale.log().range([height - margin.bottom - margin.xOffset, margin.top]);
-      if (this.options.theme !== 'minimum') {
-        this.options.x.ticks = d3.time.format(this.options.x.format);
-      }
-      if (this.options.theme === 'airsci') {
-        colorScale = d3.scale;
-      } else {
-        colorScale = d3.scale.category10();
-      }
-      return this.definition = {
-        dimensions: {
-          width: width,
-          height: height,
-          margin: margin,
-          colorScale: colorScale,
-          x: d3.time.scale().range([margin.left, width - margin.right]),
-          y: yDef
-        }
-      };
+      return this.log(this.preError + (preError + "JeffIsCool"), "cat", 8);
     };
 
     LinePlot.prototype.responsive = function() {
@@ -113,11 +72,7 @@
       preError = this.preError + "append()";
       _ = this;
       this.log("" + preError, this.options);
-      this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + (parseFloat(innerHeight)) + ")").style("fill", "none").stroke("stroke", this.options.axisColor).call(this.definition.xAxis);
-      if (this.options.theme !== 'minimum') {
-        return this.svg.select("line-plot-axis-x").selectAll("text").style("font-weight", this.options.font.weight);
-      }
+      return this.svg = d3.select(this.options.target).append("svg");
     };
 
     LinePlot.prototype.update = function(data) {};
