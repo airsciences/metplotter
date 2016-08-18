@@ -154,7 +154,7 @@
         return _.definition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y);
-      });
+      }).curve(d3.curveCatmullRom.alpha(0.5));
     };
 
     LinePlot.prototype.responsive = function() {

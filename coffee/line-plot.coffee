@@ -153,6 +153,7 @@ window.Plotting.LinePlot = class LinePlot
         console.log(_.definition.x(d.x))
         _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y))
+      .curve(d3.curveCatmullRom.alpha(0.5))
 
   responsive: ->
     # Resize the plot according to current window dimensions.
