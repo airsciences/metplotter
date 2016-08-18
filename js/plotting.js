@@ -88,8 +88,8 @@
           margin: margin
         },
         colorScale: colorScale,
-        x: d3.time.scale().range([margin.left, width - margin.right]),
-        y: d3.scale.linear().range([height - margin.bottom, margin.top])
+        x: d3.scaleTime().range([margin.left, width - margin.right]),
+        y: d3.scaleLinear().range([height - margin.bottom, margin.top])
       };
     };
 
@@ -108,7 +108,7 @@
       _ = this;
       this.log("" + preError, this.options);
       this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + (parseFloat(innerHeight)) + ")").style("fill", "none").stroke("stroke", this.options.axisColor).call(this.definition.xAxis);
+      this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + (parseFloat(innerHeight)) + ")").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis);
       if (this.options.theme !== 'minimum') {
         return this.svg.select(".line-plot-axis-x").selectAll("text").style("font-weight", this.options.font.weight);
       }

@@ -71,8 +71,8 @@ window.Plotting.LinePlot = class LinePlot
         height: height
         margin: margin
       colorScale: colorScale
-      x: d3.time.scale().range([margin.left, (width-margin.right)])
-      y: d3.scale.linear().range([(height-margin.bottom),(margin.top)])
+      x: d3.scaleTime().range([margin.left, (width-margin.right)])
+      y: d3.scaleLinear().range([(height-margin.bottom),(margin.top)])
 
   responsive: ->
     # Resize the plot according to current window dimensions.
@@ -98,7 +98,7 @@ window.Plotting.LinePlot = class LinePlot
         .attr("transform",
             "translate(0, #{parseFloat(innerHeight)})")
         .style("fill", "none")
-        .stroke("stroke", @options.axisColor)
+        .style("stroke", @options.axisColor)
         .call(@definition.xAxis)
 
     # Add Text Labels to X-Axis
