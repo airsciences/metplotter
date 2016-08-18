@@ -29,7 +29,13 @@
       this.preError = "LinePlot.";
       defaults = {
         debug: true,
-        target: null
+        target: null,
+        theme: 'default',
+        x: {
+          ticks: null,
+          format: "%Y-%m-%d %H:%M:%S"
+        },
+        axisColor: "rgb(0,0,0)"
       };
       this.options = Object.mergeDefaults(options, defaults);
       this.log = function() {
@@ -43,28 +49,57 @@
           return console.log(log);
         };
       }
+      this.getDefinition();
     }
 
     LinePlot.prototype.getDefinition = function() {
-      var preError;
+      var colorScale, height, margin, preError, width;
       preError = this.preError + "getDefinition():";
-      return this.log(this.preError + (preError + "JeffIsCool"), "cat", 8);
+      width = Math.round($(this.options.target).width());
+      height = Math.round(width / 4);
+      if (this.options.theme === 'minimum') {
+        margin = {
+          top: height * 0.28,
+          right: width * 0.03,
+          bottom: height * 0.18,
+          left: width * 0.03
+        };
+      } else {
+        margin = {
+          top: height * 0.07,
+          right: width * 0.03,
+          bottom: height * 0.07,
+          left: width * 0.03
+        };
+      }
+      this.log(preError + " (margin):", margin);
+      if (this.options.theme !== 'minimum') {
+        this.options.x.ticks = d3.timeFormat(this.options.x.format);
+      }
+      if (this.options.theme === 'airsci') {
+
+      } else {
+        colorScale = d3.schemeCategory20;
+      }
+      return this.definition = {
+        dimensions: {
+          width: width,
+          height: height,
+          margin: margin
+        },
+        colorScale: colorScale,
+        x: d3.time.scale().range([margin.left, width - margin.right]),
+        y: d3.scale.linear().range([height - margin.bottom, margin.top])
+      };
     };
 
     LinePlot.prototype.responsive = function() {
-      var dim, i, len, plot, preError, ref, results;
+      var dim, preError;
       preError = this.preError + "responsive()";
-      dim = {
+      return dim = {
         width: $(window).width(),
         height: $(window).height()
       };
-      ref = this.plots;
-      results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        plot = ref[i];
-        results.push(this.log(plot));
-      }
-      return results;
     };
 
     LinePlot.prototype.append = function() {
@@ -72,7 +107,11 @@
       preError = this.preError + "append()";
       _ = this;
       this.log("" + preError, this.options);
-      return this.svg = d3.select(this.options.target).append("svg");
+      this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + (parseFloat(innerHeight)) + ")").style("fill", "none").stroke("stroke", this.options.axisColor).call(this.definition.xAxis);
+      if (this.options.theme !== 'minimum') {
+        return this.svg.select(".line-plot-axis-x").selectAll("text").style("font-weight", this.options.font.weight);
+      }
     };
 
     LinePlot.prototype.update = function(data) {};

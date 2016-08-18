@@ -12,16 +12,29 @@ window.Plotting.LinePlot = class LinePlot
     defaults =
       debug: true
       target: null
+      theme: 'default'
+      x:
+        ticks: null
+        format: "%Y-%m-%d %H:%M:%S"
+      axisColor: "rgb(0,0,0)"
     @options = Object.mergeDefaults options, defaults
 
     # Wrapped Logging Functions
     @log = (log...) ->
     if @options.debug
       @log = (log...) -> console.log(log)
+    
+    # Run Get Definition on Class Construction
+    @getDefinition()
+    
+    # Responsive Event Listener
+    ## [Add Event Listener for window.resize]
+    ## http://stackoverflow.com/questions/13651274/
+    ##  how-can-i-attach-a-window-resize-event-listener-in-javascript#answers
 
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
-    @log(@preError + "#{preError}JeffIsCool", "cat", 8)
+    
     width = Math.round($(@options.target).width())
     height = Math.round(width/4)
     if @options.theme is 'minimum'
@@ -30,27 +43,26 @@ window.Plotting.LinePlot = class LinePlot
         right: width * 0.03
         bottom: height * 0.18
         left: width * 0.03
-        xOffset: 0
     else
       margin =
         top: height * 0.07
         right: width * 0.03
         bottom: height * 0.07
         left: width * 0.03
-        xOffset: 0
 
-
-    @linear("#{preError} (margin):", margin)
-    yDef = d3.scale.log().range([(height-margin.bottom-margin.xOffset),
-        (margin.top)])
-
+    @log "#{preError} (margin):", margin
+    
     if @options.theme isnt 'minimum'
-      @options.x.ticks = d3.time.format(@options.x.format)
+      # !D3 Version 4 No Longer has d3.time (why .format is not working).
+      # [D3 Reference:] https://github.com/d3/d3-time-format/blob/master/
+      #   README.md#timeFormat
+      # @options.x.ticks = d3.time.format @options.x.format
+      @options.x.ticks = d3.timeFormat @options.x.format
 
     if @options.theme is 'airsci'
-      colorScale = d3.scale
+      # colorScale = d3.scale
     else
-      colorScale = d3.scale.category10()
+      colorScale = d3.schemeCategory20
 
     # Begin the Definition
     @definition =
@@ -58,18 +70,16 @@ window.Plotting.LinePlot = class LinePlot
         width: width
         height: height
         margin: margin
-        colorScale: colorScale
-        x: d3.time.scale().range([margin.left, (width-margin.right)])
-        y: yDef
+      colorScale: colorScale
+      x: d3.time.scale().range([margin.left, (width-margin.right)])
+      y: d3.scale.linear().range([(height-margin.bottom),(margin.top)])
 
   responsive: ->
+    # Resize the plot according to current window dimensions.
     preError = "#{@preError}responsive()"
     dim =
       width: $(window).width()
       height: $(window).height()
-
-    for plot in @plots
-      @log plot
 
   append: ->
     preError = "#{@preError}append()"
@@ -82,9 +92,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("width", @definition.dimensions.width)
       .attr("height", @definition.dimensions.height)
 
-    #
     # Append the X-Axis
-    #
     @svg.append("g")
         .attr("class", "line-plot-axis-x")
         .attr("transform",
@@ -93,8 +101,9 @@ window.Plotting.LinePlot = class LinePlot
         .stroke("stroke", @options.axisColor)
         .call(@definition.xAxis)
 
+    # Add Text Labels to X-Axis
     if @options.theme isnt 'minimum'
-        @svg.select(".line-plot-axis-x")
+      @svg.select(".line-plot-axis-x")
         .selectAll("text")
         .style("font-weight", @options.font.weight)
 

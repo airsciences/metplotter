@@ -31,16 +31,18 @@
             var plotter = {
                 "handler": new Plotting.Handler(access, options)
             };
-            
-            var dog = {};
 
             /** Static Line Plot */
             var plot_options = {
                 "target": "#d3-plot-target"
             };
+            
+            /** Plot Data Set */
             var data = {};
-            var line_plot = new Plotting.LinePlot(data, plot_options)
-            line_plot.append();
+            
+            /** Construct the LinePlot Class as an instance called line_plot */
+            var line_plot = new Plotting.LinePlot(data, plot_options);
+            // line_plot.append();
         </script>
     </body>
 </html>
