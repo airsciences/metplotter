@@ -84,7 +84,7 @@
     }
 
     LinePlot.prototype.getDefinition = function() {
-      var _, colorScale, height, margin, preError, width, xmax, xmin, ymax, ymin;
+      var _, colorScale, height, margin, preError, width;
       preError = this.preError + "getDefinition():";
       _ = this;
       width = Math.round($(this.options.target).width());
@@ -123,6 +123,21 @@
         x: d3.scaleTime().range([margin.left, width - margin.right]),
         y: d3.scaleLinear().range([height - margin.bottom, margin.top])
       };
+      this.calculateAxes();
+      this.definition.xAxis = d3.axisBottom().scale(this.definition.x);
+      this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
+      return this.definition.line = d3.line().defined(function(d) {
+        return !isNaN(d.y) && d.y !== null;
+      }).x(function(d) {
+        return _.definition.x(d.x);
+      }).y(function(d) {
+        return _.definition.y(d.y);
+      }).curve(d3.curveCatmullRom.alpha(0.5));
+    };
+
+    LinePlot.prototype.calculateAxes = function() {
+      var preError, xmax, xmin, ymax, ymin;
+      preError = this.preError + "calculateAxes()";
       xmin = this.options.x.min === null ? d3.min(this.data, function(d) {
         return d.x;
       }) : this.parseDate(this.options.x.min);
@@ -143,18 +158,7 @@
       this.definition.y.min = ymin;
       this.definition.y.max = ymax;
       this.definition.x.domain([xmin, xmax]);
-      this.definition.y.domain([ymin, ymax]).nice();
-      this.definition.xAxis = d3.axisBottom().scale(this.definition.x).tickFormat(this.options.x.format);
-      this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
-      return this.definition.line = d3.line().defined(function(d) {
-        return !isNaN(d.y) && d.y !== null;
-      }).x(function(d) {
-        console.log(d.x);
-        console.log(_.definition.x(d.x));
-        return _.definition.x(d.x);
-      }).y(function(d) {
-        return _.definition.y(d.y);
-      }).curve(d3.curveCatmullRom.alpha(0.5));
+      return this.definition.y.domain([ymin, ymax]).nice();
     };
 
     LinePlot.prototype.responsive = function() {
@@ -179,10 +183,24 @@
         this.svg.select(".line-plot-axis-x").selectAll("text").style("font-weight", this.options.font.weight);
       }
       this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + innerWidth + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.yAxis);
-      return this.svg.append("path").attr("d", this.definition.line(this.data)).style("stroke", this.options.color).style("stroke-width", this.options.weight).style("fill", "none");
+      return this.svg.append("path").attr("d", this.definition.line(this.data)).attr("class", "line-plot-path").style("stroke", this.options.color).style("stroke-width", this.options.weight).style("fill", "none");
     };
 
-    LinePlot.prototype.update = function(data) {};
+    LinePlot.prototype.update = function(data) {
+      var _, key, preError, row;
+      preError = this.preError + "update()";
+      _ = this;
+      for (key in data) {
+        row = data[key];
+        this.data.push({
+          x: this.parseDate(row[this.options.x.variable]),
+          y: row[this.options.y.variable]
+        });
+      }
+      this.calculateAxes();
+      this.svg.transition();
+      return this.svg.select(".line-plot-path").attr("d", this.definition.line(this.data));
+    };
 
     return LinePlot;
 

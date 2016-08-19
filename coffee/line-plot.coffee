@@ -109,6 +109,22 @@ window.Plotting.LinePlot = class LinePlot
       x: d3.scaleTime().range([margin.left, (width-margin.right)])
       y: d3.scaleLinear().range([(height-margin.bottom),(margin.top)])
 
+    @calculateAxes()
+
+    # Define D3 Methods
+    @definition.xAxis = d3.axisBottom().scale(@definition.x)
+    @definition.yAxis = d3.axisLeft().scale(@definition.y)
+      .ticks(@options.y.ticks)
+    @definition.line = d3.line()
+      .defined((d)->
+        !isNaN(d.y) and d.y isnt null
+      )
+      .x((d) -> _.definition.x(d.x))
+      .y((d) -> _.definition.y(d.y))
+      .curve(d3.curveCatmullRom.alpha(0.5))
+
+  calculateAxes: ->
+    preError = "#{@preError}calculateAxes()"
     # Calculate X & Y, mins & maxes
     xmin = if @options.x.min is null then d3.min(@data, (d)-> d.x)
     else @parseDate(@options.x.min)
@@ -127,7 +143,6 @@ window.Plotting.LinePlot = class LinePlot
     # Restore Viewability if ymin == ymax
     ymin = if ymin == ymax then ymin * 0.8 else ymin
     ymax = if ymin == ymax then ymax * 1.2 else ymax
-################ what does this do?############################################
     @log("#{preError} (xmin, xmax, ymin, ymax)", xmin, xmax, ymin, ymax)
 
     @definition.x.min = xmin
@@ -138,22 +153,6 @@ window.Plotting.LinePlot = class LinePlot
     # Define the Domains
     @definition.x.domain([xmin, xmax])
     @definition.y.domain([ymin, ymax]).nice()
-
-    # Define D3 Methods
-    @definition.xAxis = d3.axisBottom().scale(@definition.x)
-      .tickFormat(@options.x.format)
-    @definition.yAxis = d3.axisLeft().scale(@definition.y)
-      .ticks(@options.y.ticks)
-    @definition.line = d3.line()
-      .defined((d)->
-        !isNaN(d.y) and d.y isnt null
-      )
-      .x((d) ->
-        console.log(d.x)
-        console.log(_.definition.x(d.x))
-        _.definition.x(d.x))
-      .y((d) -> _.definition.y(d.y))
-      .curve(d3.curveCatmullRom.alpha(0.5))
 
   responsive: ->
     # Resize the plot according to current window dimensions.
@@ -201,6 +200,7 @@ window.Plotting.LinePlot = class LinePlot
     # Append the Path
     @svg.append("path")
       .attr("d", @definition.line(@data))
+      .attr("class", "line-plot-path")
       .style("stroke", @options.color)
       .style("stroke-width", @options.weight)
       .style("fill", "none")
@@ -208,3 +208,20 @@ window.Plotting.LinePlot = class LinePlot
 
 
   update: (data) ->
+    preError = "#{@preError}update()"
+    _ = @
+
+    # Append New Data
+    for key, row of data
+      @data.push(
+        x: @parseDate(row[@options.x.variable])
+        y: row[@options.y.variable]
+      )
+
+    @calculateAxes()
+
+    @svg.transition()
+#      .duration(9000)
+
+    @svg.select(".line-plot-path")
+      .attr("d", @definition.line(@data))
