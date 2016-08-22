@@ -24,11 +24,12 @@ window.Plotting.LinePlot = class LinePlot
         min: null
         max: null
         ticks: 5
-      color: "#2980b9"
+      transitionDuration: 300
+      color: "rgb(41,128,185)"
       weight: 2
       axisColor: "rgb(0,0,0)"
       font:
-        weight: 400
+        weight: 300
 
     if options.x
       options.x = Object.mergeDefaults(options.x, defaults.x)
@@ -49,8 +50,6 @@ window.Plotting.LinePlot = class LinePlot
       @data[key] =
         x: @parseDate(row[@options.x.variable])
         y: row[@options.y.variable]
-
-    @log "@data", @data
 
     # Run Get Definition on Class Construction
     @getDefinition()
@@ -74,6 +73,7 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}getDefinition():"
     _ = @
 
+    # Calculate Basic DOM & SVG Dimensions
     width = Math.round($(@options.target).width())
     height = Math.round(width/2)
     if @options.theme is 'minimum'
@@ -89,27 +89,21 @@ window.Plotting.LinePlot = class LinePlot
         bottom: Math.round(height * 0.16)
         left: Math.round(width * 0.03)
 
-    @log "#{preError} (margin):", margin
-
+    # Allow Ticks When Large Screen
     if @options.theme isnt 'minimum'
       @options.x.ticks = d3.timeFormat @options.x.format
 
-    if @options.theme is 'airsci'
-      # colorScale = d3.scale
-    else
-      colorScale = d3.schemeCategory20
-
-    # Begin the Definition
+    # Define the Definition
     @definition =
       dimensions:
         width: width
         height: height
         margin: margin
-      colorScale: colorScale
+      colorScale: d3.schemeCategory20
       x: d3.scaleTime().range([margin.left, (width-margin.right)])
       y: d3.scaleLinear().range([(height-margin.bottom),(margin.top)])
 
-    @calculateAxes()
+    @calculateAxisDims(@data)
 
     # Define D3 Methods
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
@@ -123,36 +117,28 @@ window.Plotting.LinePlot = class LinePlot
       .y((d) -> _.definition.y(d.y))
       .curve(d3.curveCatmullRom.alpha(0.5))
 
-  calculateAxes: ->
-    preError = "#{@preError}calculateAxes()"
-    # Calculate X & Y, mins & maxes
-    xmin = if @options.x.min is null then d3.min(@data, (d)-> d.x)
+  calculateAxisDims: (data) ->
+    preError = "#{@preError}calculateAxisDims()"
+    
+    # Calculate X & Y, Min & Max
+    xmin = if @options.x.min is null then d3.min(data, (d)-> d.x)
     else @parseDate(@options.x.min)
-
-    xmax = if @options.x.max is null then d3.max(@data, (d)-> d.x)
+    xmax = if @options.x.max is null then d3.max(data, (d)-> d.x)
     else @parseDate(@options.x.max)
-
-    ymin = if @options.y.min is null then d3.min(@data,
-      (d)-> d.y)
+    ymin = if @options.y.min is null then d3.min(data, (d)-> d.y)
     else @options.y.min
-
-    ymax = if @options.y.max is null then d3.max(@data,
-      (d)-> d.y)
+    ymax = if @options.y.max is null then d3.max(data, (d)-> d.y)
     else @options.y.max
 
-    # Restore Viewability if ymin == ymax
+    # Restore Viewability if Y-Min = Y-Max
     ymin = if ymin == ymax then ymin * 0.8 else ymin
     ymax = if ymin == ymax then ymax * 1.2 else ymax
-    @log("#{preError} (xmin, xmax, ymin, ymax)", xmin, xmax, ymin, ymax)
 
+    # Insert Values into Definition
     @definition.x.min = xmin
     @definition.x.max = xmax
     @definition.y.min = ymin
     @definition.y.max = ymax
-
-    # Define the Domains
-    @definition.x.domain([xmin, xmax])
-    @definition.y.domain([ymin, ymax]).nice()
 
   responsive: ->
     # Resize the plot according to current window dimensions.
@@ -167,61 +153,81 @@ window.Plotting.LinePlot = class LinePlot
     @log "#{preError}", @options
 
     # Create the SVG
-    innerHeight = parseInt(@definition.dimensions.height-
-    @definition.dimensions.margin.bottom)
+    innerHeight = parseInt(@definition.dimensions.height -
+      @definition.dimensions.margin.bottom)
     innerWidth = parseInt(@definition.dimensions.margin.left)
+    
+    # Create the SVG
     @svg = d3.select(@options.target).append("svg")
       .attr("class", "line-plot")
       .attr("width", @definition.dimensions.width)
       .attr("height", @definition.dimensions.height)
+    
+    # Define the Domains
+    @definition.x.domain([@definition.x.min, @definition.x.max])
+    @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
+    
     # Append the X-Axis
-    @svg.append("g")#ab
-        .attr("class", "line-plot-axis-x")
-        .attr("transform", "translate(0, #{innerHeight})")
-        .style("fill", "none")
-        .style("stroke", @options.axisColor)
-        .call(@definition.xAxis)
-#######################should lables be displying yet?##################
-    # Add Text Labels to X-Axis
+    @svg.append("g")
+      .attr("class", "line-plot-axis-x")
+      .attr("transform", "translate(0, #{innerHeight})")
+      .style("fill", "none")
+      .style("stroke", @options.axisColor)
+      .call(@definition.xAxis)
+
+    # Add Text Labels to X-Axis (Only if Large Scale Theme)
     if @options.theme isnt 'minimum'
       @svg.select(".line-plot-axis-x")
         .selectAll("text")
         .style("font-weight", @options.font.weight)
 
-    # Append the Y Axi
+    # Append the Y-Axis
     @svg.append("g")
-        .attr("class", "line-plot-axis-y")
-        .attr("transform",
-            "translate(#{innerWidth}, 0)")
-        .style("fill", "none")
-        .style("stroke", @options.axisColor)
-        .call(@definition.yAxis)
+      .attr("class", "line-plot-axis-y")
+      .attr("transform", "translate(#{innerWidth}, 0)")
+      .style("fill", "none")
+      .style("stroke", @options.axisColor)
+      .call(@definition.yAxis)
 
     # Append the Path
-    @svg.append("path")
-      .attr("d", @definition.line(@data))
+    @svg.selectAll(".line-plot-path")
+      .data(@data)
+      .append("path")
+      .attr("d", @definition.line)
       .attr("class", "line-plot-path")
       .style("stroke", @options.color)
       .style("stroke-width", @options.weight)
       .style("fill", "none")
-
-
 
   update: (data) ->
     preError = "#{@preError}update()"
     _ = @
 
     # Append New Data
+    update = []
     for key, row of data
-      @data.push(
+      update[key] =
         x: @parseDate(row[@options.x.variable])
         y: row[@options.y.variable]
-      )
 
-    @calculateAxes()
+    @calculateAxisDims(data)
 
-    @svg.transition()
-#      .duration(9000)
+    @definition.x.domain([@definition.x.min, @definition.x.max])
+    @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
+
+    # Redraw the X-Axis
+    @svg.select(".line-plot-axis-x")
+      .transition()
+      .duration(@options.transitionDuration)
+      .call(@definition.xAxis)
+    
+    # Redraw the Y-Axis
+    @svg.select(".line-plot-axis-y")
+      .transition()
+      .duration(@options.transitionDuration)
+      .call(@definition.yAxis)
 
     @svg.select(".line-plot-path")
+      .transition()
+      .duration(@options.transitionDuration)
       .attr("d", @definition.line(@data))

@@ -44,11 +44,12 @@
           max: null,
           ticks: 5
         },
-        color: "#2980b9",
+        transitionDuration: 300,
+        color: "rgb(41,128,185)",
         weight: 2,
         axisColor: "rgb(0,0,0)",
         font: {
-          weight: 400
+          weight: 300
         }
       };
       if (options.x) {
@@ -79,12 +80,11 @@
           y: row[this.options.y.variable]
         };
       }
-      this.log("@data", this.data);
       this.getDefinition();
     }
 
     LinePlot.prototype.getDefinition = function() {
-      var _, colorScale, height, margin, preError, width;
+      var _, height, margin, preError, width;
       preError = this.preError + "getDefinition():";
       _ = this;
       width = Math.round($(this.options.target).width());
@@ -104,14 +104,8 @@
           left: Math.round(width * 0.03)
         };
       }
-      this.log(preError + " (margin):", margin);
       if (this.options.theme !== 'minimum') {
         this.options.x.ticks = d3.timeFormat(this.options.x.format);
-      }
-      if (this.options.theme === 'airsci') {
-
-      } else {
-        colorScale = d3.schemeCategory20;
       }
       this.definition = {
         dimensions: {
@@ -119,11 +113,11 @@
           height: height,
           margin: margin
         },
-        colorScale: colorScale,
+        colorScale: d3.schemeCategory20,
         x: d3.scaleTime().range([margin.left, width - margin.right]),
         y: d3.scaleLinear().range([height - margin.bottom, margin.top])
       };
-      this.calculateAxes();
+      this.calculateAxisDims(this.data);
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x);
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
       return this.definition.line = d3.line().defined(function(d) {
@@ -135,30 +129,27 @@
       }).curve(d3.curveCatmullRom.alpha(0.5));
     };
 
-    LinePlot.prototype.calculateAxes = function() {
+    LinePlot.prototype.calculateAxisDims = function(data) {
       var preError, xmax, xmin, ymax, ymin;
-      preError = this.preError + "calculateAxes()";
-      xmin = this.options.x.min === null ? d3.min(this.data, function(d) {
+      preError = this.preError + "calculateAxisDims()";
+      xmin = this.options.x.min === null ? d3.min(data, function(d) {
         return d.x;
       }) : this.parseDate(this.options.x.min);
-      xmax = this.options.x.max === null ? d3.max(this.data, function(d) {
+      xmax = this.options.x.max === null ? d3.max(data, function(d) {
         return d.x;
       }) : this.parseDate(this.options.x.max);
-      ymin = this.options.y.min === null ? d3.min(this.data, function(d) {
+      ymin = this.options.y.min === null ? d3.min(data, function(d) {
         return d.y;
       }) : this.options.y.min;
-      ymax = this.options.y.max === null ? d3.max(this.data, function(d) {
+      ymax = this.options.y.max === null ? d3.max(data, function(d) {
         return d.y;
       }) : this.options.y.max;
       ymin = ymin === ymax ? ymin * 0.8 : ymin;
       ymax = ymin === ymax ? ymax * 1.2 : ymax;
-      this.log(preError + " (xmin, xmax, ymin, ymax)", xmin, xmax, ymin, ymax);
       this.definition.x.min = xmin;
       this.definition.x.max = xmax;
       this.definition.y.min = ymin;
-      this.definition.y.max = ymax;
-      this.definition.x.domain([xmin, xmax]);
-      return this.definition.y.domain([ymin, ymax]).nice();
+      return this.definition.y.max = ymax;
     };
 
     LinePlot.prototype.responsive = function() {
@@ -178,28 +169,34 @@
       innerHeight = parseInt(this.definition.dimensions.height - this.definition.dimensions.margin.bottom);
       innerWidth = parseInt(this.definition.dimensions.margin.left);
       this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
+      this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + innerHeight + ")").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis);
       if (this.options.theme !== 'minimum') {
         this.svg.select(".line-plot-axis-x").selectAll("text").style("font-weight", this.options.font.weight);
       }
       this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + innerWidth + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.yAxis);
-      return this.svg.append("path").attr("d", this.definition.line(this.data)).attr("class", "line-plot-path").style("stroke", this.options.color).style("stroke-width", this.options.weight).style("fill", "none");
+      return this.svg.selectAll(".line-plot-path").data(this.data).append("path").attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.color).style("stroke-width", this.options.weight).style("fill", "none");
     };
 
     LinePlot.prototype.update = function(data) {
-      var _, key, preError, row;
+      var _, key, preError, row, update;
       preError = this.preError + "update()";
       _ = this;
+      update = [];
       for (key in data) {
         row = data[key];
-        this.data.push({
+        update[key] = {
           x: this.parseDate(row[this.options.x.variable]),
           y: row[this.options.y.variable]
-        });
+        };
       }
-      this.calculateAxes();
-      this.svg.transition();
-      return this.svg.select(".line-plot-path").attr("d", this.definition.line(this.data));
+      this.calculateAxisDims(data);
+      this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
+      this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
+      this.svg.select(".line-plot-axis-x").transition().duration(this.options.transitionDuration).call(this.definition.xAxis);
+      this.svg.select(".line-plot-axis-y").transition().duration(this.options.transitionDuration).call(this.definition.yAxis);
+      return this.svg.select(".line-plot-path").transition().duration(this.options.transitionDuration).attr("d", this.definition.line(this.data));
     };
 
     return LinePlot;
@@ -225,12 +222,21 @@
         var now;
         now = new Date;
         if (access.expires < now) {
-          return access.expired = true;
+          access.expired = true;
+        }
+        if (access.expired) {
+          return false;
+        } else {
+          return true;
         }
       };
     }
 
     Handler.prototype.alert = function(message, type) {};
+
+    Handler.prototype.getTemplate = function() {};
+
+    Handler.prototype.append = function() {};
 
     return Handler;
 
