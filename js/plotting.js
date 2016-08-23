@@ -324,6 +324,8 @@
       };
     }
 
+    Handler.prototype.listen = function() {};
+
     Handler.prototype.getTemplate = function() {};
 
     Handler.prototype.append = function() {

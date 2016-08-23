@@ -22,6 +22,9 @@ window.Plotting.Handler = class Handler
         access.expired = true
       if access.expired then false else true
     
+  listen: () ->
+    # Listen for Data Updates
+    
   getTemplate: () ->
     # Request the Template
     
