@@ -84,9 +84,30 @@
     }
 
     LinePlot.prototype.getDefinition = function() {
-      var _, height, margin, preError, width;
+      var _, preError;
       preError = this.preError + "getDefinition():";
       _ = this;
+      if (this.options.theme !== 'minimum') {
+        this.options.x.ticks = d3.timeFormat(this.options.x.format);
+      }
+      this.definition = {};
+      this.calculateChartDims();
+      this.definition.colorScale = d3.schemeCategory20;
+      this.calculateAxisDims(this.data);
+      this.definition.xAxis = d3.axisBottom().scale(this.definition.x);
+      this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
+      return this.definition.line = d3.line().defined(function(d) {
+        return !isNaN(d.y) && d.y !== null;
+      }).x(function(d) {
+        return _.definition.x(d.x);
+      }).y(function(d) {
+        return _.definition.y(d.y);
+      }).curve(d3.curveCatmullRom.alpha(0.5));
+    };
+
+    LinePlot.prototype.calculateChartDims = function() {
+      var height, margin, preError, width;
+      preError = this.preError + "calculateChartDims()";
       width = Math.round($(this.options.target).width());
       height = Math.round(width / 2);
       if (this.options.theme === 'minimum') {
@@ -104,34 +125,18 @@
           left: Math.round(width * 0.03)
         };
       }
-      if (this.options.theme !== 'minimum') {
-        this.options.x.ticks = d3.timeFormat(this.options.x.format);
-      }
-      this.definition = {
-        dimensions: {
-          width: width,
-          height: height,
-          margin: margin
-        },
-        colorScale: d3.schemeCategory20,
-        x: d3.scaleTime().range([margin.left, width - margin.right]),
-        y: d3.scaleLinear().range([height - margin.bottom, margin.top])
+      this.definition.dimensions = {
+        width: width,
+        height: height,
+        margin: margin
       };
-      this.calculateAxisDims(this.data);
-      this.definition.xAxis = d3.axisBottom().scale(this.definition.x);
-      this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
-      return this.definition.line = d3.line().defined(function(d) {
-        return !isNaN(d.y) && d.y !== null;
-      }).x(function(d) {
-        return _.definition.x(d.x);
-      }).y(function(d) {
-        return _.definition.y(d.y);
-      }).curve(d3.curveCatmullRom.alpha(0.5));
+      this.definition.x = d3.scaleTime().range([margin.left, width - margin.right]);
+      return this.definition.y = d3.scaleLinear().range([height - margin.bottom, margin.top]);
     };
 
     LinePlot.prototype.calculateAxisDims = function(data) {
       var preError, xmax, xmin, ymax, ymin;
-      preError = this.preError + "calculateAxisDims()";
+      preError = this.preError + "calculateAxisDims(data)";
       xmin = this.options.x.min === null ? d3.min(data, function(d) {
         return d.x;
       }) : this.parseDate(this.options.x.min);
@@ -153,50 +158,55 @@
     };
 
     LinePlot.prototype.responsive = function() {
-      var dim, preError;
+      var preError;
       preError = this.preError + "responsive()";
-      return dim = {
-        width: $(window).width(),
-        height: $(window).height()
-      };
+      this.calculateChartDims();
+      return true;
     };
 
     LinePlot.prototype.append = function() {
-      var _, innerHeight, innerWidth, preError;
+      var _, bottomPadding, innerHeight, innerWidth, leftPadding, preError, topPadding;
       preError = this.preError + "append()";
       _ = this;
       this.log("" + preError, this.options);
-      innerHeight = parseInt(this.definition.dimensions.height - this.definition.dimensions.margin.bottom);
-      innerWidth = parseInt(this.definition.dimensions.margin.left);
+      topPadding = parseInt(this.definition.dimensions.margin.top);
+      bottomPadding = parseInt(this.definition.dimensions.height - this.definition.dimensions.margin.bottom);
+      leftPadding = parseInt(this.definition.dimensions.margin.left);
+      innerHeight = parseInt(this.definition.dimensions.height - this.definition.dimensions.margin.bottom - this.definition.dimensions.margin.top);
+      innerWidth = parseInt(this.definition.dimensions.width - this.definition.dimensions.margin.left - this.definition.dimensions.margin.right);
       this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")");
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + innerHeight + ")").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis);
+      this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + bottomPadding + ")").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis);
       if (this.options.theme !== 'minimum') {
         this.svg.select(".line-plot-axis-x").selectAll("text").style("font-weight", this.options.font.weight);
       }
-      this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + innerWidth + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.yAxis);
-      return this.svg.selectAll(".line-plot-path").data(this.data).append("path").attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.color).style("stroke-width", this.options.weight).style("fill", "none");
+      this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + leftPadding + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.yAxis);
+      return this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.color).style("stroke-width", this.options.weight).style("fill", "none");
     };
 
     LinePlot.prototype.update = function(data) {
-      var _, key, preError, row, update;
+      var _, dtDiff, dtOffset, key, preError, row;
       preError = this.preError + "update()";
       _ = this;
-      update = [];
+      dtOffset = new Date(this.definition.x.max);
       for (key in data) {
         row = data[key];
-        update[key] = {
+        this.data.push({
           x: this.parseDate(row[this.options.x.variable]),
           y: row[this.options.y.variable]
-        };
+        });
       }
-      this.calculateAxisDims(data);
+      this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
+      this.calculateAxisDims(this.data);
+      dtDiff = this.definition.x.max - dtOffset;
+      this.log(preError + " Date Diff Calcs (dtOffset, @def.x.min, dtDiff)", dtOffset, this.definition.x.max, this.dtDiff);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.svg.select(".line-plot-axis-x").transition().duration(this.options.transitionDuration).call(this.definition.xAxis);
-      this.svg.select(".line-plot-axis-y").transition().duration(this.options.transitionDuration).call(this.definition.yAxis);
-      return this.svg.select(".line-plot-path").transition().duration(this.options.transitionDuration).attr("d", this.definition.line(this.data));
+      this.svg.select(".line-plot-axis-x").transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.xAxis);
+      this.svg.select(".line-plot-axis-y").transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
+      return this.svg.select(".line-plot-path").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.line);
     };
 
     return LinePlot;
