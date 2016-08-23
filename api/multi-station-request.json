@@ -1,9 +1,0 @@
-{
-    "station":"White Pass",
-    "region":"White Pass Upper",
-    "elevation":5800.0,
-    "data":[
-        {"datetime":"2014-09-23 10:00:00","Temperature (deg F)":50.39,"Precipitation (\")":6.11},
-        {"datetime":"2014-09-23 11:00:00","Temperature (deg F)":50.39,"Precipitation (\")":6.11}
-    ]
-}

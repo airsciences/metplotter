@@ -25,7 +25,7 @@ window.Plotting.LinePlot = class LinePlot
         max: null
         ticks: 5
       transitionDuration: 300
-      color: "rgb(41,128,185)"
+      lineColor: "rgb(41,128,185)"
       weight: 2
       axisColor: "rgb(0,0,0)"
       font:
@@ -219,7 +219,7 @@ window.Plotting.LinePlot = class LinePlot
       .datum(@data)
       .attr("d", @definition.line)
       .attr("class", "line-plot-path")
-      .style("stroke", @options.color)
+      .style("stroke", @options.lineColor)
       .style("stroke-width", @options.weight)
       .style("fill", "none")
 

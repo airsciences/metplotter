@@ -1,14 +1,17 @@
-{
-    "plot": {
+[
+    {
         "pageOrder": 1,
-        "lineColor": "",
-        "dataSpec": {
-            "parameter": "",
-            "startDatetime": "",
-            "endDatetime": ""
+        "station": {
+            "station":"White Pass",
+            "region":"White Pass Upper",
+            "elevation":5800.0
         },
-        "data": [
-            
-        ]
-    }
-}
+        "dataParams": {
+            "sensor": "Temperature (deg F)",
+            "startDatetime": "2015-01-01 00:00:00",
+            "endDatetime": "2015-01-10 00:00:00"
+        },
+        "lineColor": "rgb(22,22,22)",
+    },
+    ...
+]

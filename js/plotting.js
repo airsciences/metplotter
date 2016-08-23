@@ -125,7 +125,7 @@
           ticks: 5
         },
         transitionDuration: 300,
-        color: "rgb(41,128,185)",
+        lineColor: "rgb(41,128,185)",
         weight: 2,
         axisColor: "rgb(0,0,0)",
         font: {
@@ -263,7 +263,7 @@
         this.svg.select(".line-plot-axis-x").selectAll("text").style("font-weight", this.options.font.weight);
       }
       this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + leftPadding + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.yAxis);
-      return this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.color).style("stroke-width", this.options.weight).style("fill", "none");
+      return this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.lineColor).style("stroke-width", this.options.weight).style("fill", "none");
     };
 
     LinePlot.prototype.update = function(data) {
@@ -327,12 +327,14 @@
     Handler.prototype.getTemplate = function() {};
 
     Handler.prototype.append = function() {
-      var i, len, plot, ref, results;
+      var i, instance, len, plot, ref, results;
       ref = this.plots;
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        results.push(plot);
+        instance = new window.Plotting.LinePlot(plot.data, plot.options);
+        instance.append();
+        results.push(this.plots.push(instance));
       }
       return results;
     };

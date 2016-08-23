@@ -21,21 +21,17 @@ window.Plotting.Handler = class Handler
       if access.expires < new Date
         access.expired = true
       if access.expired then false else true
-      
-
     
   getTemplate: () ->
-    # Get the page state from GET vars.
+    # Request the Template
     
-    
-
   append: () ->
     # Master append plots.
     for plot in @plots
-      plot
-    
-
-
+      instance = new window.Plotting.LinePlot plot.data, plot.options
+      instance.append()
+      @plots.push instance
+      
   alert: (message, type) ->
     # Fire Modal w/ Message
     
