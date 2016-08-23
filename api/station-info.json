@@ -1,5 +1,7 @@
 {
     "station":"White Pass",
     "region":"White Pass Upper",
-    "elevation":5800.0
+    "elevation":5800.0,
+    "lat": 46.62076667,
+    "lon": -121.3873667
 }
