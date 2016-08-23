@@ -6,22 +6,23 @@ window.Plotting ||= {}
 
 window.Plotting.Handler = class Handler
   constructor: (access, options, plots) ->
+    @options =
+      target: null
     @endpoint = null
     access =
       token: null
       expires: null
       expired: true
+      
+    @api = new window.Plotting.API
 
     @hasAccess = () ->
       # Calculate if the token has expired.
-      now = new Date
-      if access.expires < now
+      if access.expires < new Date
         access.expired = true
       if access.expired then false else true
       
-  alert: (message, type) ->
-    # Fire Modal w/ Message
-    
+
     
   getTemplate: () ->
     # Get the page state from GET vars.
@@ -30,3 +31,11 @@ window.Plotting.Handler = class Handler
 
   append: () ->
     # Master append plots.
+    for plot in @plots
+      plot
+    
+
+
+  alert: (message, type) ->
+    # Fire Modal w/ Message
+    

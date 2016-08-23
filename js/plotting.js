@@ -1,4 +1,84 @@
 (function() {
+  var API;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.API = API = (function() {
+    function API(accessToken) {
+      var preError;
+      this.preError = "Plotting.API.";
+      preError = this.preError + "constructor()";
+      this.xhr = null;
+      this.async = false;
+    }
+
+    API.prototype.build = function() {
+      var error, error1, error2, preError;
+      preError = this.preError + ".build()";
+      this.xhr = null;
+      if (XMLHttpRequest) {
+        return this.xhr = new XMLHttpRequest;
+      } else {
+        try {
+          return this.xhr = new ActiveXObject("Msxml2.XMLHTTP");
+        } catch (error1) {
+          error = error1;
+          try {
+            return this.xhr = new ActiveXObject("Microsoft.XMLHTTP");
+          } catch (error2) {
+            error = error2;
+            return console.error(preError, 'Cannot specify XMLHTTPRequest (error)', e);
+          }
+        }
+      }
+    };
+
+    API.prototype.get = function(uri, params, callback) {
+      var _, preError;
+      preError = this.preError + ".get(uri, params, callback)";
+      this.build();
+      _ = this;
+      if (typeof callback !== 'undefined') {
+        return this.xhr.onreadystatechange = function() {
+          var error, error1, result;
+          if (data.xhr.readyState !== 4) {
+            return;
+          }
+          if (data.xhr.status !== 200 && data.xhr.status !== 304) {
+            console.log(preError + " HTTP error, (status): " + _.xhr.status);
+            _.xhr = null;
+            return;
+          }
+          result = {
+            response: _.xhr.response,
+            responseText: _.xhr.responseText,
+            responseJSON: null
+          };
+          try {
+            result.responseJSON = JSON.parse(result.responseText);
+          } catch (error1) {
+            error = error1;
+            result.responseJSON = null;
+          }
+          _.xhr = null;
+          return callback(result);
+        };
+      }
+    };
+
+    API.prototype.put = function() {};
+
+    API.prototype.post = function() {};
+
+    API.prototype["delete"] = function() {};
+
+    return API;
+
+  })();
+
+}).call(this);
+
+(function() {
   if (!Object.mergeDefaults) {
     Object.mergeDefaults = function(args, defaults) {
       var key, key1, merge, val, val1;
@@ -222,16 +302,18 @@
 
   window.Plotting.Handler = Handler = (function() {
     function Handler(access, options, plots) {
+      this.options = {
+        target: null
+      };
       this.endpoint = null;
       access = {
         token: null,
         expires: null,
         expired: true
       };
+      this.api = new window.Plotting.API;
       this.hasAccess = function() {
-        var now;
-        now = new Date;
-        if (access.expires < now) {
+        if (access.expires < new Date) {
           access.expired = true;
         }
         if (access.expired) {
@@ -242,11 +324,20 @@
       };
     }
 
-    Handler.prototype.alert = function(message, type) {};
-
     Handler.prototype.getTemplate = function() {};
 
-    Handler.prototype.append = function() {};
+    Handler.prototype.append = function() {
+      var i, len, plot, ref, results;
+      ref = this.plots;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        plot = ref[i];
+        results.push(plot);
+      }
+      return results;
+    };
+
+    Handler.prototype.alert = function(message, type) {};
 
     return Handler;
 
