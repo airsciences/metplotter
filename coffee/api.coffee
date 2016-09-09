@@ -6,8 +6,8 @@ window.Plotting ||= {}
 
 window.Plotting.API = class API
   constructor: (accessToken) ->
-    @preError = "Plotting.API."
-    preError = "#{@preError}constructor()"
+    @preError = "Plotting.API"
+    preError = "#{@preError}.constructor()"
     
     # Pre-Define Master Variables
     @xhr = null
@@ -69,8 +69,8 @@ window.Plotting.API = class API
     args = @encodeArgs 'GET', args
 
     try
-      @xhr.setRequestHeader "Authorization", @getAccessToken()
       @xhr.open 'GET', uri + args, @async
+      @xhr.setRequestHeader "Authorization", @getAccessToken()
       @xhr.send null
     catch error
       console.log preError + 'catch(error).', error
@@ -79,14 +79,138 @@ window.Plotting.API = class API
       
   put: () ->
     # Standard PUT Method
-    
-    
+    preError = "#{@preError}.put(uri, params, callback)"
+        
+    # Initialize the Object
+    @build()
+    _ = @
+        
+    if typeof callback != 'undefined'
+      @xhr.onreadystatechange = () ->
+        # Handle Waiting & Error Cases
+        if (_.xhr.readyState != 4) then return
+        if (_.xhr.status != 200 && _.xhr.status != 304)
+          console.log "#{preError} HTTP error, (status): #{_.xhr.status}"
+          _.xhr = null
+          return
+        
+        console.log "#{preError} (callback)", callback
+        # Set the Result
+        result =
+          response: _.xhr.response
+          responseText: _.xhr.responseText
+          responseJSON: null
+        try
+          result.responseJSON = JSON.parse result.responseText
+        catch error
+          result.responseJSON = null
+        
+        # Close the Object & Run the Callback
+        _.xhr = null
+        callback result
+
+    # Create a 'GET' formatted argument string
+    args = @encodeArgs 'PUT', args
+
+    try
+      @xhr.open 'PUT', uri, @async
+      @xhr.setRequestHeader "Authorization", @getAccessToken()
+      @xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
+      @xhr.send args
+    catch error
+      console.log preError + 'catch(error).', error
+
+    return
     
   post: () ->
     # Standard POST Method
+    preError = "#{@preError}.post(uri, params, callback)"
+        
+    # Initialize the Object
+    @build()
+    _ = @
+        
+    if typeof callback != 'undefined'
+      @xhr.onreadystatechange = () ->
+        # Handle Waiting & Error Cases
+        if (_.xhr.readyState != 4) then return
+        if (_.xhr.status != 200 && _.xhr.status != 304)
+          console.log "#{preError} HTTP error, (status): #{_.xhr.status}"
+          _.xhr = null
+          return
+        
+        console.log "#{preError} (callback)", callback
+        # Set the Result
+        result =
+          response: _.xhr.response
+          responseText: _.xhr.responseText
+          responseJSON: null
+        try
+          result.responseJSON = JSON.parse result.responseText
+        catch error
+          result.responseJSON = null
+        
+        # Close the Object & Run the Callback
+        _.xhr = null
+        callback result
+
+    # Create a 'GET' formatted argument string
+    args = @encodeArgs 'POST', args
+
+    try
+      @xhr.open 'POST', uri, @async
+      @xhr.setRequestHeader "Authorization", @getAccessToken()
+      @xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
+      @xhr.send args
+    catch error
+      console.log preError + 'catch(error).', error
+
+    return
       
   delete: () ->
     # Standard DELETE Method
+    preError = "#{@preError}.delete(uri, params, callback)"
+        
+    # Initialize the Object
+    @build()
+    _ = @
+        
+    if typeof callback != 'undefined'
+      @xhr.onreadystatechange = () ->
+        # Handle Waiting & Error Cases
+        if (_.xhr.readyState != 4) then return
+        if (_.xhr.status != 200 && _.xhr.status != 304)
+          console.log "#{preError} HTTP error, (status): #{_.xhr.status}"
+          _.xhr = null
+          return
+        
+        console.log "#{preError} (callback)", callback
+        # Set the Result
+        result =
+          response: _.xhr.response
+          responseText: _.xhr.responseText
+          responseJSON: null
+        try
+          result.responseJSON = JSON.parse result.responseText
+        catch error
+          result.responseJSON = null
+        
+        # Close the Object & Run the Callback
+        _.xhr = null
+        callback result
+
+    # Create a 'GET' formatted argument string
+    args = @encodeArgs 'DELETE', args
+
+    try
+      @xhr.open 'DELETE', uri, @async
+      @xhr.setRequestHeader "Authorization", @getAccessToken()
+      @xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
+      @xhr.send args
+    catch error
+      console.log preError + 'catch(error).', error
+
+    return
 
   encodeArgs: (type, json_args) ->
     # Encode an arguments set from JSON for a PUT/POST/GET Method

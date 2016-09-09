@@ -6,7 +6,7 @@ window.Plotting ||= {}
 
 window.Plotting.Handler = class Handler
   constructor: (access, options, plots) ->
-    @preError = "Plotting.Handler."
+    @preError = "Plotting.Handler"
     
     defaults =
       target: null
@@ -37,7 +37,7 @@ window.Plotting.Handler = class Handler
     
   getStationParamData: (data_logger, fields, limit, offset) ->
     # Request a station's dataset (param specific)
-    preError = "#{@preError}getStationParamData(...)"
+    preError = "#{@preError}.getStationParamData(...)"
     target = "http://dev.nwac.us/api/v5/measurement"
     args =
       data_logger: data_logger

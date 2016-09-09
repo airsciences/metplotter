@@ -6,8 +6,8 @@
   window.Plotting.API = API = (function() {
     function API(accessToken) {
       var preError;
-      this.preError = "Plotting.API.";
-      preError = this.preError + "constructor()";
+      this.preError = "Plotting.API";
+      preError = this.preError + ".constructor()";
       this.xhr = null;
       this.async = true;
       this.getAccessToken = function() {
@@ -70,8 +70,8 @@
       }
       args = this.encodeArgs('GET', args);
       try {
-        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
         this.xhr.open('GET', uri + args, this.async);
+        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
         this.xhr.send(null);
       } catch (error1) {
         error = error1;
@@ -79,11 +79,137 @@
       }
     };
 
-    API.prototype.put = function() {};
+    API.prototype.put = function() {
+      var _, args, error, error1, preError;
+      preError = this.preError + ".put(uri, params, callback)";
+      this.build();
+      _ = this;
+      if (typeof callback !== 'undefined') {
+        this.xhr.onreadystatechange = function() {
+          var error, error1, result;
+          if (_.xhr.readyState !== 4) {
+            return;
+          }
+          if (_.xhr.status !== 200 && _.xhr.status !== 304) {
+            console.log(preError + " HTTP error, (status): " + _.xhr.status);
+            _.xhr = null;
+            return;
+          }
+          console.log(preError + " (callback)", callback);
+          result = {
+            response: _.xhr.response,
+            responseText: _.xhr.responseText,
+            responseJSON: null
+          };
+          try {
+            result.responseJSON = JSON.parse(result.responseText);
+          } catch (error1) {
+            error = error1;
+            result.responseJSON = null;
+          }
+          _.xhr = null;
+          return callback(result);
+        };
+      }
+      args = this.encodeArgs('PUT', args);
+      try {
+        this.xhr.open('PUT', uri, this.async);
+        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
+        this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        this.xhr.send(args);
+      } catch (error1) {
+        error = error1;
+        console.log(preError + 'catch(error).', error);
+      }
+    };
 
-    API.prototype.post = function() {};
+    API.prototype.post = function() {
+      var _, args, error, error1, preError;
+      preError = this.preError + ".post(uri, params, callback)";
+      this.build();
+      _ = this;
+      if (typeof callback !== 'undefined') {
+        this.xhr.onreadystatechange = function() {
+          var error, error1, result;
+          if (_.xhr.readyState !== 4) {
+            return;
+          }
+          if (_.xhr.status !== 200 && _.xhr.status !== 304) {
+            console.log(preError + " HTTP error, (status): " + _.xhr.status);
+            _.xhr = null;
+            return;
+          }
+          console.log(preError + " (callback)", callback);
+          result = {
+            response: _.xhr.response,
+            responseText: _.xhr.responseText,
+            responseJSON: null
+          };
+          try {
+            result.responseJSON = JSON.parse(result.responseText);
+          } catch (error1) {
+            error = error1;
+            result.responseJSON = null;
+          }
+          _.xhr = null;
+          return callback(result);
+        };
+      }
+      args = this.encodeArgs('POST', args);
+      try {
+        this.xhr.open('POST', uri, this.async);
+        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
+        this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        this.xhr.send(args);
+      } catch (error1) {
+        error = error1;
+        console.log(preError + 'catch(error).', error);
+      }
+    };
 
-    API.prototype["delete"] = function() {};
+    API.prototype["delete"] = function() {
+      var _, args, error, error1, preError;
+      preError = this.preError + ".delete(uri, params, callback)";
+      this.build();
+      _ = this;
+      if (typeof callback !== 'undefined') {
+        this.xhr.onreadystatechange = function() {
+          var error, error1, result;
+          if (_.xhr.readyState !== 4) {
+            return;
+          }
+          if (_.xhr.status !== 200 && _.xhr.status !== 304) {
+            console.log(preError + " HTTP error, (status): " + _.xhr.status);
+            _.xhr = null;
+            return;
+          }
+          console.log(preError + " (callback)", callback);
+          result = {
+            response: _.xhr.response,
+            responseText: _.xhr.responseText,
+            responseJSON: null
+          };
+          try {
+            result.responseJSON = JSON.parse(result.responseText);
+          } catch (error1) {
+            error = error1;
+            result.responseJSON = null;
+          }
+          _.xhr = null;
+          return callback(result);
+        };
+      }
+      args = this.encodeArgs('DELETE', args);
+      try {
+        this.xhr.open('DELETE', uri, this.async);
+        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
+        this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        this.xhr.send(args);
+      } catch (error1) {
+        error = error1;
+        console.log(preError + 'catch(error).', error);
+      }
+    };
 
     API.prototype.encodeArgs = function(type, json_args) {
       var aCount, argStr, argument, error, error1;
@@ -343,7 +469,7 @@
   window.Plotting.Handler = Handler = (function() {
     function Handler(access, options, plots) {
       var accessToken, defaults;
-      this.preError = "Plotting.Handler.";
+      this.preError = "Plotting.Handler";
       defaults = {
         target: null,
         dateFormat: "%Y-%m-%d %H:%M:%S"
@@ -376,7 +502,7 @@
 
     Handler.prototype.getStationParamData = function(data_logger, fields, limit, offset) {
       var args, callback, preError, target;
-      preError = this.preError + "getStationParamData(...)";
+      preError = this.preError + ".getStationParamData(...)";
       target = "http://dev.nwac.us/api/v5/measurement";
       args = {
         data_logger: data_logger,
