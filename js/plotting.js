@@ -9,7 +9,10 @@
       this.preError = "Plotting.API.";
       preError = this.preError + "constructor()";
       this.xhr = null;
-      this.async = false;
+      this.async = true;
+      this.getAccessToken = function() {
+        return accessToken;
+      };
     }
 
     API.prototype.build = function() {
@@ -27,28 +30,29 @@
             return this.xhr = new ActiveXObject("Microsoft.XMLHTTP");
           } catch (error2) {
             error = error2;
-            return console.error(preError, 'Cannot specify XMLHTTPRequest (error)', e);
+            return console.error(preError, 'Cannot specify XMLHTTPRequest (error)', error);
           }
         }
       }
     };
 
     API.prototype.get = function(uri, params, callback) {
-      var _, preError;
+      var _, args, error, error1, preError;
       preError = this.preError + ".get(uri, params, callback)";
       this.build();
       _ = this;
       if (typeof callback !== 'undefined') {
-        return this.xhr.onreadystatechange = function() {
+        this.xhr.onreadystatechange = function() {
           var error, error1, result;
-          if (data.xhr.readyState !== 4) {
+          if (_.xhr.readyState !== 4) {
             return;
           }
-          if (data.xhr.status !== 200 && data.xhr.status !== 304) {
+          if (_.xhr.status !== 200 && _.xhr.status !== 304) {
             console.log(preError + " HTTP error, (status): " + _.xhr.status);
             _.xhr = null;
             return;
           }
+          console.log(preError + " (callback)", callback);
           result = {
             response: _.xhr.response,
             responseText: _.xhr.responseText,
@@ -64,6 +68,15 @@
           return callback(result);
         };
       }
+      args = this.encodeArgs('GET', args);
+      try {
+        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
+        this.xhr.open('GET', uri + args, this.async);
+        this.xhr.send(null);
+      } catch (error1) {
+        error = error1;
+        console.log(preError + 'catch(error).', error);
+      }
     };
 
     API.prototype.put = function() {};
@@ -71,6 +84,33 @@
     API.prototype.post = function() {};
 
     API.prototype["delete"] = function() {};
+
+    API.prototype.encodeArgs = function(type, json_args) {
+      var aCount, argStr, argument, error, error1;
+      argStr = "";
+      aCount = 0;
+      if (typeof json_args === 'string') {
+        try {
+          json_args = JSON.parse(json_args);
+        } catch (error1) {
+          error = error1;
+          console.log(preError + 'catch(error).', error);
+        }
+      }
+      if (type === 'POST' || type === 'PUT') {
+        argStr = JSON.stringify(json_args);
+      } else if (type === 'GET') {
+        for (argument in json_args) {
+          if (aCount === 0) {
+            argStr = "?" + argument + "=" + args[argument];
+          } else {
+            argStr = argStr + "&" + argument + "=" + args[argument];
+            aCount++;
+          }
+        }
+      }
+      return argStr;
+    };
 
     return API;
 
@@ -189,7 +229,7 @@
       var height, margin, preError, width;
       preError = this.preError + "calculateChartDims()";
       width = Math.round($(this.options.target).width());
-      height = Math.round(width / 2);
+      height = Math.round(width / 3);
       if (this.options.theme === 'minimum') {
         margin = {
           top: Math.round(height * 0.28),
@@ -302,18 +342,24 @@
 
   window.Plotting.Handler = Handler = (function() {
     function Handler(access, options, plots) {
-      this.options = {
-        target: null
+      var accessToken, defaults;
+      this.preError = "Plotting.Handler.";
+      defaults = {
+        target: null,
+        dateFormat: "%Y-%m-%d %H:%M:%S"
       };
+      this.options = Object.mergeDefaults(options, defaults);
       this.endpoint = null;
-      access = {
+      accessToken = {
         token: null,
         expires: null,
         expired: true
       };
+      access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API;
+      this.parseDate = d3.timeParse(this.options.dateFormat);
       this.hasAccess = function() {
-        if (access.expires < new Date) {
+        if (this.parseDate(access.expires) > new Date) {
           access.expired = true;
         }
         if (access.expired) {
@@ -327,6 +373,22 @@
     Handler.prototype.listen = function() {};
 
     Handler.prototype.getTemplate = function() {};
+
+    Handler.prototype.getStationParamData = function(data_logger, fields, limit, offset) {
+      var args, callback, preError, target;
+      preError = this.preError + "getStationParamData(...)";
+      target = "http://dev.nwac.us/api/v5/measurement";
+      args = {
+        data_logger: data_logger,
+        fields: fields,
+        limit: limit,
+        offset: offset
+      };
+      callback = function(data) {
+        return console.log(preError + ".callback(...) (data)", data);
+      };
+      return this.api.get(target, args, callback);
+    };
 
     Handler.prototype.append = function() {
       var i, instance, len, plot, ref, results;

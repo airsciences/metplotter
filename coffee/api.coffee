@@ -11,22 +11,11 @@ window.Plotting.API = class API
     
     # Pre-Define Master Variables
     @xhr = null
-    @async = false
+    @async = true
 
-    # @build()
-
-    # @xhr.onreadystatechange = () ->
-    #   switch _.xhr.readyState
-    #     when 4
-    #       # Request Complete
-    #       _.xhr = null
-    #     when 3
-    #     when 2
-    #       # Connection Opened
-    #     when 1
-    #       # Waiting
-    #     else
-    #       # Error State
+    # Attach Authentication
+    @getAccessToken = () ->
+      accessToken
     
   build: () ->
     # Build the XHR Class
@@ -42,7 +31,7 @@ window.Plotting.API = class API
         try
           @xhr = new ActiveXObject "Microsoft.XMLHTTP"
         catch error
-          console.error preError, 'Cannot specify XMLHTTPRequest (error)', e
+          console.error preError, 'Cannot specify XMLHTTPRequest (error)', error
 
   get: (uri, params, callback) ->
     # Standard GET Method
@@ -55,16 +44,17 @@ window.Plotting.API = class API
     if typeof callback != 'undefined'
       @xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
-        if (data.xhr.readyState != 4) then return
-        if (data.xhr.status != 200 && data.xhr.status != 304)
+        if (_.xhr.readyState != 4) then return
+        if (_.xhr.status != 200 && _.xhr.status != 304)
           console.log "#{preError} HTTP error, (status): #{_.xhr.status}"
           _.xhr = null
           return
         
+        console.log "#{preError} (callback)", callback
         # Set the Result
         result =
-          response: _.xhr.response,
-          responseText: _.xhr.responseText,
+          response: _.xhr.response
+          responseText: _.xhr.responseText
           responseJSON: null
         try
           result.responseJSON = JSON.parse result.responseText
@@ -74,12 +64,51 @@ window.Plotting.API = class API
         # Close the Object & Run the Callback
         _.xhr = null
         callback result
+
+    # Create a 'GET' formatted argument string
+    args = @encodeArgs 'GET', args
+
+    try
+      @xhr.setRequestHeader "Authorization", @getAccessToken()
+      @xhr.open 'GET', uri + args, @async
+      @xhr.send null
+    catch error
+      console.log preError + 'catch(error).', error
+
+    return
       
   put: () ->
     # Standard PUT Method
-       
+    
+    
+    
   post: () ->
     # Standard POST Method
       
   delete: () ->
     # Standard DELETE Method
+
+  encodeArgs: (type, json_args) ->
+    # Encode an arguments set from JSON for a PUT/POST/GET Method
+    argStr = ""
+    aCount = 0
+
+    # Parse to JSON if string provided
+    if typeof json_args == 'string'
+      try
+        json_args = JSON.parse json_args
+      catch error
+        console.log preError + 'catch(error).', error
+    
+    # Prepare for the XHR method action
+    if type == 'POST' || type == 'PUT'
+      argStr = JSON.stringify json_args
+    else if type == 'GET'
+      for argument of json_args
+        if aCount == 0
+          argStr = "?" + argument + "=" + args[argument]
+        else
+          argStr = argStr + "&" + argument + "=" + args[argument]
+          aCount++
+
+    return argStr

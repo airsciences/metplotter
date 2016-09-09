@@ -105,7 +105,7 @@ window.Plotting.LinePlot = class LinePlot
     
     # Calculate Basic DOM & SVG Dimensions
     width = Math.round($(@options.target).width())
-    height = Math.round(width/2)
+    height = Math.round(width/3)
     if @options.theme is 'minimum'
       margin =
         top: Math.round(height * 0.28)
