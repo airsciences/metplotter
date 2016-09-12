@@ -15,21 +15,28 @@ window.Plotting.LinePlot = class LinePlot
       theme: 'default'
       x:
         variable: null
-        ticks: null
         format: "%Y-%m-%d %H:%M:%S"
         min: null
         max: null
+        ticks: 7
       y:
         variable: null
+        ticks: 5
         min: null
         max: null
-        ticks: 5
       transitionDuration: 300
       lineColor: "rgb(41,128,185)"
       weight: 2
       axisColor: "rgb(0,0,0)"
       font:
-        weight: 300
+        weight: 200
+      crosshairX:
+        weight: 1
+        color: "rgb(149, 165, 166)"
+      crosshairY:
+        weight: 1
+        color: "rgb(149, 165, 166)"
+
 
     if options.x
       options.x = Object.mergeDefaults(options.x, defaults.x)
@@ -73,7 +80,7 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}getDefinition():"
     _ = @
 
-    
+
 
     # Allow Ticks When Large Screen
     if @options.theme isnt 'minimum'
@@ -81,15 +88,16 @@ window.Plotting.LinePlot = class LinePlot
 
     # Define the Definition
     @definition = {}
-    
+
     @calculateChartDims()
-    
+
     @definition.colorScale = d3.schemeCategory20
 
     @calculateAxisDims(@data)
 
     # Define D3 Methods
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
+      .ticks(Math.round($(@options.target).width() / 100))
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
       .ticks(@options.y.ticks)
     @definition.line = d3.line()
@@ -99,26 +107,26 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y))
       .curve(d3.curveCatmullRom.alpha(0.5))
- 
+
   calculateChartDims: ->
     preError = "#{@preError}calculateChartDims()"
-    
+
     # Calculate Basic DOM & SVG Dimensions
     width = Math.round($(@options.target).width())
-    height = Math.round(width/3)
+    height = Math.round(width/2.5)
     if @options.theme is 'minimum'
       margin =
         top: Math.round(height * 0.28)
-        right: Math.round(width * 0.03)
+        right: Math.round(Math.pow(width, 0.6))
         bottom: Math.round(height * 0.18)
-        left: Math.round(width * 0.03)
+        left: Math.round(Math.pow(width, 0.6))
     else
       margin =
         top: Math.round(height * 0.07)
-        right: Math.round(width * 0.03)
+        right: Math.round(Math.pow(width, 0.6))
         bottom: Math.round(height * 0.16)
-        left: Math.round(width * 0.03)
-        
+        left: Math.round(Math.pow(width, 0.6))
+
     @definition.dimensions =
       width: width
       height: height
@@ -129,7 +137,7 @@ window.Plotting.LinePlot = class LinePlot
 
   calculateAxisDims: (data) ->
     preError = "#{@preError}calculateAxisDims(data)"
-    
+
     # Calculate X & Y, Min & Max
     xmin = if @options.x.min is null then d3.min(data, (d)-> d.x)
     else @parseDate(@options.x.min)
@@ -155,7 +163,7 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}responsive()"
     @calculateChartDims()
     true
-    
+
   append: ->
     preError = "#{@preError}append()"
     _ = @
@@ -170,13 +178,14 @@ window.Plotting.LinePlot = class LinePlot
       @definition.dimensions.margin.bottom - @definition.dimensions.margin.top)
     innerWidth = parseInt(@definition.dimensions.width -
       @definition.dimensions.margin.left - @definition.dimensions.margin.right)
-    
+
     # Create the SVG
     @svg = d3.select(@options.target).append("svg")
       .attr("class", "line-plot")
       .attr("width", @definition.dimensions.width)
       .attr("height", @definition.dimensions.height)
-    
+
+
     # Append a Clip Path
     @svg.append("defs")
       .append("clipPath")
@@ -185,11 +194,11 @@ window.Plotting.LinePlot = class LinePlot
       .attr("width", innerWidth)
       .attr("height", innerHeight)
       .attr("transform", "translate(#{leftPadding}, #{topPadding})")
-    
+
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
-    
+
     # Append the X-Axis
     @svg.append("g")
       .attr("class", "line-plot-axis-x")
@@ -202,7 +211,10 @@ window.Plotting.LinePlot = class LinePlot
     if @options.theme isnt 'minimum'
       @svg.select(".line-plot-axis-x")
         .selectAll("text")
-        .style("font-weight", @options.font.weight)
+        .style("font-size", 10)
+        .style("font-weight", 100)
+
+
 
     # Append the Y-Axis
     @svg.append("g")
@@ -220,9 +232,27 @@ window.Plotting.LinePlot = class LinePlot
       .attr("d", @definition.line)
       .attr("class", "line-plot-path")
       .style("stroke", @options.lineColor)
-      .style("stroke-width", @options.weight)
+      .style("stroke-width",
+          Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
-
+# #############################################################################
+    # Create Crosshairs
+    @svg.append("g")
+        .attr("class", "line")
+    # Create Horizontal line
+    @svg.append("g")
+        .attr("id", "crosshairX")
+        .attr("class", "crosshair")
+        .style("stroke", @options.crosshairX.color)
+        .style("stroke-width", @options.crosshairX.stroke)
+        .style("fill", "none")
+    # Create Vertical Line
+    @svg.append("g")
+      .attr("id", "crosshairY")
+      .attr("class", "crosshair")
+      .style("stroke", @options.crosshairY.color)
+      .style("stroke-width", @options.crosshairY.stroke)
+      .style("fill", "none")
   update: (data) ->
     preError = "#{@preError}update()"
     _ = @
@@ -234,12 +264,12 @@ window.Plotting.LinePlot = class LinePlot
         x: @parseDate(row[@options.x.variable])
         y: row[@options.y.variable]
       )
-    
+
     # Pre-Append Data For Smooth transform
     @svg.select(".line-plot-path")
       .datum(@data)
       .attr("d", @definition.line)
-    
+
     @calculateAxisDims @data
     dtDiff = @definition.x.max - dtOffset
     @log "#{preError} Date Diff Calcs (dtOffset, @def.x.min, dtDiff)",
@@ -254,7 +284,7 @@ window.Plotting.LinePlot = class LinePlot
       .duration(@options.transitionDuration)
       .ease(d3.easeLinear)
       .call(@definition.xAxis)
-    
+
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
       .transition()
@@ -268,4 +298,3 @@ window.Plotting.LinePlot = class LinePlot
       .transition()
       .duration(@options.transitionDuration)
       .attr("d", @definition.line)
-      

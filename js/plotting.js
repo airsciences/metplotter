@@ -279,23 +279,31 @@
         theme: 'default',
         x: {
           variable: null,
-          ticks: null,
           format: "%Y-%m-%d %H:%M:%S",
           min: null,
-          max: null
+          max: null,
+          ticks: 7
         },
         y: {
           variable: null,
+          ticks: 5,
           min: null,
-          max: null,
-          ticks: 5
+          max: null
         },
         transitionDuration: 300,
         lineColor: "rgb(41,128,185)",
         weight: 2,
         axisColor: "rgb(0,0,0)",
         font: {
-          weight: 300
+          weight: 200
+        },
+        crosshairX: {
+          weight: 1,
+          color: "rgb(149, 165, 166)"
+        },
+        crosshairY: {
+          weight: 1,
+          color: "rgb(149, 165, 166)"
         }
       };
       if (options.x) {
@@ -340,7 +348,7 @@
       this.calculateChartDims();
       this.definition.colorScale = d3.schemeCategory20;
       this.calculateAxisDims(this.data);
-      this.definition.xAxis = d3.axisBottom().scale(this.definition.x);
+      this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
       return this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
@@ -355,20 +363,20 @@
       var height, margin, preError, width;
       preError = this.preError + "calculateChartDims()";
       width = Math.round($(this.options.target).width());
-      height = Math.round(width / 3);
+      height = Math.round(width / 2.5);
       if (this.options.theme === 'minimum') {
         margin = {
           top: Math.round(height * 0.28),
-          right: Math.round(width * 0.03),
+          right: Math.round(Math.pow(width, 0.6)),
           bottom: Math.round(height * 0.18),
-          left: Math.round(width * 0.03)
+          left: Math.round(Math.pow(width, 0.6))
         };
       } else {
         margin = {
           top: Math.round(height * 0.07),
-          right: Math.round(width * 0.03),
+          right: Math.round(Math.pow(width, 0.6)),
           bottom: Math.round(height * 0.16),
-          left: Math.round(width * 0.03)
+          left: Math.round(Math.pow(width, 0.6))
         };
       }
       this.definition.dimensions = {
@@ -426,10 +434,13 @@
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + bottomPadding + ")").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis);
       if (this.options.theme !== 'minimum') {
-        this.svg.select(".line-plot-axis-x").selectAll("text").style("font-weight", this.options.font.weight);
+        this.svg.select(".line-plot-axis-x").selectAll("text").style("font-size", 10).style("font-weight", 100);
       }
       this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + leftPadding + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.yAxis);
-      return this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.lineColor).style("stroke-width", this.options.weight).style("fill", "none");
+      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.lineColor).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.append("g").attr("class", "line");
+      this.svg.append("g").attr("id", "crosshairX").attr("class", "crosshair").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.stroke).style("fill", "none");
+      return this.svg.append("g").attr("id", "crosshairY").attr("class", "crosshair").style("stroke", this.options.crosshairY.color).style("stroke-width", this.options.crosshairY.stroke).style("fill", "none");
     };
 
     LinePlot.prototype.update = function(data) {
