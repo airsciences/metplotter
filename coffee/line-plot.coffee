@@ -29,14 +29,14 @@ window.Plotting.LinePlot = class LinePlot
       weight: 2
       axisColor: "rgb(0,0,0)"
       font:
-        weight: 200
+        weight: 100
+        size: 12
       crosshairX:
         weight: 1
         color: "rgb(149, 165, 166)"
       crosshairY:
         weight: 1
         color: "rgb(149, 165, 166)"
-
 
     if options.x
       options.x = Object.mergeDefaults(options.x, defaults.x)
@@ -50,6 +50,7 @@ window.Plotting.LinePlot = class LinePlot
       @log = (log...) -> console.log(log)
 
     @parseDate = d3.timeParse(@options.x.format)
+    @bisectDate = d3.bisector((d) -> d.x).left
 
     # Set @data
     @data = []
@@ -106,7 +107,7 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y))
-      .curve(d3.curveCatmullRom.alpha(0.5))
+      ######################.curve(d3.curveCatmullRom.alpha(0.5))
 
   calculateChartDims: ->
     preError = "#{@preError}calculateChartDims()"
@@ -211,10 +212,8 @@ window.Plotting.LinePlot = class LinePlot
     if @options.theme isnt 'minimum'
       @svg.select(".line-plot-axis-x")
         .selectAll("text")
-        .style("font-size", 10)
-        .style("font-weight", 100)
-
-
+        .style("font-size", @options.font.size)
+        .style("font-weight", @options.font.weight)
 
     # Append the Y-Axis
     @svg.append("g")
@@ -222,7 +221,10 @@ window.Plotting.LinePlot = class LinePlot
       .attr("transform", "translate(#{leftPadding}, 0)")
       .style("fill", "none")
       .style("stroke", @options.axisColor)
+      .style("font-size", @options.font.size)
+      .style("font-weight", @options.font.weight)
       .call(@definition.yAxis)
+
 
     # Append the Line Path
     @svg.append("g")
@@ -235,24 +237,66 @@ window.Plotting.LinePlot = class LinePlot
       .style("stroke-width",
           Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
-# #############################################################################
+
     # Create Crosshairs
-    @svg.append("g")
-        .attr("class", "line")
-    # Create Horizontal line
-    @svg.append("g")
-        .attr("id", "crosshairX")
-        .attr("class", "crosshair")
-        .style("stroke", @options.crosshairX.color)
-        .style("stroke-width", @options.crosshairX.stroke)
-        .style("fill", "none")
-    # Create Vertical Line
-    @svg.append("g")
-      .attr("id", "crosshairY")
+    @crosshairs = @svg.append("g")
       .attr("class", "crosshair")
-      .style("stroke", @options.crosshairY.color)
-      .style("stroke-width", @options.crosshairY.stroke)
+    # Create Horizontal line
+    @crosshairs.append("line")
+      .attr("class", "crosshair-x")
+      .style("stroke", @options.crosshairX.color)
+      .style("stroke-width", @options.crosshairX.weight)
       .style("fill", "none")
+    # Create Vertical Line
+    @crosshairs.append("line")
+      .attr("class", "crosshair-y")
+      .style("stroke", @options.crosshairY.color)
+      .style("stroke-width", @options.crosshairY.weight)
+      .style("fill", "none")
+
+    _ = @
+    # Move Crosshairs Based on Mouse Location
+    @svg.append("rect")
+      .datum(@data)
+      .attr("class", "overlay")
+      .attr("width", innerWidth)
+      .attr("height", innerHeight)
+      #.attr("transform", "translate(#{leftPadding}, #{topPadding})")
+      .style("fill", "none")
+      .style("pointer-events", "all")
+      .on("mouseover", () ->
+        _.crosshairs.style("display", null)
+      )
+      .on("mouseout", () ->
+        _.crosshairs.style("display", "none")
+      )
+
+      .on("mousemove", (d) ->
+        mouse = d3.mouse @
+        x0 = _.definition.x.invert(mouse[0])
+        i = _.bisectDate(d, x0, 1)
+        d0 = d[i - 1]
+        d1 = d[i]
+        d = if x0 - (d0.Date) > (d1.Date) - x0 then d1 else d0
+        dy = _.definition.y(d.y)
+        _.log dy
+
+        _.crosshairs.select(".crosshair-x")
+          .attr("x1", mouse[0])
+          .attr("y1", topPadding)
+          .attr("x2", mouse[0])
+          .attr("y2", innerHeight + topPadding)
+          #.attr("transform", "translate(#{leftPadding}, 0)")
+
+        _.crosshairs.select(".crosshair-y")
+          .attr("x1", leftPadding)
+          .attr("y1", _.definition.y(d.y))
+          .attr("x2", innerWidth + leftPadding)
+          .attr("y2", _.definition.y(d.y))
+          #.attr("transform", "translate(0, #{topPadding})")
+        )
+
+
   update: (data) ->
     preError = "#{@preError}update()"
     _ = @
@@ -280,6 +324,8 @@ window.Plotting.LinePlot = class LinePlot
 
     # Redraw the X-Axis
     @svg.select(".line-plot-axis-x")
+      .style("font-size", @options.font.size)
+      .style("font-weight", @options.font.weight)
       .transition()
       .duration(@options.transitionDuration)
       .ease(d3.easeLinear)
@@ -287,6 +333,8 @@ window.Plotting.LinePlot = class LinePlot
 
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
+      .style("font-size", @options.font.size)
+      .style("font-weight", @options.font.weight)
       .transition()
       .duration(@options.transitionDuration)
       .ease(d3.easeLinear)

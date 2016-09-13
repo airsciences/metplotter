@@ -295,7 +295,8 @@
         weight: 2,
         axisColor: "rgb(0,0,0)",
         font: {
-          weight: 200
+          weight: 100,
+          size: 12
         },
         crosshairX: {
           weight: 1,
@@ -325,6 +326,9 @@
         };
       }
       this.parseDate = d3.timeParse(this.options.x.format);
+      this.bisectDate = d3.bisector(function(d) {
+        return d.x;
+      }).left;
       this.data = [];
       ref = data.data;
       for (key in ref) {
@@ -356,7 +360,7 @@
         return _.definition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y);
-      }).curve(d3.curveCatmullRom.alpha(0.5));
+      });
     };
 
     LinePlot.prototype.calculateChartDims = function() {
@@ -434,13 +438,31 @@
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       this.svg.append("g").attr("class", "line-plot-axis-x").attr("transform", "translate(0, " + bottomPadding + ")").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis);
       if (this.options.theme !== 'minimum') {
-        this.svg.select(".line-plot-axis-x").selectAll("text").style("font-size", 10).style("font-weight", 100);
+        this.svg.select(".line-plot-axis-x").selectAll("text").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
       }
-      this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + leftPadding + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.yAxis);
+      this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + leftPadding + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis);
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.lineColor).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
-      this.svg.append("g").attr("class", "line");
-      this.svg.append("g").attr("id", "crosshairX").attr("class", "crosshair").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.stroke).style("fill", "none");
-      return this.svg.append("g").attr("id", "crosshairY").attr("class", "crosshair").style("stroke", this.options.crosshairY.color).style("stroke-width", this.options.crosshairY.stroke).style("fill", "none");
+      this.crosshairs = this.svg.append("g").attr("class", "crosshair");
+      this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("fill", "none");
+      this.crosshairs.append("line").attr("class", "crosshair-y").style("stroke", this.options.crosshairY.color).style("stroke-width", this.options.crosshairY.weight).style("fill", "none");
+      _ = this;
+      return this.svg.append("rect").datum(this.data).attr("class", "overlay").attr("width", innerWidth).attr("height", innerHeight).style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
+        return _.crosshairs.style("display", null);
+      }).on("mouseout", function() {
+        return _.crosshairs.style("display", "none");
+      }).on("mousemove", function(d) {
+        var d0, d1, dy, i, mouse, x0;
+        mouse = d3.mouse(this);
+        x0 = _.definition.x.invert(mouse[0]);
+        i = _.bisectDate(d, x0, 1);
+        d0 = d[i - 1];
+        d1 = d[i];
+        d = x0 - d0.Date > d1.Date - x0 ? d1 : d0;
+        dy = _.definition.y(d.y);
+        _.log(dy);
+        _.crosshairs.select(".crosshair-x").attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding);
+        return _.crosshairs.select(".crosshair-y").attr("x1", leftPadding).attr("y1", _.definition.y(d.y)).attr("x2", innerWidth + leftPadding).attr("y2", _.definition.y(d.y));
+      });
     };
 
     LinePlot.prototype.update = function(data) {
@@ -461,8 +483,8 @@
       this.log(preError + " Date Diff Calcs (dtOffset, @def.x.min, dtDiff)", dtOffset, this.definition.x.max, this.dtDiff);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.svg.select(".line-plot-axis-x").transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.xAxis);
-      this.svg.select(".line-plot-axis-y").transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
+      this.svg.select(".line-plot-axis-x").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.xAxis);
+      this.svg.select(".line-plot-axis-y").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
       return this.svg.select(".line-plot-path").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.line);
     };
 
