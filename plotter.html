@@ -4,17 +4,19 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>NWAC D3 Plotting</title>
+        <title>NWAC D3 Plotting Latest</title>
         <link href="style/bootstrap.min.css" rel="stylesheet">
     </head>
     <body>
         <div class="container">
             <div class="row-sm-12">
                 <div class="pull-right">
-                    <a href="plotter.html"><button class="btn btn-sm btn-default">Advanced</button></a>
-                    <button class="btn btn-sm btn-default" onclick="line_plot.update(data2)">Static Update</button>
+                    <a href="test.html"><button class="btn btn-sm btn-default">Basic</button></a>
+                    <button class="btn btn-sm btn-default" onclick="">Update</button>
+                    <button class="btn btn-sm btn-default" onclick="plotter.getTemplate()">Get Template</button>
+                    <button class="btn btn-sm btn-default" onclick="plotter.setTemplate()">Set Template</button>
                 </div>
-                <h1>NWAC D3 Plotting Tool</h1>
+                <h1>NWAC D3 Plotting Tool <small>Plotter API Dev</small></h1>
                 <div id="d3-plot-target"></div>
             </div>
         </div>
@@ -53,7 +55,7 @@
                 "region":"Heather Meadow",
                 "elevation":4210.0,
                 "data":[
-	                  {"datetime":"2014-09-23 10:00:00","Temperature (deg F)":60.24,"Precipitation (\")":0.0},
+	                {"datetime":"2014-09-23 10:00:00","Temperature (deg F)":60.24,"Precipitation (\")":0.0},
                     {"datetime":"2014-09-23 11:00:00","Temperature (deg F)":60.24,"Precipitation (\")":0.0},
                     {"datetime":"2014-09-23 12:00:00","Temperature (deg F)":59.14,"Precipitation (\")":0.0},
                     {"datetime":"2014-09-23 13:00:00","Temperature (deg F)":54.8,"Precipitation (\")":0.03},

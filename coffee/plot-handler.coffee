@@ -32,8 +32,27 @@ window.Plotting.Handler = class Handler
   listen: () ->
     # Listen for Data Updates
     
-  getTemplate: () ->
+  getTemplate: (template_uri) ->
     # Request the Template
+    preError = "#{@preError}.getTemplate(...)"
+    target = "http://dev.nwac.us/api/v5/template"
+    _ = @
+    
+    callback = (data) ->
+      console.log "#{preError}.callback(...) (data)", data
+      _.plotData = data.responseJSON.plotData
+      
+    @api.get target, args, callback
+    
+  setTemplate: () ->
+    # Save the Template
+    preError = "#{@preError}.setTemplate(...)"
+    target = "http://dev.nwac.us/api/v5/template"
+    
+    callback = (data) ->
+      console.log "#{preError}.callback(...) (data)"
+    
+    @api.put target, args, callback
     
   getStationParamData: (data_logger, fields, limit, offset) ->
     # Request a station's dataset (param specific)
@@ -52,7 +71,7 @@ window.Plotting.Handler = class Handler
     
   append: () ->
     # Master append plots.
-    for plot in @plots
+    for plot in @plotData
       instance = new window.Plotting.LinePlot plot.data, plot.options
       instance.append()
       @plots.push instance
