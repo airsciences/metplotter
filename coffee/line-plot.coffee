@@ -293,8 +293,7 @@ window.Plotting.LinePlot = class LinePlot
           .attr("y2", innerHeight + topPadding)
           .attr("transform", "translate(#{leftPadding}, 0)")
 ############################################################################
-        _.focusCircle.select(".focusCircle")
-          .attr("cx", dx)
+        _.focusCircle.attr("cx", dx)
           .attr("cy", dy)
           #.attr("transform", "translate(0, #{topPadding})")
         )

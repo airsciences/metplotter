@@ -464,7 +464,7 @@
         dx = _.definition.x(d.x);
         _.log(dx);
         _.crosshairs.select(".crosshair-x").attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding).attr("transform", "translate(" + leftPadding + ", 0)");
-        return _.focusCircle.select(".focusCircle").attr("cx", dx).attr("cy", dy);
+        return _.focusCircle.attr("cx", dx).attr("cy", dy);
       });
     };
 
