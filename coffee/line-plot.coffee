@@ -241,34 +241,38 @@ window.Plotting.LinePlot = class LinePlot
     # Create Crosshairs
     @crosshairs = @svg.append("g")
       .attr("class", "crosshair")
-    # Create Horizontal line
+
+    # Create Vertical line
     @crosshairs.append("line")
       .attr("class", "crosshair-x")
       .style("stroke", @options.crosshairX.color)
       .style("stroke-width", @options.crosshairX.weight)
       .style("fill", "none")
-    # Create Vertical Line
-    @crosshairs.append("line")
-      .attr("class", "crosshair-y")
-      .style("stroke", @options.crosshairY.color)
-      .style("stroke-width", @options.crosshairY.weight)
-      .style("fill", "none")
 
     _ = @
-    # Move Crosshairs Based on Mouse Location
+
+    # Create Focus Circle
+    @focusCircle = @svg.append("circle")
+      .attr("r", 5)
+      .attr("class", "focusCircle")
+      .attr("fill", "rgb(44, 62, 80)")
+
+    # Move Crosshairs and Focus Circle Based on Mouse Location
     @svg.append("rect")
       .datum(@data)
       .attr("class", "overlay")
       .attr("width", innerWidth)
       .attr("height", innerHeight)
-      #.attr("transform", "translate(#{leftPadding}, #{topPadding})")
+      .attr("transform", "translate(#{leftPadding}, #{topPadding})")
       .style("fill", "none")
       .style("pointer-events", "all")
       .on("mouseover", () ->
         _.crosshairs.style("display", null)
+        _.focusCircle.style("display", null)
       )
       .on("mouseout", () ->
         _.crosshairs.style("display", "none")
+        _.focusCircle.style("display", "none")
       )
 
       .on("mousemove", (d) ->
@@ -279,20 +283,19 @@ window.Plotting.LinePlot = class LinePlot
         d1 = d[i]
         d = if x0 - (d0.Date) > (d1.Date) - x0 then d1 else d0
         dy = _.definition.y(d.y)
-        _.log dy
+        dx = _.definition.x(d.x)
+        _.log(dx)
 
         _.crosshairs.select(".crosshair-x")
           .attr("x1", mouse[0])
           .attr("y1", topPadding)
           .attr("x2", mouse[0])
           .attr("y2", innerHeight + topPadding)
-          #.attr("transform", "translate(#{leftPadding}, 0)")
-
-        _.crosshairs.select(".crosshair-y")
-          .attr("x1", leftPadding)
-          .attr("y1", _.definition.y(d.y))
-          .attr("x2", innerWidth + leftPadding)
-          .attr("y2", _.definition.y(d.y))
+          .attr("transform", "translate(#{leftPadding}, 0)")
+############################################################################
+        _.focusCircle.select(".focusCircle")
+          .attr("cx", dx)
+          .attr("cy", dy)
           #.attr("transform", "translate(0, #{topPadding})")
         )
 
