@@ -25,7 +25,8 @@ window.Plotting.LinePlot = class LinePlot
         min: null
         max: null
       transitionDuration: 300
-      lineColor: "rgb(41,128,185)"
+      line1Color: "rgb(41,128,185)"
+      line2Color: "rgb(211, 84, 0)"
       weight: 2
       axisColor: "rgb(0,0,0)"
       font:
@@ -34,9 +35,8 @@ window.Plotting.LinePlot = class LinePlot
       crosshairX:
         weight: 1
         color: "rgb(149, 165, 166)"
-      crosshairY:
-        weight: 1
-        color: "rgb(149, 165, 166)"
+      focusCircle:
+        color: "rgb(44, 62, 80)"
 
     if options.x
       options.x = Object.mergeDefaults(options.x, defaults.x)
@@ -63,19 +63,17 @@ window.Plotting.LinePlot = class LinePlot
     @getDefinition()
 
     # Responsive Event Listener
-#     if(window.attachEvent) {
-#       window.attachEvent('onresize', function() {
-#         alert('attachEvent - resize');
-#         });
-#     }
-#     else if(window.addEventListener) {
-#       window.addEventListener('resize', function() {
-#         console.log('addEventListener - resize');
-#         }, true);
-#     }
-# ######### do we need this? ################
-#     else{
-#       }
+    ##################### add recalculation when the window changes ###########
+    if window.attachEvent
+      window.attachEvent 'onresize', ->
+        alert 'attachEvent - resize'
+        return
+    else if window.addEventListener
+      window.addEventListener 'resize', (->
+        console.log 'addEventListener - resize'
+        return
+      ), true
+    else
 
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
@@ -107,7 +105,7 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y))
-      ######################.curve(d3.curveCatmullRom.alpha(0.5))
+      .curve(d3.curveCatmullRom.alpha(0.5))
 
   calculateChartDims: ->
     preError = "#{@preError}calculateChartDims()"
@@ -233,7 +231,18 @@ window.Plotting.LinePlot = class LinePlot
       .datum(@data)
       .attr("d", @definition.line)
       .attr("class", "line-plot-path")
-      .style("stroke", @options.lineColor)
+      .style("stroke", @options.line1Color)
+      .style("stroke-width",
+          Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+      .style("fill", "none")
+##########################yoloswag
+    @svg.append("g")
+      .attr("clip-path", "url(\##{@options.target}_clip)")
+      .append("path")
+      .datum(@data)
+      .attr("d", @definition.line)
+      .attr("class", "line-plot-path")
+      .style("stroke", @options.line2Color)
       .style("stroke-width",
           Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
@@ -255,7 +264,7 @@ window.Plotting.LinePlot = class LinePlot
     @focusCircle = @svg.append("circle")
       .attr("r", 5)
       .attr("class", "focusCircle")
-      .attr("fill", "rgb(44, 62, 80)")
+      .attr("fill", @options.focusCircle.color)
 
     # Move Crosshairs and Focus Circle Based on Mouse Location
     @svg.append("rect")
@@ -279,12 +288,11 @@ window.Plotting.LinePlot = class LinePlot
         mouse = d3.mouse @
         x0 = _.definition.x.invert(mouse[0])
         i = _.bisectDate(d, x0, 1)
-        d0 = d[i - 1]
-        d1 = d[i]
+        d0 = d[i]
+        d1 = d[i + 1]
         d = if x0 - (d0.Date) > (d1.Date) - x0 then d1 else d0
         dy = _.definition.y(d.y)
         dx = _.definition.x(d.x)
-        _.log(dx)
 
         _.crosshairs.select(".crosshair-x")
           .attr("x1", mouse[0])
@@ -292,10 +300,11 @@ window.Plotting.LinePlot = class LinePlot
           .attr("x2", mouse[0])
           .attr("y2", innerHeight + topPadding)
           .attr("transform", "translate(#{leftPadding}, 0)")
-############################################################################
-        _.focusCircle.attr("cx", dx)
+
+        _.focusCircle
+          .attr("cx", dx)
           .attr("cy", dy)
-          #.attr("transform", "translate(0, #{topPadding})")
+          #.attr("transform", "translate(#{leftPadding}, 0)")
         )
 
 

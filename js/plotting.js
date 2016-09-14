@@ -291,7 +291,8 @@
           max: null
         },
         transitionDuration: 300,
-        lineColor: "rgb(41,128,185)",
+        line1Color: "rgb(41,128,185)",
+        line2Color: "rgb(211, 84, 0)",
         weight: 2,
         axisColor: "rgb(0,0,0)",
         font: {
@@ -302,9 +303,8 @@
           weight: 1,
           color: "rgb(149, 165, 166)"
         },
-        crosshairY: {
-          weight: 1,
-          color: "rgb(149, 165, 166)"
+        focusCircle: {
+          color: "rgb(44, 62, 80)"
         }
       };
       if (options.x) {
@@ -339,6 +339,17 @@
         };
       }
       this.getDefinition();
+      if (window.attachEvent) {
+        window.attachEvent('onresize', function() {
+          alert('attachEvent - resize');
+        });
+      } else if (window.addEventListener) {
+        window.addEventListener('resize', (function() {
+          console.log('addEventListener - resize');
+        }), true);
+      } else {
+
+      }
     }
 
     LinePlot.prototype.getDefinition = function() {
@@ -360,7 +371,7 @@
         return _.definition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y);
-      });
+      }).curve(d3.curveCatmullRom.alpha(0.5));
     };
 
     LinePlot.prototype.calculateChartDims = function() {
@@ -441,11 +452,12 @@
         this.svg.select(".line-plot-axis-x").selectAll("text").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
       }
       this.svg.append("g").attr("class", "line-plot-axis-y").attr("transform", "translate(" + leftPadding + ", 0)").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis);
-      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.lineColor).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.crosshairs = this.svg.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("fill", "none");
       _ = this;
-      this.focusCircle = this.svg.append("circle").attr("r", 5).attr("class", "focusCircle").attr("fill", "rgb(44, 62, 80)");
+      this.focusCircle = this.svg.append("circle").attr("r", 5).attr("class", "focusCircle").attr("fill", this.options.focusCircle.color);
       return this.svg.append("rect").datum(this.data).attr("class", "overlay").attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
         _.crosshairs.style("display", null);
         return _.focusCircle.style("display", null);
@@ -457,12 +469,11 @@
         mouse = d3.mouse(this);
         x0 = _.definition.x.invert(mouse[0]);
         i = _.bisectDate(d, x0, 1);
-        d0 = d[i - 1];
-        d1 = d[i];
+        d0 = d[i];
+        d1 = d[i + 1];
         d = x0 - d0.Date > d1.Date - x0 ? d1 : d0;
         dy = _.definition.y(d.y);
         dx = _.definition.x(d.x);
-        _.log(dx);
         _.crosshairs.select(".crosshair-x").attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding).attr("transform", "translate(" + leftPadding + ", 0)");
         return _.focusCircle.attr("cx", dx).attr("cy", dy);
       });
