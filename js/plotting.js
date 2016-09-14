@@ -13,6 +13,9 @@
       this.getAccessToken = function() {
         return accessToken;
       };
+      this.getAccessTokenValue = function() {
+        return "Token " + accessToken;
+      };
     }
 
     API.prototype.build = function() {
@@ -71,7 +74,8 @@
       args = this.encodeArgs('GET', args);
       try {
         this.xhr.open('GET', uri + args, this.async);
-        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
+        this.xhr.setRequestHeader("Origin", "http://dev.nwac.us");
+        this.xhr.setRequestHeader("Authorization", this.getAccessTokenValue());
         this.xhr.send(null);
       } catch (error1) {
         error = error1;
@@ -515,7 +519,7 @@
         expired: true
       };
       access = Object.mergeDefaults(access, accessToken);
-      this.api = new window.Plotting.API;
+      this.api = new window.Plotting.API(access.token);
       this.parseDate = d3.timeParse(this.options.dateFormat);
       this.hasAccess = function() {
         if (this.parseDate(access.expires) > new Date) {
@@ -531,27 +535,63 @@
 
     Handler.prototype.listen = function() {};
 
-    Handler.prototype.getTemplate = function() {};
+    Handler.prototype.getTemplate = function(template_uri) {
+      var _, args, callback, preError, target;
+      preError = this.preError + ".getTemplate(...)";
+      target = "template/1";
+      args = null;
+      _ = this;
+      callback = function(data) {
+        var i, len, params, plot, ref, results;
+        if (data.responseJSON === null || data.responseJSON.error) {
+          console.log(preError + ".callback(...) error detected (data)", data);
+          return;
+        }
+        _.template = data.responseJSON.templateData;
+        ref = _.template;
+        results = [];
+        for (i = 0, len = ref.length; i < len; i++) {
+          plot = ref[i];
+          params = plot.dataParams;
+          console.log(preError + ".callback(...) (plot, params)", plot, params);
+          results.push(_.getStationParamData(plot, params.data_logger, params.fields, params.max_datetime, params.limit, null));
+        }
+        return results;
+      };
+      return this.api.get(target, args, callback);
+    };
 
-    Handler.prototype.getStationParamData = function(data_logger, fields, limit, offset) {
+    Handler.prototype.setTemplate = function() {
+      var callback, preError, target;
+      preError = this.preError + ".setTemplate(...)";
+      target = "http://dev.nwac.us/api/v5/template";
+      callback = function(data) {
+        return console.log(preError + ".callback(...) (data)");
+      };
+      return this.api.put(target, args, callback);
+    };
+
+    Handler.prototype.getStationParamData = function(plot, data_logger, fields, max_datetime, limit, offset) {
       var args, callback, preError, target;
       preError = this.preError + ".getStationParamData(...)";
       target = "http://dev.nwac.us/api/v5/measurement";
       args = {
         data_logger: data_logger,
+        max_datetime: max_datetime,
         fields: fields,
         limit: limit,
         offset: offset
       };
       callback = function(data) {
-        return console.log(preError + ".callback(...) (data)", data);
+        console.log(preError + ".callback(...) (plot, data)", plot, data);
+        return plot.data = data.responseJSON;
       };
       return this.api.get(target, args, callback);
     };
 
     Handler.prototype.append = function() {
       var i, instance, len, plot, ref, results;
-      ref = this.plots;
+      ref = this.template;
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
@@ -561,6 +601,24 @@
       }
       return results;
     };
+
+    Handler.prototype.getAggregateMethod = function(param, start, end) {
+      var aggregate, arregate, interval;
+      aggregate = 'hourly';
+      interval = new Date(end - new Date(start));
+      switch (param) {
+        case 'temp':
+          return arregate = 'daily';
+        case 'precip':
+          return aggregate = 'daily';
+      }
+    };
+
+    Handler.prototype.forward = function(offset) {};
+
+    Handler.prototype.backward = function(offset) {};
+
+    Handler.prototype.zoom = function(level) {};
 
     Handler.prototype.alert = function(message, type) {};
 

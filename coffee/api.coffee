@@ -16,6 +16,9 @@ window.Plotting.API = class API
     # Attach Authentication
     @getAccessToken = () ->
       accessToken
+      
+    @getAccessTokenValue = () ->
+      "Token #{accessToken}"
     
   build: () ->
     # Build the XHR Class
@@ -69,8 +72,10 @@ window.Plotting.API = class API
     args = @encodeArgs 'GET', args
 
     try
+      # console.log "Getting Header: [Authorization]: ", @getAccessTokenValue()
       @xhr.open 'GET', uri + args, @async
-      @xhr.setRequestHeader "Authorization", @getAccessToken()
+      @xhr.setRequestHeader "Origin", "http://dev.nwac.us"
+      @xhr.setRequestHeader "Authorization", @getAccessTokenValue()
       @xhr.send null
     catch error
       console.log preError + 'catch(error).', error
