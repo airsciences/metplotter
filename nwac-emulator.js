@@ -83,9 +83,9 @@ app.get('/template/:plotTemplateId', function(req, res) {
 });
 
 /** Run Server Listen */
-var server = app.listen(8081, function () {
+var server = app.listen(3000, function () {
     var host = server.address().address;
     var port = server.address().port;
 
-    console.log("NWAC Development Emulator Listening...");
+    console.log("NWAC Development Emulator Listening (http://localhost:"+port+")...");
 });
