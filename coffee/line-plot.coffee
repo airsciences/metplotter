@@ -264,9 +264,6 @@ window.Plotting.LinePlot = class LinePlot
       .style("fill", "none")
 
     _ = @
-<<<<<<< HEAD
-    # Move Crosshairs Based on Mouse Location
-=======
 
     # Create Focus Circle
     @focusCircle = @svg.append("circle")
@@ -275,7 +272,6 @@ window.Plotting.LinePlot = class LinePlot
       .attr("fill", @options.focusCircle.color)
 
     # Move Crosshairs and Focus Circle Based on Mouse Location
->>>>>>> 662c120... Dot follows line (only at data points)
     @svg.append("rect")
       .datum(@data)
       .attr("class", "overlay")
@@ -299,36 +295,20 @@ window.Plotting.LinePlot = class LinePlot
         d1 = d[i + 1]
         d = if x0 - (d0.Date) > (d1.Date) - x0 then d1 else d0
         dy = _.definition.y(d.y)
-<<<<<<< HEAD
-        _.log dy
-=======
         dx = _.definition.x(d.x)
->>>>>>> 662c120... Dot follows line (only at data points)
-
+        
         _.crosshairs.select(".crosshair-x")
           .attr("x1", mouse[0])
           .attr("y1", topPadding)
           .attr("x2", mouse[0])
           .attr("y2", innerHeight + topPadding)
-<<<<<<< HEAD
-          #.attr("transform", "translate(#{leftPadding}, 0)")
-
-        _.crosshairs.select(".crosshair-y")
-          .attr("x1", leftPadding)
-          .attr("y1", _.definition.y(d.y))
-          .attr("x2", innerWidth + leftPadding)
-          .attr("y2", _.definition.y(d.y))
-          #.attr("transform", "translate(0, #{topPadding})")
-=======
           .attr("transform", "translate(#{leftPadding}, 0)")
 
         _.focusCircle
           .attr("cx", dx)
           .attr("cy", dy)
           #.attr("transform", "translate(#{leftPadding}, 0)")
->>>>>>> 662c120... Dot follows line (only at data points)
         )
-
 
   update: (data) ->
     preError = "#{@preError}update()"

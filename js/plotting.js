@@ -461,19 +461,13 @@
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("fill", "none");
       this.crosshairs.append("line").attr("class", "crosshair-y").style("stroke", this.options.crosshairY.color).style("stroke-width", this.options.crosshairY.weight).style("fill", "none");
       _ = this;
-<<<<<<< HEAD
+      this.focusCircle = this.svg.append("circle").attr("r", 5).attr("class", "focusCircle").attr("fill", this.options.focusCircle.color);
       return this.svg.append("rect").datum(this.data).attr("class", "overlay").attr("width", innerWidth).attr("height", innerHeight).style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
         return _.crosshairs.style("display", null);
-=======
-      this.focusCircle = this.svg.append("circle").attr("r", 5).attr("class", "focusCircle").attr("fill", this.options.focusCircle.color);
-      return this.svg.append("rect").datum(this.data).attr("class", "overlay").attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
-        _.crosshairs.style("display", null);
-        return _.focusCircle.style("display", null);
->>>>>>> 662c120... Dot follows line (only at data points)
       }).on("mouseout", function() {
         return _.crosshairs.style("display", "none");
       }).on("mousemove", function(d) {
-        var d0, d1, dy, i, mouse, x0;
+        var d0, d1, dx, dy, i, mouse, x0;
         mouse = d3.mouse(this);
         x0 = _.definition.x.invert(mouse[0]);
         i = _.bisectDate(d, x0, 1);
@@ -481,15 +475,9 @@
         d1 = d[i + 1];
         d = x0 - d0.Date > d1.Date - x0 ? d1 : d0;
         dy = _.definition.y(d.y);
-<<<<<<< HEAD
-        _.log(dy);
-        _.crosshairs.select(".crosshair-x").attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding);
-        return _.crosshairs.select(".crosshair-y").attr("x1", leftPadding).attr("y1", _.definition.y(d.y)).attr("x2", innerWidth + leftPadding).attr("y2", _.definition.y(d.y));
-=======
         dx = _.definition.x(d.x);
         _.crosshairs.select(".crosshair-x").attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding).attr("transform", "translate(" + leftPadding + ", 0)");
         return _.focusCircle.attr("cx", dx).attr("cy", dy);
->>>>>>> 662c120... Dot follows line (only at data points)
       });
     };
 
