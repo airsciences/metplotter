@@ -12,10 +12,6 @@ app.use(express.static('style'));
 
 /** Routing Calls */
 app.get('/', function (req, res) {
-    res.render('basic', {});
-});
-
-app.get('/plotter', function (req, res) {
     var minutes = 60;
     var access = process.env.NWAC_TOKEN;
     var date = new Date();
@@ -33,7 +29,6 @@ app.get('/plotter', function (req, res) {
 });
 
 /** Routing API Calls */
-
 app.get('/template/:plotTemplateId', function(req, res) {
     console.log("API-Template: req.params", req.params);
     var result = {

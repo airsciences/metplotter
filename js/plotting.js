@@ -74,6 +74,7 @@
       args = this.encodeArgs('GET', args);
       try {
         this.xhr.open('GET', uri + args, this.async);
+        console.log("Authorization", this.getAccessTokenValue());
         this.xhr.setRequestHeader("Authorization", this.getAccessTokenValue());
         this.xhr.send(null);
       } catch (error1) {

@@ -74,6 +74,7 @@ window.Plotting.API = class API
     try
       # console.log "Getting Header: [Authorization]: ", @getAccessTokenValue()
       @xhr.open 'GET', uri + args, @async
+      console.log "Authorization", @getAccessTokenValue()
       @xhr.setRequestHeader "Authorization", @getAccessTokenValue()
       @xhr.send null
     catch error
