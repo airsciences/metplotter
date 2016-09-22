@@ -506,7 +506,7 @@
     };
 
     LinePlot.prototype.append = function() {
-      var _, bottomPadding, innerHeight, innerWidth, leftPadding, preError, topPadding;
+      var _, bottomPadding, gX, gY, innerHeight, innerWidth, leftPadding, preError, topPadding;
       preError = this.preError + "append()";
       _ = this;
       this.log("" + preError, this.options);
@@ -519,11 +519,11 @@
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")");
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis).attr("transform", "translate(0, " + bottomPadding + ")");
+      gX = this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis).attr("transform", "translate(0, " + bottomPadding + ")");
       if (this.options.theme !== 'minimum') {
         this.svg.select(".line-plot-axis-x").selectAll("text").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
       }
-      this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + leftPadding + ", 0)");
+      gY = this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + leftPadding + ", 0)");
       this.lineband = this.svg.append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", "rgb(52, 152, 219)").style("opacity", 0.15).style("stroke", "BLACK");
       this.lineband2 = this.svg.append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area").style("fill", "rgb(46, 204, 113)").style("opacity", 0.15).style("stroke", "BLACK");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
@@ -566,6 +566,15 @@
         _.focusCircle2.attr("cx", dx).attr("cy", dy2);
         return _.focusText2.attr("x", dx + leftPadding / 10).attr("y", dy2 - topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
       });
+    };
+
+    LinePlot.prototype.zoomed = function() {
+      var _, preError;
+      preError = this.preError + "append()";
+      _ = this;
+      svg.attr("transform", d3.transform);
+      gX.call(xAxis.scale(d3.transform.rescaleX(x)));
+      return gY.call(yAxis.scale(d3.transform.rescaleY(y)));
     };
 
     LinePlot.prototype.update = function(data) {

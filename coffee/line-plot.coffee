@@ -284,7 +284,7 @@ window.Plotting.LinePlot = class LinePlot
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Append the X-Axis
-    @svg.append("g")
+    gX = @svg.append("g")
       .attr("class", "line-plot-axis-x")
       .style("fill", "none")
       .style("stroke", @options.axisColor)
@@ -299,7 +299,7 @@ window.Plotting.LinePlot = class LinePlot
         .style("font-weight", @options.font.weight)
 
     # Append the Y-Axis
-    @svg.append("g")
+    gY = @svg.append("g")
       .attr("class", "line-plot-axis-y")
       .style("fill", "none")
       .style("stroke", @options.axisColor)
@@ -447,6 +447,13 @@ window.Plotting.LinePlot = class LinePlot
           .text(d.y2.toFixed(1) + " " + "°F")
         )
 
+
+  zoomed: ->
+    preError = "#{@preError}append()"
+    _ = @
+    svg.attr "transform", d3.transform
+    gX.call xAxis.scale(d3.transform.rescaleX(x))
+    gY.call yAxis.scale(d3.transform.rescaleY(y))
 
   update: (data) ->
     preError = "#{@preError}update()"
