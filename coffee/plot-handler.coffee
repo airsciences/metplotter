@@ -10,7 +10,7 @@ window.Plotting.Handler = class Handler
     
     defaults =
       target: null
-      dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+      dateFormat: "%Y-%m-%dT%H:%M:%S%Z"
     @options = Object.mergeDefaults options, defaults
 
     @plots = []
@@ -73,8 +73,12 @@ window.Plotting.Handler = class Handler
   append: () ->
     preError = "#{@preError}.append()"
     # Master append plots.
+    
     for plot in @template
-      plot.options.target = @options.target
+      target = @utarget(@options.target)
+      $(@options.target).append("<div id='#{target}'></div>")
+      plot.options.uuid = @uuid()
+      plot.options.target = "\##{target}"
       plot.options.x =
         variable: 'datetime'
         format: @options.dateFormat
@@ -115,4 +119,12 @@ window.Plotting.Handler = class Handler
 
   alert: (message, type) ->
     # Fire Modal w/ Message
+  
+  
+  uuid: (length) ->
+    return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
+    
+  utarget: (prepend) ->
+    prepend = prepend.replace '#', ''
+    return "#{prepend}-#{@uuid()}"
     

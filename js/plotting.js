@@ -268,6 +268,7 @@
       var defaults, key, ref, row;
       this.preError = "LinePlot.";
       defaults = {
+        uuid: '',
         debug: true,
         target: null,
         theme: 'default',
@@ -298,7 +299,7 @@
           minVariable: null,
           maxVariable: null
         },
-        transitionDuration: 300,
+        transitionDuration: 500,
         line1Color: "rgb(41, 128, 185)",
         line2Color: "rgb(39, 174, 96)",
         weight: 2,
@@ -364,17 +365,6 @@
         }
       }
       this.getDefinition();
-      if (window.attachEvent) {
-        window.attachEvent('onresize', function() {
-          alert('attachEvent - resize');
-        });
-      } else if (window.addEventListener) {
-        window.addEventListener('resize', (function() {
-          console.log('addEventListener - resize');
-        }), true);
-      } else {
-
-      }
     }
 
     LinePlot.prototype.getDefinition = function() {
@@ -396,14 +386,14 @@
         return _.definition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y);
-      }).curve(d3.curveCatmullRom.alpha(0.5));
+      }).curve(d3.curveMonotoneX);
       this.definition.line2 = d3.line().defined(function(d) {
         return !isNaN(d.y2) && d.y2 !== null;
       }).x(function(d) {
         return _.definition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y2);
-      }).curve(d3.curveCatmullRom.alpha(0.5));
+      }).curve(d3.curveMonotoneX);
       this.definition.area = d3.area().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -412,7 +402,7 @@
         return _.definition.y(d.yMin);
       }).y1(function(d) {
         return _.definition.y(d.yMax);
-      }).curve(d3.curveCatmullRom.alpha(0.5));
+      }).curve(d3.curveMonotoneX);
       return this.definition.area2 = d3.area().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -421,14 +411,14 @@
         return _.definition.y(d.y2Min);
       }).y1(function(d) {
         return _.definition.y(d.y2Max);
-      }).curve(d3.curveCatmullRom.alpha(0.5));
+      }).curve(d3.curveMonotoneX);
     };
 
     LinePlot.prototype.calculateChartDims = function() {
       var height, margin, preError, width;
       preError = this.preError + "calculateChartDims()";
       width = Math.round($(this.options.target).width());
-      height = Math.round(width / 2.5);
+      height = Math.round(width / 4);
       if (this.options.theme === 'minimum') {
         margin = {
           top: Math.round(height * 0.28),
@@ -454,24 +444,24 @@
     };
 
     LinePlot.prototype.calculateAxisDims = function(data) {
-      var preError, xmax, xmin, y1max, y1min, y2BandMax, y2BandMin, y2max, y2min, yBandMax, yBandMin, ymax, ymax_a, ymin, ymin_a;
+      var preError, xmax, xmin, y2BandMax, y2BandMin, y2Max, y2Min, yBandMax, yBandMin, yMax, yMin, ymax, ymax_a, ymin, ymin_a;
       preError = this.preError + "calculateAxisDims(data)";
       xmin = this.options.x.min === null ? d3.min(data, function(d) {
         return d.x;
-      }) : this.parseDate(this.options.x.min);
+      }) : this.parseDate(this.options.x.min) - 10000;
       xmax = this.options.x.max === null ? d3.max(data, function(d) {
         return d.x;
       }) : this.parseDate(this.options.x.max);
-      y1min = this.options.y.min === null ? d3.min(data, function(d) {
+      yMin = this.options.y.min === null ? d3.min(data, function(d) {
         return d.y;
       }) : this.options.y.min;
-      y1max = this.options.y.max === null ? d3.max(data, function(d) {
+      yMax = this.options.y.max === null ? d3.max(data, function(d) {
         return d.y;
       }) : this.options.y.max;
-      y2min = this.options.y2.min === null ? d3.min(data, function(d) {
+      y2Min = this.options.y2.min === null ? d3.min(data, function(d) {
         return d.y2;
       }) : this.options.y2.min;
-      y2max = this.options.y2.max === null ? d3.max(data, function(d) {
+      y2Max = this.options.y2.max === null ? d3.max(data, function(d) {
         return d.y2;
       }) : this.options.y2.max;
       yBandMin = d3.min(data, function(d) {
@@ -486,8 +476,8 @@
       y2BandMax = d3.max(data, function(d) {
         return d.y2Max;
       });
-      ymin_a = [y1min, y2min, yBandMin, y2BandMin];
-      ymax_a = [y1max, y2max, yBandMax, y2BandMax];
+      ymin_a = [yMin, y2Min, yBandMin, y2BandMin];
+      ymax_a = [yMax, y2Max, yBandMax, y2BandMax];
       ymin = d3.min(ymin_a);
       ymax = d3.max(ymax_a);
       ymin = ymin === ymax ? ymin * 0.8 : ymin;
@@ -506,7 +496,7 @@
     };
 
     LinePlot.prototype.append = function() {
-      var _, bottomPadding, gX, gY, innerHeight, innerWidth, leftPadding, preError, topPadding;
+      var _, bottomPadding, innerHeight, innerWidth, leftPadding, preError, topPadding;
       preError = this.preError + "append()";
       _ = this;
       this.log("" + preError, this.options);
@@ -519,34 +509,46 @@
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")");
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      gX = this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis).attr("transform", "translate(0, " + bottomPadding + ")");
+      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis).attr("transform", "translate(0, " + bottomPadding + ")");
       if (this.options.theme !== 'minimum') {
         this.svg.select(".line-plot-axis-x").selectAll("text").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
       }
-      gY = this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + leftPadding + ", 0)");
-      this.lineband = this.svg.append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", "rgb(52, 152, 219)").style("opacity", 0.15).style("stroke", "BLACK");
-      this.lineband2 = this.svg.append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area").style("fill", "rgb(46, 204, 113)").style("opacity", 0.15).style("stroke", "BLACK");
+      this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + leftPadding + ", 0)");
+      this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", "rgb(171, 211, 237)").style("opacity", 0.5).style("stroke", "rgb(0, 0, 0)").style("stroke-width", "1");
+      this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", "rgb(172, 236, 199)").style("opacity", 0.5).style("stroke", "rgb(0, 0, 0)");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
-      this.crosshairs = this.svg.append("g").attr("class", "crosshair");
-      this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("fill", "none");
+      this.crosshairs = this.svg.append("g").attr("class", "crosshair-" + this.options.uuid);
+      this.crosshairs.append("line").attr("class", "crosshair-x-" + this.options.uuid).style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("fill", "none");
       _ = this;
-      this.focusCircle = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle").attr("fill", this.options.focusCircle.color);
-      this.focusText = this.svg.append("text").attr("class", "focusText").attr("x", 9).attr("y", 7).style("stroke", this.options.focusCircle.color);
-      this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle2").attr("fill", this.options.focusCircle2.color);
-      this.focusText2 = this.svg.append("text").attr("class", "focusText2").attr("x", 9).attr("y", 7).style("stroke", this.options.focusCircle2.color);
-      return this.svg.append("rect").datum(this.data).attr("class", "overlay").attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
+      if (this.options.y.variable !== null) {
+        this.focusCircle = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle-" + this.options.uuid).attr("fill", this.options.focusCircle.color).attr("transform", "translate(-10, -10)");
+        this.focusText = this.svg.append("text").attr("class", "focusText-" + this.options.uuid).attr("x", 9).attr("y", 7).style("fill", this.options.focusCircle.color);
+      }
+      if (this.options.y2.variable !== null) {
+        this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle2-" + this.options.uuid).attr("fill", this.options.focusCircle2.color).attr("transform", "translate(-10, -10)");
+        this.focusText2 = this.svg.append("text").attr("class", "focusText2-" + this.options.uuid).attr("x", 9).attr("y", 7).style("fill", this.options.focusCircle2.color);
+      }
+      return this.svg.append("rect").datum(this.data).attr("class", "overlay-" + this.options.uuid).attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
         _.crosshairs.style("display", null);
-        _.focusCircle.style("display", null);
-        _.focusCircle2.style("display", null);
-        _.focusText.style("display", null);
-        return _.focusText2.style("display", null);
+        if (_.options.y.variable !== null) {
+          _.focusCircle.style("display", null);
+          _.focusText.style("display", null);
+        }
+        if (_.options.y2.variable !== null) {
+          _.focusCircle2.style("display", null);
+          return _.focusText2.style("display", null);
+        }
       }).on("mouseout", function() {
         _.crosshairs.style("display", "none");
-        _.focusCircle.style("display", "none");
-        _.focusCircle2.style("display", "none");
-        _.focusText.style("display", "none");
-        return _.focusText2.style("display", "none");
+        if (_.options.y.variable !== null) {
+          _.focusCircle.style("display", "none");
+          _.focusText.style("display", "none");
+        }
+        if (_.options.y2.variable !== null) {
+          _.focusCircle2.style("display", "none");
+          return _.focusText2.style("display", "none");
+        }
       }).on("mousemove", function(d) {
         var d0, d1, dx, dy, dy2, i, min, mouse, x0;
         mouse = d3.mouse(this);
@@ -558,23 +560,25 @@
         d = d0;
         d = min >= 30 ? d1 : d0;
         dx = _.definition.x(d.x);
-        dy = _.definition.y(d.y);
-        dy2 = _.definition.y(d.y2);
-        _.crosshairs.select(".crosshair-x").attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding).attr("transform", "translate(" + leftPadding + ", 0)");
-        _.focusCircle.attr("cx", dx).attr("cy", dy);
-        _.focusText.attr("x", dx + leftPadding / 10).attr("y", dy - topPadding / 10).text(d.y.toFixed(1) + " " + "°F");
-        _.focusCircle2.attr("cx", dx).attr("cy", dy2);
-        return _.focusText2.attr("x", dx + leftPadding / 10).attr("y", dy2 - topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
+        if (_.options.y.variable !== null) {
+          dy = _.definition.y(d.y);
+          _.focusCircle.attr("transform", "translate(0, 0)");
+        }
+        if (_.options.y2.variable !== null) {
+          dy2 = _.definition.y(d.y2);
+          _.focusCircle2.attr("transform", "translate(0, 0)");
+        }
+        _.crosshairs.select(".crosshair-x-" + _.options.uuid).attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding).attr("transform", "translate(" + leftPadding + ", 0)");
+        if (_.options.y.variable !== null) {
+          console.log("focusCircle (d, dx, dy)", d, dx, dy);
+          _.focusCircle.attr("cx", dx).attr("cy", dy);
+          _.focusText.attr("x", dx + leftPadding / 10).attr("y", dy - topPadding / 10).text(d.y.toFixed(1) + " " + "°F");
+        }
+        if (_.options.y2.variable !== null) {
+          _.focusCircle2.attr("cx", dx).attr("cy", dy2);
+          return _.focusText2.attr("x", dx + leftPadding / 10).attr("y", dy2 - topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
+        }
       });
-    };
-
-    LinePlot.prototype.zoomed = function() {
-      var _, preError;
-      preError = this.preError + "append()";
-      _ = this;
-      svg.attr("transform", d3.transform);
-      gX.call(xAxis.scale(d3.transform.rescaleX(x)));
-      return gY.call(yAxis.scale(d3.transform.rescaleY(y)));
     };
 
     LinePlot.prototype.update = function(data) {
@@ -591,8 +595,18 @@
         if (this.options.y2.variable !== null) {
           dtaRow.y2 = row[this.options.y2.variable];
         }
+        if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
+          dtaRow.yMin = row[this.options.yBand.minVariable];
+          dtaRow.yMax = row[this.options.yBand.maxVariable];
+        }
+        if (this.options.y2Band.minVariable !== null && this.options.y2Band.maxVariable !== null) {
+          dtaRow.y2Min = row[this.options.y2Band.minVariable];
+          dtaRow.y2Max = row[this.options.y2Band.maxVariable];
+        }
         this.data.push(dtaRow);
       }
+      this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
+      this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
       this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
       this.calculateAxisDims(this.data);
@@ -600,10 +614,12 @@
       this.log(preError + " Date Diff Calcs (dtOffset, @def.x.min, dtDiff)", dtOffset, this.definition.x.max, this.dtDiff);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.svg.select(".line-plot-axis-x").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.xAxis);
-      this.svg.select(".line-plot-axis-y").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
+      this.svg.select(".line-plot-area").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.area);
+      this.svg.select(".line-plot-area2").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.line);
-      return this.svg.select(".line-plot-path2").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.line2);
+      this.svg.select(".line-plot-path2").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.line2);
+      this.svg.select(".line-plot-axis-x").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.xAxis);
+      return this.svg.select(".line-plot-axis-y").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
     };
 
     return LinePlot;
@@ -623,7 +639,7 @@
       this.preError = "Plotting.Handler";
       defaults = {
         target: null,
-        dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+        dateFormat: "%Y-%m-%dT%H:%M:%S%Z"
       };
       this.options = Object.mergeDefaults(options, defaults);
       this.plots = [];
@@ -693,13 +709,16 @@
     };
 
     Handler.prototype.append = function() {
-      var data, i, instance, len, plot, preError, ref, results;
+      var data, i, instance, len, plot, preError, ref, results, target;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        plot.options.target = this.options.target;
+        target = this.utarget(this.options.target);
+        $(this.options.target).append("<div id='" + target + "'></div>");
+        plot.options.uuid = this.uuid();
+        plot.options.target = "\#" + target;
         plot.options.x = {
           variable: 'datetime',
           format: this.options.dateFormat
@@ -739,6 +758,15 @@
     Handler.prototype.zoom = function(level) {};
 
     Handler.prototype.alert = function(message, type) {};
+
+    Handler.prototype.uuid = function(length) {
+      return (((1 + Math.random()) * 0x100000000) | 0).toString(16).substring(1);
+    };
+
+    Handler.prototype.utarget = function(prepend) {
+      prepend = prepend.replace('#', '');
+      return prepend + "-" + (this.uuid());
+    };
 
     return Handler;
 

@@ -10,6 +10,7 @@ window.Plotting.LinePlot = class LinePlot
 
     # Default Configuration
     defaults =
+      uuid: ''
       debug: true
       target: null
       theme: 'default'
@@ -35,7 +36,7 @@ window.Plotting.LinePlot = class LinePlot
       y2Band:
         minVariable: null
         maxVariable: null
-      transitionDuration: 300
+      transitionDuration: 500
       line1Color: "rgb(41, 128, 185)"
       line2Color: "rgb(39, 174, 96)"
       weight: 2
@@ -95,16 +96,19 @@ window.Plotting.LinePlot = class LinePlot
 
     # Responsive Event Listener ######## is this the right spot for this
     ##################### add recalculation when the window changes
-    if window.attachEvent
-      window.attachEvent 'onresize', ->
-        alert 'attachEvent - resize'
-        return
-    else if window.addEventListener
-      window.addEventListener 'resize', (->
-        console.log 'addEventListener - resize'
-        return
-      ), true
-    else
+
+    #### window.addEventListener 'resize', Chart.render
+
+    # if window.attachEvent
+    #   window.attachEvent 'onresize', ->
+    #     alert 'attachEvent - resize'
+    #     return
+    # else if window.addEventListener
+    #   window.addEventListener 'resize', (->
+    #     console.log 'addEventListener - resize'
+    #     return
+    #   ), true
+    # else
 
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
@@ -126,7 +130,7 @@ window.Plotting.LinePlot = class LinePlot
     # Define D3 Methods
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
       .ticks(Math.round($(@options.target).width() / 100))
-
+      
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
       .ticks(@options.y.ticks)
 
@@ -136,7 +140,7 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y))
-      .curve(d3.curveCatmullRom.alpha(0.5))
+      .curve(d3.curveMonotoneX)
 
     @definition.line2 = d3.line()
       .defined((d)->
@@ -144,7 +148,7 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y2))
-      .curve(d3.curveCatmullRom.alpha(0.5))
+      .curve(d3.curveMonotoneX)
 
     @definition.area = d3.area()
       .defined((d)->
@@ -153,7 +157,7 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.yMin))
       .y1((d) -> _.definition.y(d.yMax))
-      .curve(d3.curveCatmullRom.alpha(0.5))
+      .curve(d3.curveMonotoneX)
 
     @definition.area2 = d3.area()
       .defined((d)->
@@ -162,14 +166,14 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.y2Min))
       .y1((d) -> _.definition.y(d.y2Max))
-      .curve(d3.curveCatmullRom.alpha(0.5))
+      .curve(d3.curveMonotoneX)
 
   calculateChartDims: ->
     preError = "#{@preError}calculateChartDims()"
 
     # Calculate Basic DOM & SVG Dimensions
     width = Math.round($(@options.target).width())
-    height = Math.round(width/2.5)
+    height = Math.round(width/4)
 
     if @options.theme is 'minimum'
       margin =
@@ -197,16 +201,16 @@ window.Plotting.LinePlot = class LinePlot
 
     # Calculate X & Y, Min & Max
     xmin = if @options.x.min is null then d3.min(data, (d)-> d.x)
-    else @parseDate(@options.x.min)
+    else @parseDate(@options.x.min)-10000
     xmax = if @options.x.max is null then d3.max(data, (d)-> d.x)
     else @parseDate(@options.x.max)
-    y1min = if @options.y.min is null then d3.min(data, (d)-> d.y)
+    yMin = if @options.y.min is null then d3.min(data, (d)-> d.y)
     else @options.y.min
-    y1max = if @options.y.max is null then d3.max(data, (d)-> d.y)
+    yMax = if @options.y.max is null then d3.max(data, (d)-> d.y)
     else @options.y.max
-    y2min = if @options.y2.min is null then d3.min(data, (d)-> d.y2)
+    y2Min = if @options.y2.min is null then d3.min(data, (d)-> d.y2)
     else @options.y2.min
-    y2max = if @options.y2.max is null then d3.max(data, (d)-> d.y2)
+    y2Max = if @options.y2.max is null then d3.max(data, (d)-> d.y2)
     else @options.y2.max
     yBandMin = d3.min(data, (d)-> d.yMin)
     yBandMax = d3.max(data, (d)-> d.yMax)
@@ -214,24 +218,21 @@ window.Plotting.LinePlot = class LinePlot
     y2BandMax = d3.max(data, (d)-> d.y2Max)
 
     ymin_a = [
-      y1min
-      y2min
+      yMin
+      y2Min
       yBandMin
       y2BandMin
     ]
 
     ymax_a = [
-      y1max
-      y2max
+      yMax
+      y2Max
       yBandMax
       y2BandMax
     ]
 
     ymin = d3.min(ymin_a)
     ymax = d3.max(ymax_a)
-
-    # ymin = if y2min < y1min then y2min else y1min
-    # ymax = if y2max > y1max then y2max else y1max
 
     # Restore Viewability if Y-Min = Y-Max
     ymin = if ymin == ymax then ymin * 0.8 else ymin
@@ -284,7 +285,7 @@ window.Plotting.LinePlot = class LinePlot
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Append the X-Axis
-    gX = @svg.append("g")
+    @svg.append("g")
       .attr("class", "line-plot-axis-x")
       .style("fill", "none")
       .style("stroke", @options.axisColor)
@@ -299,7 +300,7 @@ window.Plotting.LinePlot = class LinePlot
         .style("font-weight", @options.font.weight)
 
     # Append the Y-Axis
-    gY = @svg.append("g")
+    @svg.append("g")
       .attr("class", "line-plot-axis-y")
       .style("fill", "none")
       .style("stroke", @options.axisColor)
@@ -308,23 +309,29 @@ window.Plotting.LinePlot = class LinePlot
       .call(@definition.yAxis)
       .attr("transform", "translate(#{leftPadding}, 0)")
 
-    @lineband = @svg.append("path")
+    # Append Bands
+    @lineband = @svg.append("g")
+      .attr("clip-path", "url(\##{@options.target}_clip)")
+      .append("path")
       .datum(@data)
       .attr("d", @definition.area)
       .attr("class", "line-plot-area")
-      .style("fill", "rgb(52, 152, 219)")
-      .style("opacity", 0.15)
-      .style("stroke", "BLACK")
+      .style("fill", "rgb(171, 211, 237)")
+      .style("opacity", 0.5)
+      .style("stroke", "rgb(0, 0, 0)")
+      .style("stroke-width", "1")
 
-    @lineband2 = @svg.append("path")
+    @lineband2 = @svg.append("g")
+      .attr("clip-path", "url(\##{@options.target}_clip)")
+      .append("path")
       .datum(@data)
       .attr("d", @definition.area2)
-      .attr("class", "line-plot-area")
-      .style("fill", "rgb(46, 204, 113)")
-      .style("opacity", 0.15)
-      .style("stroke", "BLACK")
+      .attr("class", "line-plot-area2")
+      .style("fill", "rgb(172, 236, 199)")
+      .style("opacity", 0.5)
+      .style("stroke", "rgb(0, 0, 0)")
 
-    # Append the Line Path 1
+    # Append the Line Paths
     @svg.append("g")
       .attr("clip-path", "url(\##{@options.target}_clip)")
       .append("path")
@@ -336,7 +343,6 @@ window.Plotting.LinePlot = class LinePlot
           Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
 
-    # Append the Line Path 2
     @svg.append("g")
       .attr("clip-path", "url(\##{@options.target}_clip)")
       .append("path")
@@ -347,14 +353,19 @@ window.Plotting.LinePlot = class LinePlot
       .style("stroke-width",
           Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
+    
+    # @plot.call d3.behavior.zoom()
+    #   .x(@x)
+    #   .y(@y)
+    #   .on("zoom", @redraw())
 
     # Create Crosshairs
     @crosshairs = @svg.append("g")
-      .attr("class", "crosshair")
+      .attr("class", "crosshair-#{@options.uuid}")
 
     # Create Vertical line
     @crosshairs.append("line")
-      .attr("class", "crosshair-x")
+      .attr("class", "crosshair-x-#{@options.uuid}")
       .style("stroke", @options.crosshairX.color)
       .style("stroke-width", @options.crosshairX.weight)
       .style("fill", "none")
@@ -362,32 +373,36 @@ window.Plotting.LinePlot = class LinePlot
     _ = @
 
     # Create Focus Circles and Labels
-    @focusCircle = @svg.append("circle")
-      .attr("r", 4)
-      .attr("class", "focusCircle")
-      .attr("fill", @options.focusCircle.color)
+    if @options.y.variable != null
+      @focusCircle = @svg.append("circle")
+        .attr("r", 4)
+        .attr("class", "focusCircle-#{@options.uuid}")
+        .attr("fill", @options.focusCircle.color)
+        .attr("transform", "translate(-10, -10)")
 
-    @focusText = @svg.append("text")
-      .attr("class", "focusText")
-      .attr("x", 9)
-      .attr("y", 7)
-      .style("stroke", @options.focusCircle.color)
+      @focusText = @svg.append("text")
+        .attr("class", "focusText-#{@options.uuid}")
+        .attr("x", 9)
+        .attr("y", 7)
+        .style("fill", @options.focusCircle.color)
 
-    @focusCircle2 = @svg.append("circle")
-      .attr("r", 4)
-      .attr("class", "focusCircle2")
-      .attr("fill", @options.focusCircle2.color)
+    if @options.y2.variable != null
+      @focusCircle2 = @svg.append("circle")
+        .attr("r", 4)
+        .attr("class", "focusCircle2-#{@options.uuid}")
+        .attr("fill", @options.focusCircle2.color)
+        .attr("transform", "translate(-10, -10)")
 
-    @focusText2 = @svg.append("text")
-      .attr("class", "focusText2")
-      .attr("x", 9)
-      .attr("y", 7)
-      .style("stroke", @options.focusCircle2.color)
+      @focusText2 = @svg.append("text")
+        .attr("class", "focusText2-#{@options.uuid}")
+        .attr("x", 9)
+        .attr("y", 7)
+        .style("fill", @options.focusCircle2.color)
 
     # Move Crosshairs and Focus Circle Based on Mouse Location
     @svg.append("rect")
       .datum(@data)
-      .attr("class", "overlay")
+      .attr("class", "overlay-#{@options.uuid}")
       .attr("width", innerWidth)
       .attr("height", innerHeight)
       .attr("transform", "translate(#{leftPadding}, #{topPadding})")
@@ -395,19 +410,22 @@ window.Plotting.LinePlot = class LinePlot
       .style("pointer-events", "all")
       .on("mouseover", () ->
         _.crosshairs.style("display", null)
-        _.focusCircle.style("display", null)
-        _.focusCircle2.style("display", null)
-        _.focusText.style("display", null)
-        _.focusText2.style("display", null)
+        if _.options.y.variable != null
+          _.focusCircle.style("display", null)
+          _.focusText.style("display", null)
+        if _.options.y2.variable != null
+          _.focusCircle2.style("display", null)
+          _.focusText2.style("display", null)
       )
       .on("mouseout", () ->
         _.crosshairs.style("display", "none")
-        _.focusCircle.style("display", "none")
-        _.focusCircle2.style("display", "none")
-        _.focusText.style("display", "none")
-        _.focusText2.style("display", "none")
+        if _.options.y.variable != null
+          _.focusCircle.style("display", "none")
+          _.focusText.style("display", "none")
+        if _.options.y2.variable != null
+          _.focusCircle2.style("display", "none")
+          _.focusText2.style("display", "none")
       )
-
       .on("mousemove", (d) ->
         mouse = d3.mouse @
         x0 = _.definition.x.invert(mouse[0] + leftPadding)
@@ -418,42 +436,42 @@ window.Plotting.LinePlot = class LinePlot
         d = d0
         d = if min >= 30 then d1 else d0
         dx = _.definition.x(d.x)
-        dy = _.definition.y(d.y)
-        dy2 = _.definition.y(d.y2)
+        if _.options.y.variable != null
+          dy = _.definition.y(d.y)
+          _.focusCircle.attr("transform", "translate(0, 0)")
+        if _.options.y2.variable != null
+          dy2 = _.definition.y(d.y2)
+          _.focusCircle2.attr("transform", "translate(0, 0)")
 
-        _.crosshairs.select(".crosshair-x")
+        _.crosshairs.select(".crosshair-x-#{_.options.uuid}")
           .attr("x1", mouse[0])
           .attr("y1", topPadding)
           .attr("x2", mouse[0])
           .attr("y2", innerHeight + topPadding)
           .attr("transform", "translate(#{leftPadding}, 0)")
 
-        _.focusCircle
-          .attr("cx", dx)
-          .attr("cy", dy)
+        if _.options.y.variable != null
+          console.log "focusCircle (d, dx, dy)", d, dx, dy
+          
+          _.focusCircle
+            .attr("cx", dx)
+            .attr("cy", dy)
 
-        _.focusText
-          .attr("x", dx + leftPadding / 10)
-          .attr("y", dy - topPadding / 10)
-          .text(d.y.toFixed(1) + " " + "°F")
+          _.focusText
+            .attr("x", dx + leftPadding / 10)
+            .attr("y", dy - topPadding / 10)
+            .text(d.y.toFixed(1) + " " + "°F")
 
-        _.focusCircle2
-          .attr("cx", dx)
-          .attr("cy", dy2)
+        if _.options.y2.variable != null
+          _.focusCircle2
+            .attr("cx", dx)
+            .attr("cy", dy2)
 
-        _.focusText2
-          .attr("x", dx + leftPadding / 10)
-          .attr("y", dy2 - topPadding / 10)
-          .text(d.y2.toFixed(1) + " " + "°F")
-        )
-
-
-  zoomed: ->
-    preError = "#{@preError}append()"
-    _ = @
-    svg.attr "transform", d3.transform
-    gX.call xAxis.scale(d3.transform.rescaleX(x))
-    gY.call yAxis.scale(d3.transform.rescaleY(y))
+          _.focusText2
+            .attr("x", dx + leftPadding / 10)
+            .attr("y", dy2 - topPadding / 10)
+            .text(d.y2.toFixed(1) + " " + "°F")
+      )
 
   update: (data) ->
     preError = "#{@preError}update()"
@@ -467,10 +485,29 @@ window.Plotting.LinePlot = class LinePlot
         y: row[@options.y.variable]
       if @options.y2.variable != null
         dtaRow.y2 = row[@options.y2.variable]
-
+      if (
+        @options.yBand.minVariable != null and
+        @options.yBand.maxVariable != null
+      )
+        dtaRow.yMin = row[@options.yBand.minVariable]
+        dtaRow.yMax = row[@options.yBand.maxVariable]
+      if (
+        @options.y2Band.minVariable != null and
+        @options.y2Band.maxVariable != null
+      )
+        dtaRow.y2Min = row[@options.y2Band.minVariable]
+        dtaRow.y2Max = row[@options.y2Band.maxVariable]
       @data.push(dtaRow)
 
     # Pre-Append Data For Smooth transform
+    @svg.select(".line-plot-area")
+      .datum(@data)
+      .attr("d", @definition.area)
+
+    @svg.select(".line-plot-area2")
+      .datum(@data)
+      .attr("d", @definition.area2)
+
     @svg.select(".line-plot-path")
       .datum(@data)
       .attr("d", @definition.line)
@@ -486,6 +523,32 @@ window.Plotting.LinePlot = class LinePlot
 
     @definition.x.domain([@definition.x.min, @definition.x.max])
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
+
+    # Redraw the Bands
+    @svg.select(".line-plot-area")
+      .datum(@data)
+      .transition()
+      .duration(@options.transitionDuration)
+      .attr("d", @definition.area)
+
+    @svg.select(".line-plot-area2")
+      .datum(@data)
+      .transition()
+      .duration(@options.transitionDuration)
+      .attr("d", @definition.area2)
+
+    # Redraw the Line Paths
+    @svg.select(".line-plot-path")
+      .datum(@data)
+      .transition()
+      .duration(@options.transitionDuration)
+      .attr("d", @definition.line)
+
+    @svg.select(".line-plot-path2")
+      .datum(@data)
+      .transition()
+      .duration(@options.transitionDuration)
+      .attr("d", @definition.line2)
 
     # Redraw the X-Axis
     @svg.select(".line-plot-axis-x")
@@ -504,16 +567,3 @@ window.Plotting.LinePlot = class LinePlot
       .duration(@options.transitionDuration)
       .ease(d3.easeLinear)
       .call(@definition.yAxis)
-
-    # Redraw the Line Path
-    @svg.select(".line-plot-path")
-      .datum(@data)
-      .transition()
-      .duration(@options.transitionDuration)
-      .attr("d", @definition.line)
-
-    @svg.select(".line-plot-path2")
-      .datum(@data)
-      .transition()
-      .duration(@options.transitionDuration)
-      .attr("d", @definition.line2)

@@ -47,7 +47,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "dataParams": {
                     "field": "temperature",
                     "data_logger": 34,
-                    "max_datetime": new Date(),
+                    //"max_datetime": new Date(),
                     "limit": 50
                 },
                 "options": {
@@ -64,7 +64,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "dataParams": {
                     "field": "precipitation",
                     "data_logger": 32,
-                    "max_datetime": new Date(),
+                    //"max_datetime": new Date(),
                     "limit": 50
                 },
                 "options": {
