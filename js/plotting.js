@@ -8,7 +8,6 @@
       var preError;
       this.preError = "Plotting.API";
       preError = this.preError + ".constructor()";
-      this.xhr = null;
       this.async = true;
       this.getAccessToken = function() {
         return accessToken;
@@ -19,46 +18,46 @@
     }
 
     API.prototype.build = function() {
-      var error, error1, error2, preError;
+      var error, error1, error2, preError, xhr;
       preError = this.preError + ".build()";
-      this.xhr = null;
+      xhr = null;
       if (XMLHttpRequest) {
-        return this.xhr = new XMLHttpRequest;
+        xhr = new XMLHttpRequest;
       } else {
         try {
-          return this.xhr = new ActiveXObject("Msxml2.XMLHTTP");
+          xhr = new ActiveXObject("Msxml2.XMLHTTP");
         } catch (error1) {
           error = error1;
           try {
-            return this.xhr = new ActiveXObject("Microsoft.XMLHTTP");
+            xhr = new ActiveXObject("Microsoft.XMLHTTP");
           } catch (error2) {
             error = error2;
-            return console.error(preError, 'Cannot specify XMLHTTPRequest (error)', error);
+            console.error(preError, 'Cannot specify XMLHTTPRequest (error)', error);
           }
         }
       }
+      return xhr;
     };
 
-    API.prototype.get = function(uri, params, callback) {
-      var _, args, error, error1, preError;
+    API.prototype.get = function(uri, args, callback) {
+      var error, error1, preError, xhr;
       preError = this.preError + ".get(uri, params, callback)";
-      this.build();
-      _ = this;
+      xhr = this.build();
       if (typeof callback !== 'undefined') {
-        this.xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function() {
           var error, error1, result;
-          if (_.xhr.readyState !== 4) {
+          if (xhr.readyState !== 4) {
             return;
           }
-          if (_.xhr.status !== 200 && _.xhr.status !== 304) {
-            console.log(preError + " HTTP error, (status): " + _.xhr.status);
-            _.xhr = null;
+          if (xhr.status !== 200 && xhr.status !== 304) {
+            console.log(preError + " HTTP error, (status): " + xhr.status);
+            xhr = null;
             return;
           }
           console.log(preError + " (callback)", callback);
           result = {
-            response: _.xhr.response,
-            responseText: _.xhr.responseText,
+            response: xhr.response,
+            responseText: xhr.responseText,
             responseJSON: null
           };
           try {
@@ -67,16 +66,15 @@
             error = error1;
             result.responseJSON = null;
           }
-          _.xhr = null;
           return callback(result);
         };
       }
       args = this.encodeArgs('GET', args);
+      console.log(preError + " (args)", args);
       try {
-        this.xhr.open('GET', uri + args, this.async);
-        console.log("Authorization", this.getAccessTokenValue());
-        this.xhr.setRequestHeader("Authorization", this.getAccessTokenValue());
-        this.xhr.send(null);
+        xhr.open('GET', uri + args, this.async);
+        xhr.setRequestHeader("Authorization", this.getAccessTokenValue());
+        xhr.send(null);
       } catch (error1) {
         error = error1;
         console.log(preError + 'catch(error).', error);
@@ -84,25 +82,24 @@
     };
 
     API.prototype.put = function() {
-      var _, args, error, error1, preError;
+      var args, error, error1, preError, xhr;
       preError = this.preError + ".put(uri, params, callback)";
-      this.build();
-      _ = this;
+      xhr = this.build();
       if (typeof callback !== 'undefined') {
-        this.xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function() {
           var error, error1, result;
-          if (_.xhr.readyState !== 4) {
+          if (xhr.readyState !== 4) {
             return;
           }
-          if (_.xhr.status !== 200 && _.xhr.status !== 304) {
-            console.log(preError + " HTTP error, (status): " + _.xhr.status);
-            _.xhr = null;
+          if (xhr.status !== 200 && xhr.status !== 304) {
+            console.log(preError + " HTTP error, (status): " + xhr.status);
+            xhr = null;
             return;
           }
           console.log(preError + " (callback)", callback);
           result = {
-            response: _.xhr.response,
-            responseText: _.xhr.responseText,
+            response: xhr.response,
+            responseText: xhr.responseText,
             responseJSON: null
           };
           try {
@@ -111,16 +108,15 @@
             error = error1;
             result.responseJSON = null;
           }
-          _.xhr = null;
           return callback(result);
         };
       }
       args = this.encodeArgs('PUT', args);
       try {
-        this.xhr.open('PUT', uri, this.async);
-        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
-        this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        this.xhr.send(args);
+        xhr.open('PUT', uri, this.async);
+        xhr.setRequestHeader("Authorization", this.getAccessToken());
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.send(args);
       } catch (error1) {
         error = error1;
         console.log(preError + 'catch(error).', error);
@@ -128,25 +124,23 @@
     };
 
     API.prototype.post = function() {
-      var _, args, error, error1, preError;
+      var args, error, error1, preError, xhr;
       preError = this.preError + ".post(uri, params, callback)";
-      this.build();
-      _ = this;
+      xhr = build();
       if (typeof callback !== 'undefined') {
-        this.xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function() {
           var error, error1, result;
-          if (_.xhr.readyState !== 4) {
+          if (xhr.readyState !== 4) {
             return;
           }
-          if (_.xhr.status !== 200 && _.xhr.status !== 304) {
-            console.log(preError + " HTTP error, (status): " + _.xhr.status);
-            _.xhr = null;
+          if (xhr.status !== 200 && xhr.status !== 304) {
+            console.log(preError + " HTTP error, (status): " + xhr.status);
+            xhr = null;
             return;
           }
-          console.log(preError + " (callback)", callback);
           result = {
-            response: _.xhr.response,
-            responseText: _.xhr.responseText,
+            response: xhr.response,
+            responseText: xhr.responseText,
             responseJSON: null
           };
           try {
@@ -155,16 +149,15 @@
             error = error1;
             result.responseJSON = null;
           }
-          _.xhr = null;
           return callback(result);
         };
       }
       args = this.encodeArgs('POST', args);
       try {
-        this.xhr.open('POST', uri, this.async);
-        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
-        this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        this.xhr.send(args);
+        xhr.open('POST', uri, this.async);
+        xhr.setRequestHeader("Authorization", this.getAccessToken());
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.send(args);
       } catch (error1) {
         error = error1;
         console.log(preError + 'catch(error).', error);
@@ -172,25 +165,23 @@
     };
 
     API.prototype["delete"] = function() {
-      var _, args, error, error1, preError;
+      var args, error, error1, preError, xhr;
       preError = this.preError + ".delete(uri, params, callback)";
-      this.build();
-      _ = this;
+      xhr = this.build();
       if (typeof callback !== 'undefined') {
-        this.xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function() {
           var error, error1, result;
-          if (_.xhr.readyState !== 4) {
+          if (xhr.readyState !== 4) {
             return;
           }
-          if (_.xhr.status !== 200 && _.xhr.status !== 304) {
-            console.log(preError + " HTTP error, (status): " + _.xhr.status);
-            _.xhr = null;
+          if (xhr.status !== 200 && xhr.status !== 304) {
+            console.log(preError + " HTTP error, (status): " + xhr.status);
+            xhr = null;
             return;
           }
-          console.log(preError + " (callback)", callback);
           result = {
-            response: _.xhr.response,
-            responseText: _.xhr.responseText,
+            response: xhr.response,
+            responseText: xhr.responseText,
             responseJSON: null
           };
           try {
@@ -199,16 +190,15 @@
             error = error1;
             result.responseJSON = null;
           }
-          _.xhr = null;
           return callback(result);
         };
       }
       args = this.encodeArgs('DELETE', args);
       try {
-        this.xhr.open('DELETE', uri, this.async);
-        this.xhr.setRequestHeader("Authorization", this.getAccessToken());
-        this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        this.xhr.send(args);
+        xhr.open('DELETE', uri, this.async);
+        xhr.setRequestHeader("Authorization", this.getAccessToken());
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.send(args);
       } catch (error1) {
         error = error1;
         console.log(preError + 'catch(error).', error);
@@ -232,11 +222,11 @@
       } else if (type === 'GET') {
         for (argument in json_args) {
           if (aCount === 0) {
-            argStr = "?" + argument + "=" + args[argument];
+            argStr = "?" + argument + "=" + json_args[argument];
           } else {
-            argStr = argStr + "&" + argument + "=" + args[argument];
-            aCount++;
+            argStr = argStr + "&" + argument + "=" + json_args[argument];
           }
+          aCount++;
         }
       }
       return argStr;
@@ -624,9 +614,10 @@
       this.preError = "Plotting.Handler";
       defaults = {
         target: null,
-        dateFormat: "%Y-%m-%d %H:%M:%S"
+        dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       };
       this.options = Object.mergeDefaults(options, defaults);
+      this.plots = [];
       this.endpoint = null;
       accessToken = {
         token: null,
@@ -657,65 +648,68 @@
       args = null;
       _ = this;
       callback = function(data) {
-        var i, len, params, plot, ref, results;
         if (data.responseJSON === null || data.responseJSON.error) {
           console.log(preError + ".callback(...) error detected (data)", data);
           return;
         }
-        _.template = data.responseJSON.templateData;
-        ref = _.template;
-        results = [];
-        for (i = 0, len = ref.length; i < len; i++) {
-          plot = ref[i];
-          params = plot.dataParams;
-          console.log(preError + ".callback(...) (plot, params)", plot, params);
-          results.push(_.getStationParamData(plot, params.data_logger, params.fields, params.max_datetime, params.limit, null));
-        }
-        return results;
+        return _.template = data.responseJSON.templateData;
       };
       return this.api.get(target, args, callback);
     };
 
-    Handler.prototype.setTemplate = function() {
-      var callback, preError, target;
-      preError = this.preError + ".setTemplate(...)";
-      target = "http://dev.nwac.us/api/v5/template";
-      callback = function(data) {
-        return console.log(preError + ".callback(...) (data)");
-      };
-      return this.api.put(target, args, callback);
-    };
-
-    Handler.prototype.getStationParamData = function(plot, data_logger, fields, max_datetime, limit, offset) {
-      var args, callback, preError, target;
+    Handler.prototype.getStationParamData = function(plotId) {
+      var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData(...)";
       target = "http://dev.nwac.us/api/v5/measurement";
-      args = {
-        data_logger: data_logger,
-        max_datetime: max_datetime,
-        fields: fields,
-        limit: limit,
-        offset: offset
-      };
+      _ = this;
+      args = this.template[plotId].dataParams;
+      console.log(preError + " (args)", args);
       callback = function(data) {
-        console.log(preError + ".callback(...) (plot, data)", plot, data);
-        return plot.data = data.responseJSON;
+        console.log(preError + "->callback() Returning API (plotId)", plotId);
+        return _.template[plotId].data = data.responseJSON;
       };
       return this.api.get(target, args, callback);
+    };
+
+    Handler.prototype.getPlotData = function() {
+      var key, plot, preError, ref, results;
+      preError = this.preError + ".getPlotData()";
+      ref = this.template;
+      results = [];
+      for (key in ref) {
+        plot = ref[key];
+        results.push(this.getStationParamData(key));
+      }
+      return results;
     };
 
     Handler.prototype.append = function() {
-      var i, instance, len, plot, ref, results;
+      var data, i, instance, len, plot, preError, ref, results;
+      preError = this.preError + ".append()";
       ref = this.template;
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        instance = new window.Plotting.LinePlot(plot.data, plot.options);
+        plot.options.target = this.options.target;
+        plot.options.x = {
+          variable: 'datetime',
+          format: this.options.dateFormat
+        };
+        plot.options.y = {
+          variable: 'wind_speed_average'
+        };
+        data = {
+          data: plot.data.results
+        };
+        console.log(preError + " (plot)", plot);
+        instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
         results.push(this.plots.push(instance));
       }
       return results;
     };
+
+    Handler.prototype.mergeTemplateOption = function() {};
 
     Handler.prototype.getAggregateMethod = function(param, start, end) {
       var aggregate, arregate, interval;

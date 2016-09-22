@@ -48,7 +48,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "field": "temperature",
                     "data_logger": 34,
                     "max_datetime": new Date(),
-                    "limit": 10
+                    "limit": 50
                 },
                 "options": {
                     "color": "rgb(41,128,185)"
@@ -63,9 +63,9 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "field": "precipitation",
-                    "data_logger": 34,
+                    "data_logger": 32,
                     "max_datetime": new Date(),
-                    "limit": 10
+                    "limit": 50
                 },
                 "options": {
                     "color": "rgb(39,174,96)"

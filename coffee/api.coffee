@@ -9,8 +9,7 @@ window.Plotting.API = class API
     @preError = "Plotting.API"
     preError = "#{@preError}.constructor()"
     
-    # Pre-Define Master Variables
-    @xhr = null
+    # Configurations
     @async = true
 
     # Attach Authentication
@@ -24,59 +23,57 @@ window.Plotting.API = class API
     # Build the XHR Class
     preError = "#{@preError}.build()"
 
-    @xhr = null
+    xhr = null
     if XMLHttpRequest
-      @xhr = new XMLHttpRequest
+      xhr = new XMLHttpRequest
     else
       try
-        @xhr = new ActiveXObject "Msxml2.XMLHTTP"
+        xhr = new ActiveXObject "Msxml2.XMLHTTP"
       catch error
         try
-          @xhr = new ActiveXObject "Microsoft.XMLHTTP"
+          xhr = new ActiveXObject "Microsoft.XMLHTTP"
         catch error
           console.error preError, 'Cannot specify XMLHTTPRequest (error)', error
+    return xhr
 
-  get: (uri, params, callback) ->
+  get: (uri, args, callback) ->
     # Standard GET Method
     preError = "#{@preError}.get(uri, params, callback)"
     
     # Initialize the Object
-    @build()
-    _ = @
+    xhr = @build()
     
     if typeof callback != 'undefined'
-      @xhr.onreadystatechange = () ->
+      xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
-        if (_.xhr.readyState != 4) then return
-        if (_.xhr.status != 200 && _.xhr.status != 304)
-          console.log "#{preError} HTTP error, (status): #{_.xhr.status}"
-          _.xhr = null
+        if (xhr.readyState != 4) then return
+        if (xhr.status != 200 && xhr.status != 304)
+          console.log "#{preError} HTTP error, (status): #{xhr.status}"
+          xhr = null
           return
         
         console.log "#{preError} (callback)", callback
         # Set the Result
         result =
-          response: _.xhr.response
-          responseText: _.xhr.responseText
+          response: xhr.response
+          responseText: xhr.responseText
           responseJSON: null
         try
           result.responseJSON = JSON.parse result.responseText
         catch error
           result.responseJSON = null
         
-        # Close the Object & Run the Callback
-        _.xhr = null
+        # Run the Callback
         callback result
 
     # Create a 'GET' formatted argument string
     args = @encodeArgs 'GET', args
+    console.log "#{preError} (args)", args
 
     try
-      # console.log "Getting Header: [Authorization]: ", @getAccessTokenValue()
-      @xhr.open 'GET', uri + args, @async
-      console.log "Authorization", @getAccessTokenValue()
-      @xhr.setRequestHeader "Authorization", @getAccessTokenValue()
-      @xhr.send null
+      xhr.open 'GET', uri + args, @async
+      xhr.setRequestHeader "Authorization", @getAccessTokenValue()
+      xhr.send null
     catch error
       console.log preError + 'catch(error).', error
 
@@ -87,41 +84,39 @@ window.Plotting.API = class API
     preError = "#{@preError}.put(uri, params, callback)"
         
     # Initialize the Object
-    @build()
-    _ = @
+    xhr = @build()
         
     if typeof callback != 'undefined'
-      @xhr.onreadystatechange = () ->
+      xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
-        if (_.xhr.readyState != 4) then return
-        if (_.xhr.status != 200 && _.xhr.status != 304)
-          console.log "#{preError} HTTP error, (status): #{_.xhr.status}"
-          _.xhr = null
+        if (xhr.readyState != 4) then return
+        if (xhr.status != 200 && xhr.status != 304)
+          console.log "#{preError} HTTP error, (status): #{xhr.status}"
+          xhr = null
           return
         
         console.log "#{preError} (callback)", callback
         # Set the Result
         result =
-          response: _.xhr.response
-          responseText: _.xhr.responseText
+          response: xhr.response
+          responseText: xhr.responseText
           responseJSON: null
         try
           result.responseJSON = JSON.parse result.responseText
         catch error
           result.responseJSON = null
         
-        # Close the Object & Run the Callback
-        _.xhr = null
+        # Run the Callback
         callback result
 
     # Create a 'GET' formatted argument string
     args = @encodeArgs 'PUT', args
 
     try
-      @xhr.open 'PUT', uri, @async
-      @xhr.setRequestHeader "Authorization", @getAccessToken()
-      @xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
-      @xhr.send args
+      xhr.open 'PUT', uri, @async
+      xhr.setRequestHeader "Authorization", @getAccessToken()
+      xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
+      xhr.send args
     catch error
       console.log preError + 'catch(error).', error
 
@@ -132,41 +127,38 @@ window.Plotting.API = class API
     preError = "#{@preError}.post(uri, params, callback)"
         
     # Initialize the Object
-    @build()
-    _ = @
+    xhr = build()
         
     if typeof callback != 'undefined'
-      @xhr.onreadystatechange = () ->
+      xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
-        if (_.xhr.readyState != 4) then return
-        if (_.xhr.status != 200 && _.xhr.status != 304)
-          console.log "#{preError} HTTP error, (status): #{_.xhr.status}"
-          _.xhr = null
+        if (xhr.readyState != 4) then return
+        if (xhr.status != 200 && xhr.status != 304)
+          console.log "#{preError} HTTP error, (status): #{xhr.status}"
+          xhr = null
           return
         
-        console.log "#{preError} (callback)", callback
         # Set the Result
         result =
-          response: _.xhr.response
-          responseText: _.xhr.responseText
+          response: xhr.response
+          responseText: xhr.responseText
           responseJSON: null
         try
           result.responseJSON = JSON.parse result.responseText
         catch error
           result.responseJSON = null
         
-        # Close the Object & Run the Callback
-        _.xhr = null
+        # Run the Callback
         callback result
 
     # Create a 'GET' formatted argument string
     args = @encodeArgs 'POST', args
 
     try
-      @xhr.open 'POST', uri, @async
-      @xhr.setRequestHeader "Authorization", @getAccessToken()
-      @xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
-      @xhr.send args
+      xhr.open 'POST', uri, @async
+      xhr.setRequestHeader "Authorization", @getAccessToken()
+      xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
+      xhr.send args
     catch error
       console.log preError + 'catch(error).', error
 
@@ -177,23 +169,21 @@ window.Plotting.API = class API
     preError = "#{@preError}.delete(uri, params, callback)"
         
     # Initialize the Object
-    @build()
-    _ = @
+    xhr = @build()
         
     if typeof callback != 'undefined'
-      @xhr.onreadystatechange = () ->
+      xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
-        if (_.xhr.readyState != 4) then return
-        if (_.xhr.status != 200 && _.xhr.status != 304)
-          console.log "#{preError} HTTP error, (status): #{_.xhr.status}"
-          _.xhr = null
+        if (xhr.readyState != 4) then return
+        if (xhr.status != 200 && xhr.status != 304)
+          console.log "#{preError} HTTP error, (status): #{xhr.status}"
+          xhr = null
           return
         
-        console.log "#{preError} (callback)", callback
         # Set the Result
         result =
-          response: _.xhr.response
-          responseText: _.xhr.responseText
+          response: xhr.response
+          responseText: xhr.responseText
           responseJSON: null
         try
           result.responseJSON = JSON.parse result.responseText
@@ -201,17 +191,16 @@ window.Plotting.API = class API
           result.responseJSON = null
         
         # Close the Object & Run the Callback
-        _.xhr = null
         callback result
 
     # Create a 'GET' formatted argument string
     args = @encodeArgs 'DELETE', args
 
     try
-      @xhr.open 'DELETE', uri, @async
-      @xhr.setRequestHeader "Authorization", @getAccessToken()
-      @xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
-      @xhr.send args
+      xhr.open 'DELETE', uri, @async
+      xhr.setRequestHeader "Authorization", @getAccessToken()
+      xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
+      xhr.send args
     catch error
       console.log preError + 'catch(error).', error
 
@@ -235,9 +224,9 @@ window.Plotting.API = class API
     else if type == 'GET'
       for argument of json_args
         if aCount == 0
-          argStr = "?" + argument + "=" + args[argument]
+          argStr = "?" + argument + "=" + json_args[argument]
         else
-          argStr = argStr + "&" + argument + "=" + args[argument]
-          aCount++
+          argStr = argStr + "&" + argument + "=" + json_args[argument]
+        aCount++
 
     return argStr

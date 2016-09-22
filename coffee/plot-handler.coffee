@@ -10,8 +10,10 @@ window.Plotting.Handler = class Handler
     
     defaults =
       target: null
-      dateFormat: "%Y-%m-%d %H:%M:%S"
+      dateFormat: "%Y-%m-%dT%H:%M:%SZ"
     @options = Object.mergeDefaults options, defaults
+
+    @plots = []
 
     @endpoint = null
     accessToken =
@@ -37,8 +39,6 @@ window.Plotting.Handler = class Handler
     preError = "#{@preError}.getTemplate(...)"
     target = "template/1"
     args = null
-    # args =
-    #   plotHandlerId: @options.plotHandlerId
     _ = @
     
     callback = (data) ->
@@ -46,56 +46,50 @@ window.Plotting.Handler = class Handler
         console.log "#{preError}.callback(...) error detected (data)", data
         return
       _.template = data.responseJSON.templateData
-      for plot in _.template
-        params = plot.dataParams
-        console.log "#{preError}.callback(...) (plot, params)", plot, params
-        _.getStationParamData plot, params.data_logger, params.fields,
-          params.max_datetime, params.limit, null
-      
       
     @api.get target, args, callback
-    
-  setTemplate: () ->
-    # Save the Template
-    preError = "#{@preError}.setTemplate(...)"
-    target = "http://dev.nwac.us/api/v5/template"
-    
-    callback = (data) ->
-      console.log "#{preError}.callback(...) (data)"
-    
-    @api.put target, args, callback
-    
-  getStationParamData: \
-  ( plot
-  , data_logger
-  , fields
-  , max_datetime
-  , limit
-  , offset
-  ) ->
+
+  getStationParamData: (plotId) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData(...)"
     target = "http://dev.nwac.us/api/v5/measurement"
-    args =
-      data_logger: data_logger
-      max_datetime: max_datetime
-      fields: fields
-      limit: limit
-      offset: offset
-    
+    _ = @
+    args = @template[plotId].dataParams
+
+    console.log "#{preError} (args)", args
+
     callback = (data) ->
-      console.log "#{preError}.callback(...) (plot, data)", plot, data
-      plot.data = data.responseJSON
+      console.log "#{preError}->callback() Returning API (plotId)", plotId
+      _.template[plotId].data = data.responseJSON
     
     @api.get target, args, callback
     
+  getPlotData: () ->
+    # GET all plot data.
+    preError = "#{@preError}.getPlotData()"
+    for key, plot of @template
+      @getStationParamData(key)
+  
   append: () ->
+    preError = "#{@preError}.append()"
     # Master append plots.
     for plot in @template
-      instance = new window.Plotting.LinePlot plot.data, plot.options
+      plot.options.target = @options.target
+      plot.options.x =
+        variable: 'datetime'
+        format: @options.dateFormat
+      plot.options.y =
+        variable: 'wind_speed_average'
+      data =
+        data: plot.data.results
+      console.log "#{preError} (plot)", plot
+      instance = new window.Plotting.LinePlot data, plot.options
       instance.append()
       @plots.push instance
 
+  mergeTemplateOption: () ->
+    # Merge the templated plot options with returned options
+      
   getAggregateMethod: (param, start, end) ->
     # Returns the appropriate aggregate method for a give parameter and zoom.
     aggregate = 'hourly'
@@ -117,8 +111,7 @@ window.Plotting.Handler = class Handler
       
   zoom: (level) ->
     # Change the zoom level
-
-
+    
 
   alert: (message, type) ->
     # Fire Modal w/ Message
