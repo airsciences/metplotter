@@ -69,6 +69,10 @@ window.Plotting.LinePlot = class LinePlot
     @parseDate = d3.timeParse(@options.x.format)
     @bisectDate = d3.bisector((d) -> d.x).left
 
+    # Sort Data by Datetime (Ascending)
+    sortDatetimeAsc = (a, b) ->
+      a.x - b.x
+
     # Set @data
     @data = []
     for key, row of data.data
@@ -90,6 +94,8 @@ window.Plotting.LinePlot = class LinePlot
         @data[key].y2Min = row[@options.y2Band.minVariable]
         @data[key].y2Max = row[@options.y2Band.maxVariable]
 
+    # Sort the Data
+    @data = @data.sort sortDatetimeAsc
 
     # Run Get Definition on Class Construction
     @getDefinition()
@@ -291,14 +297,14 @@ window.Plotting.LinePlot = class LinePlot
       .style("stroke", @options.axisColor)
       .call(@definition.xAxis)
       .attr("transform", "translate(0, #{bottomPadding})")
-
+            
     # Add Text Labels to X-Axis (Only if Large Scale Theme)
     if @options.theme isnt 'minimum'
       @svg.select(".line-plot-axis-x")
         .selectAll("text")
         .style("font-size", @options.font.size)
         .style("font-weight", @options.font.weight)
-
+      
     # Append the Y-Axis
     @svg.append("g")
       .attr("class", "line-plot-axis-y")
@@ -310,26 +316,34 @@ window.Plotting.LinePlot = class LinePlot
       .attr("transform", "translate(#{leftPadding}, 0)")
 
     # Append Bands
-    @lineband = @svg.append("g")
-      .attr("clip-path", "url(\##{@options.target}_clip)")
-      .append("path")
-      .datum(@data)
-      .attr("d", @definition.area)
-      .attr("class", "line-plot-area")
-      .style("fill", "rgb(171, 211, 237)")
-      .style("opacity", 0.5)
-      .style("stroke", "rgb(0, 0, 0)")
-      .style("stroke-width", "1")
+    if (
+      @options.yBand.minVariable != null and
+      @options.yBand.maxVariable != null
+    )
+      @lineband = @svg.append("g")
+        .attr("clip-path", "url(\##{@options.target}_clip)")
+        .append("path")
+        .datum(@data)
+        .attr("d", @definition.area)
+        .attr("class", "line-plot-area")
+        .style("fill", "rgb(171, 211, 237)")
+        .style("opacity", 0.5)
+        .style("stroke", "rgb(0, 0, 0)")
+        .style("stroke-width", "1")
 
-    @lineband2 = @svg.append("g")
-      .attr("clip-path", "url(\##{@options.target}_clip)")
-      .append("path")
-      .datum(@data)
-      .attr("d", @definition.area2)
-      .attr("class", "line-plot-area2")
-      .style("fill", "rgb(172, 236, 199)")
-      .style("opacity", 0.5)
-      .style("stroke", "rgb(0, 0, 0)")
+    if (
+      @options.y2Band.minVariable != null and
+      @options.y2Band.maxVariable != null
+    )
+      @lineband2 = @svg.append("g")
+        .attr("clip-path", "url(\##{@options.target}_clip)")
+        .append("path")
+        .datum(@data)
+        .attr("d", @definition.area2)
+        .attr("class", "line-plot-area2")
+        .style("fill", "rgb(172, 236, 199)")
+        .style("opacity", 0.5)
+        .style("stroke", "rgb(0, 0, 0)")
 
     # Append the Line Paths
     @svg.append("g")
@@ -351,7 +365,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("class", "line-plot-path2")
       .style("stroke", @options.line2Color)
       .style("stroke-width",
-          Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
     
     # @plot.call d3.behavior.zoom()
@@ -435,13 +449,13 @@ window.Plotting.LinePlot = class LinePlot
         d1 = d[i]
         d = d0
         d = if min >= 30 then d1 else d0
-        dx = _.definition.x(d.x)
+        dx = _.definition.x d.x
         if _.options.y.variable != null
-          dy = _.definition.y(d.y)
-          _.focusCircle.attr("transform", "translate(0, 0)")
+          dy = _.definition.y d.y
+          _.focusCircle.attr "transform", "translate(0, 0)"
         if _.options.y2.variable != null
-          dy2 = _.definition.y(d.y2)
-          _.focusCircle2.attr("transform", "translate(0, 0)")
+          dy2 = _.definition.y d.y2
+          _.focusCircle2.attr "transform", "translate(0, 0)"
 
         _.crosshairs.select(".crosshair-x-#{_.options.uuid}")
           .attr("x1", mouse[0])
@@ -451,8 +465,6 @@ window.Plotting.LinePlot = class LinePlot
           .attr("transform", "translate(#{leftPadding}, 0)")
 
         if _.options.y.variable != null
-          console.log "focusCircle (d, dx, dy)", d, dx, dy
-          
           _.focusCircle
             .attr("cx", dx)
             .attr("cy", dy)
@@ -472,6 +484,8 @@ window.Plotting.LinePlot = class LinePlot
             .attr("y", dy2 - topPadding / 10)
             .text(d.y2.toFixed(1) + " " + "°F")
       )
+      .on("mousedown.drag",  _.xScroll)
+      .on("touchstart.drag", _.xScroll)
 
   update: (data) ->
     preError = "#{@preError}update()"
@@ -498,6 +512,9 @@ window.Plotting.LinePlot = class LinePlot
         dtaRow.y2Min = row[@options.y2Band.minVariable]
         dtaRow.y2Max = row[@options.y2Band.maxVariable]
       @data.push(dtaRow)
+
+    # Sort the Data
+    @data = @data.sort sortDatetimeAsc
 
     # Pre-Append Data For Smooth transform
     @svg.select(".line-plot-area")
@@ -567,3 +584,15 @@ window.Plotting.LinePlot = class LinePlot
       .duration(@options.transitionDuration)
       .ease(d3.easeLinear)
       .call(@definition.yAxis)
+
+  @zoom: () ->
+    # Zoom Function
+
+  @xScroll: (d) ->
+    # Scroll the X-Axis
+    _ = @
+    return (d) ->
+      document.onselectstart = () -> return false
+      p = d3.mouse _.vis[0][0]
+      console.log "xScroll", p
+      _.downy = _.x.invert p[0]

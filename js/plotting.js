@@ -265,7 +265,7 @@
 
   window.Plotting.LinePlot = LinePlot = (function() {
     function LinePlot(data, options) {
-      var defaults, key, ref, row;
+      var defaults, key, ref, row, sortDatetimeAsc;
       this.preError = "LinePlot.";
       defaults = {
         uuid: '',
@@ -344,6 +344,9 @@
       this.bisectDate = d3.bisector(function(d) {
         return d.x;
       }).left;
+      sortDatetimeAsc = function(a, b) {
+        return a.x - b.x;
+      };
       this.data = [];
       ref = data.data;
       for (key in ref) {
@@ -364,6 +367,7 @@
           this.data[key].y2Max = row[this.options.y2Band.maxVariable];
         }
       }
+      this.data = this.data.sort(sortDatetimeAsc);
       this.getDefinition();
     }
 
@@ -514,8 +518,12 @@
         this.svg.select(".line-plot-axis-x").selectAll("text").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
       }
       this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + leftPadding + ", 0)");
-      this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", "rgb(171, 211, 237)").style("opacity", 0.5).style("stroke", "rgb(0, 0, 0)").style("stroke-width", "1");
-      this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", "rgb(172, 236, 199)").style("opacity", 0.5).style("stroke", "rgb(0, 0, 0)");
+      if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
+        this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", "rgb(171, 211, 237)").style("opacity", 0.5).style("stroke", "rgb(0, 0, 0)").style("stroke-width", "1");
+      }
+      if (this.options.y2Band.minVariable !== null && this.options.y2Band.maxVariable !== null) {
+        this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", "rgb(172, 236, 199)").style("opacity", 0.5).style("stroke", "rgb(0, 0, 0)");
+      }
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.crosshairs = this.svg.append("g").attr("class", "crosshair-" + this.options.uuid);
@@ -570,7 +578,6 @@
         }
         _.crosshairs.select(".crosshair-x-" + _.options.uuid).attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding).attr("transform", "translate(" + leftPadding + ", 0)");
         if (_.options.y.variable !== null) {
-          console.log("focusCircle (d, dx, dy)", d, dx, dy);
           _.focusCircle.attr("cx", dx).attr("cy", dy);
           _.focusText.attr("x", dx + leftPadding / 10).attr("y", dy - topPadding / 10).text(d.y.toFixed(1) + " " + "°F");
         }
@@ -578,7 +585,7 @@
           _.focusCircle2.attr("cx", dx).attr("cy", dy2);
           return _.focusText2.attr("x", dx + leftPadding / 10).attr("y", dy2 - topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
         }
-      });
+      }).on("mousedown.drag", _.xScroll).on("touchstart.drag", _.xScroll);
     };
 
     LinePlot.prototype.update = function(data) {
@@ -605,6 +612,7 @@
         }
         this.data.push(dtaRow);
       }
+      this.data = this.data.sort(sortDatetimeAsc);
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
@@ -620,6 +628,22 @@
       this.svg.select(".line-plot-path2").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.line2);
       this.svg.select(".line-plot-axis-x").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.xAxis);
       return this.svg.select(".line-plot-axis-y").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
+    };
+
+    LinePlot.zoom = function() {};
+
+    LinePlot.xScroll = function(d) {
+      var _;
+      _ = this;
+      return function(d) {
+        var p;
+        document.onselectstart = function() {
+          return false;
+        };
+        p = d3.mouse(_.vis[0][0]);
+        console.log("xScroll", p);
+        return _.downy = _.x.invert(p[0]);
+      };
     };
 
     return LinePlot;

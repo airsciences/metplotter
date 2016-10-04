@@ -34,6 +34,7 @@ window.Plotting.Handler = class Handler
   listen: () ->
     # Listen for Data Updates
     
+    
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
@@ -46,7 +47,7 @@ window.Plotting.Handler = class Handler
         console.log "#{preError}.callback(...) error detected (data)", data
         return
       _.template = data.responseJSON.templateData
-      
+    
     @api.get target, args, callback
 
   getStationParamData: (plotId) ->
