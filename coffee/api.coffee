@@ -52,7 +52,6 @@ window.Plotting.API = class API
           xhr = null
           return
         
-        console.log "#{preError} (callback)", callback
         # Set the Result
         result =
           response: xhr.response
@@ -68,7 +67,6 @@ window.Plotting.API = class API
 
     # Create a 'GET' formatted argument string
     args = @encodeArgs 'GET', args
-    console.log "#{preError} (args)", args
 
     try
       xhr.open 'GET', uri + args, @async
@@ -95,7 +93,6 @@ window.Plotting.API = class API
           xhr = null
           return
         
-        console.log "#{preError} (callback)", callback
         # Set the Result
         result =
           response: xhr.response

@@ -54,7 +54,6 @@
             xhr = null;
             return;
           }
-          console.log(preError + " (callback)", callback);
           result = {
             response: xhr.response,
             responseText: xhr.responseText,
@@ -70,7 +69,6 @@
         };
       }
       args = this.encodeArgs('GET', args);
-      console.log(preError + " (args)", args);
       try {
         xhr.open('GET', uri + args, this.async);
         xhr.setRequestHeader("Authorization", this.getAccessTokenValue());
@@ -96,7 +94,6 @@
             xhr = null;
             return;
           }
-          console.log(preError + " (callback)", callback);
           result = {
             response: xhr.response,
             responseText: xhr.responseText,
@@ -265,7 +262,7 @@
 
   window.Plotting.LinePlot = LinePlot = (function() {
     function LinePlot(data, options) {
-      var defaults, key, ref, row, sortDatetimeAsc;
+      var defaults, key, ref, row;
       this.preError = "LinePlot.";
       defaults = {
         uuid: '',
@@ -311,12 +308,6 @@
         crosshairX: {
           weight: 1,
           color: "rgb(149, 165, 166)"
-        },
-        focusCircle: {
-          color: "rgb(41, 128, 185)"
-        },
-        focusCircle2: {
-          color: "rgb(39, 174, 96)"
         }
       };
       if (options.x) {
@@ -344,7 +335,7 @@
       this.bisectDate = d3.bisector(function(d) {
         return d.x;
       }).left;
-      sortDatetimeAsc = function(a, b) {
+      this.sortDatetimeAsc = function(a, b) {
         return a.x - b.x;
       };
       this.data = [];
@@ -367,7 +358,7 @@
           this.data[key].y2Max = row[this.options.y2Band.maxVariable];
         }
       }
-      this.data = this.data.sort(sortDatetimeAsc);
+      this.data = this.data.sort(this.sortDatetimeAsc);
       this.getDefinition();
     }
 
@@ -384,6 +375,7 @@
       this.calculateAxisDims(this.data);
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
+      this.definition.zoom = d3.zoom().scaleExtent([1, 40]).translateExtent([[-100, -100], [this.definition.dimensions.width + 90, this.definition.dimensions.height + 100]]).on("zoom", this.zoomed);
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -440,6 +432,7 @@
       }
       this.definition.dimensions = {
         width: width,
+        stageWidth: width + 200,
         height: height,
         margin: margin
       };
@@ -530,14 +523,14 @@
       this.crosshairs.append("line").attr("class", "crosshair-x-" + this.options.uuid).style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("fill", "none");
       _ = this;
       if (this.options.y.variable !== null) {
-        this.focusCircle = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle-" + this.options.uuid).attr("fill", this.options.focusCircle.color).attr("transform", "translate(-10, -10)");
-        this.focusText = this.svg.append("text").attr("class", "focusText-" + this.options.uuid).attr("x", 9).attr("y", 7).style("fill", this.options.focusCircle.color);
+        this.focusCircle = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle-" + this.options.uuid).attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)");
+        this.focusText = this.svg.append("text").attr("class", "focusText-" + this.options.uuid).attr("x", 9).attr("y", 7).style("fill", this.options.line1Color);
       }
       if (this.options.y2.variable !== null) {
-        this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle2-" + this.options.uuid).attr("fill", this.options.focusCircle2.color).attr("transform", "translate(-10, -10)");
-        this.focusText2 = this.svg.append("text").attr("class", "focusText2-" + this.options.uuid).attr("x", 9).attr("y", 7).style("fill", this.options.focusCircle2.color);
+        this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle2-" + this.options.uuid).attr("fill", this.options.line2Color).attr("transform", "translate(-10, -10)");
+        this.focusText2 = this.svg.append("text").attr("class", "focusText2-" + this.options.uuid).attr("x", 9).attr("y", 7).style("fill", this.options.line2Color);
       }
-      return this.svg.append("rect").datum(this.data).attr("class", "overlay-" + this.options.uuid).attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
+      return this.overlay = this.svg.append("rect").datum(this.data).attr("class", "overlay-" + this.options.uuid).attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
         _.crosshairs.style("display", null);
         if (_.options.y.variable !== null) {
           _.focusCircle.style("display", null);
@@ -585,7 +578,7 @@
           _.focusCircle2.attr("cx", dx).attr("cy", dy2);
           return _.focusText2.attr("x", dx + leftPadding / 10).attr("y", dy2 - topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
         }
-      }).on("mousedown.drag", _.xScroll).on("touchstart.drag", _.xScroll);
+      });
     };
 
     LinePlot.prototype.update = function(data) {
@@ -612,7 +605,8 @@
         }
         this.data.push(dtaRow);
       }
-      this.data = this.data.sort(sortDatetimeAsc);
+      this.data = this.data.sort(this.sortDatetimeAsc);
+      console.log(preError + " (@data)", this.data);
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
@@ -630,22 +624,6 @@
       return this.svg.select(".line-plot-axis-y").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
     };
 
-    LinePlot.zoom = function() {};
-
-    LinePlot.xScroll = function(d) {
-      var _;
-      _ = this;
-      return function(d) {
-        var p;
-        document.onselectstart = function() {
-          return false;
-        };
-        p = d3.mouse(_.vis[0][0]);
-        console.log("xScroll", p);
-        return _.downy = _.x.invert(p[0]);
-      };
-    };
-
     return LinePlot;
 
   })();
@@ -659,13 +637,16 @@
 
   window.Plotting.Handler = Handler = (function() {
     function Handler(access, options, plots) {
-      var accessToken, defaults;
+      var accessToken, defaults, format;
       this.preError = "Plotting.Handler";
       defaults = {
         target: null,
-        dateFormat: "%Y-%m-%dT%H:%M:%S%Z"
+        dateFormat: "%Y-%m-%dT%H:%M:%SZ",
+        updateHourOffset: 25
       };
       this.options = Object.mergeDefaults(options, defaults);
+      this.now = new Date();
+      this.current = null;
       this.plots = [];
       this.endpoint = null;
       accessToken = {
@@ -676,6 +657,21 @@
       access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API(access.token);
       this.parseDate = d3.timeParse(this.options.dateFormat);
+      format = d3.utcFormat(this.options.dateFormat);
+      this.getCurrent = function() {
+        return format(this.current);
+      };
+      this.getNow = function() {
+        return format(this.now);
+      };
+      this.getForwardHours = function() {
+        var now;
+        now = new Date();
+        return Math.floor((now.getTime() - this.current.getTime()) / 1000 / 3600);
+      };
+      this.hasForward = function() {
+        return this.getForwardHours() > 0;
+      };
       this.hasAccess = function() {
         if (this.parseDate(access.expires) > new Date) {
           access.expired = true;
@@ -706,39 +702,59 @@
       return this.api.get(target, args, callback);
     };
 
-    Handler.prototype.getStationParamData = function(plotId) {
+    Handler.prototype.getStationParamData = function(plotId, direction) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData(...)";
       target = "http://dev.nwac.us/api/v5/measurement";
       _ = this;
       args = this.template[plotId].dataParams;
-      console.log(preError + " (args)", args);
+      if (args.max_datetime === void 0) {
+        args.max_datetime = this.getNow();
+        this.current = this.now;
+      } else {
+        this.current = new Date(args.max_datetime);
+      }
       callback = function(data) {
-        console.log(preError + "->callback() Returning API (plotId)", plotId);
+        console.log(preError + " callback() Returning API (data)", data.responseJSON.results);
         return _.template[plotId].data = data.responseJSON;
       };
       return this.api.get(target, args, callback);
     };
 
-    Handler.prototype.getPlotData = function() {
-      var key, plot, preError, ref, results;
+    Handler.prototype.getPlotData = function(direction) {
+      var key, plot, preError, prepend_offset, ref, results, update;
+      preError = this.preError + ".getPlotData(...)";
+      update = false;
+      prepend_offset = 0;
+      if (direction === 'forward' && this.hasForward()) {
+        update = true;
+        this.current = this.current.getTime() + (this.options.updateHourOffset * 60 * 60 * 1000);
+        console.log(preError + " (@current)", this.current);
+      } else if (direction === 'backward') {
+        update = true;
+        prepend_offset = this.options.updateHourOffset;
+      }
       preError = this.preError + ".getPlotData()";
       ref = this.template;
       results = [];
       for (key in ref) {
         plot = ref[key];
-        results.push(this.getStationParamData(key));
+        if (update) {
+          this.template[key].dataParams.limit = this.template[key].dataParams.limit + prepend_offset;
+          this.template[key].dataParams.max_datetime = this.getCurrent();
+        }
+        results.push(this.getStationParamData(key, direction));
       }
       return results;
     };
 
     Handler.prototype.append = function() {
-      var data, i, instance, len, plot, preError, ref, results, target;
+      var data, instance, key, plot, preError, ref, results, target;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        plot = ref[i];
+      for (key in ref) {
+        plot = ref[key];
         target = this.utarget(this.options.target);
         $(this.options.target).append("<div id='" + target + "'></div>");
         plot.options.uuid = this.uuid();
@@ -756,7 +772,7 @@
         console.log(preError + " (plot)", plot);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
-        results.push(this.plots.push(instance));
+        results.push(this.plots[key] = instance);
       }
       return results;
     };
@@ -775,9 +791,31 @@
       }
     };
 
-    Handler.prototype.forward = function(offset) {};
+    Handler.prototype.update = function() {
+      var data, key, plot, preError, ref, results;
+      preError = this.preError + ".update()";
+      ref = this.plots;
+      results = [];
+      for (key in ref) {
+        plot = ref[key];
+        console.log(preError + " ready to go forward (@template[key].data)", this.template[key].data);
+        data = this.template[key].data.results;
+        results.push(this.plots[key].update(data));
+      }
+      return results;
+    };
 
-    Handler.prototype.backward = function(offset) {};
+    Handler.prototype.forward = function() {
+      var preError;
+      preError = this.preError + ".forward()";
+      return this.getPlotData("forward");
+    };
+
+    Handler.prototype.backward = function() {
+      var preError;
+      preError = this.preError + ".backward()";
+      return this.getPlotData("backward");
+    };
 
     Handler.prototype.zoom = function(level) {};
 

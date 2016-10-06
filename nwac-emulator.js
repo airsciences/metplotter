@@ -47,11 +47,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "dataParams": {
                     "field": "temperature",
                     "data_logger": 34,
-                    //"max_datetime": new Date(),
+                    "max_datetime": "2016-10-05T17:00:00Z",
                     "limit": 50
                 },
                 "options": {
-                    "color": "rgb(41,128,185)"
+                    "line1Color": "rgb(41,128,185)"
                 }                    
             },
             {
@@ -64,11 +64,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "dataParams": {
                     "field": "precipitation",
                     "data_logger": 32,
-                    //"max_datetime": new Date(),
+                    "max_datetime": "2016-10-05T17:00:00Z",
                     "limit": 50
                 },
                 "options": {
-                    "color": "rgb(39,174,96)"
+                    "line1Color": "rgb(39,174,96)"
                 }
             }
         ]};

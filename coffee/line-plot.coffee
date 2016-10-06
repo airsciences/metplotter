@@ -47,10 +47,6 @@ window.Plotting.LinePlot = class LinePlot
       crosshairX:
         weight: 1
         color: "rgb(149, 165, 166)"
-      focusCircle:
-        color: "rgb(41, 128, 185)"
-      focusCircle2:
-        color: "rgb(39, 174, 96)"
 
     if options.x
       options.x = Object.mergeDefaults(options.x, defaults.x)
@@ -70,7 +66,7 @@ window.Plotting.LinePlot = class LinePlot
     @bisectDate = d3.bisector((d) -> d.x).left
 
     # Sort Data by Datetime (Ascending)
-    sortDatetimeAsc = (a, b) ->
+    @sortDatetimeAsc = (a, b) ->
       a.x - b.x
 
     # Set @data
@@ -95,7 +91,7 @@ window.Plotting.LinePlot = class LinePlot
         @data[key].y2Max = row[@options.y2Band.maxVariable]
 
     # Sort the Data
-    @data = @data.sort sortDatetimeAsc
+    @data = @data.sort @sortDatetimeAsc
 
     # Run Get Definition on Class Construction
     @getDefinition()
@@ -139,6 +135,15 @@ window.Plotting.LinePlot = class LinePlot
       
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
       .ticks(@options.y.ticks)
+
+    @definition.zoom = d3.zoom()
+      .scaleExtent([1, 40])
+      .translateExtent(
+        [[-100, -100],
+        [@definition.dimensions.width + 90,
+        @definition.dimensions.height + 100]]
+      )
+      .on("zoom", @zoomed)
 
     @definition.line = d3.line()
       .defined((d)->
@@ -196,6 +201,7 @@ window.Plotting.LinePlot = class LinePlot
 
     @definition.dimensions =
       width: width
+      stageWidth: (width + 200)
       height: height
       margin: margin
     @definition.x = d3.scaleTime().range([margin.left, (width-margin.right)])
@@ -276,7 +282,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("class", "line-plot")
       .attr("width", @definition.dimensions.width)
       .attr("height", @definition.dimensions.height)
-
+      
     # Append a Clip Path
     @svg.append("defs")
       .append("clipPath")
@@ -285,7 +291,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("width", innerWidth)
       .attr("height", innerHeight)
       .attr("transform", "translate(#{leftPadding}, #{topPadding})")
-
+    
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
@@ -367,11 +373,6 @@ window.Plotting.LinePlot = class LinePlot
       .style("stroke-width",
         Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
-    
-    # @plot.call d3.behavior.zoom()
-    #   .x(@x)
-    #   .y(@y)
-    #   .on("zoom", @redraw())
 
     # Create Crosshairs
     @crosshairs = @svg.append("g")
@@ -391,30 +392,30 @@ window.Plotting.LinePlot = class LinePlot
       @focusCircle = @svg.append("circle")
         .attr("r", 4)
         .attr("class", "focusCircle-#{@options.uuid}")
-        .attr("fill", @options.focusCircle.color)
+        .attr("fill", @options.line1Color)
         .attr("transform", "translate(-10, -10)")
 
       @focusText = @svg.append("text")
         .attr("class", "focusText-#{@options.uuid}")
         .attr("x", 9)
         .attr("y", 7)
-        .style("fill", @options.focusCircle.color)
+        .style("fill", @options.line1Color)
 
     if @options.y2.variable != null
       @focusCircle2 = @svg.append("circle")
         .attr("r", 4)
         .attr("class", "focusCircle2-#{@options.uuid}")
-        .attr("fill", @options.focusCircle2.color)
+        .attr("fill", @options.line2Color)
         .attr("transform", "translate(-10, -10)")
 
       @focusText2 = @svg.append("text")
         .attr("class", "focusText2-#{@options.uuid}")
         .attr("x", 9)
         .attr("y", 7)
-        .style("fill", @options.focusCircle2.color)
+        .style("fill", @options.line2Color)
 
     # Move Crosshairs and Focus Circle Based on Mouse Location
-    @svg.append("rect")
+    @overlay = @svg.append("rect")
       .datum(@data)
       .attr("class", "overlay-#{@options.uuid}")
       .attr("width", innerWidth)
@@ -484,8 +485,6 @@ window.Plotting.LinePlot = class LinePlot
             .attr("y", dy2 - topPadding / 10)
             .text(d.y2.toFixed(1) + " " + "°F")
       )
-      .on("mousedown.drag",  _.xScroll)
-      .on("touchstart.drag", _.xScroll)
 
   update: (data) ->
     preError = "#{@preError}update()"
@@ -514,7 +513,9 @@ window.Plotting.LinePlot = class LinePlot
       @data.push(dtaRow)
 
     # Sort the Data
-    @data = @data.sort sortDatetimeAsc
+    @data = @data.sort @sortDatetimeAsc
+
+    console.log "#{preError} (@data)", @data
 
     # Pre-Append Data For Smooth transform
     @svg.select(".line-plot-area")
@@ -585,14 +586,36 @@ window.Plotting.LinePlot = class LinePlot
       .ease(d3.easeLinear)
       .call(@definition.yAxis)
 
-  @zoom: () ->
-    # Zoom Function
+#  @zoomed: () ->
+#    # Zoom Function
+#    preError = "#{@preError}.zoomed()"
+#    @log "#{preError} zoom action occured."
+#    view = @svg.select(".overlay")
+#    gX = @svg.select(".line-plot-axis-x")
+#    gY = @svg.select(".line-plot-axis-y")
+#
+#    view.attr("transform", d3.event.transform)
+#   gX.call(@definition.xAxis.scale(d3.event.transform.rescaleX(@definition.x)))
+#   gY.call(@definition.yAxis.scale(d3.event.transform.rescaleY(@definition.y)))
+#
+#  @dragStarted: (d) ->
+#    d3.event.sourceEvent.stopPropagation()
+#    d3.select(this).classed("dragging", true)
 
-  @xScroll: (d) ->
-    # Scroll the X-Axis
-    _ = @
-    return (d) ->
-      document.onselectstart = () -> return false
-      p = d3.mouse _.vis[0][0]
-      console.log "xScroll", p
-      _.downy = _.x.invert p[0]
+#  @dragged: (d) ->
+#    d3.select(@)
+#      .attr("cx", d.x = d3.event.x)
+#      .attr("cy", d.y = d3.event.y)
+
+#  @dragended: (d) ->
+#    d3.select(@)
+#      .classed("dragging", false)
+#
+#  @xScroll: (d) ->
+#    # Scroll the X-Axis
+#    _ = @
+#    return (d) ->
+#      document.onselectstart = () -> return false
+#      p = d3.mouse _.vis[0][0]
+#      console.log "xScroll", p
+#      _.downy = _.x.invert p[0]

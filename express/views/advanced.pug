@@ -9,10 +9,12 @@ html(lang='en')
   body
     div(class='container')
       div(class='row-sm-12')
-        div(class='pull-right')
-          button(class='btn btn-sm btn-default' style='margin-right: 5px' onclick='plotter.handler.getTemplate()')='Get Template'
-          button(class='btn btn-sm btn-default' style='margin-right: 5px' onclick='plotter.handler.getPlotData()')='Get Data'
-          button(class='btn btn-sm btn-default' onclick='plotter.handler.append()')='Append Plots'
+        div(class='pull-right btn-group')
+          button(class='btn btn-sm btn-default' onclick='plotter.handler.getPlotData()')='Get Data'
+          button(class='btn btn-sm btn-default' onclick='plotter.handler.append()')='Append'
+          button(class='btn btn-sm btn-default' onclick='plotter.handler.forward()')='Forward'
+          button(class='btn btn-sm btn-default' onclick='plotter.handler.backward()')='Back'
+          button(class='btn btn-sm btn-default' onclick='plotter.handler.update()')='Update'
         h1='NWAC D3 Plotting Tool'
         small
           code="NWAC Emulator - v0.1 (Node.js)"
@@ -34,3 +36,5 @@ html(lang='en')
       var plotter = {
           "handler": new Plotting.Handler(access, options)
       };
+      
+      plotter.handler.getTemplate();
