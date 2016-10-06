@@ -10,6 +10,14 @@ cd /path/to/nwac-repo
 npm install
 ```
 
+***Add your Development Access Token**
+
+```sh
+export NWAC_TOKEN={{ACCESS_TOKEN}}
+```
+
+Note this environment variable either needs to be added to your `.bash-profile` before opening the terminal you intend to run the emulator in. Alternatively, you need to export it in the same terminal you will use to run the emulator later.
+
 ***Run the NWAC Emulator***
 
 ```sh
