@@ -375,7 +375,12 @@
       this.calculateAxisDims(this.data);
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
-      this.definition.zoom = d3.zoom().scaleExtent([1, 40]).translateExtent([[-100, -100], [this.definition.dimensions.width + 90, this.definition.dimensions.height + 100]]).on("zoom", this.zoomed);
+      this.definition.zoom = d3.zoom().on("zoom", function() {
+        console.log("Zoom Event (path)", _.svg.select(".line-plot-path"));
+        _.svg.select(".line-plot-axis-x").call(_.definition.xAxis.scale(d3.event.transform.rescaleX(_.definition.x)));
+        _.svg.select(".line-plot-axis-y").call(_.definition.yAxis.scale(d3.event.transform.rescaleY(_.definition.y)));
+        return _.svg.select(".line-plot-path").attr("transform", d3.event.transform);
+      });
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -519,66 +524,7 @@
       }
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
-      this.crosshairs = this.svg.append("g").attr("class", "crosshair-" + this.options.uuid);
-      this.crosshairs.append("line").attr("class", "crosshair-x-" + this.options.uuid).style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("fill", "none");
-      _ = this;
-      if (this.options.y.variable !== null) {
-        this.focusCircle = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle-" + this.options.uuid).attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)");
-        this.focusText = this.svg.append("text").attr("class", "focusText-" + this.options.uuid).attr("x", 9).attr("y", 7).style("fill", this.options.line1Color);
-      }
-      if (this.options.y2.variable !== null) {
-        this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle2-" + this.options.uuid).attr("fill", this.options.line2Color).attr("transform", "translate(-10, -10)");
-        this.focusText2 = this.svg.append("text").attr("class", "focusText2-" + this.options.uuid).attr("x", 9).attr("y", 7).style("fill", this.options.line2Color);
-      }
-      return this.overlay = this.svg.append("rect").datum(this.data).attr("class", "overlay-" + this.options.uuid).attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
-        _.crosshairs.style("display", null);
-        if (_.options.y.variable !== null) {
-          _.focusCircle.style("display", null);
-          _.focusText.style("display", null);
-        }
-        if (_.options.y2.variable !== null) {
-          _.focusCircle2.style("display", null);
-          return _.focusText2.style("display", null);
-        }
-      }).on("mouseout", function() {
-        _.crosshairs.style("display", "none");
-        if (_.options.y.variable !== null) {
-          _.focusCircle.style("display", "none");
-          _.focusText.style("display", "none");
-        }
-        if (_.options.y2.variable !== null) {
-          _.focusCircle2.style("display", "none");
-          return _.focusText2.style("display", "none");
-        }
-      }).on("mousemove", function(d) {
-        var d0, d1, dx, dy, dy2, i, min, mouse, x0;
-        mouse = d3.mouse(this);
-        x0 = _.definition.x.invert(mouse[0] + leftPadding);
-        i = _.bisectDate(d, x0, 1);
-        min = x0.getMinutes();
-        d0 = d[i - 1];
-        d1 = d[i];
-        d = d0;
-        d = min >= 30 ? d1 : d0;
-        dx = _.definition.x(d.x);
-        if (_.options.y.variable !== null) {
-          dy = _.definition.y(d.y);
-          _.focusCircle.attr("transform", "translate(0, 0)");
-        }
-        if (_.options.y2.variable !== null) {
-          dy2 = _.definition.y(d.y2);
-          _.focusCircle2.attr("transform", "translate(0, 0)");
-        }
-        _.crosshairs.select(".crosshair-x-" + _.options.uuid).attr("x1", mouse[0]).attr("y1", topPadding).attr("x2", mouse[0]).attr("y2", innerHeight + topPadding).attr("transform", "translate(" + leftPadding + ", 0)");
-        if (_.options.y.variable !== null) {
-          _.focusCircle.attr("cx", dx).attr("cy", dy);
-          _.focusText.attr("x", dx + leftPadding / 10).attr("y", dy - topPadding / 10).text(d.y.toFixed(1) + " " + "°F");
-        }
-        if (_.options.y2.variable !== null) {
-          _.focusCircle2.attr("cx", dx).attr("cy", dy2);
-          return _.focusText2.attr("x", dx + leftPadding / 10).attr("y", dy2 - topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
-        }
-      });
+      return this.svg.append("rect").attr("class", "zoom-pane").attr("width", innerWidth).attr("height", innerHeight).attr("transform", "translate(" + leftPadding + ", " + topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move").call(this.definition.zoom);
     };
 
     LinePlot.prototype.update = function(data) {
@@ -606,22 +552,24 @@
         this.data.push(dtaRow);
       }
       this.data = this.data.sort(this.sortDatetimeAsc);
-      console.log(preError + " (@data)", this.data);
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
       this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
-      this.calculateAxisDims(this.data);
       dtDiff = this.definition.x.max - dtOffset;
       this.log(preError + " Date Diff Calcs (dtOffset, @def.x.min, dtDiff)", dtOffset, this.definition.x.max, this.dtDiff);
-      this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       this.svg.select(".line-plot-area").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.line);
       this.svg.select(".line-plot-path2").datum(this.data).transition().duration(this.options.transitionDuration).attr("d", this.definition.line2);
-      this.svg.select(".line-plot-axis-x").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.xAxis);
       return this.svg.select(".line-plot-axis-y").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
+    };
+
+    LinePlot.zoomed = function() {
+      var preError;
+      preError = this.preError + ".zoomed()";
+      return this.log(preError + " zoom action occured.");
     };
 
     return LinePlot;
