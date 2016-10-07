@@ -82,6 +82,7 @@ The sample template `JSON`
 * `dataParams` - Specify the API request for getting initial data for the plot
 * `options` - A specific JSON object that is passed to the D3 plot
 
+***
 
 ***Default Options for a Plot***
 
