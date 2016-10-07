@@ -379,17 +379,18 @@
       this.calculateAxisDims(this.data);
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
+      this.zoomIdentity = d3.zoomIdentity;
       this.definition.zoom = d3.zoom().on("zoom", function() {
+        var kt, xt;
         _.calculateYAxisDims(_.data);
-        console.log(d3.zoomIdentity);
+        xt = d3.event.transform.x;
+        kt = d3.event.transform.k;
+        _.zoomIdentity.translate(xt, 0).scale(kt);
+        console.log("On-Zoom: (_.zoomIdentity, d3.zoomIdentity)", _.zoomIdentity, d3.zoomIdentity);
         _.svg.select(".line-plot-axis-x").call(_.definition.xAxis.scale(d3.event.transform.rescaleX(_.definition.x)));
         _.svg.select(".line-plot-axis-y").call(_.definition.yAxis);
-        _.svg.select(".line-plot-path").attr("d", _.definition.line).attr("transform", function() {
-          return "translate(" + d3.event.transform.x + "," + 0 + ") scale(" + d3.event.transform.k + ", 1)";
-        });
-        return _.svg.select(".line-plot-path2").attr("d", _.definition.line2).attr("transform", function() {
-          return "translate(" + d3.event.transform.x + "," + 0 + ") scale(" + d3.event.transform.k + ", 1)";
-        });
+        _.svg.select(".line-plot-path").attr("d", _.definition.line).attr("transform", "translate(" + xt + ", 0) scale(" + kt + ", 1)");
+        return _.svg.select(".line-plot-path2").attr("d", _.definition.line2).attr("transform", "translate(" + xt + ", 0) scale(" + kt + ", 1)");
       });
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;

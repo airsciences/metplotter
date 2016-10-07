@@ -29,8 +29,5 @@ html(lang='en')
           "expires": "#{token.expires}"
       };
 
-      var plotter = {
-          "handler": new Plotting.Handler(access, options)
-      };
-      
-      plotter.handler.initialize();
+      var plotter = new Plotting.Handler(access, options);
+      plotter.initialize();

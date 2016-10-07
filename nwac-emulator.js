@@ -45,15 +45,19 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "elevation":5800.0
                 },
                 "dataParams": {
-                    "field": "wind_speed_average",
-                    "field2": "wind_speed_minumum",
                     "data_logger": 34,
                     "max_datetime": "2016-10-05T17:00:00Z",
                     "limit": 50
                 },
                 "options": {
                     "line1Color": "rgb(41,128,185)",
-                    "line2Color": "rgb(39,174,96)"
+                    "line2Color": "rgb(39,174,96)",
+                    "y": {
+                        "variable": "wind_speed_average"
+                    },
+                    "y2": {
+                        "variable": "wind_speed_minumum"
+                    }
                 }                    
             },
             {
