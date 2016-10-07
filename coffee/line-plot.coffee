@@ -121,12 +121,9 @@ window.Plotting.LinePlot = class LinePlot
       @options.x.ticks = d3.timeFormat @options.x.format
 
     # Define the Definition
-    @definition = {}
-
+    @definition =
+      colorScale: d3.schemeCategory20
     @calculateChartDims()
-
-    @definition.colorScale = d3.schemeCategory20
-
     @calculateAxisDims(@data)
 
     # Define D3 Methods
@@ -137,11 +134,11 @@ window.Plotting.LinePlot = class LinePlot
       .ticks(@options.y.ticks)
 
     @definition.zoom = d3.zoom()
-      .on("zoom", (d) ->
-        console.log "On-zoom. (d)", d
-        
+      .on("zoom", () ->
         # Re-define Y-Axis Bounds
         _.calculateYAxisDims(_.data)
+        
+        console.log d3.zoomIdentity
         
         # Zoom the X-Axis
         _.svg.select(".line-plot-axis-x").call(
@@ -289,10 +286,6 @@ window.Plotting.LinePlot = class LinePlot
     ymin = if ymin == ymax then ymin * 0.8 else ymin
     ymax = if ymin == ymax then ymax * 1.2 else ymax
 
-    # TEST
-    # ymin = 0
-    # ymax = 50
-
     # Insert Values into Definition
     @definition.y.min = ymin
     @definition.y.max = ymax
@@ -415,126 +408,125 @@ window.Plotting.LinePlot = class LinePlot
         Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
 
-    # # Create Crosshairs
-    # @crosshairs = @svg.append("g")
-    #   .attr("class", "crosshair-#{@options.uuid}")
+    # Create Crosshairs
+    @crosshairs = @svg.append("g")
+      .attr("class", "crosshair-#{@options.uuid}")
 
-    # # Create Vertical line
-    # @crosshairs.append("line")
-    #   .attr("class", "crosshair-x-#{@options.uuid}")
-    #   .style("stroke", @options.crosshairX.color)
-    #   .style("stroke-width", @options.crosshairX.weight)
-    #   .style("fill", "none")
+    # Create Vertical line
+    @crosshairs.append("line")
+      .attr("class", "crosshair-x-#{@options.uuid}")
+      .style("stroke", @options.crosshairX.color)
+      .style("stroke-width", @options.crosshairX.weight)
+      .style("fill", "none")
 
     # Create Focus Circles and Labels
-    # if @options.y.variable != null
-    #   @focusCircle = @svg.append("circle")
-    #     .attr("r", 4)
-    #     .attr("class", "focusCircle-#{@options.uuid}")
-    #     .attr("fill", @options.line1Color)
-    #     .attr("transform", "translate(-10, -10)")
+    if @options.y.variable != null
+      @focusCircle = @svg.append("circle")
+        .attr("r", 4)
+        .attr("class", "focusCircle-#{@options.uuid}")
+        .attr("fill", @options.line1Color)
+        .attr("transform", "translate(-10, -10)")
 
-    #   @focusText = @svg.append("text")
-    #     .attr("class", "focusText-#{@options.uuid}")
-    #     .attr("x", 9)
-    #     .attr("y", 7)
-    #     .style("fill", @options.line1Color)
+      @focusText = @svg.append("text")
+        .attr("class", "focusText-#{@options.uuid}")
+        .attr("x", 9)
+        .attr("y", 7)
+        .style("fill", @options.line1Color)
 
-    # if @options.y2.variable != null
-    #   @focusCircle2 = @svg.append("circle")
-    #     .attr("r", 4)
-    #     .attr("class", "focusCircle2-#{@options.uuid}")
-    #     .attr("fill", @options.line2Color)
-    #     .attr("transform", "translate(-10, -10)")
+    if @options.y2.variable != null
+      @focusCircle2 = @svg.append("circle")
+        .attr("r", 4)
+        .attr("class", "focusCircle2-#{@options.uuid}")
+        .attr("fill", @options.line2Color)
+        .attr("transform", "translate(-10, -10)")
 
-    #   @focusText2 = @svg.append("text")
-    #     .attr("class", "focusText2-#{@options.uuid}")
-    #     .attr("x", 9)
-    #     .attr("y", 7)
-    #     .style("fill", @options.line2Color)
+      @focusText2 = @svg.append("text")
+        .attr("class", "focusText2-#{@options.uuid}")
+        .attr("x", 9)
+        .attr("y", 7)
+        .style("fill", @options.line2Color)
 
     # Move Crosshairs and Focus Circle Based on Mouse Location
-    # @overlay = @svg.append("rect")
-    #   .datum(@data)
-    #   .attr("class", "overlay-#{@options.uuid}")
-    #   .attr("width", innerWidth)
-    #   .attr("height", innerHeight)
-    #   .attr("transform", "translate(#{leftPadding}, #{topPadding})")
-    #   .style("fill", "none")
-    #   .style("pointer-events", "all")
-    #   .on("mouseover", () ->
-    #     _.crosshairs.style("display", null)
-    #     if _.options.y.variable != null
-    #       _.focusCircle.style("display", null)
-    #       _.focusText.style("display", null)
-    #     if _.options.y2.variable != null
-    #       _.focusCircle2.style("display", null)
-    #       _.focusText2.style("display", null)
-    #   )
-    #   .on("mouseout", () ->
-    #     _.crosshairs.style("display", "none")
-    #     if _.options.y.variable != null
-    #       _.focusCircle.style("display", "none")
-    #       _.focusText.style("display", "none")
-    #     if _.options.y2.variable != null
-    #       _.focusCircle2.style("display", "none")
-    #       _.focusText2.style("display", "none")
-    #   )
-    #   .on("mousemove", (d) ->
-    #     mouse = d3.mouse @
-    #     x0 = _.definition.x.invert(mouse[0] + leftPadding)
-    #     i = _.bisectDate(d, x0, 1)
-    #     min = x0.getMinutes()
-    #     d0 = d[i - 1]
-    #     d1 = d[i]
-    #     d = d0
-    #     d = if min >= 30 then d1 else d0
-    #     dx = _.definition.x d.x
-    #     if _.options.y.variable != null
-    #       dy = _.definition.y d.y
-    #       _.focusCircle.attr "transform", "translate(0, 0)"
-    #     if _.options.y2.variable != null
-    #       dy2 = _.definition.y d.y2
-    #       _.focusCircle2.attr "transform", "translate(0, 0)"
+    @overlay = @svg.append("rect")
+      .datum(@data)
+      .attr("class", "overlay-#{@options.uuid}")
+      .attr("width", innerWidth)
+      .attr("height", innerHeight)
+      .attr("transform", "translate(#{leftPadding}, #{topPadding})")
+      .style("fill", "none")
+      .style("pointer-events", "all")
+      .on("mouseover", () ->
+        _.crosshairs.style("display", null)
+        if _.options.y.variable != null
+          _.focusCircle.style("display", null)
+          _.focusText.style("display", null)
+        if _.options.y2.variable != null
+          _.focusCircle2.style("display", null)
+          _.focusText2.style("display", null)
+      )
+      .on("mouseout", () ->
+        _.crosshairs.style("display", "none")
+        if _.options.y.variable != null
+          _.focusCircle.style("display", "none")
+          _.focusText.style("display", "none")
+        if _.options.y2.variable != null
+          _.focusCircle2.style("display", "none")
+          _.focusText2.style("display", "none")
+      )
+      .on("mousemove", (d) ->
+        mouse = d3.mouse @
+        x0 = _.definition.x.invert(mouse[0] + leftPadding)
+        i = _.bisectDate(d, x0, 1)
+        min = x0.getMinutes()
+        d0 = d[i - 1]
+        d1 = d[i]
+        d = d0
+        d = if min >= 30 then d1 else d0
+        dx = _.definition.x d.x
+        if _.options.y.variable != null
+          dy = _.definition.y d.y
+          _.focusCircle.attr "transform", "translate(0, 0)"
+        if _.options.y2.variable != null
+          dy2 = _.definition.y d.y2
+          _.focusCircle2.attr "transform", "translate(0, 0)"
 
-    #     _.crosshairs.select(".crosshair-x-#{_.options.uuid}")
-    #       .attr("x1", mouse[0])
-    #       .attr("y1", topPadding)
-    #       .attr("x2", mouse[0])
-    #       .attr("y2", innerHeight + topPadding)
-    #       .attr("transform", "translate(#{leftPadding}, 0)")
+        _.crosshairs.select(".crosshair-x-#{_.options.uuid}")
+          .attr("x1", mouse[0])
+          .attr("y1", topPadding)
+          .attr("x2", mouse[0])
+          .attr("y2", innerHeight + topPadding)
+          .attr("transform", "translate(#{leftPadding}, 0)")
 
-    #     if _.options.y.variable != null
-    #       _.focusCircle
-    #         .attr("cx", dx)
-    #         .attr("cy", dy)
+        if _.options.y.variable != null
+          _.focusCircle
+            .attr("cx", dx)
+            .attr("cy", dy)
 
-    #       _.focusText
-    #         .attr("x", dx + leftPadding / 10)
-    #         .attr("y", dy - topPadding / 10)
-    #         .text(d.y.toFixed(1) + " " + "°F")
+          _.focusText
+            .attr("x", dx + leftPadding / 10)
+            .attr("y", dy - topPadding / 10)
+            .text(d.y.toFixed(1) + " " + "°F")
 
-    #     if _.options.y2.variable != null
-    #       _.focusCircle2
-    #         .attr("cx", dx)
-    #         .attr("cy", dy2)
+        if _.options.y2.variable != null
+          _.focusCircle2
+            .attr("cx", dx)
+            .attr("cy", dy2)
 
-    #       _.focusText2
-    #         .attr("x", dx + leftPadding / 10)
-    #         .attr("y", dy2 - topPadding / 10)
-    #         .text(d.y2.toFixed(1) + " " + "°F")
-    #   )
+          _.focusText2
+            .attr("x", dx + leftPadding / 10)
+            .attr("y", dy2 - topPadding / 10)
+            .text(d.y2.toFixed(1) + " " + "°F")
+      )
     
     # Zoom Rectangle
-    @svg.append("rect")
-      .attr("class", "zoom-pane")
+    @overlay.attr("class", "zoom-pane")
       .attr("width", innerWidth)
       .attr("height", innerHeight)
       .attr("transform", "translate(#{leftPadding}, #{topPadding})")
       .style("fill", "none")
       .style("pointer-events", "all")
       .style("cursor", "move")
-      .call(@definition.zoom)
+      .call(@definition.zoom, d3.zoomIdentity)
 
   update: (data) ->
     preError = "#{@preError}update()"
