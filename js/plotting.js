@@ -4,11 +4,14 @@
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.API = API = (function() {
-    function API(accessToken) {
+    function API(accessToken, async) {
       var preError;
       this.preError = "Plotting.API";
       preError = this.preError + ".constructor()";
       this.async = true;
+      if (typeof async !== "undefined") {
+        this.async = async;
+      }
       this.getAccessToken = function() {
         return accessToken;
       };
@@ -375,11 +378,15 @@
       this.calculateAxisDims(this.data);
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
-      this.definition.zoom = d3.zoom().on("zoom", function() {
+      this.definition.zoom = d3.zoom().on("zoom", function(d) {
+        console.log("On-zoom. (d)", d);
         _.calculateYAxisDims(_.data);
         _.svg.select(".line-plot-axis-x").call(_.definition.xAxis.scale(d3.event.transform.rescaleX(_.definition.x)));
         _.svg.select(".line-plot-axis-y").call(_.definition.yAxis);
-        return _.svg.select(".line-plot-path").attr("d", _.definition.line).attr("transform", function() {
+        _.svg.select(".line-plot-path").attr("d", _.definition.line).attr("transform", function() {
+          return "translate(" + d3.event.transform.x + "," + 0 + ") scale(" + d3.event.transform.k + ", 1)";
+        });
+        return _.svg.select(".line-plot-path2").attr("d", _.definition.line2).attr("transform", function() {
           return "translate(" + d3.event.transform.x + "," + 0 + ") scale(" + d3.event.transform.k + ", 1)";
         });
       });
@@ -604,6 +611,7 @@
       this.preError = "Plotting.Handler";
       defaults = {
         target: null,
+        stage: 4,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         updateHourOffset: 25
       };
@@ -611,6 +619,9 @@
       this.now = new Date();
       this.current = null;
       this.plots = [];
+      this.readyState = {
+        template: false
+      };
       this.endpoint = null;
       accessToken = {
         token: null,
@@ -619,6 +630,7 @@
       };
       access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API(access.token);
+      this.syncronousapi = new window.Plotting.API(access.token, false);
       this.parseDate = d3.timeParse(this.options.dateFormat);
       format = d3.utcFormat(this.options.dateFormat);
       this.getCurrent = function() {
@@ -647,7 +659,23 @@
       };
     }
 
-    Handler.prototype.listen = function() {};
+    Handler.prototype.initialize = function() {
+      this.getTemplate();
+      this.getPlotData(null, false);
+      this.append();
+      console.log("Appended");
+      return this.stage();
+    };
+
+    Handler.prototype.stage = function() {
+      var i, num, ref, results;
+      results = [];
+      for (num = i = 0, ref = this.options.stage; 0 <= ref ? i <= ref : i >= ref; num = 0 <= ref ? ++i : --i) {
+        this.backward();
+        results.push(this.forward());
+      }
+      return results;
+    };
 
     Handler.prototype.getTemplate = function(template_uri) {
       var _, args, callback, preError, target;
@@ -660,12 +688,13 @@
           console.log(preError + ".callback(...) error detected (data)", data);
           return;
         }
-        return _.template = data.responseJSON.templateData;
+        _.template = data.responseJSON.templateData;
+        return _.readyState.template = true;
       };
-      return this.api.get(target, args, callback);
+      return this.syncronousapi.get(target, args, callback);
     };
 
-    Handler.prototype.getStationParamData = function(plotId, direction) {
+    Handler.prototype.getStationParamData = function(plotId, async) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData(...)";
       target = "http://dev.nwac.us/api/v5/measurement";
@@ -681,10 +710,14 @@
         console.log(preError + " callback() Returning API (data)", data.responseJSON.results);
         return _.template[plotId].data = data.responseJSON;
       };
-      return this.api.get(target, args, callback);
+      if (async === false) {
+        return this.syncronousapi.get(target, args, callback);
+      } else {
+        return this.api.get(target, args, callback);
+      }
     };
 
-    Handler.prototype.getPlotData = function(direction) {
+    Handler.prototype.getPlotData = function(direction, async) {
       var key, plot, preError, prepend_offset, ref, results, update;
       preError = this.preError + ".getPlotData(...)";
       update = false;
@@ -706,7 +739,7 @@
           this.template[key].dataParams.limit = this.template[key].dataParams.limit + prepend_offset;
           this.template[key].dataParams.max_datetime = this.getCurrent();
         }
-        results.push(this.getStationParamData(key, direction));
+        results.push(this.getStationParamData(key, async));
       }
       return results;
     };
@@ -728,6 +761,9 @@
         };
         plot.options.y = {
           variable: 'wind_speed_average'
+        };
+        plot.options.y2 = {
+          variable: 'wind_speed_minimum'
         };
         data = {
           data: plot.data.results

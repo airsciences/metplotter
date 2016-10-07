@@ -10,6 +10,7 @@ window.Plotting.Handler = class Handler
     
     defaults =
       target: null
+      stage: 4
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       updateHourOffset: 25
     @options = Object.mergeDefaults options, defaults
@@ -17,6 +18,9 @@ window.Plotting.Handler = class Handler
     @now = new Date()
     @current = null
     @plots = []
+
+    @readyState =
+      template: false
 
     @endpoint = null
     accessToken =
@@ -26,32 +30,44 @@ window.Plotting.Handler = class Handler
     access = Object.mergeDefaults access, accessToken
       
     @api = new window.Plotting.API access.token
+    @syncronousapi = new window.Plotting.API access.token, false
     @parseDate = d3.timeParse(@options.dateFormat)
 
     format = d3.utcFormat @options.dateFormat
 
-    @getCurrent = () ->
+    @getCurrent = ->
       return format @current
 
-    @getNow = () ->
+    @getNow = ->
       return format @now
 
-    @getForwardHours = () ->
+    @getForwardHours = ->
       # Checks if the zoom forward can happen
       now = new Date()
       Math.floor((now.getTime() - @current.getTime()) / 1000 / 3600)
 
-    @hasForward = () ->
+    @hasForward = ->
       @getForwardHours() > 0
 
-    @hasAccess = () ->
+    @hasAccess = ->
       # Calculate if the token has expired.
       if @parseDate(access.expires) > new Date
         access.expired = true
       if access.expired then false else true
     
-  listen: () ->
-    # Listen for Data Updates
+  initialize: ->
+    # Initialize the page.
+    @getTemplate()
+    @getPlotData(null, false)
+    @append()
+    console.log "Appended"
+    @stage()
+
+  stage: ->
+    # Stage forward and behind
+    for num in [0..@options.stage]
+      @backward()
+      @forward()
     
   getTemplate: (template_uri) ->
     # Request the Template
@@ -65,10 +81,11 @@ window.Plotting.Handler = class Handler
         console.log "#{preError}.callback(...) error detected (data)", data
         return
       _.template = data.responseJSON.templateData
+      _.readyState.template = true
     
-    @api.get target, args, callback
+    @syncronousapi.get target, args, callback
 
-  getStationParamData: (plotId, direction) ->
+  getStationParamData: (plotId, async) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData(...)"
     target = "http://dev.nwac.us/api/v5/measurement"
@@ -87,9 +104,12 @@ window.Plotting.Handler = class Handler
         data.responseJSON.results
       _.template[plotId].data = data.responseJSON
     
-    @api.get target, args, callback
+    if async == false
+      @syncronousapi.get target, args, callback
+    else
+      @api.get target, args, callback
     
-  getPlotData: (direction) ->
+  getPlotData: (direction, async) ->
     # Get data for all plots
     preError = "#{@preError}.getPlotData(...)"
     update = false
@@ -114,7 +134,7 @@ window.Plotting.Handler = class Handler
           prepend_offset
         @template[key].dataParams.max_datetime = @getCurrent()
     
-      @getStationParamData(key, direction)
+      @getStationParamData key, async
   
   append: () ->
     preError = "#{@preError}.append()"
@@ -130,6 +150,8 @@ window.Plotting.Handler = class Handler
         format: @options.dateFormat
       plot.options.y =
         variable: 'wind_speed_average'
+      plot.options.y2 =
+        variable: 'wind_speed_minimum'
       data =
         data: plot.data.results
       console.log "#{preError} (plot)", plot
@@ -160,12 +182,12 @@ window.Plotting.Handler = class Handler
       data = @template[key].data.results
       @plots[key].update data
     
-  forward: () ->
+  forward: ->
     # Move forward a certain offset of time records on all plots.
     preError = "#{@preError}.forward()"
     @getPlotData("forward")
       
-  backward: () ->
+  backward: ->
     # Move backward a certain offset of time records on all plots.
     preError = "#{@preError}.backward()"
     @getPlotData("backward")

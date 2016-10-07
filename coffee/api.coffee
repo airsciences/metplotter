@@ -5,12 +5,14 @@
 window.Plotting ||= {}
 
 window.Plotting.API = class API
-  constructor: (accessToken) ->
+  constructor: (accessToken, async) ->
     @preError = "Plotting.API"
     preError = "#{@preError}.constructor()"
     
     # Configurations
     @async = true
+    if typeof async != "undefined"
+      @async = async
 
     # Attach Authentication
     @getAccessToken = () ->

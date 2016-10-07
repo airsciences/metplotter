@@ -137,7 +137,9 @@ window.Plotting.LinePlot = class LinePlot
       .ticks(@options.y.ticks)
 
     @definition.zoom = d3.zoom()
-      .on("zoom", () ->
+      .on("zoom", (d) ->
+        console.log "On-zoom. (d)", d
+        
         # Re-define Y-Axis Bounds
         _.calculateYAxisDims(_.data)
         
@@ -145,12 +147,9 @@ window.Plotting.LinePlot = class LinePlot
         _.svg.select(".line-plot-axis-x").call(
           _.definition.xAxis.scale(d3.event.transform.rescaleX(_.definition.x))
         )
-        _.svg.select(".line-plot-axis-y").call(
-        #  _.definition.yAxis.scale(d3.event.transform.rescaleY(_.definition.y))
-          _.definition.yAxis
-        )
-        # _.svg.select("path.area").attr("d", area)
-        # _.svg.select(".line-plot-path").attr("d", _.definition.line)
+        _.svg.select(".line-plot-axis-y").call(_.definition.yAxis)
+        
+        # Zoom the Line Paths
         _.svg.select(".line-plot-path")
           .attr("d", _.definition.line)
           .attr("transform", () ->
@@ -158,7 +157,15 @@ window.Plotting.LinePlot = class LinePlot
             " + 0 + ")
             scale(" + d3.event.transform.k + ", 1)"
           )
-        # _.svg.select(".line-plot-path").attr("transform", d3.event.transform)
+        _.svg.select(".line-plot-path2")
+          .attr("d", _.definition.line2)
+          .attr("transform", () ->
+            return "translate(" + d3.event.transform.x + ",
+            " + 0 + ")
+            scale(" + d3.event.transform.k + ", 1)"
+          )
+          
+        # _.svg.select("path.area").attr("d", area)
       )
 
     @definition.line = d3.line()
