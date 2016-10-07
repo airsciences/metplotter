@@ -376,10 +376,12 @@
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
       this.definition.zoom = d3.zoom().on("zoom", function() {
-        console.log("Zoom Event (path)", _.svg.select(".line-plot-path"));
+        _.calculateYAxisDims(_.data);
         _.svg.select(".line-plot-axis-x").call(_.definition.xAxis.scale(d3.event.transform.rescaleX(_.definition.x)));
-        _.svg.select(".line-plot-axis-y").call(_.definition.yAxis.scale(d3.event.transform.rescaleY(_.definition.y)));
-        return _.svg.select(".line-plot-path").attr("transform", d3.event.transform);
+        _.svg.select(".line-plot-axis-y").call(_.definition.yAxis);
+        return _.svg.select(".line-plot-path").attr("d", _.definition.line).attr("transform", function() {
+          return "translate(" + d3.event.transform.x + "," + 0 + ") scale(" + d3.event.transform.k + ", 1)";
+        });
       });
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
@@ -446,14 +448,28 @@
     };
 
     LinePlot.prototype.calculateAxisDims = function(data) {
-      var preError, xmax, xmin, y2BandMax, y2BandMin, y2Max, y2Min, yBandMax, yBandMin, yMax, yMin, ymax, ymax_a, ymin, ymin_a;
+      var preError;
       preError = this.preError + "calculateAxisDims(data)";
+      this.calculateXAxisDims(data);
+      return this.calculateYAxisDims(data);
+    };
+
+    LinePlot.prototype.calculateXAxisDims = function(data) {
+      var preError, xmax, xmin;
+      preError = this.preError + "calculateXAxisDims(data)";
       xmin = this.options.x.min === null ? d3.min(data, function(d) {
         return d.x;
       }) : this.parseDate(this.options.x.min) - 10000;
       xmax = this.options.x.max === null ? d3.max(data, function(d) {
         return d.x;
       }) : this.parseDate(this.options.x.max);
+      this.definition.x.min = xmin;
+      return this.definition.x.max = xmax;
+    };
+
+    LinePlot.prototype.calculateYAxisDims = function(data) {
+      var preError, y2BandMax, y2BandMin, y2Max, y2Min, yBandMax, yBandMin, yMax, yMin, ymax, ymax_a, ymin, ymin_a;
+      preError = this.preError + "calculateYAxisDims(data)";
       yMin = this.options.y.min === null ? d3.min(data, function(d) {
         return d.y;
       }) : this.options.y.min;
@@ -484,8 +500,6 @@
       ymax = d3.max(ymax_a);
       ymin = ymin === ymax ? ymin * 0.8 : ymin;
       ymax = ymin === ymax ? ymax * 1.2 : ymax;
-      this.definition.x.min = xmin;
-      this.definition.x.max = xmax;
       this.definition.y.min = ymin;
       return this.definition.y.max = ymax;
     };
@@ -556,6 +570,7 @@
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
       this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
+      this.calculateYAxisDims(this.data);
       dtDiff = this.definition.x.max - dtOffset;
       this.log(preError + " Date Diff Calcs (dtOffset, @def.x.min, dtDiff)", dtOffset, this.definition.x.max, this.dtDiff);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();

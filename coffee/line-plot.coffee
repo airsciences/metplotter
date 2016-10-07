@@ -138,18 +138,28 @@ window.Plotting.LinePlot = class LinePlot
 
     @definition.zoom = d3.zoom()
       .on("zoom", () ->
-        console.log "Zoom Event (path)", _.svg.select(".line-plot-path")
+        # Re-define Y-Axis Bounds
+        _.calculateYAxisDims(_.data)
+        
+        # Zoom the X-Axis
         _.svg.select(".line-plot-axis-x").call(
           _.definition.xAxis.scale(d3.event.transform.rescaleX(_.definition.x))
         )
         _.svg.select(".line-plot-axis-y").call(
-          _.definition.yAxis.scale(d3.event.transform.rescaleY(_.definition.y))
+        #  _.definition.yAxis.scale(d3.event.transform.rescaleY(_.definition.y))
+          _.definition.yAxis
         )
         # _.svg.select("path.area").attr("d", area)
         # _.svg.select(".line-plot-path").attr("d", _.definition.line)
-        _.svg.select(".line-plot-path").attr("transform", d3.event.transform)
+        _.svg.select(".line-plot-path")
+          .attr("d", _.definition.line)
+          .attr("transform", () ->
+            return "translate(" + d3.event.transform.x + ",
+            " + 0 + ")
+            scale(" + d3.event.transform.k + ", 1)"
+          )
+        # _.svg.select(".line-plot-path").attr("transform", d3.event.transform)
       )
-    # @definition.zoom.extent(@definition.x)
 
     @definition.line = d3.line()
       .defined((d)->
@@ -215,13 +225,29 @@ window.Plotting.LinePlot = class LinePlot
       (margin.top)])
 
   calculateAxisDims: (data) ->
+    # Shortcut Method to Calculate X & Y-Axis Dims
     preError = "#{@preError}calculateAxisDims(data)"
+    @calculateXAxisDims(data)
+    @calculateYAxisDims(data)
 
-    # Calculate X & Y, Min & Max
+  calculateXAxisDims: (data) ->
+    # Calculate X-Axis Dims
+    preError = "#{@preError}calculateXAxisDims(data)"
+    
+    # Calculate Min & Max X Values
     xmin = if @options.x.min is null then d3.min(data, (d)-> d.x)
     else @parseDate(@options.x.min)-10000
     xmax = if @options.x.max is null then d3.max(data, (d)-> d.x)
     else @parseDate(@options.x.max)
+    
+    # Insert Values into Definition
+    @definition.x.min = xmin
+    @definition.x.max = xmax
+
+  calculateYAxisDims: (data) ->
+    preError = "#{@preError}calculateYAxisDims(data)"
+    
+    # Calculate Min & Max Y Values
     yMin = if @options.y.min is null then d3.min(data, (d)-> d.y)
     else @options.y.min
     yMax = if @options.y.max is null then d3.max(data, (d)-> d.y)
@@ -256,9 +282,11 @@ window.Plotting.LinePlot = class LinePlot
     ymin = if ymin == ymax then ymin * 0.8 else ymin
     ymax = if ymin == ymax then ymax * 1.2 else ymax
 
+    # TEST
+    # ymin = 0
+    # ymax = 50
+
     # Insert Values into Definition
-    @definition.x.min = xmin
-    @definition.x.max = xmax
     @definition.y.min = ymin
     @definition.y.max = ymax
 
@@ -548,6 +576,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("d", @definition.line2)
 
     # @calculateAxisDims @data
+    @calculateYAxisDims @data
     dtDiff = @definition.x.max - dtOffset
     @log "#{preError} Date Diff Calcs (dtOffset, @def.x.min, dtDiff)",
       dtOffset, @definition.x.max, @dtDiff
