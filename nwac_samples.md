@@ -83,7 +83,7 @@ The sample template `JSON`
 * `options` - A specific JSON object that is passed to the D3 plot
 
 
-*** Default Options for a Plot***
+***Default Options for a Plot***
 
 The JSON object of defaults for a plot. This shows everything that be configured
 on an individual plot. We can discuss what the NWAC user needs to be able to
