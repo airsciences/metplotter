@@ -81,3 +81,55 @@ The sample template `JSON`
 * `station` - Basic station and titling inforation. Will be used for selectors.
 * `dataParams` - Specify the API request for getting initial data for the plot
 * `options` - A specific JSON object that is passed to the D3 plot
+
+
+*** Default Options for a Plot***
+
+The JSON object of defaults for a plot. This shows everything that be configured
+on an individual plot. We can discuss what the NWAC user needs to be able to
+manipulate to save their templates.
+
+***Note:*** It's also effective that we just let them manuipulate these things on 
+the plot, then simply send a `PUT` to save a template. 
+
+```coffeescript
+# Default Options
+defaults =
+  uuid: ''
+  debug: true
+  target: null
+  theme: 'default'
+  x:
+    variable: null
+    format: "%Y-%m-%d %H:%M:%S"
+    min: null
+    max: null
+    ticks: 7
+  y:
+    variable: null
+    ticks: 5
+    min: null
+    max: null
+  yBand:
+    minVariable: null
+    maxVariable: null
+  y2:
+    variable: null
+    ticks: 5
+    min: null
+    max: null
+  y2Band:
+    minVariable: null
+    maxVariable: null
+  transitionDuration: 500
+  line1Color: "rgb(41, 128, 185)"
+  line2Color: "rgb(39, 174, 96)"
+  weight: 2
+  axisColor: "rgb(0,0,0)"
+  font:
+    weight: 100
+    size: 12
+  crosshairX:
+    weight: 1
+    color: "rgb(149, 165, 166)"
+```
