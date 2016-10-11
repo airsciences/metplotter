@@ -36,6 +36,8 @@ window.Plotting.LinePlot = class LinePlot
       y2Band:
         minVariable: null
         maxVariable: null
+      zoom:
+        maxScale: 6
       transitionDuration: 500
       line1Color: "rgb(41, 128, 185)"
       line2Color: "rgb(39, 174, 96)"
@@ -133,35 +135,42 @@ window.Plotting.LinePlot = class LinePlot
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
       .ticks(@options.y.ticks)
       
-    @zoomIdentity = d3.zoomIdentity
     @definition.zoom = d3.zoom()
+      .scaleExtent([1, @options.zoom.maxScale])
       .on("zoom", () ->
-        # Re-define Y-Axis Bounds
-        _.calculateYAxisDims(_.data)
-        
-        xt = d3.event.transform.x
-        kt = d3.event.transform.k
-        
-        _.zoomIdentity.translate(xt, 0).scale(kt)
-        console.log "On-Zoom: (_.zoomIdentity, d3.zoomIdentity)",
-          _.zoomIdentity, d3.zoomIdentity
+        _transform = d3.event.transform
         
         # Zoom the X-Axis
+        _rescaleX = _transform.rescaleX(_.definition.x)
         _.svg.select(".line-plot-axis-x").call(
-          _.definition.xAxis.scale(d3.event.transform.rescaleX(_.definition.x))
+          _.definition.xAxis.scale(_rescaleX)
         )
-        _.svg.select(".line-plot-axis-y").call(_.definition.yAxis)
         
-        # Zoom the Line Paths
+        # Redefine & Redraw the Line Path
+        _.definition.line = d3.line()
+          .defined((d)->
+            !isNaN(d.y) and d.y isnt null
+          )
+          .x((d) -> _transform.applyX(_.definition.x(d.x)))
+          .y((d) -> _.definition.y(d.y))
+          .curve(d3.curveMonotoneX)
+
         _.svg.select(".line-plot-path")
           .attr("d", _.definition.line)
-          .attr("transform", "translate(#{xt}, 0) scale(#{kt}, 1)")
-          
+
+        # Redefine & Redraw the Line2 Path
+        _.definition.line2 = d3.line()
+          .defined((d)->
+            !isNaN(d.y2) and d.y2 isnt null
+          )
+          .x((d) -> _transform.applyX(_.definition.x(d.x)))
+          .y((d) -> _.definition.y(d.y2))
+          .curve(d3.curveMonotoneX)
+
         _.svg.select(".line-plot-path2")
           .attr("d", _.definition.line2)
-          .attr("transform", "translate(#{xt}, 0) scale(#{kt}, 1)")
           
-        # _.svg.select("path.area").attr("d", area)
+        _.appendCrosshairTarget(_transform)
       )
 
     @definition.line = d3.line()
@@ -218,11 +227,28 @@ window.Plotting.LinePlot = class LinePlot
         bottom: Math.round(height * 0.16)
         left: Math.round(Math.pow(width, 0.6))
 
+    # Basic Dimention
     @definition.dimensions =
       width: width
       stageWidth: (width + 200)
       height: height
       margin: margin
+      
+    # Define Translate Padding
+    @definition.dimensions.topPadding =
+      parseInt(@definition.dimensions.margin.top)
+    @definition.dimensions.bottomPadding =
+      parseInt(@definition.dimensions.height -
+      @definition.dimensions.margin.bottom)
+    @definition.dimensions.leftPadding =
+      parseInt(@definition.dimensions.margin.left)
+    @definition.dimensions.innerHeight =
+      parseInt(@definition.dimensions.height -
+      @definition.dimensions.margin.bottom - @definition.dimensions.margin.top)
+    @definition.dimensions.innerWidth =
+      parseInt(@definition.dimensions.width -
+      @definition.dimensions.margin.left - @definition.dimensions.margin.right)
+    
     @definition.x = d3.scaleTime().range([margin.left, (width-margin.right)])
     @definition.y = d3.scaleLinear().range([(height-margin.bottom),
       (margin.top)])
@@ -300,16 +326,6 @@ window.Plotting.LinePlot = class LinePlot
     _ = @
     @log "#{preError}", @options
 
-    # Define Translate Padding
-    topPadding = parseInt(@definition.dimensions.margin.top)
-    bottomPadding = parseInt(@definition.dimensions.height -
-      @definition.dimensions.margin.bottom)
-    leftPadding = parseInt(@definition.dimensions.margin.left)
-    innerHeight = parseInt(@definition.dimensions.height -
-      @definition.dimensions.margin.bottom - @definition.dimensions.margin.top)
-    innerWidth = parseInt(@definition.dimensions.width -
-      @definition.dimensions.margin.left - @definition.dimensions.margin.right)
-
     # Create the SVG
     @svg = d3.select(@options.target).append("svg")
       .attr("class", "line-plot")
@@ -321,9 +337,12 @@ window.Plotting.LinePlot = class LinePlot
       .append("clipPath")
       .attr("id", "#{@options.target}_clip")
       .append("rect")
-      .attr("width", innerWidth)
-      .attr("height", innerHeight)
-      .attr("transform", "translate(#{leftPadding}, #{topPadding})")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
     
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
@@ -335,7 +354,9 @@ window.Plotting.LinePlot = class LinePlot
       .style("fill", "none")
       .style("stroke", @options.axisColor)
       .call(@definition.xAxis)
-      .attr("transform", "translate(0, #{bottomPadding})")
+      .attr("transform",
+        "translate(0, #{@definition.dimensions.bottomPadding})"
+      )
             
     # Add Text Labels to X-Axis (Only if Large Scale Theme)
     if @options.theme isnt 'minimum'
@@ -352,7 +373,7 @@ window.Plotting.LinePlot = class LinePlot
       .style("font-size", @options.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.yAxis)
-      .attr("transform", "translate(#{leftPadding}, 0)")
+      .attr("transform", "translate(#{@definition.dimensions.leftPadding}, 0)")
 
     # Append Bands
     if (
@@ -409,11 +430,11 @@ window.Plotting.LinePlot = class LinePlot
 
     # Create Crosshairs
     @crosshairs = @svg.append("g")
-      .attr("class", "crosshair-#{@options.uuid}")
+      .attr("class", "crosshair")
 
     # Create Vertical line
     @crosshairs.append("line")
-      .attr("class", "crosshair-x-#{@options.uuid}")
+      .attr("class", "crosshair-x")
       .style("stroke", @options.crosshairX.color)
       .style("stroke-width", @options.crosshairX.weight)
       .style("fill", "none")
@@ -422,12 +443,12 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y.variable != null
       @focusCircle = @svg.append("circle")
         .attr("r", 4)
-        .attr("class", "focusCircle-#{@options.uuid}")
+        .attr("class", "focusCircle")
         .attr("fill", @options.line1Color)
         .attr("transform", "translate(-10, -10)")
 
       @focusText = @svg.append("text")
-        .attr("class", "focusText-#{@options.uuid}")
+        .attr("class", "focusText")
         .attr("x", 9)
         .attr("y", 7)
         .style("fill", @options.line1Color)
@@ -435,23 +456,37 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y2.variable != null
       @focusCircle2 = @svg.append("circle")
         .attr("r", 4)
-        .attr("class", "focusCircle2-#{@options.uuid}")
+        .attr("class", "focusCircle2")
         .attr("fill", @options.line2Color)
         .attr("transform", "translate(-10, -10)")
 
       @focusText2 = @svg.append("text")
-        .attr("class", "focusText2-#{@options.uuid}")
+        .attr("class", "focusText2")
         .attr("x", 9)
         .attr("y", 7)
         .style("fill", @options.line2Color)
 
-    # Move Crosshairs and Focus Circle Based on Mouse Location
+    # Append the Crosshair & Zoom Event Rectangle
     @overlay = @svg.append("rect")
-      .datum(@data)
-      .attr("class", "overlay-#{@options.uuid}")
-      .attr("width", innerWidth)
-      .attr("height", innerHeight)
-      .attr("transform", "translate(#{leftPadding}, #{topPadding})")
+      .attr("class", "plot-event-target")
+      
+    # Append Crosshair & Zoom Listening Targets
+    @appendCrosshairTarget()
+    @appendZoomTarget()
+    
+  appendCrosshairTarget: (transform) ->
+    # Move Crosshairs and Focus Circle Based on Mouse Location
+    preError = "#{@preError}appendCrosshairTarget()"
+    _ = @
+    
+    @overlay.datum(@data)
+      .attr("class", "overlay")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
       .style("fill", "none")
       .style("pointer-events", "all")
       .on("mouseover", () ->
@@ -474,27 +509,44 @@ window.Plotting.LinePlot = class LinePlot
       )
       .on("mousemove", (d) ->
         mouse = d3.mouse @
-        x0 = _.definition.x.invert(mouse[0] + leftPadding)
+        x0 = _.definition.x.invert(mouse[0] +
+          _.definition.dimensions.leftPadding)
+        x0a = x0
+        if transform
+          x0a = _.definition.x.invert(
+            transform.invertX(mouse[0]) + _.definition.dimensions.leftPadding
+          )
+        console.log("Crosshair, on-mousemove: (mouse, x0, x0a)", mouse, x0, x0a)
+        x0 = x0a
+    
         i = _.bisectDate(d, x0, 1)
         min = x0.getMinutes()
         d0 = d[i - 1]
         d1 = d[i]
         d = d0
         d = if min >= 30 then d1 else d0
-        dx = _.definition.x d.x
+        # dx = _.definition.x(d.x)
+        dx = if transform then transform.applyX(_.definition.x(d.x)) else
+          _.definition.x(d.x)
         if _.options.y.variable != null
-          dy = _.definition.y d.y
-          _.focusCircle.attr "transform", "translate(0, 0)"
+          dy = _.definition.y(d.y)
+          _.focusCircle.attr("transform", "translate(0, 0)")
         if _.options.y2.variable != null
-          dy2 = _.definition.y d.y2
-          _.focusCircle2.attr "transform", "translate(0, 0)"
+          dy2 = _.definition.y(d.y2)
+          _.focusCircle2.attr("transform", "translate(0, 0)")
 
-        _.crosshairs.select(".crosshair-x-#{_.options.uuid}")
-          .attr("x1", mouse[0])
-          .attr("y1", topPadding)
-          .attr("x2", mouse[0])
-          .attr("y2", innerHeight + topPadding)
-          .attr("transform", "translate(#{leftPadding}, 0)")
+        cx = dx - _.definition.dimensions.leftPadding
+        _.crosshairs.select(".crosshair-x")
+          .attr("x1", cx)
+          .attr("y1", _.definition.dimensions.topPadding)
+          .attr("x2", cx)
+          .attr(
+            "y2", _.definition.dimensions.innerHeight +
+            _.definition.dimensions.topPadding
+          )
+          .attr("transform",
+            "translate(#{_.definition.dimensions.leftPadding}, 0)"
+          )
 
         if _.options.y.variable != null
           _.focusCircle
@@ -502,8 +554,8 @@ window.Plotting.LinePlot = class LinePlot
             .attr("cy", dy)
 
           _.focusText
-            .attr("x", dx + leftPadding / 10)
-            .attr("y", dy - topPadding / 10)
+            .attr("x", dx + _.definition.dimensions.leftPadding / 10)
+            .attr("y", dy - _.definition.dimensions.topPadding / 10)
             .text(d.y.toFixed(1) + " " + "°F")
 
         if _.options.y2.variable != null
@@ -512,16 +564,23 @@ window.Plotting.LinePlot = class LinePlot
             .attr("cy", dy2)
 
           _.focusText2
-            .attr("x", dx + leftPadding / 10)
-            .attr("y", dy2 - topPadding / 10)
+            .attr("x", dx + _.definition.dimensions.leftPadding / 10)
+            .attr("y", dy2 - _.definition.dimensions.topPadding / 10)
             .text(d.y2.toFixed(1) + " " + "°F")
       )
+      
+  appendZoomTarget: ->
+    preError = "#{@preError}appendZoomTarget()"
+    _ = @
     
-    # Zoom Rectangle
+    # Append the Zoom Rectangle
     @overlay.attr("class", "zoom-pane")
-      .attr("width", innerWidth)
-      .attr("height", innerHeight)
-      .attr("transform", "translate(#{leftPadding}, #{topPadding})")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
       .style("fill", "none")
       .style("pointer-events", "all")
       .style("cursor", "move")
@@ -630,38 +689,3 @@ window.Plotting.LinePlot = class LinePlot
     # Zoom Function
     preError = "#{@preError}.zoomed()"
     @log "#{preError} zoom action occured."
-
-
-#  @zoomed: () ->
-#    # Zoom Function
-#    preError = "#{@preError}.zoomed()"
-#    @log "#{preError} zoom action occured."
-#    view = @svg.select(".overlay")
-#    gX = @svg.select(".line-plot-axis-x")
-#    gY = @svg.select(".line-plot-axis-y")
-#
-#    view.attr("transform", d3.event.transform)
-#   gX.call(@definition.xAxis.scale(d3.event.transform.rescaleX(@definition.x)))
-#   gY.call(@definition.yAxis.scale(d3.event.transform.rescaleY(@definition.y)))
-#
-#  @dragStarted: (d) ->
-#    d3.event.sourceEvent.stopPropagation()
-#    d3.select(this).classed("dragging", true)
-
-#  @dragged: (d) ->
-#    d3.select(@)
-#      .attr("cx", d.x = d3.event.x)
-#      .attr("cy", d.y = d3.event.y)
-
-#  @dragended: (d) ->
-#    d3.select(@)
-#      .classed("dragging", false)
-#
-#  @xScroll: (d) ->
-#    # Scroll the X-Axis
-#    _ = @
-#    return (d) ->
-#      document.onselectstart = () -> return false
-#      p = d3.mouse _.vis[0][0]
-#      console.log "xScroll", p
-#      _.downy = _.x.invert p[0]

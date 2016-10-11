@@ -60,7 +60,6 @@ window.Plotting.Handler = class Handler
     @getTemplate()
     @getPlotData(null, false)
     @append()
-    console.log "Appended"
     @stage()
 
   stage: ->
@@ -100,8 +99,6 @@ window.Plotting.Handler = class Handler
       @current = new Date args.max_datetime
 
     callback = (data) ->
-      console.log "#{preError} callback() Returning API (data)",
-        data.responseJSON.results
       _.template[plotId].data = data.responseJSON
     
     if async == false
