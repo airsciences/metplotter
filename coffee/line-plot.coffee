@@ -37,7 +37,9 @@ window.Plotting.LinePlot = class LinePlot
         minVariable: null
         maxVariable: null
       zoom:
-        maxScale: 6
+        scale:
+          min: 0.1
+          max: 5
       transitionDuration: 500
       line1Color: "rgb(41, 128, 185)"
       line2Color: "rgb(39, 174, 96)"
@@ -136,7 +138,7 @@ window.Plotting.LinePlot = class LinePlot
       .ticks(@options.y.ticks)
       
     @definition.zoom = d3.zoom()
-      .scaleExtent([1, @options.zoom.maxScale])
+      .scaleExtent([@options.zoom.scale.min, @options.zoom.scale.max])
       .on("zoom", () ->
         _transform = d3.event.transform
         
@@ -511,13 +513,10 @@ window.Plotting.LinePlot = class LinePlot
         mouse = d3.mouse @
         x0 = _.definition.x.invert(mouse[0] +
           _.definition.dimensions.leftPadding)
-        x0a = x0
         if transform
-          x0a = _.definition.x.invert(
-            transform.invertX(mouse[0]) + _.definition.dimensions.leftPadding
+          x0 = _.definition.x.invert(
+            transform.invertX(mouse[0] + _.definition.dimensions.leftPadding)
           )
-        console.log("Crosshair, on-mousemove: (mouse, x0, x0a)", mouse, x0, x0a)
-        x0 = x0a
     
         i = _.bisectDate(d, x0, 1)
         min = x0.getMinutes()

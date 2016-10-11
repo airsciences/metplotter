@@ -300,7 +300,10 @@
           maxVariable: null
         },
         zoom: {
-          maxScale: 6
+          scale: {
+            min: 0.1,
+            max: 5
+          }
         },
         transitionDuration: 500,
         line1Color: "rgb(41, 128, 185)",
@@ -382,7 +385,7 @@
       this.calculateAxisDims(this.data);
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
-      this.definition.zoom = d3.zoom().scaleExtent([1, this.options.zoom.maxScale]).on("zoom", function() {
+      this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).on("zoom", function() {
         var _rescaleX, _transform;
         _transform = d3.event.transform;
         _rescaleX = _transform.rescaleX(_.definition.x);
@@ -600,15 +603,12 @@
           return _.focusText2.style("display", "none");
         }
       }).on("mousemove", function(d) {
-        var cx, d0, d1, dx, dy, dy2, i, min, mouse, x0, x0a;
+        var cx, d0, d1, dx, dy, dy2, i, min, mouse, x0;
         mouse = d3.mouse(this);
         x0 = _.definition.x.invert(mouse[0] + _.definition.dimensions.leftPadding);
-        x0a = x0;
         if (transform) {
-          x0a = _.definition.x.invert(transform.invertX(mouse[0]) + _.definition.dimensions.leftPadding);
+          x0 = _.definition.x.invert(transform.invertX(mouse[0] + _.definition.dimensions.leftPadding));
         }
-        console.log("Crosshair, on-mousemove: (mouse, x0, x0a)", mouse, x0, x0a);
-        x0 = x0a;
         i = _.bisectDate(d, x0, 1);
         min = x0.getMinutes();
         d0 = d[i - 1];
