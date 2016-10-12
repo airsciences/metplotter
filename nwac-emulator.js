@@ -50,7 +50,6 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "limit": 500
                 },
                 "options": {
-                    "aspectDivisor": 1.33,
                     "line1Color": "rgb(41,128,185)",
                     "line2Color": "rgb(39,174,96)",
                     "y": {
