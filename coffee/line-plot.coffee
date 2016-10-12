@@ -417,9 +417,12 @@ window.Plotting.LinePlot = class LinePlot
       )
       .style("fill", "none")
       .style("pointer-events", "all")
-      .on("mouseover", () -> _.showCrosshair())
-      .on("mouseout", () -> _.hideCrosshair())
-      .on("mousemove", (d) -> _.setCrosshair(d, transform))
+      .on("mouseover", () -> plotter.showCrosshairs())
+      .on("mouseout", () -> plotter.hideCrosshairs())
+      .on("mousemove", () ->
+        mouse = _.setCrosshair(transform)
+        plotter.crosshair(transform, mouse)
+      )
       
   appendZoomTarget: ->
     preError = "#{@preError}appendZoomTarget()"
@@ -560,25 +563,25 @@ window.Plotting.LinePlot = class LinePlot
       
     @appendCrosshairTarget(_transform)
 
-  setCrosshair: (d, transform, mouse) ->
+  setCrosshair: (transform, mouse) ->
     # Set the Crosshair position
     preError = "#{@preError}.setCrosshair(mouse)"
     _ = @
+    _dims = @definition.dimensions
     
     _mouseTarget = @overlay.node()
+    _datum = @overlay.datum()
     mouse = if mouse then mouse else d3.mouse(_mouseTarget)
-    x0 = _.definition.x.invert(mouse[0] +
-      _.definition.dimensions.leftPadding)
+    
+    x0 = _.definition.x.invert(mouse[0] + _dims.leftPadding)
     if transform
       x0 = _.definition.x.invert(
-        transform.invertX(mouse[0] + _.definition.dimensions.leftPadding)
+        transform.invertX(mouse[0] + _dims.leftPadding)
       )
-
-    i = _.bisectDate(d, x0, 1)
-    d = if x0.getMinutes() >= 30 then d[i] else d[i - 1]
+    i = _.bisectDate(_datum, x0, 1)
+    d = if x0.getMinutes() >= 30 then _datum[i] else _datum[i - 1]
     dx = if transform then transform.applyX(_.definition.x(d.x)) else
       _.definition.x(d.x)
-    
     if _.options.y.variable != null
       dy = _.definition.y(d.y)
       _.focusCircle.attr("transform", "translate(0, 0)")
@@ -586,18 +589,13 @@ window.Plotting.LinePlot = class LinePlot
       dy2 = _.definition.y(d.y2)
       _.focusCircle2.attr("transform", "translate(0, 0)")
 
-    cx = dx - _.definition.dimensions.leftPadding
+    cx = dx - _dims.leftPadding
     _.crosshairs.select(".crosshair-x")
       .attr("x1", cx)
-      .attr("y1", _.definition.dimensions.topPadding)
+      .attr("y1", _dims.topPadding)
       .attr("x2", cx)
-      .attr(
-        "y2", _.definition.dimensions.innerHeight +
-        _.definition.dimensions.topPadding
-      )
-      .attr("transform",
-        "translate(#{_.definition.dimensions.leftPadding}, 0)"
-      )
+      .attr("y2", _dims.innerHeight + _dims.topPadding)
+      .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
     if _.options.y.variable != null
       _.focusCircle
@@ -605,8 +603,8 @@ window.Plotting.LinePlot = class LinePlot
         .attr("cy", dy)
 
       _.focusText
-        .attr("x", dx + _.definition.dimensions.leftPadding / 10)
-        .attr("y", dy - _.definition.dimensions.topPadding / 10)
+        .attr("x", dx + _dims.leftPadding / 10)
+        .attr("y", dy - _dims.topPadding / 10)
         .text(d.y.toFixed(1) + " " + "°F")
 
     if _.options.y2.variable != null
@@ -615,11 +613,14 @@ window.Plotting.LinePlot = class LinePlot
         .attr("cy", dy2)
 
       _.focusText2
-        .attr("x", dx + _.definition.dimensions.leftPadding / 10)
-        .attr("y", dy2 - _.definition.dimensions.topPadding / 10)
+        .attr("x", dx + _dims.leftPadding / 10)
+        .attr("y", dy2 - _dims.topPadding / 10)
         .text(d.y2.toFixed(1) + " " + "°F")
     
+    return mouse
+    
   showCrosshair: ->
+    # Show the Crosshair
     @crosshairs.select(".crosshair-x")
       .style("display", null)
     

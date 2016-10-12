@@ -549,11 +549,13 @@
       preError = this.preError + "appendCrosshairTarget()";
       _ = this;
       return this.overlay.datum(this.data).attr("class", "overlay").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
-        return _.showCrosshair();
+        return plotter.showCrosshairs();
       }).on("mouseout", function() {
-        return _.hideCrosshair();
-      }).on("mousemove", function(d) {
-        return _.setCrosshair(d, transform);
+        return plotter.hideCrosshairs();
+      }).on("mousemove", function() {
+        var mouse;
+        mouse = _.setCrosshair(transform);
+        return plotter.crosshair(transform, mouse);
       });
     };
 
@@ -628,18 +630,20 @@
       return this.appendCrosshairTarget(_transform);
     };
 
-    LinePlot.prototype.setCrosshair = function(d, transform, mouse) {
-      var _, _mouseTarget, cx, dx, dy, dy2, i, preError, x0;
+    LinePlot.prototype.setCrosshair = function(transform, mouse) {
+      var _, _datum, _dims, _mouseTarget, cx, d, dx, dy, dy2, i, preError, x0;
       preError = this.preError + ".setCrosshair(mouse)";
       _ = this;
+      _dims = this.definition.dimensions;
       _mouseTarget = this.overlay.node();
+      _datum = this.overlay.datum();
       mouse = mouse ? mouse : d3.mouse(_mouseTarget);
-      x0 = _.definition.x.invert(mouse[0] + _.definition.dimensions.leftPadding);
+      x0 = _.definition.x.invert(mouse[0] + _dims.leftPadding);
       if (transform) {
-        x0 = _.definition.x.invert(transform.invertX(mouse[0] + _.definition.dimensions.leftPadding));
+        x0 = _.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
       }
-      i = _.bisectDate(d, x0, 1);
-      d = x0.getMinutes() >= 30 ? d[i] : d[i - 1];
+      i = _.bisectDate(_datum, x0, 1);
+      d = x0.getMinutes() >= 30 ? _datum[i] : _datum[i - 1];
       dx = transform ? transform.applyX(_.definition.x(d.x)) : _.definition.x(d.x);
       if (_.options.y.variable !== null) {
         dy = _.definition.y(d.y);
@@ -649,16 +653,17 @@
         dy2 = _.definition.y(d.y2);
         _.focusCircle2.attr("transform", "translate(0, 0)");
       }
-      cx = dx - _.definition.dimensions.leftPadding;
-      _.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _.definition.dimensions.topPadding).attr("x2", cx).attr("y2", _.definition.dimensions.innerHeight + _.definition.dimensions.topPadding).attr("transform", "translate(" + _.definition.dimensions.leftPadding + ", 0)");
+      cx = dx - _dims.leftPadding;
+      _.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
       if (_.options.y.variable !== null) {
         _.focusCircle.attr("cx", dx).attr("cy", dy);
-        _.focusText.attr("x", dx + _.definition.dimensions.leftPadding / 10).attr("y", dy - _.definition.dimensions.topPadding / 10).text(d.y.toFixed(1) + " " + "°F");
+        _.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(1) + " " + "°F");
       }
       if (_.options.y2.variable !== null) {
         _.focusCircle2.attr("cx", dx).attr("cy", dy2);
-        return _.focusText2.attr("x", dx + _.definition.dimensions.leftPadding / 10).attr("y", dy2 - _.definition.dimensions.topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
+        _.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
       }
+      return mouse;
     };
 
     LinePlot.prototype.showCrosshair = function() {
@@ -921,21 +926,39 @@
       return results;
     };
 
-    Handler.prototype.crosshair = function(d, mouse, transform) {
+    Handler.prototype.crosshair = function(transform, mouse) {
       var i, len, plot, preError, ref, results;
       preError = this.preError + ".crosshair(mouse, transform)";
-      console.log(preError + " (d, mouse, transform)", d, mouse, transform);
       ref = this.plots;
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        console.log(preError + " (key, plot)", plot);
-        results.push(plot.setCrosshair(d, mouse, transform));
+        results.push(plot.setCrosshair(transform, mouse));
       }
       return results;
     };
 
-    Handler.prototype.hideCrosshair = function() {};
+    Handler.prototype.showCrosshairs = function() {
+      var i, len, plot, ref, results;
+      ref = this.plots;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        plot = ref[i];
+        results.push(plot.showCrosshair());
+      }
+      return results;
+    };
+
+    Handler.prototype.hideCrosshairs = function() {
+      var i, len, plot, ref, results;
+      ref = this.plots;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        plot = ref[i];
+        results.push(plot.hideCrosshair());
+      }
+      return results;
+    };
 
     Handler.prototype.alert = function(message, type) {};
 

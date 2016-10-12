@@ -197,16 +197,21 @@ window.Plotting.Handler = class Handler
       # console.log("#{preError} (key, plot)", plot)
       plot.setZoomTransform(transform)
     
-  crosshair: (d, mouse, transform) ->
+  crosshair: (transform, mouse) ->
     # Set the cursor hover position of all plots. Triggered by a single plot.
     preError = "#{@preError}.crosshair(mouse, transform)"
-    console.log("#{preError} (d, mouse, transform)", d, mouse, transform)
     for plot in @plots
-      console.log("#{preError} (key, plot)", plot)
-      plot.setCrosshair(d, mouse, transform)
+      plot.setCrosshair(transform, mouse)
 
-  hideCrosshair: ->
+  showCrosshairs: ->
+    # Show all Crosshair Command
+    for plot in @plots
+      plot.showCrosshair()
+
+  hideCrosshairs: ->
     # Hide cursor crosshairs.
+    for plot in @plots
+      plot.hideCrosshair()
 
   alert: (message, type) ->
     # Fire Modal w/ Message
