@@ -40,6 +40,7 @@ window.Plotting.LinePlot = class LinePlot
         scale:
           min: 0.1
           max: 5
+      aspectDivisor: 4
       transitionDuration: 500
       line1Color: "rgb(41, 128, 185)"
       line2Color: "rgb(39, 174, 96)"
@@ -194,7 +195,7 @@ window.Plotting.LinePlot = class LinePlot
   calculateChartDims: ->
     # Calculate Basic DOM & SVG Dimensions
     width = Math.round($(@options.target).width())
-    height = Math.round(width/4)
+    height = Math.round(width/@options.aspectDivisor)
     margin =
       top: Math.round(height * 0.16)
       right: Math.round(Math.pow(width, 0.6))

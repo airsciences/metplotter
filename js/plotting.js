@@ -305,6 +305,7 @@
             max: 5
           }
         },
+        aspectDivisor: 4,
         transitionDuration: 500,
         line1Color: "rgb(41, 128, 185)",
         line2Color: "rgb(39, 174, 96)",
@@ -449,7 +450,7 @@
     LinePlot.prototype.calculateChartDims = function() {
       var height, margin, width;
       width = Math.round($(this.options.target).width());
-      height = Math.round(width / 4);
+      height = Math.round(width / this.options.aspectDivisor);
       margin = {
         top: Math.round(height * 0.16),
         right: Math.round(Math.pow(width, 0.6)),
