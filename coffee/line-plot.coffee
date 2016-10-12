@@ -73,6 +73,10 @@ window.Plotting.LinePlot = class LinePlot
     # Prepare the Data & Definition
     @data = @processData(data.data)
     @getDefinition()
+    
+    # Plotter Reference data
+    @range
+    @scaleRange
 
   processData: (data) ->
     # Process a data set.
@@ -95,6 +99,11 @@ window.Plotting.LinePlot = class LinePlot
       )
         result[key].y2Min = row[@options.y2Band.minVariable]
         result[key].y2Max = row[@options.y2Band.maxVariable]
+    
+    @range =
+      min: d3.min(result, (d)-> d.x)
+      max: d3.max(result, (d)-> d.x)
+    
     return result.sort @sortDatetimeAsc
 
   getDefinition: ->
@@ -116,46 +125,18 @@ window.Plotting.LinePlot = class LinePlot
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
-      
+    
+    _extent = [
+        [-Infinity, 0],
+        [(@definition.x(new Date())),
+        @definition.dimensions.innerHeight]
+    ]
     @definition.zoom = d3.zoom()
       .scaleExtent([@options.zoom.scale.min, @options.zoom.scale.max])
+      .translateExtent(_extent)
       .on("zoom", () ->
-        _transform = d3.event.transform
-        
-        # Zoom the X-Axis
-        _rescaleX = _transform.rescaleX(_.definition.x)
-        _.svg.select(".line-plot-axis-x").call(
-          _.definition.xAxis.scale(_rescaleX)
-        )
-        
-        # Redefine & Redraw the Line Path
-        _.definition.line = d3.line()
-          .defined((d)->
-            !isNaN(d.y) and d.y isnt null
-          )
-          .x((d) -> _transform.applyX(_.definition.x(d.x)))
-          .y((d) -> _.definition.y(d.y))
-          .curve(d3.curveMonotoneX)
-
-        _.svg.select(".line-plot-path")
-          .attr("d", _.definition.line)
-
-        # Redefine & Redraw the Line2 Path
-        _.definition.line2 = d3.line()
-          .defined((d)->
-            !isNaN(d.y2) and d.y2 isnt null
-          )
-          .x((d) -> _transform.applyX(_.definition.x(d.x)))
-          .y((d) -> _.definition.y(d.y2))
-          .curve(d3.curveMonotoneX)
-
-        _.svg.select(".line-plot-path2")
-          .attr("d", _.definition.line2)
-          
-        _.appendCrosshairTarget(_transform)
-        
-        # Pass Transform to Plotter
-        plotter.zoom(_transform)
+        transform = _.setZoomTransform()
+        plotter.zoom(transform)
       )
 
     @definition.line = d3.line()
@@ -470,6 +451,10 @@ window.Plotting.LinePlot = class LinePlot
 
     # Sort the Data
     @data = @data.sort @sortDatetimeAsc
+
+    @range =
+      min: d3.min(@data, (d)-> d.x)
+      max: d3.max(@data, (d)-> d.x)
     
     # Pre-Append Data For Smooth transform
     @svg.select(".line-plot-area")
@@ -530,7 +515,7 @@ window.Plotting.LinePlot = class LinePlot
     # Set the current zoom transform state.
     preError = "#{@preError}.setZoomTransform(transform)"
     _ = @
-    _transform = transform
+    _transform = if transform then transform else d3.event.transform
     
     # Zoom the X-Axis
     _rescaleX = _transform.rescaleX(@definition.x)
@@ -538,6 +523,11 @@ window.Plotting.LinePlot = class LinePlot
       @definition.xAxis.scale(_rescaleX)
     )
     
+    # Set the scaleRange
+    @scaleRange =
+      min: _rescaleX.domain()[0]
+      max: _rescaleX.domain()[1]
+
     # Redefine & Redraw the Line Path
     @definition.line = d3.line()
       .defined((d)->
@@ -563,6 +553,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("d", @definition.line2)
       
     @appendCrosshairTarget(_transform)
+    return _transform
 
   setCrosshair: (transform, mouse) ->
     # Set the Crosshair position
@@ -581,6 +572,11 @@ window.Plotting.LinePlot = class LinePlot
       )
     i = _.bisectDate(_datum, x0, 1)
     d = if x0.getMinutes() >= 30 then _datum[i] else _datum[i - 1]
+    if x0.getTime() < @range.min.getTime()
+      d = _datum[i - 1]
+    if x0.getTime() > @range.max.getTime()
+      d = _datum[i - 1]
+     
     dx = if transform then transform.applyX(_.definition.x(d.x)) else
       _.definition.x(d.x)
     if _.options.y.variable != null
@@ -664,3 +660,11 @@ window.Plotting.LinePlot = class LinePlot
         .attr("y", (@definition.dimensions.margin.top / 2 + 12))
         .style("font-size", "12px")
         .text(subtitle)
+
+  getState: ->
+    # Return the Current Plot state.
+    result =
+      range:
+        data: @range
+        scale: @scaleRange
+       

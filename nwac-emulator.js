@@ -46,8 +46,8 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 34,
-                    "max_datetime": "2016-10-05T17:00:00Z",
-                    "limit": 500
+                    "max_datetime": "2016-10-05T18:00:00Z",
+                    "limit": 168
                 },
                 "options": {
                     "line1Color": "rgb(41,128,185)",
@@ -73,8 +73,8 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 34,
-                    "max_datetime": "2016-10-05T17:00:00Z",
-                    "limit":500
+                    "max_datetime": "2016-10-05T18:00:00Z",
+                    "limit": 168
                 },
                 "options": {
                     "line1Color": "rgb(142,68,173)",
@@ -94,8 +94,8 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 34,
-                    "max_datetime": "2016-10-05T17:00:00Z",
-                    "limit":500
+                    "max_datetime": "2016-10-05T18:00:00Z",
+                    "limit": 168
                 },
                 "options": {
                     "line1Color": "rgb(243,156,18)",

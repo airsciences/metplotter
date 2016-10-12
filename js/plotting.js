@@ -350,6 +350,8 @@
       };
       this.data = this.processData(data.data);
       this.getDefinition();
+      this.range;
+      this.scaleRange;
     }
 
     LinePlot.prototype.processData = function(data) {
@@ -373,11 +375,19 @@
           result[key].y2Max = row[this.options.y2Band.maxVariable];
         }
       }
+      this.range = {
+        min: d3.min(result, function(d) {
+          return d.x;
+        }),
+        max: d3.max(result, function(d) {
+          return d.x;
+        })
+      };
       return result.sort(this.sortDatetimeAsc);
     };
 
     LinePlot.prototype.getDefinition = function() {
-      var _, preError;
+      var _, _extent, preError;
       preError = this.preError + "getDefinition():";
       _ = this;
       this.definition = {
@@ -389,29 +399,11 @@
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).on("zoom", function() {
-        var _rescaleX, _transform;
-        _transform = d3.event.transform;
-        _rescaleX = _transform.rescaleX(_.definition.x);
-        _.svg.select(".line-plot-axis-x").call(_.definition.xAxis.scale(_rescaleX));
-        _.definition.line = d3.line().defined(function(d) {
-          return !isNaN(d.y) && d.y !== null;
-        }).x(function(d) {
-          return _transform.applyX(_.definition.x(d.x));
-        }).y(function(d) {
-          return _.definition.y(d.y);
-        }).curve(d3.curveMonotoneX);
-        _.svg.select(".line-plot-path").attr("d", _.definition.line);
-        _.definition.line2 = d3.line().defined(function(d) {
-          return !isNaN(d.y2) && d.y2 !== null;
-        }).x(function(d) {
-          return _transform.applyX(_.definition.x(d.x));
-        }).y(function(d) {
-          return _.definition.y(d.y2);
-        }).curve(d3.curveMonotoneX);
-        _.svg.select(".line-plot-path2").attr("d", _.definition.line2);
-        _.appendCrosshairTarget(_transform);
-        return plotter.zoom(_transform);
+      _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
+      this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
+        var transform;
+        transform = _.setZoomTransform();
+        return plotter.zoom(transform);
       });
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
@@ -592,6 +584,14 @@
         this.data.push(dtaRow);
       }
       this.data = this.data.sort(this.sortDatetimeAsc);
+      this.range = {
+        min: d3.min(this.data, function(d) {
+          return d.x;
+        }),
+        max: d3.max(this.data, function(d) {
+          return d.x;
+        })
+      };
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
@@ -609,9 +609,13 @@
       var _, _rescaleX, _transform, preError;
       preError = this.preError + ".setZoomTransform(transform)";
       _ = this;
-      _transform = transform;
+      _transform = transform ? transform : d3.event.transform;
       _rescaleX = _transform.rescaleX(this.definition.x);
       this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
+      this.scaleRange = {
+        min: _rescaleX.domain()[0],
+        max: _rescaleX.domain()[1]
+      };
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -628,7 +632,8 @@
         return _.definition.y(d.y2);
       }).curve(d3.curveMonotoneX);
       this.svg.select(".line-plot-path2").attr("d", this.definition.line2);
-      return this.appendCrosshairTarget(_transform);
+      this.appendCrosshairTarget(_transform);
+      return _transform;
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
@@ -645,6 +650,12 @@
       }
       i = _.bisectDate(_datum, x0, 1);
       d = x0.getMinutes() >= 30 ? _datum[i] : _datum[i - 1];
+      if (x0.getTime() < this.range.min.getTime()) {
+        d = _datum[i - 1];
+      }
+      if (x0.getTime() > this.range.max.getTime()) {
+        d = _datum[i - 1];
+      }
       dx = transform ? transform.applyX(_.definition.x(d.x)) : _.definition.x(d.x);
       if (_.options.y.variable !== null) {
         dy = _.definition.y(d.y);
@@ -699,6 +710,16 @@
       }
     };
 
+    LinePlot.prototype.getState = function() {
+      var result;
+      return result = {
+        range: {
+          data: this.range,
+          scale: this.scaleRange
+        }
+      };
+    };
+
     return LinePlot;
 
   })();
@@ -716,9 +737,9 @@
       this.preError = "Plotting.Handler";
       defaults = {
         target: null,
-        stage: 4,
+        stage: 1,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
-        updateHourOffset: 150
+        updateHourOffset: 5000
       };
       this.options = Object.mergeDefaults(options, defaults);
       this.now = new Date();
@@ -775,8 +796,7 @@
       var i, num, ref, results;
       results = [];
       for (num = i = 0, ref = this.options.stage; 0 <= ref ? i <= ref : i >= ref; num = 0 <= ref ? ++i : --i) {
-        this.backward();
-        results.push(this.forward());
+        results.push(this.backward());
       }
       return results;
     };
@@ -828,8 +848,8 @@
       if (direction === 'forward' && this.hasForward()) {
         update = true;
         this.current = this.current.getTime() + (this.options.updateHourOffset * 60 * 60 * 1000);
-        console.log(preError + " (@current)", this.current);
       } else if (direction === 'backward') {
+        console.log(preError + " (backward)");
         update = true;
         prepend_offset = this.options.updateHourOffset;
       }

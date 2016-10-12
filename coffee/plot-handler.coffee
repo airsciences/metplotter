@@ -10,9 +10,9 @@ window.Plotting.Handler = class Handler
     
     defaults =
       target: null
-      stage: 4
+      stage: 1
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
-      updateHourOffset: 150
+      updateHourOffset: 5000
     @options = Object.mergeDefaults options, defaults
 
     @now = new Date()
@@ -66,7 +66,6 @@ window.Plotting.Handler = class Handler
     # Stage forward and behind
     for num in [0..@options.stage]
       @backward()
-      @forward()
     
   getTemplate: (template_uri) ->
     # Request the Template
@@ -117,9 +116,9 @@ window.Plotting.Handler = class Handler
       update = true
       @current = @current.getTime() +
         (@options.updateHourOffset * 60 * 60 * 1000)
-      console.log "#{preError} (@current)", @current
     else if direction == 'backward'
       # Backward is an option, extend the offset from current
+      console.log "#{preError} (backward)"
       update = true
       prepend_offset = @options.updateHourOffset
     
