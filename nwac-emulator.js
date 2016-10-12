@@ -47,7 +47,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "dataParams": {
                     "data_logger": 34,
                     "max_datetime": "2016-10-05T17:00:00Z",
-                    "limit": 50
+                    "limit": 500
                 },
                 "options": {
                     "line1Color": "rgb(41,128,185)",
@@ -71,7 +71,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "field": "precipitation",
                     "data_logger": 32,
                     "max_datetime": "2016-10-05T17:00:00Z",
-                    "limit": 50
+                    "limit":500
                 },
                 "options": {
                     "line1Color": "rgb(142,68,173)",

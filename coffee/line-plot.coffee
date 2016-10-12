@@ -51,14 +51,12 @@ window.Plotting.LinePlot = class LinePlot
       crosshairX:
         weight: 1
         color: "rgb(149, 165, 166)"
-
     if options.x
       options.x = Object.mergeDefaults(options.x, defaults.x)
     if options.y
       options.y = Object.mergeDefaults(options.y, defaults.y)
     if options.y2
       options.y2 = Object.mergeDefaults(options.y2, defaults.y2)
-
     @options = Object.mergeDefaults options, defaults
 
     # Wrapped Logging Functions
@@ -66,63 +64,41 @@ window.Plotting.LinePlot = class LinePlot
     if @options.debug
       @log = (log...) -> console.log(log)
 
+    # Minor Prototype Support Functions
     @parseDate = d3.timeParse(@options.x.format)
     @bisectDate = d3.bisector((d) -> d.x).left
+    @sortDatetimeAsc = (a, b) -> a.x - b.x
 
-    # Sort Data by Datetime (Ascending)
-    @sortDatetimeAsc = (a, b) ->
-      a.x - b.x
+    # Prepare the Data & Definition
+    @data = @processData(data.data)
+    @getDefinition()
 
-    # Set @data
-    @data = []
-    for key, row of data.data
-      @data[key] =
+  processData: (data) ->
+    # Process a data set.
+    result = []
+    for key, row of data
+      result[key] =
         x: @parseDate(row[@options.x.variable])
         y: row[@options.y.variable]
       if @options.y2.variable != null
-        @data[key].y2 = row[@options.y2.variable]
+        result[key].y2 = row[@options.y2.variable]
       if (
         @options.yBand.minVariable != null and
         @options.yBand.maxVariable != null
       )
-        @data[key].yMin = row[@options.yBand.minVariable]
-        @data[key].yMax = row[@options.yBand.maxVariable]
+        result[key].yMin = row[@options.yBand.minVariable]
+        result[key].yMax = row[@options.yBand.maxVariable]
       if (
         @options.y2Band.minVariable != null and
         @options.y2Band.maxVariable != null
       )
-        @data[key].y2Min = row[@options.y2Band.minVariable]
-        @data[key].y2Max = row[@options.y2Band.maxVariable]
-
-    # Sort the Data
-    @data = @data.sort @sortDatetimeAsc
-
-    # Run Get Definition on Class Construction
-    @getDefinition()
-
-    # Responsive Event Listener ######## is this the right spot for this
-    ##################### add recalculation when the window changes
-
-    #### window.addEventListener 'resize', Chart.render
-
-    # if window.attachEvent
-    #   window.attachEvent 'onresize', ->
-    #     alert 'attachEvent - resize'
-    #     return
-    # else if window.addEventListener
-    #   window.addEventListener 'resize', (->
-    #     console.log 'addEventListener - resize'
-    #     return
-    #   ), true
-    # else
+        result[key].y2Min = row[@options.y2Band.minVariable]
+        result[key].y2Max = row[@options.y2Band.maxVariable]
+    return result.sort @sortDatetimeAsc
 
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
     _ = @
-
-    # Allow Ticks When Large Screen
-    if @options.theme isnt 'minimum'
-      @options.x.ticks = d3.timeFormat @options.x.format
 
     # Define the Definition
     @definition =
@@ -133,9 +109,12 @@ window.Plotting.LinePlot = class LinePlot
     # Define D3 Methods
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
       .ticks(Math.round($(@options.target).width() / 100))
-      
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
       .ticks(@options.y.ticks)
+      
+    # Define the Domains
+    @definition.x.domain([@definition.x.min, @definition.x.max])
+    @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
       
     @definition.zoom = d3.zoom()
       .scaleExtent([@options.zoom.scale.min, @options.zoom.scale.max])
@@ -173,6 +152,9 @@ window.Plotting.LinePlot = class LinePlot
           .attr("d", _.definition.line2)
           
         _.appendCrosshairTarget(_transform)
+        
+        # Pass Transform to Plotter
+        plotter.zoom(_transform)
       )
 
     @definition.line = d3.line()
@@ -210,32 +192,21 @@ window.Plotting.LinePlot = class LinePlot
       .curve(d3.curveMonotoneX)
 
   calculateChartDims: ->
-    preError = "#{@preError}calculateChartDims()"
-
     # Calculate Basic DOM & SVG Dimensions
     width = Math.round($(@options.target).width())
     height = Math.round(width/4)
-
-    if @options.theme is 'minimum'
-      margin =
-        top: Math.round(height * 0.28)
-        right: Math.round(Math.pow(width, 0.6))
-        bottom: Math.round(height * 0.18)
-        left: Math.round(Math.pow(width, 0.6))
-    else
-      margin =
-        top: Math.round(height * 0.07)
-        right: Math.round(Math.pow(width, 0.6))
-        bottom: Math.round(height * 0.16)
-        left: Math.round(Math.pow(width, 0.6))
+    margin =
+      top: Math.round(height * 0.07)
+      right: Math.round(Math.pow(width, 0.6))
+      bottom: Math.round(height * 0.16)
+      left: Math.round(Math.pow(width, 0.6))
 
     # Basic Dimention
     @definition.dimensions =
       width: width
-      stageWidth: (width + 200)
       height: height
       margin: margin
-      
+
     # Define Translate Padding
     @definition.dimensions.topPadding =
       parseInt(@definition.dimensions.margin.top)
@@ -251,82 +222,48 @@ window.Plotting.LinePlot = class LinePlot
       parseInt(@definition.dimensions.width -
       @definition.dimensions.margin.left - @definition.dimensions.margin.right)
     
+    # Define the X & Y Scales
     @definition.x = d3.scaleTime().range([margin.left, (width-margin.right)])
     @definition.y = d3.scaleLinear().range([(height-margin.bottom),
       (margin.top)])
 
   calculateAxisDims: (data) ->
-    # Shortcut Method to Calculate X & Y-Axis Dims
-    preError = "#{@preError}calculateAxisDims(data)"
     @calculateXAxisDims(data)
     @calculateYAxisDims(data)
 
   calculateXAxisDims: (data) ->
-    # Calculate X-Axis Dims
-    preError = "#{@preError}calculateXAxisDims(data)"
-    
     # Calculate Min & Max X Values
-    xmin = if @options.x.min is null then d3.min(data, (d)-> d.x)
-    else @parseDate(@options.x.min)-10000
-    xmax = if @options.x.max is null then d3.max(data, (d)-> d.x)
+    @definition.x.min = if @options.x.min is null then d3.min(data, (d)-> d.x)
+    else @parseDate(@options.x.min)
+    @definition.x.max = if @options.x.max is null then d3.max(data, (d)-> d.x)
     else @parseDate(@options.x.max)
-    
-    # Insert Values into Definition
-    @definition.x.min = xmin
-    @definition.x.max = xmax
 
   calculateYAxisDims: (data) ->
-    preError = "#{@preError}calculateYAxisDims(data)"
-    
     # Calculate Min & Max Y Values
-    yMin = if @options.y.min is null then d3.min(data, (d)-> d.y)
-    else @options.y.min
-    yMax = if @options.y.max is null then d3.max(data, (d)-> d.y)
-    else @options.y.max
-    y2Min = if @options.y2.min is null then d3.min(data, (d)-> d.y2)
-    else @options.y2.min
-    y2Max = if @options.y2.max is null then d3.max(data, (d)-> d.y2)
-    else @options.y2.max
-    yBandMin = d3.min(data, (d)-> d.yMin)
-    yBandMax = d3.max(data, (d)-> d.yMax)
-    y2BandMin = d3.min(data, (d)-> d.y2Min)
-    y2BandMax = d3.max(data, (d)-> d.y2Max)
-
-    ymin_a = [
-      yMin
-      y2Min
-      yBandMin
-      y2BandMin
-    ]
-
-    ymax_a = [
-      yMax
-      y2Max
-      yBandMax
-      y2BandMax
-    ]
-
-    ymin = d3.min(ymin_a)
-    ymax = d3.max(ymax_a)
+    @definition.y.min = d3.min([
+      @options.y.min
+      d3.min(data, (d)-> d.y)
+      d3.min(data, (d)-> d.y2)
+      d3.min(data, (d)-> d.yMin)
+      d3.min(data, (d)-> d.y2Min)
+    ])
+    
+    @definition.y.max = d3.max([
+      @options.y.max
+      d3.max(data, (d)-> d.y)
+      d3.max(data, (d)-> d.y2)
+      d3.max(data, (d)-> d.yMax)
+      d3.max(data, (d)-> d.y2Max)
+    ])
 
     # Restore Viewability if Y-Min = Y-Max
-    ymin = if ymin == ymax then ymin * 0.8 else ymin
-    ymax = if ymin == ymax then ymax * 1.2 else ymax
-
-    # Insert Values into Definition
-    @definition.y.min = ymin
-    @definition.y.max = ymax
-
-  responsive: ->
-    # Resize the plot according to current window dimensions.
-    preError = "#{@preError}responsive()"
-    @calculateChartDims()
-    true
+    if @definition.y.min == @definition.y.max
+      @definition.y.min = @definition.y.min * 0.8
+      @definition.y.max = @definition.y.min * 1.2
 
   append: ->
     preError = "#{@preError}append()"
     _ = @
-    @log "#{preError}", @options
 
     # Create the SVG
     @svg = d3.select(@options.target).append("svg")
@@ -346,10 +283,6 @@ window.Plotting.LinePlot = class LinePlot
         #{@definition.dimensions.topPadding})"
       )
     
-    # Define the Domains
-    @definition.x.domain([@definition.x.min, @definition.x.max])
-    @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
-
     # Append the X-Axis
     @svg.append("g")
       .attr("class", "line-plot-axis-x")
@@ -359,14 +292,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("transform",
         "translate(0, #{@definition.dimensions.bottomPadding})"
       )
-            
-    # Add Text Labels to X-Axis (Only if Large Scale Theme)
-    if @options.theme isnt 'minimum'
-      @svg.select(".line-plot-axis-x")
-        .selectAll("text")
-        .style("font-size", @options.font.size)
-        .style("font-weight", @options.font.weight)
-      
+
     # Append the Y-Axis
     @svg.append("g")
       .attr("class", "line-plot-axis-y")
@@ -491,82 +417,9 @@ window.Plotting.LinePlot = class LinePlot
       )
       .style("fill", "none")
       .style("pointer-events", "all")
-      .on("mouseover", () ->
-        _.crosshairs.style("display", null)
-        if _.options.y.variable != null
-          _.focusCircle.style("display", null)
-          _.focusText.style("display", null)
-        if _.options.y2.variable != null
-          _.focusCircle2.style("display", null)
-          _.focusText2.style("display", null)
-      )
-      .on("mouseout", () ->
-        _.crosshairs.style("display", "none")
-        if _.options.y.variable != null
-          _.focusCircle.style("display", "none")
-          _.focusText.style("display", "none")
-        if _.options.y2.variable != null
-          _.focusCircle2.style("display", "none")
-          _.focusText2.style("display", "none")
-      )
-      .on("mousemove", (d) ->
-        mouse = d3.mouse @
-        x0 = _.definition.x.invert(mouse[0] +
-          _.definition.dimensions.leftPadding)
-        if transform
-          x0 = _.definition.x.invert(
-            transform.invertX(mouse[0] + _.definition.dimensions.leftPadding)
-          )
-    
-        i = _.bisectDate(d, x0, 1)
-        min = x0.getMinutes()
-        d0 = d[i - 1]
-        d1 = d[i]
-        d = d0
-        d = if min >= 30 then d1 else d0
-        # dx = _.definition.x(d.x)
-        dx = if transform then transform.applyX(_.definition.x(d.x)) else
-          _.definition.x(d.x)
-        if _.options.y.variable != null
-          dy = _.definition.y(d.y)
-          _.focusCircle.attr("transform", "translate(0, 0)")
-        if _.options.y2.variable != null
-          dy2 = _.definition.y(d.y2)
-          _.focusCircle2.attr("transform", "translate(0, 0)")
-
-        cx = dx - _.definition.dimensions.leftPadding
-        _.crosshairs.select(".crosshair-x")
-          .attr("x1", cx)
-          .attr("y1", _.definition.dimensions.topPadding)
-          .attr("x2", cx)
-          .attr(
-            "y2", _.definition.dimensions.innerHeight +
-            _.definition.dimensions.topPadding
-          )
-          .attr("transform",
-            "translate(#{_.definition.dimensions.leftPadding}, 0)"
-          )
-
-        if _.options.y.variable != null
-          _.focusCircle
-            .attr("cx", dx)
-            .attr("cy", dy)
-
-          _.focusText
-            .attr("x", dx + _.definition.dimensions.leftPadding / 10)
-            .attr("y", dy - _.definition.dimensions.topPadding / 10)
-            .text(d.y.toFixed(1) + " " + "°F")
-
-        if _.options.y2.variable != null
-          _.focusCircle2
-            .attr("cx", dx)
-            .attr("cy", dy2)
-
-          _.focusText2
-            .attr("x", dx + _.definition.dimensions.leftPadding / 10)
-            .attr("y", dy2 - _.definition.dimensions.topPadding / 10)
-            .text(d.y2.toFixed(1) + " " + "°F")
-      )
+      .on("mouseover", () -> _.showCrosshair())
+      .on("mouseout", () -> _.hideCrosshair())
+      .on("mousemove", (d) -> _.setCrosshair(d, transform))
       
   appendZoomTarget: ->
     preError = "#{@preError}appendZoomTarget()"
@@ -631,13 +484,7 @@ window.Plotting.LinePlot = class LinePlot
       .datum(@data)
       .attr("d", @definition.line2)
 
-    # @calculateAxisDims @data
     @calculateYAxisDims @data
-    dtDiff = @definition.x.max - dtOffset
-    @log "#{preError} Date Diff Calcs (dtOffset, @def.x.min, dtDiff)",
-      dtOffset, @definition.x.max, @dtDiff
-
-    # @definition.x.domain([@definition.x.min, @definition.x.max])
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Redraw the Bands
@@ -666,15 +513,6 @@ window.Plotting.LinePlot = class LinePlot
       .duration(@options.transitionDuration)
       .attr("d", @definition.line2)
 
-    # Redraw the X-Axis
-    # @svg.select(".line-plot-axis-x")
-    #   .style("font-size", @options.font.size)
-    #   .style("font-weight", @options.font.weight)
-    #   .transition()
-    #   .duration(@options.transitionDuration)
-    #   .ease(d3.easeLinear)
-    #   .call(@definition.xAxis)
-
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
       .style("font-size", @options.font.size)
@@ -683,8 +521,129 @@ window.Plotting.LinePlot = class LinePlot
       .duration(@options.transitionDuration)
       .ease(d3.easeLinear)
       .call(@definition.yAxis)
+      
+  setZoomTransform: (transform) ->
+    # Set the current zoom transform state.
+    preError = "#{@preError}.setZoomTransform(transform)"
+    _ = @
+    _transform = transform
+    
+    # Zoom the X-Axis
+    _rescaleX = _transform.rescaleX(@definition.x)
+    @svg.select(".line-plot-axis-x").call(
+      @definition.xAxis.scale(_rescaleX)
+    )
+    
+    # Redefine & Redraw the Line Path
+    @definition.line = d3.line()
+      .defined((d)->
+        !isNaN(d.y) and d.y isnt null
+      )
+      .x((d) -> _transform.applyX(_.definition.x(d.x)))
+      .y((d) -> _.definition.y(d.y))
+      .curve(d3.curveMonotoneX)
 
-  @zoomed: () ->
-    # Zoom Function
-    preError = "#{@preError}.zoomed()"
-    @log "#{preError} zoom action occured."
+    @svg.select(".line-plot-path")
+      .attr("d", @definition.line)
+
+    # Redefine & Redraw the Line2 Path
+    @definition.line2 = d3.line()
+      .defined((d)->
+        !isNaN(d.y2) and d.y2 isnt null
+      )
+      .x((d) -> _transform.applyX(_.definition.x(d.x)))
+      .y((d) -> _.definition.y(d.y2))
+      .curve(d3.curveMonotoneX)
+
+    @svg.select(".line-plot-path2")
+      .attr("d", @definition.line2)
+      
+    @appendCrosshairTarget(_transform)
+
+  setCrosshair: (d, transform, mouse) ->
+    # Set the Crosshair position
+    preError = "#{@preError}.setCrosshair(mouse)"
+    _ = @
+    
+    _mouseTarget = @overlay.node()
+    mouse = if mouse then mouse else d3.mouse(_mouseTarget)
+    x0 = _.definition.x.invert(mouse[0] +
+      _.definition.dimensions.leftPadding)
+    if transform
+      x0 = _.definition.x.invert(
+        transform.invertX(mouse[0] + _.definition.dimensions.leftPadding)
+      )
+
+    i = _.bisectDate(d, x0, 1)
+    d = if x0.getMinutes() >= 30 then d[i] else d[i - 1]
+    dx = if transform then transform.applyX(_.definition.x(d.x)) else
+      _.definition.x(d.x)
+    
+    if _.options.y.variable != null
+      dy = _.definition.y(d.y)
+      _.focusCircle.attr("transform", "translate(0, 0)")
+    if _.options.y2.variable != null
+      dy2 = _.definition.y(d.y2)
+      _.focusCircle2.attr("transform", "translate(0, 0)")
+
+    cx = dx - _.definition.dimensions.leftPadding
+    _.crosshairs.select(".crosshair-x")
+      .attr("x1", cx)
+      .attr("y1", _.definition.dimensions.topPadding)
+      .attr("x2", cx)
+      .attr(
+        "y2", _.definition.dimensions.innerHeight +
+        _.definition.dimensions.topPadding
+      )
+      .attr("transform",
+        "translate(#{_.definition.dimensions.leftPadding}, 0)"
+      )
+
+    if _.options.y.variable != null
+      _.focusCircle
+        .attr("cx", dx)
+        .attr("cy", dy)
+
+      _.focusText
+        .attr("x", dx + _.definition.dimensions.leftPadding / 10)
+        .attr("y", dy - _.definition.dimensions.topPadding / 10)
+        .text(d.y.toFixed(1) + " " + "°F")
+
+    if _.options.y2.variable != null
+      _.focusCircle2
+        .attr("cx", dx)
+        .attr("cy", dy2)
+
+      _.focusText2
+        .attr("x", dx + _.definition.dimensions.leftPadding / 10)
+        .attr("y", dy2 - _.definition.dimensions.topPadding / 10)
+        .text(d.y2.toFixed(1) + " " + "°F")
+    
+  showCrosshair: ->
+    @crosshairs.select(".crosshair-x")
+      .style("display", null)
+    
+    if @options.y.variable != null
+      @focusCircle.style("display", null)
+      @focusText.style("display", null)
+      
+    if @options.y2.variable != null
+      @focusCircle2.style("display", null)
+      @focusText2.style("display", null)
+  
+  hideCrosshair: () ->
+    # Hide the Crosshair
+    @crosshairs.select(".crosshair-x")
+      .style("display", "none")
+    
+    if @options.y.variable != null
+      @focusCircle.style("display", "none")
+      @focusText.style("display", "none")
+    
+    if @options.y2.variable != null
+      @focusCircle2.style("display", "none")
+      @focusText2.style("display", "none")
+
+  appendTitle: (title) ->
+    @svg.append("g")
+      .attr("class", "line-plot-title")

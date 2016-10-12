@@ -189,9 +189,24 @@ window.Plotting.Handler = class Handler
     preError = "#{@preError}.backward()"
     @getPlotData("backward")
       
-  zoom: (level) ->
-    # Change the zoom level
+  zoom: (transform) ->
+    # Set the zoom state of all plots. Triggered by a single plot.
+    preError = "#{@preError}.zoom(transform)"
+    # console.log("#{preError} (transform)", transform)
+    for plot in @plots
+      # console.log("#{preError} (key, plot)", plot)
+      plot.setZoomTransform(transform)
     
+  crosshair: (d, mouse, transform) ->
+    # Set the cursor hover position of all plots. Triggered by a single plot.
+    preError = "#{@preError}.crosshair(mouse, transform)"
+    console.log("#{preError} (d, mouse, transform)", d, mouse, transform)
+    for plot in @plots
+      console.log("#{preError} (key, plot)", plot)
+      plot.setCrosshair(d, mouse, transform)
+
+  hideCrosshair: ->
+    # Hide cursor crosshairs.
 
   alert: (message, type) ->
     # Fire Modal w/ Message
