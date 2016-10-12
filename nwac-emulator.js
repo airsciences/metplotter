@@ -53,10 +53,14 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "line1Color": "rgb(41,128,185)",
                     "line2Color": "rgb(39,174,96)",
                     "y": {
-                        "variable": "wind_speed_average"
+                        "variable": "wind_speed_average",
+                        "title": "Wind Speed Average",
+                        "units": "m/s"
                     },
                     "y2": {
-                        "variable": "wind_speed_minumum"
+                        "variable": "wind_speed_minimum",
+                        "title": "Wind Speed Minimum",
+                        "units": "m/s"
                     }
                 }                    
             },
@@ -64,18 +68,42 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "pageOrder": 2,
                 "station": {
                     "station":"White Pass",
-                    "region":"White Pass Lower",
-                    "elevation":5300.0
+                    "region":"White Pass Upper",
+                    "elevation":5800.0
                 },
                 "dataParams": {
-                    "field": "precipitation",
-                    "data_logger": 32,
+                    "data_logger": 34,
                     "max_datetime": "2016-10-05T17:00:00Z",
                     "limit":500
                 },
                 "options": {
                     "line1Color": "rgb(142,68,173)",
-                    "line2Color": "rgb(243,156,18)"
+                    "y": {
+                        "variable": "temperature",
+                        "title": "Temperature",
+                        "units": "°F"
+                    }
+                }
+            },
+            {
+                "pageOrder": 3,
+                "station": {
+                    "station":"White Pass",
+                    "region":"White Pass Upper",
+                    "elevation":5800.0
+                },
+                "dataParams": {
+                    "data_logger": 34,
+                    "max_datetime": "2016-10-05T17:00:00Z",
+                    "limit":500
+                },
+                "options": {
+                    "line1Color": "rgb(243,156,18)",
+                    "y": {
+                        "variable": "solar_pyranometer",
+                        "title": "Solar Radiation",
+                        "units": "W/sq-m"
+                    }
                 }
             }
         ]};

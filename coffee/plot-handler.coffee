@@ -12,7 +12,7 @@ window.Plotting.Handler = class Handler
       target: null
       stage: 4
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
-      updateHourOffset: 25
+      updateHourOffset: 150
     @options = Object.mergeDefaults options, defaults
 
     @now = new Date()
@@ -145,15 +145,18 @@ window.Plotting.Handler = class Handler
       plot.options.x =
         variable: 'datetime'
         format: @options.dateFormat
-      plot.options.y =
-        variable: 'wind_speed_average'
-      plot.options.y2 =
-        variable: 'wind_speed_minimum'
       data =
         data: plot.data.results
-      console.log "#{preError} (plot)", plot
+        
+      title = plot.station.station
+      subtitle = "#{plot.options.y.title}"
+      if plot.options.y2
+        subtitle = "#{plot.options.y.title} & #{plot.options.y2.title}"
+     
+      console.log "#{preError} (plot, data)", plot, data
       instance = new window.Plotting.LinePlot data, plot.options
       instance.append()
+      instance.appendTitle(title, subtitle)
       @plots[key] = instance
 
   mergeTemplateOption: () ->
@@ -191,15 +194,11 @@ window.Plotting.Handler = class Handler
       
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
-    preError = "#{@preError}.zoom(transform)"
-    # console.log("#{preError} (transform)", transform)
     for plot in @plots
-      # console.log("#{preError} (key, plot)", plot)
       plot.setZoomTransform(transform)
     
   crosshair: (transform, mouse) ->
-    # Set the cursor hover position of all plots. Triggered by a single plot.
-    preError = "#{@preError}.crosshair(mouse, transform)"
+    # Set the cursor hover position of all plots. Triggered by a single plot."
     for plot in @plots
       plot.setCrosshair(transform, mouse)
 

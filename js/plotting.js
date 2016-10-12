@@ -451,7 +451,7 @@
       width = Math.round($(this.options.target).width());
       height = Math.round(width / 4);
       margin = {
-        top: Math.round(height * 0.07),
+        top: Math.round(height * 0.16),
         right: Math.round(Math.pow(width, 0.6)),
         bottom: Math.round(height * 0.16),
         left: Math.round(Math.pow(width, 0.6))
@@ -657,11 +657,11 @@
       _.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
       if (_.options.y.variable !== null) {
         _.focusCircle.attr("cx", dx).attr("cy", dy);
-        _.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(1) + " " + "°F");
+        _.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(2) + " " + this.options.y.units);
       }
       if (_.options.y2.variable !== null) {
         _.focusCircle2.attr("cx", dx).attr("cy", dy2);
-        _.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(1) + " " + "°F");
+        _.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(2) + " " + this.options.y2.units);
       }
       return mouse;
     };
@@ -690,8 +690,12 @@
       }
     };
 
-    LinePlot.prototype.appendTitle = function(title) {
-      return this.svg.append("g").attr("class", "line-plot-title");
+    LinePlot.prototype.appendTitle = function(title, subtitle) {
+      this.title = this.svg.append("g").attr("class", "line-plot-title");
+      this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 - 4).style("font-size", "16px").style("font-weight", 600).text(title);
+      if (subtitle) {
+        return this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 + 12).style("font-size", "12px").text(subtitle);
+      }
     };
 
     return LinePlot;
@@ -713,7 +717,7 @@
         target: null,
         stage: 4,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
-        updateHourOffset: 25
+        updateHourOffset: 150
       };
       this.options = Object.mergeDefaults(options, defaults);
       this.now = new Date();
@@ -843,7 +847,7 @@
     };
 
     Handler.prototype.append = function() {
-      var data, instance, key, plot, preError, ref, results, target;
+      var data, instance, key, plot, preError, ref, results, subtitle, target, title;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
@@ -857,18 +861,18 @@
           variable: 'datetime',
           format: this.options.dateFormat
         };
-        plot.options.y = {
-          variable: 'wind_speed_average'
-        };
-        plot.options.y2 = {
-          variable: 'wind_speed_minimum'
-        };
         data = {
           data: plot.data.results
         };
-        console.log(preError + " (plot)", plot);
+        title = plot.station.station;
+        subtitle = "" + plot.options.y.title;
+        if (plot.options.y2) {
+          subtitle = plot.options.y.title + " & " + plot.options.y2.title;
+        }
+        console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
+        instance.appendTitle(title, subtitle);
         results.push(this.plots[key] = instance);
       }
       return results;
@@ -915,8 +919,7 @@
     };
 
     Handler.prototype.zoom = function(transform) {
-      var i, len, plot, preError, ref, results;
-      preError = this.preError + ".zoom(transform)";
+      var i, len, plot, ref, results;
       ref = this.plots;
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
@@ -927,8 +930,7 @@
     };
 
     Handler.prototype.crosshair = function(transform, mouse) {
-      var i, len, plot, preError, ref, results;
-      preError = this.preError + ".crosshair(mouse, transform)";
+      var i, len, plot, ref, results;
       ref = this.plots;
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {

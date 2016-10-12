@@ -196,7 +196,7 @@ window.Plotting.LinePlot = class LinePlot
     width = Math.round($(@options.target).width())
     height = Math.round(width/4)
     margin =
-      top: Math.round(height * 0.07)
+      top: Math.round(height * 0.16)
       right: Math.round(Math.pow(width, 0.6))
       bottom: Math.round(height * 0.16)
       left: Math.round(Math.pow(width, 0.6))
@@ -605,7 +605,7 @@ window.Plotting.LinePlot = class LinePlot
       _.focusText
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy - _dims.topPadding / 10)
-        .text(d.y.toFixed(1) + " " + "°F")
+        .text(d.y.toFixed(2) + " " + @options.y.units)
 
     if _.options.y2.variable != null
       _.focusCircle2
@@ -615,7 +615,7 @@ window.Plotting.LinePlot = class LinePlot
       _.focusText2
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy2 - _dims.topPadding / 10)
-        .text(d.y2.toFixed(1) + " " + "°F")
+        .text(d.y2.toFixed(2) + " " + @options.y2.units)
     
     return mouse
     
@@ -645,6 +645,21 @@ window.Plotting.LinePlot = class LinePlot
       @focusCircle2.style("display", "none")
       @focusText2.style("display", "none")
 
-  appendTitle: (title) ->
-    @svg.append("g")
+  appendTitle: (title, subtitle) ->
+    # Append a Plot Title
+    @title = @svg.append("g")
       .attr("class", "line-plot-title")
+      
+    @title.append("text")
+      .attr("x", (@definition.dimensions.margin.left + 10))
+      .attr("y", (@definition.dimensions.margin.top / 2 - 4))
+      .style("font-size", "16px")
+      .style("font-weight", 600)
+      .text(title)
+    
+    if subtitle
+      @title.append("text")
+        .attr("x", (@definition.dimensions.margin.left + 10))
+        .attr("y", (@definition.dimensions.margin.top / 2 + 12))
+        .style("font-size", "12px")
+        .text(subtitle)
