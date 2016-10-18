@@ -429,6 +429,12 @@ window.Plotting.LinePlot = class LinePlot
       .style("stroke-width", @options.crosshairX.weight)
       .style("stroke-dasharray", ("3, 3"))
       .style("fill", "none")
+      
+    # Create the Focus Label Underlay
+    @crosshairs.append("rect")
+      .attr("class", "crosshair-x-under")
+      .style("fill", "rgb(255,255,255)")
+      .style("opacity", 0.5)
 
     # Create Focus Circles and Labels
     if @options.y.variable != null
@@ -674,6 +680,13 @@ window.Plotting.LinePlot = class LinePlot
       .attr("x2", cx)
       .attr("y2", _dims.innerHeight + _dims.topPadding)
       .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+       
+    _.crosshairs.select(".crosshair-x-under")
+      .attr("x", cx)
+      .attr("y", _dims.topPadding)
+      .attr("width", (_dims.innerWidth - cx))
+      .attr("height", _dims.innerHeight)
+      .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
     if _.options.y.variable != null
       _.focusCircle
@@ -701,6 +714,9 @@ window.Plotting.LinePlot = class LinePlot
     # Show the Crosshair
     @crosshairs.select(".crosshair-x")
       .style("display", null)
+      
+    @crosshairs.select(".crosshair-x-under")
+      .style("display", null)
     
     if @options.y.variable != null
       @focusCircle.style("display", null)
@@ -713,6 +729,9 @@ window.Plotting.LinePlot = class LinePlot
   hideCrosshair: () ->
     # Hide the Crosshair
     @crosshairs.select(".crosshair-x")
+      .style("display", "none")
+    
+    @crosshairs.select(".crosshair-x-under")
       .style("display", "none")
     
     if @options.y.variable != null

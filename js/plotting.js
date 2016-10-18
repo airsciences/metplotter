@@ -608,6 +608,7 @@
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.crosshairs = this.svg.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
+      this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.5);
       if (this.options.y.variable !== null) {
         this.focusCircle = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle").attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)");
         this.focusText = this.svg.append("text").attr("class", "focusText").attr("x", 9).attr("y", 7).style("fill", this.options.line1Color);
@@ -742,6 +743,7 @@
       }
       cx = dx - _dims.leftPadding;
       _.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+      _.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
       if (_.options.y.variable !== null) {
         _.focusCircle.attr("cx", dx).attr("cy", dy);
         _.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(2) + " " + this.options.y.units);
@@ -755,6 +757,7 @@
 
     LinePlot.prototype.showCrosshair = function() {
       this.crosshairs.select(".crosshair-x").style("display", null);
+      this.crosshairs.select(".crosshair-x-under").style("display", null);
       if (this.options.y.variable !== null) {
         this.focusCircle.style("display", null);
         this.focusText.style("display", null);
@@ -767,6 +770,7 @@
 
     LinePlot.prototype.hideCrosshair = function() {
       this.crosshairs.select(".crosshair-x").style("display", "none");
+      this.crosshairs.select(".crosshair-x-under").style("display", "none");
       if (this.options.y.variable !== null) {
         this.focusCircle.style("display", "none");
         this.focusText.style("display", "none");

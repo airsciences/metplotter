@@ -64,7 +64,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "x": xVar,
                     "y": {
                         "variable": "wind_speed_average",
-                        "title": "Wind Speed Average",
+                        "title": "Wind Speed",
                         "units": "m/s",
                         "min": 0
                     },
