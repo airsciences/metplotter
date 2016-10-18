@@ -13,7 +13,7 @@ window.Plotting.LinePlot = class LinePlot
       uuid: ''
       debug: true
       target: null
-      theme: 'default'
+      dataParams: null
       x:
         variable: null
         format: "%Y-%m-%d %H:%M:%S"
@@ -40,6 +40,8 @@ window.Plotting.LinePlot = class LinePlot
         scale:
           min: 0.1
           max: 5
+      visible:
+        limit: 2190
       aspectDivisor: 4
       transitionDuration: 500
       line1Color: "rgb(41, 128, 185)"
@@ -71,12 +73,24 @@ window.Plotting.LinePlot = class LinePlot
     @sortDatetimeAsc = (a, b) -> a.x - b.x
 
     # Prepare the Data & Definition
-    @data = @processData(data.data)
+    _initial = @processData(data.data)
+    @data =
+      full: _initial.slice(0)
+      visible: _initial.slice(0)
     @getDefinition()
     
-    # Plotter Reference data
-    @range
-    @scaleRange
+    # Initialize the State
+    @state =
+      range:
+        data: null
+        visible: null
+        scale: @getDomainScale(@definition.x)
+      length:
+        data: null
+        visible: null
+      mean:
+        scale: @getDomainMean(@definition.x)
+    @setDataState()
 
   processData: (data) ->
     # Process a data set.
@@ -100,11 +114,68 @@ window.Plotting.LinePlot = class LinePlot
         result[key].y2Min = row[@options.y2Band.minVariable]
         result[key].y2Max = row[@options.y2Band.maxVariable]
     
-    @range =
-      min: d3.min(result, (d)-> d.x)
-      max: d3.max(result, (d)-> d.x)
-    
     return result.sort @sortDatetimeAsc
+
+  appendData: (data) ->
+    # Append the full data set.
+    for key, row of data
+      dtaRow =
+        x: @parseDate(row[@options.x.variable])
+        y: row[@options.y.variable]
+      if @options.y2.variable != null
+        dtaRow.y2 = row[@options.y2.variable]
+      if (
+        @options.yBand.minVariable != null and
+        @options.yBand.maxVariable != null
+      )
+        dtaRow.yMin = row[@options.yBand.minVariable]
+        dtaRow.yMax = row[@options.yBand.maxVariable]
+      if (
+        @options.y2Band.minVariable != null and
+        @options.y2Band.maxVariable != null
+      )
+        dtaRow.y2Min = row[@options.y2Band.minVariable]
+        dtaRow.y2Max = row[@options.y2Band.maxVariable]
+      @data.full.push(dtaRow)
+
+    # Sort the Data
+    @data.full = @data.full.sort @sortDatetimeAsc
+    
+    console.log("LinePlot.appendData(data) (@data)", @data)
+    
+    # Reset the Data Range
+    @setDataState()
+    
+  setVisibleData: ->
+    # Set the Visible Data to a Selection of @data.full
+    preError = "#{@preError}setVisibleData()"
+    
+    _current_center = ""
+    
+    console.log("Current Scroll Range (range, center, length)",
+      @state.range, @state.center, @state.length)
+
+  setDataState: ->
+    # Set Data Ranges
+    @state.range.data =
+      min: d3.min(@data.full, (d)-> d.x)
+      max: d3.max(@data.full, (d)-> d.x)
+    @state.range.visible =
+      min: d3.min(@data.visible, (d)-> d.x)
+      max: d3.max(@data.visible, (d)-> d.x)
+    # Set Data Length States
+    @state.length.data = @data.full.length
+    @state.length.visible = @data.visible.length
+
+  getDomainScale: (axis) ->
+    # Calculate the Min & Max Range of an Axis
+    result =
+      min: axis.domain()[0]
+      max: axis.domain()[1]
+
+  getDomainMean: (axis) ->
+    # Calculat the Mean of an Axis
+    new Date(d3.mean(axis.domain()))
 
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
@@ -114,7 +185,7 @@ window.Plotting.LinePlot = class LinePlot
     @definition =
       colorScale: d3.schemeCategory20
     @calculateChartDims()
-    @calculateAxisDims(@data)
+    @calculateAxisDims(@data.full)
 
     # Define D3 Methods
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
@@ -126,6 +197,7 @@ window.Plotting.LinePlot = class LinePlot
     @definition.x.domain([@definition.x.min, @definition.x.max])
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
     
+    # Define the Zoom Method
     _extent = [
         [-Infinity, 0],
         [(@definition.x(new Date())),
@@ -223,7 +295,6 @@ window.Plotting.LinePlot = class LinePlot
   calculateYAxisDims: (data) ->
     # Calculate Min & Max Y Values
     @definition.y.min = d3.min([
-      @options.y.min
       d3.min(data, (d)-> d.y)
       d3.min(data, (d)-> d.y2)
       d3.min(data, (d)-> d.yMin)
@@ -231,7 +302,6 @@ window.Plotting.LinePlot = class LinePlot
     ])
     
     @definition.y.max = d3.max([
-      @options.y.max
       d3.max(data, (d)-> d.y)
       d3.max(data, (d)-> d.y2)
       d3.max(data, (d)-> d.yMax)
@@ -242,6 +312,12 @@ window.Plotting.LinePlot = class LinePlot
     if @definition.y.min == @definition.y.max
       @definition.y.min = @definition.y.min * 0.8
       @definition.y.max = @definition.y.min * 1.2
+     
+     
+    @definition.y.min = if @options.y.min is null then @definition.y.min
+    else @options.y.min
+    @definition.y.max = if @options.y.max is null then @definition.y.max
+    else @options.y.max
 
   append: ->
     preError = "#{@preError}append()"
@@ -293,13 +369,15 @@ window.Plotting.LinePlot = class LinePlot
       @lineband = @svg.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
         .append("path")
-        .datum(@data)
+        .datum(@data.visible)
         .attr("d", @definition.area)
         .attr("class", "line-plot-area")
-        .style("fill", "rgb(171, 211, 237)")
-        .style("opacity", 0.5)
-        .style("stroke", "rgb(0, 0, 0)")
-        .style("stroke-width", "1")
+        .style("fill", @options.line1Color)
+        .style("opacity", 0.15)
+        .style("stroke", () ->
+          return d3.color(_.options.line1Color).darker(1)
+        )
+    
 
     if (
       @options.y2Band.minVariable != null and
@@ -308,18 +386,20 @@ window.Plotting.LinePlot = class LinePlot
       @lineband2 = @svg.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
         .append("path")
-        .datum(@data)
+        .datum(@data.visible)
         .attr("d", @definition.area2)
         .attr("class", "line-plot-area2")
-        .style("fill", "rgb(172, 236, 199)")
-        .style("opacity", 0.5)
-        .style("stroke", "rgb(0, 0, 0)")
+        .style("fill", @options.line2Color)
+        .style("opacity", 0.25)
+        .style("stroke", () ->
+          return d3.rgb(_.options.line2Color).darker(1)
+        )
 
     # Append the Line Paths
     @svg.append("g")
       .attr("clip-path", "url(\##{@options.target}_clip)")
       .append("path")
-      .datum(@data)
+      .datum(@data.visible)
       .attr("d", @definition.line)
       .attr("class", "line-plot-path")
       .style("stroke", @options.line1Color)
@@ -330,7 +410,7 @@ window.Plotting.LinePlot = class LinePlot
     @svg.append("g")
       .attr("clip-path", "url(\##{@options.target}_clip)")
       .append("path")
-      .datum(@data)
+      .datum(@data.visible)
       .attr("d", @definition.line2)
       .attr("class", "line-plot-path2")
       .style("stroke", @options.line2Color)
@@ -347,6 +427,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("class", "crosshair-x")
       .style("stroke", @options.crosshairX.color)
       .style("stroke-width", @options.crosshairX.weight)
+      .style("stroke-dasharray", ("3, 3"))
       .style("fill", "none")
 
     # Create Focus Circles and Labels
@@ -383,13 +464,76 @@ window.Plotting.LinePlot = class LinePlot
     # Append Crosshair & Zoom Listening Targets
     @appendCrosshairTarget()
     @appendZoomTarget()
+
+  update: (data) ->
+    preError = "#{@preError}update()"
+    _ = @
+
+    # Append New Data
+    dtOffset = new Date @definition.x.max
+    @appendData(data)
     
+    # Pre-Append Data For Smooth transform
+    @svg.select(".line-plot-area")
+      .datum(@data.visible)
+      .attr("d", @definition.area)
+
+    @svg.select(".line-plot-area2")
+      .datum(@data.visible)
+      .attr("d", @definition.area2)
+
+    @svg.select(".line-plot-path")
+      .datum(@data.visible)
+      .attr("d", @definition.line)
+
+    @svg.select(".line-plot-path2")
+      .datum(@data.visible)
+      .attr("d", @definition.line2)
+
+    @calculateYAxisDims @data.visible
+    @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
+
+    # Redraw the Bands
+    @svg.select(".line-plot-area")
+      .datum(@data.visible)
+      .transition()
+      .duration(@options.transitionDuration)
+      .attr("d", @definition.area)
+
+    @svg.select(".line-plot-area2")
+      .datum(@data.visible)
+      .transition()
+      .duration(@options.transitionDuration)
+      .attr("d", @definition.area2)
+
+    # Redraw the Line Paths
+    @svg.select(".line-plot-path")
+      .datum(@data.visible)
+      .transition()
+      .duration(@options.transitionDuration)
+      .attr("d", @definition.line)
+
+    @svg.select(".line-plot-path2")
+      .datum(@data.visible)
+      .transition()
+      .duration(@options.transitionDuration)
+      .attr("d", @definition.line2)
+
+    # Redraw the Y-Axis
+    @svg.select(".line-plot-axis-y")
+      .style("font-size", @options.font.size)
+      .style("font-weight", @options.font.weight)
+      .transition()
+      .duration(@options.transitionDuration)
+      .ease(d3.easeLinear)
+      .call(@definition.yAxis)
+          
   appendCrosshairTarget: (transform) ->
     # Move Crosshairs and Focus Circle Based on Mouse Location
     preError = "#{@preError}appendCrosshairTarget()"
     _ = @
     
-    @overlay.datum(@data)
+    @overlay.datum(@data.visible)
       .attr("class", "overlay")
       .attr("width", @definition.dimensions.innerWidth)
       .attr("height", @definition.dimensions.innerHeight)
@@ -422,94 +566,6 @@ window.Plotting.LinePlot = class LinePlot
       .style("pointer-events", "all")
       .style("cursor", "move")
       .call(@definition.zoom, d3.zoomIdentity)
-
-  update: (data) ->
-    preError = "#{@preError}update()"
-    _ = @
-
-    # Append New Data
-    dtOffset = new Date @definition.x.max
-    for key, row of data
-      dtaRow =
-        x: @parseDate(row[@options.x.variable])
-        y: row[@options.y.variable]
-      if @options.y2.variable != null
-        dtaRow.y2 = row[@options.y2.variable]
-      if (
-        @options.yBand.minVariable != null and
-        @options.yBand.maxVariable != null
-      )
-        dtaRow.yMin = row[@options.yBand.minVariable]
-        dtaRow.yMax = row[@options.yBand.maxVariable]
-      if (
-        @options.y2Band.minVariable != null and
-        @options.y2Band.maxVariable != null
-      )
-        dtaRow.y2Min = row[@options.y2Band.minVariable]
-        dtaRow.y2Max = row[@options.y2Band.maxVariable]
-      @data.push(dtaRow)
-
-    # Sort the Data
-    @data = @data.sort @sortDatetimeAsc
-
-    @range =
-      min: d3.min(@data, (d)-> d.x)
-      max: d3.max(@data, (d)-> d.x)
-    
-    # Pre-Append Data For Smooth transform
-    @svg.select(".line-plot-area")
-      .datum(@data)
-      .attr("d", @definition.area)
-
-    @svg.select(".line-plot-area2")
-      .datum(@data)
-      .attr("d", @definition.area2)
-
-    @svg.select(".line-plot-path")
-      .datum(@data)
-      .attr("d", @definition.line)
-
-    @svg.select(".line-plot-path2")
-      .datum(@data)
-      .attr("d", @definition.line2)
-
-    @calculateYAxisDims @data
-    @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
-
-    # Redraw the Bands
-    @svg.select(".line-plot-area")
-      .datum(@data)
-      .transition()
-      .duration(@options.transitionDuration)
-      .attr("d", @definition.area)
-
-    @svg.select(".line-plot-area2")
-      .datum(@data)
-      .transition()
-      .duration(@options.transitionDuration)
-      .attr("d", @definition.area2)
-
-    # Redraw the Line Paths
-    @svg.select(".line-plot-path")
-      .datum(@data)
-      .transition()
-      .duration(@options.transitionDuration)
-      .attr("d", @definition.line)
-
-    @svg.select(".line-plot-path2")
-      .datum(@data)
-      .transition()
-      .duration(@options.transitionDuration)
-      .attr("d", @definition.line2)
-
-    # Redraw the Y-Axis
-    @svg.select(".line-plot-axis-y")
-      .style("font-size", @options.font.size)
-      .style("font-weight", @options.font.weight)
-      .transition()
-      .duration(@options.transitionDuration)
-      .ease(d3.easeLinear)
-      .call(@definition.yAxis)
       
   setZoomTransform: (transform) ->
     # Set the current zoom transform state.
@@ -524,9 +580,21 @@ window.Plotting.LinePlot = class LinePlot
     )
     
     # Set the scaleRange
-    @scaleRange =
-      min: _rescaleX.domain()[0]
-      max: _rescaleX.domain()[1]
+    @state.range.scale = @getDomainScale(_rescaleX)
+    @state.mean.scale = @getDomainMean(_rescaleX)
+
+    # Redefine & Redraw the Area
+    @definition.area = d3.area()
+      .defined((d)->
+        !isNaN(d.y) and d.y isnt null
+      )
+      .x((d) -> _transform.applyX(_.definition.x(d.x)))
+      .y0((d) -> _.definition.y(d.yMin))
+      .y1((d) -> _.definition.y(d.yMax))
+      .curve(d3.curveMonotoneX)
+
+    @svg.select(".line-plot-area")
+      .attr("d", @definition.area)
 
     # Redefine & Redraw the Line Path
     @definition.line = d3.line()
@@ -539,6 +607,19 @@ window.Plotting.LinePlot = class LinePlot
 
     @svg.select(".line-plot-path")
       .attr("d", @definition.line)
+
+    # Redefine & Redraw the Area2
+    @definition.area2 = d3.area()
+      .defined((d)->
+        !isNaN(d.y2Max) and d.y2Max isnt null
+      )
+      .x((d) -> _transform.applyX(_.definition.x(d.x)))
+      .y0((d) -> _.definition.y(d.y2Min))
+      .y1((d) -> _.definition.y(d.y2Max))
+      .curve(d3.curveMonotoneX)
+     
+    @svg.select(".line-plot-area2")
+      .attr("d", @definition.area2)
 
     # Redefine & Redraw the Line2 Path
     @definition.line2 = d3.line()
@@ -572,9 +653,9 @@ window.Plotting.LinePlot = class LinePlot
       )
     i = _.bisectDate(_datum, x0, 1)
     d = if x0.getMinutes() >= 30 then _datum[i] else _datum[i - 1]
-    if x0.getTime() < @range.min.getTime()
+    if x0.getTime() < @state.range.visible.min.getTime()
       d = _datum[i - 1]
-    if x0.getTime() > @range.max.getTime()
+    if x0.getTime() > @state.range.visible.max.getTime()
       d = _datum[i - 1]
      
     dx = if transform then transform.applyX(_.definition.x(d.x)) else
@@ -663,8 +744,4 @@ window.Plotting.LinePlot = class LinePlot
 
   getState: ->
     # Return the Current Plot state.
-    result =
-      range:
-        data: @range
-        scale: @scaleRange
-       
+    return @state

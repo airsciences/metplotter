@@ -10,18 +10,34 @@ window.Plotting.Handler = class Handler
     
     defaults =
       target: null
-      stage: 1
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
-      updateHourOffset: 5000
+      updateLength: 1095
+      colors:
+        light: [
+          "rgb(53, 152, 219)",
+          "rgb(241, 196, 14)",
+          "rgb(155, 88, 181)",
+          "rgb(27, 188, 155)",
+          "rgb(52, 73, 94)",
+          "rgb(231, 126, 35)",
+          "rgb(45, 204, 112)",
+          "rgb(232, 76, 61)",
+          "rgb(149, 165, 165)"
+        ]
+        dark: [
+          "rgb(42, 128, 185)",
+          "rgb(239, 154, 15)",
+          "rgb(143, 68, 173)",
+          "rgb(23, 160, 134)",
+          "rgb(45, 62, 80)",
+          "rgb(210, 84, 0)",
+          "rgb(39, 174, 97)",
+          "rgb(192, 57, 43)",
+          "rgb(126, 140, 141)"
+        ]
     @options = Object.mergeDefaults options, defaults
-
     @now = new Date()
-    @current = null
-    @plots = []
-
-    @readyState =
-      template: false
-
+    
     @endpoint = null
     accessToken =
       token: null
@@ -33,21 +49,10 @@ window.Plotting.Handler = class Handler
     @syncronousapi = new window.Plotting.API access.token, false
     @parseDate = d3.timeParse(@options.dateFormat)
 
-    format = d3.utcFormat @options.dateFormat
-
-    @getCurrent = ->
-      return format @current
+    @format = d3.utcFormat(@options.dateFormat)
 
     @getNow = ->
-      return format @now
-
-    @getForwardHours = ->
-      # Checks if the zoom forward can happen
-      now = new Date()
-      Math.floor((now.getTime() - @current.getTime()) / 1000 / 3600)
-
-    @hasForward = ->
-      @getForwardHours() > 0
+      return @format(@now)
 
     @hasAccess = ->
       # Calculate if the token has expired.
@@ -58,14 +63,8 @@ window.Plotting.Handler = class Handler
   initialize: ->
     # Initialize the page.
     @getTemplate()
-    @getPlotData(null, false)
+    @getTemplatePlotData()
     @append()
-    @stage()
-
-  stage: ->
-    # Stage forward and behind
-    for num in [0..@options.stage]
-      @backward()
     
   getTemplate: (template_uri) ->
     # Request the Template
@@ -79,88 +78,141 @@ window.Plotting.Handler = class Handler
         console.log "#{preError}.callback(...) error detected (data)", data
         return
       _.template = data.responseJSON.templateData
-      _.readyState.template = true
     
     @syncronousapi.get target, args, callback
 
-  getStationParamData: (plotId, async) ->
+  getStationParamData: (plotId) ->
     # Request a station's dataset (param specific)
-    preError = "#{@preError}.getStationParamData(...)"
+    preError = "#{@preError}.getStationParamData()"
     target = "http://dev.nwac.us/api/v5/measurement"
     _ = @
     args = @template[plotId].dataParams
-    
-    # Specify Key Datetime
-    if args.max_datetime == undefined
-      args.max_datetime = @getNow()
-      @current = @now
-    else
-      @current = new Date args.max_datetime
 
     callback = (data) ->
       _.template[plotId].data = data.responseJSON
     
-    if async == false
-      @syncronousapi.get target, args, callback
-    else
-      @api.get target, args, callback
+    @syncronousapi.get target, args, callback
     
-  getPlotData: (direction, async) ->
-    # Get data for all plots
-    preError = "#{@preError}.getPlotData(...)"
-    update = false
-    prepend_offset = 0
-    
-    if direction == 'forward' and @hasForward()
-      # Forward is an option, add to the max_datetime
-      update = true
-      @current = @current.getTime() +
-        (@options.updateHourOffset * 60 * 60 * 1000)
-    else if direction == 'backward'
-      # Backward is an option, extend the offset from current
-      console.log "#{preError} (backward)"
-      update = true
-      prepend_offset = @options.updateHourOffset
-    
+  getTemplatePlotData: ->
     preError = "#{@preError}.getPlotData()"
     for key, plot of @template
-      # Update the Offset Values
-      if update
-        @template[key].dataParams.limit = @template[key].dataParams.limit +
-          prepend_offset
-        @template[key].dataParams.max_datetime = @getCurrent()
-    
-      @getStationParamData key, async
+      @getStationParamData key
   
   append: () ->
-    preError = "#{@preError}.append()"
     # Master append plots.
+    preError = "#{@preError}.append()"
     
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
-      plot.options.x =
-        variable: 'datetime'
-        format: @options.dateFormat
+      plot.options.dataParams = plot.dataParams
+      plot.options.line1Color = @getColor('dark', key)
       data =
         data: plot.data.results
-        
-      title = plot.station.station
-      subtitle = "#{plot.options.y.title}"
-      if plot.options.y2
-        subtitle = "#{plot.options.y.title} & #{plot.options.y2.title}"
-     
+      plot.data = null
+      title = @getTitle(plot)
       console.log "#{preError} (plot, data)", plot, data
       instance = new window.Plotting.LinePlot data, plot.options
       instance.append()
-      instance.appendTitle(title, subtitle)
-      @plots[key] = instance
+      instance.appendTitle(title.title, title.subtitle)
+      @template[key].proto = instance
 
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options
+
+  getPrependData: (plotId, dataParams) ->
+    # Request a station's dataset (param specific)
+    preError = "#{@preError}.getPrependData(key, dataParams)"
+    target = "http://dev.nwac.us/api/v5/measurement"
+    _ = @
+    args = dataParams
+
+    callback = (data) ->
+      _.template[plotId].proto.appendData(data.responseJSON.results)
+    
+    @api.get target, args, callback
+
+  prependData: ->
+    # Move forward a certain offset of time records on all plots.
+    preError = "#{@preError}.prependData()"
+    for key, plot of @template
+      state = plot.proto.getState()
+      dataParams = plot.proto.options.dataParams
+      dataParams.max_datetime = @format(state.range.data.min)
+      dataParams.limit = @options.updateLength
       
+      console.log("#{preError} (key, dataParams)", key, dataParams)
+      
+      @getPrependData(key, dataParams)
+    
+  appendData: ->
+    # Move forward a certain offset of time records on all plots.
+    preError = "#{@preError}.forward()"
+    # @getPlotData("forward")
+      
+  zoom: (transform) ->
+    # Set the zoom state of all plots. Triggered by a single plot.
+    for plot in @template
+      plot.proto.setZoomTransform(transform)
+    
+  crosshair: (transform, mouse) ->
+    # Set the cursor hover position of all plots. Triggered by a single plot."
+    for plot in @template
+      plot.proto.setCrosshair(transform, mouse)
+
+  showCrosshairs: ->
+    # Show all Crosshair Command
+    for plot in @template
+      plot.proto.showCrosshair()
+
+  hideCrosshairs: ->
+    # Hide cursor crosshairs.
+    for plot in @template
+      plot.proto.hideCrosshair()
+
+  appendDropdown: (target, type, data) ->
+    # Constuct and append the button dropdown list.
+    switch type
+      when 'station'
+        head = "<button class=\"btn btn-xs btn-default dropdown-toggle\"
+            type=\"button\" id=\"dropdownMenu3\" data-toggle=\"dropdown\"
+            aria-haspopup=\"true\" aria-expanded=\"false\">
+            <span>Stations </span>
+            <span class=\"caret\"></span>
+          </button>
+          <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">"
+        for station in data.stations
+          list = "#{html}
+            <li><i style=\"\" class=\"icon-circle\"></i>#{station.station}</li>"
+        foot = "</ul>"
+      when 'parameter'
+        html = ""
+    
+    result = "#{head}
+        #{list}
+        #{foot}"
+    
+    $(target).append(result)
+    
+  getColor: (shade, key) ->
+    # Return the Color from the ordered list.
+    return @options.colors[shade][key]
+
+  getTitle: (plot) ->
+    # Get the title.
+    result = {}
+    if plot.type == 'station'
+      result.title = plot.station.station
+      result.subtitle = "#{plot.options.y.title}"
+      if plot.options.y2
+        result.subtitle = "#{plot.options.y.title} & #{plot.options.y2.title}"
+    else if plot.type == 'parameter'
+      result.title = plot.options.y.title
+      result.subtitle = ""
+    return result
+
   getAggregateMethod: (param, start, end) ->
     # Returns the appropriate aggregate method for a give parameter and zoom.
     aggregate = 'hourly'
@@ -171,50 +223,7 @@ window.Plotting.Handler = class Handler
         arregate = 'daily'
       when 'precip'
         aggregate = 'daily'
-
-  update: () ->
-    # Move forward a certain offset of time records on all plots.
-    preError = "#{@preError}.update()"
-    for key, plot of @plots
-      console.log "#{preError} ready to go forward (@template[key].data)",
-        @template[key].data
-      data = @template[key].data.results
-      @plots[key].update data
-    
-  forward: ->
-    # Move forward a certain offset of time records on all plots.
-    preError = "#{@preError}.forward()"
-    @getPlotData("forward")
-      
-  backward: ->
-    # Move backward a certain offset of time records on all plots.
-    preError = "#{@preError}.backward()"
-    @getPlotData("backward")
-      
-  zoom: (transform) ->
-    # Set the zoom state of all plots. Triggered by a single plot.
-    for plot in @plots
-      plot.setZoomTransform(transform)
-    
-  crosshair: (transform, mouse) ->
-    # Set the cursor hover position of all plots. Triggered by a single plot."
-    for plot in @plots
-      plot.setCrosshair(transform, mouse)
-
-  showCrosshairs: ->
-    # Show all Crosshair Command
-    for plot in @plots
-      plot.showCrosshair()
-
-  hideCrosshairs: ->
-    # Hide cursor crosshairs.
-    for plot in @plots
-      plot.hideCrosshair()
-
-  alert: (message, type) ->
-    # Fire Modal w/ Message
-  
-  
+ 
   uuid: (length) ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
     

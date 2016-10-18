@@ -1,0 +1,7 @@
+[
+    {"title": "Windspeed", "color": "#2980b9", "onclick": "plotter.plot[0]"},
+    {"title": "Temperature", "color": "#2980b9", "onclick": "plotter.plot[0]"},
+    {"title": "Temperature", "color": "#2980b9", "onclick": "plotter.plot[0]"},
+    {"title": "Temperature", "color": "#2980b9", "onclick": "plotter.plot[0]"},
+    {"title": "Temperature", "color": "#2980b9", "onclick": "plotter.plot[0]"},
+]
