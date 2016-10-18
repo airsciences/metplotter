@@ -440,12 +440,14 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y.variable != null
       @focusCircle = @svg.append("circle")
         .attr("r", 4)
-        .attr("class", "focusCircle")
+        .attr("id", "focus-circle-1")
+        .attr("class", "focus-circle")
         .attr("fill", @options.line1Color)
         .attr("transform", "translate(-10, -10)")
 
       @focusText = @svg.append("text")
-        .attr("class", "focusText")
+        .attr("id", "focus-text-1")
+        .attr("class", "focus-text")
         .attr("x", 9)
         .attr("y", 7)
         .style("fill", @options.line1Color)
@@ -456,12 +458,14 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y2.variable != null
       @focusCircle2 = @svg.append("circle")
         .attr("r", 4)
-        .attr("class", "focusCircle2")
+        .attr("id", "focus-circle-2")
+        .attr("class", "focus-circle")
         .attr("fill", @options.line2Color)
         .attr("transform", "translate(-10, -10)")
 
       @focusText2 = @svg.append("text")
-        .attr("class", "focusText2")
+        .attr("id", "focus-text-2")
+        .attr("class", "focus-text")
         .attr("x", 9)
         .attr("y", 7)
         .style("fill", @options.line2Color)
@@ -658,9 +662,9 @@ window.Plotting.LinePlot = class LinePlot
     _datum = @overlay.datum()
     mouse = if mouse then mouse else d3.mouse(_mouseTarget)
     
-    x0 = _.definition.x.invert(mouse[0] + _dims.leftPadding)
+    x0 = @definition.x.invert(mouse[0] + _dims.leftPadding)
     if transform
-      x0 = _.definition.x.invert(
+      x0 = @definition.x.invert(
         transform.invertX(mouse[0] + _dims.leftPadding)
       )
     i = _.bisectDate(_datum, x0, 1)
@@ -670,49 +674,75 @@ window.Plotting.LinePlot = class LinePlot
     if x0.getTime() > @state.range.visible.max.getTime()
       d = _datum[i - 1]
      
-    dx = if transform then transform.applyX(_.definition.x(d.x)) else
-      _.definition.x(d.x)
-    if _.options.y.variable != null
-      dy = _.definition.y(d.y)
-      _.focusCircle.attr("transform", "translate(0, 0)")
-    if _.options.y2.variable != null
-      dy2 = _.definition.y(d.y2)
-      _.focusCircle2.attr("transform", "translate(0, 0)")
+    dx = if transform then transform.applyX(@definition.x(d.x)) else
+      @definition.x(d.x)
+    if @options.y.variable != null
+      dy = @definition.y(d.y)
+      @focusCircle.attr("transform", "translate(0, 0)")
+    if @options.y2.variable != null
+      dy2 = @definition.y(d.y2)
+      @focusCircle2.attr("transform", "translate(0, 0)")
 
     cx = dx - _dims.leftPadding
-    _.crosshairs.select(".crosshair-x")
+    @crosshairs.select(".crosshair-x")
       .attr("x1", cx)
       .attr("y1", _dims.topPadding)
       .attr("x2", cx)
       .attr("y2", _dims.innerHeight + _dims.topPadding)
       .attr("transform", "translate(#{_dims.leftPadding}, 0)")
        
-    _.crosshairs.select(".crosshair-x-under")
+    @crosshairs.select(".crosshair-x-under")
       .attr("x", cx)
       .attr("y", _dims.topPadding)
       .attr("width", (_dims.innerWidth - cx))
       .attr("height", _dims.innerHeight)
       .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-    if _.options.y.variable != null
-      _.focusCircle
+    if @options.y.variable != null
+      @focusCircle
         .attr("cx", dx)
         .attr("cy", dy)
 
-      _.focusText
+      @focusText
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy - _dims.topPadding / 10)
         .text(d.y.toFixed(2) + " " + @options.y.units)
 
-    if _.options.y2.variable != null
-      _.focusCircle2
+    if @options.y2.variable != null
+      @focusCircle2
         .attr("cx", dx)
         .attr("cy", dy2)
 
-      _.focusText2
+      @focusText2
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy2 - _dims.topPadding / 10)
         .text(d.y2.toFixed(2) + " " + @options.y2.units)
+
+    # Tooltip Overlap Prevention
+    if @options.y.variable != null and @options.y2.variable != null
+      ypos = []
+      @svg.selectAll('.focus-text')
+        .attr("transform", (d, i) ->
+          row =
+            ind: i
+            y: parseInt(d3.select(@).attr("y"))
+            offset: 0
+          ypos.push(row)
+          return ""
+        )
+        .call((sel) ->
+          ypos.sort((a, b) -> a.y - b.y)
+          ypos.forEach ((p, i) ->
+            if i > 0
+              offset = Math.max(0, (ypos[i-1].y + 18) - ypos[i].y)
+              if ypos[i].ind == 0
+                offset = -offset
+              ypos[i].offset = offset
+          )
+        )
+        .attr("transform", (d, i) ->
+          return "translate (0, #{ypos[i].offset})"
+        )
     
     return mouse
     

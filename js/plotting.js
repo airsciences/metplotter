@@ -610,12 +610,12 @@
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
       if (this.options.y.variable !== null) {
-        this.focusCircle = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle").attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)");
-        this.focusText = this.svg.append("text").attr("class", "focusText").attr("x", 9).attr("y", 7).style("fill", this.options.line1Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+        this.focusCircle = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-1").attr("class", "focus-circle").attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)");
+        this.focusText = this.svg.append("text").attr("id", "focus-text-1").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("fill", this.options.line1Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       }
       if (this.options.y2.variable !== null) {
-        this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle2").attr("fill", this.options.line2Color).attr("transform", "translate(-10, -10)");
-        this.focusText2 = this.svg.append("text").attr("class", "focusText2").attr("x", 9).attr("y", 7).style("fill", this.options.line2Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+        this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-2").attr("class", "focus-circle").attr("fill", this.options.line2Color).attr("transform", "translate(-10, -10)");
+        this.focusText2 = this.svg.append("text").attr("id", "focus-text-2").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("fill", this.options.line2Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       }
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget();
@@ -713,16 +713,16 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _datum, _dims, _mouseTarget, cx, d, dx, dy, dy2, i, preError, x0;
+      var _, _datum, _dims, _mouseTarget, cx, d, dx, dy, dy2, i, preError, x0, ypos;
       preError = this.preError + ".setCrosshair(mouse)";
       _ = this;
       _dims = this.definition.dimensions;
       _mouseTarget = this.overlay.node();
       _datum = this.overlay.datum();
       mouse = mouse ? mouse : d3.mouse(_mouseTarget);
-      x0 = _.definition.x.invert(mouse[0] + _dims.leftPadding);
+      x0 = this.definition.x.invert(mouse[0] + _dims.leftPadding);
       if (transform) {
-        x0 = _.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
+        x0 = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
       }
       i = _.bisectDate(_datum, x0, 1);
       d = x0.getMinutes() >= 30 ? _datum[i] : _datum[i - 1];
@@ -732,25 +732,54 @@
       if (x0.getTime() > this.state.range.visible.max.getTime()) {
         d = _datum[i - 1];
       }
-      dx = transform ? transform.applyX(_.definition.x(d.x)) : _.definition.x(d.x);
-      if (_.options.y.variable !== null) {
-        dy = _.definition.y(d.y);
-        _.focusCircle.attr("transform", "translate(0, 0)");
+      dx = transform ? transform.applyX(this.definition.x(d.x)) : this.definition.x(d.x);
+      if (this.options.y.variable !== null) {
+        dy = this.definition.y(d.y);
+        this.focusCircle.attr("transform", "translate(0, 0)");
       }
-      if (_.options.y2.variable !== null) {
-        dy2 = _.definition.y(d.y2);
-        _.focusCircle2.attr("transform", "translate(0, 0)");
+      if (this.options.y2.variable !== null) {
+        dy2 = this.definition.y(d.y2);
+        this.focusCircle2.attr("transform", "translate(0, 0)");
       }
       cx = dx - _dims.leftPadding;
-      _.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-      _.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-      if (_.options.y.variable !== null) {
-        _.focusCircle.attr("cx", dx).attr("cy", dy);
-        _.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(2) + " " + this.options.y.units);
+      this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+      this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+      if (this.options.y.variable !== null) {
+        this.focusCircle.attr("cx", dx).attr("cy", dy);
+        this.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(2) + " " + this.options.y.units);
       }
-      if (_.options.y2.variable !== null) {
-        _.focusCircle2.attr("cx", dx).attr("cy", dy2);
-        _.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(2) + " " + this.options.y2.units);
+      if (this.options.y2.variable !== null) {
+        this.focusCircle2.attr("cx", dx).attr("cy", dy2);
+        this.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(2) + " " + this.options.y2.units);
+      }
+      if (this.options.y.variable !== null && this.options.y2.variable !== null) {
+        ypos = [];
+        this.svg.selectAll('.focus-text').attr("transform", function(d, i) {
+          var row;
+          row = {
+            ind: i,
+            y: parseInt(d3.select(this).attr("y")),
+            offset: 0
+          };
+          ypos.push(row);
+          return "";
+        }).call(function(sel) {
+          ypos.sort(function(a, b) {
+            return a.y - b.y;
+          });
+          return ypos.forEach((function(p, i) {
+            var offset;
+            if (i > 0) {
+              offset = Math.max(0, (ypos[i - 1].y + 18) - ypos[i].y);
+              if (ypos[i].ind === 0) {
+                offset = -offset;
+              }
+              return ypos[i].offset = offset;
+            }
+          }));
+        }).attr("transform", function(d, i) {
+          return "translate (0, " + ypos[i].offset + ")";
+        });
       }
       return mouse;
     };

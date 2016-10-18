@@ -57,7 +57,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 42,
-                    "max_datetime": "2016-10-13T00:00:00Z",
+                    "max_datetime": "2016-10-19T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
@@ -71,6 +71,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "yBand": {
                         "minVariable": "wind_speed_minimum",
                         "maxVariable": "wind_speed_maximum",
+                    },
+                    "y2": {
+                        "variable": "battery_voltage",
+                        "title": "Battery Voltage",
+                        "units": "V"
                     }
                 }
             },
@@ -84,7 +89,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 42,
-                    "max_datetime": "2016-10-13T00:00:00Z",
+                    "max_datetime": "2016-10-19T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
@@ -107,7 +112,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 42,
-                    "max_datetime": "2016-10-13T00:00:00Z",
+                    "max_datetime": "2016-10-19T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
@@ -133,7 +138,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 34,
-                    "max_datetime": "2016-10-13T00:00:00Z",
+                    "max_datetime": "2016-10-19T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
@@ -161,7 +166,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 34,
-                    "max_datetime": "2016-10-13T00:00:00Z",
+                    "max_datetime": "2016-10-19T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
@@ -183,7 +188,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 },
                 "dataParams": {
                     "data_logger": 34,
-                    "max_datetime": "2016-10-13T00:00:00Z",
+                    "max_datetime": "2016-10-19T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
