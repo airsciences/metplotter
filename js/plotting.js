@@ -608,14 +608,14 @@
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.crosshairs = this.svg.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
-      this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.5);
+      this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
       if (this.options.y.variable !== null) {
         this.focusCircle = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle").attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)");
-        this.focusText = this.svg.append("text").attr("class", "focusText").attr("x", 9).attr("y", 7).style("fill", this.options.line1Color);
+        this.focusText = this.svg.append("text").attr("class", "focusText").attr("x", 9).attr("y", 7).style("fill", this.options.line1Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       }
       if (this.options.y2.variable !== null) {
         this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("class", "focusCircle2").attr("fill", this.options.line2Color).attr("transform", "translate(-10, -10)");
-        this.focusText2 = this.svg.append("text").attr("class", "focusText2").attr("x", 9).attr("y", 7).style("fill", this.options.line2Color);
+        this.focusText2 = this.svg.append("text").attr("class", "focusText2").attr("x", 9).attr("y", 7).style("fill", this.options.line2Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       }
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget();
@@ -814,7 +814,7 @@
         updateLength: 1095,
         colors: {
           light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
-          dark: ["rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)", "rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)"]
+          dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
         }
       };
       this.options = Object.mergeDefaults(options, defaults);
@@ -904,6 +904,7 @@
         plot.options.target = "\#" + target;
         plot.options.dataParams = plot.dataParams;
         plot.options.line1Color = this.getColor('dark', key);
+        plot.options.line1Color = this.getColor('light', key);
         data = {
           data: plot.data.results
         };

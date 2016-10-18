@@ -25,15 +25,15 @@ window.Plotting.Handler = class Handler
           "rgb(149, 165, 165)"
         ]
         dark: [
-          "rgb(42, 128, 185)",
-          "rgb(239, 154, 15)",
-          "rgb(143, 68, 173)",
-          "rgb(23, 160, 134)",
           "rgb(45, 62, 80)",
           "rgb(210, 84, 0)",
           "rgb(39, 174, 97)",
           "rgb(192, 57, 43)",
-          "rgb(126, 140, 141)"
+          "rgb(126, 140, 141)",
+          "rgb(42, 128, 185)",
+          "rgb(239, 154, 15)",
+          "rgb(143, 68, 173)",
+          "rgb(23, 160, 134)"
         ]
     @options = Object.mergeDefaults options, defaults
     @now = new Date()
@@ -109,6 +109,7 @@ window.Plotting.Handler = class Handler
       plot.options.target = "\##{target}"
       plot.options.dataParams = plot.dataParams
       plot.options.line1Color = @getColor('dark', key)
+      plot.options.line1Color = @getColor('light', key)
       data =
         data: plot.data.results
       plot.data = null

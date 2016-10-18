@@ -434,7 +434,7 @@ window.Plotting.LinePlot = class LinePlot
     @crosshairs.append("rect")
       .attr("class", "crosshair-x-under")
       .style("fill", "rgb(255,255,255)")
-      .style("opacity", 0.5)
+      .style("opacity", 0.1)
 
     # Create Focus Circles and Labels
     if @options.y.variable != null
@@ -449,6 +449,9 @@ window.Plotting.LinePlot = class LinePlot
         .attr("x", 9)
         .attr("y", 7)
         .style("fill", @options.line1Color)
+        .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+          2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+          2px 2px 0 rgb(255,255,255)")
 
     if @options.y2.variable != null
       @focusCircle2 = @svg.append("circle")
@@ -462,6 +465,9 @@ window.Plotting.LinePlot = class LinePlot
         .attr("x", 9)
         .attr("y", 7)
         .style("fill", @options.line2Color)
+        .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+          2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+          2px 2px 0 rgb(255,255,255)")
 
     # Append the Crosshair & Zoom Event Rectangle
     @overlay = @svg.append("rect")
