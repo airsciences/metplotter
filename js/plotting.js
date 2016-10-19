@@ -321,6 +321,10 @@
         crosshairX: {
           weight: 1,
           color: "rgb(149, 165, 166)"
+        },
+        requestInterval: {
+          data: 336,
+          visible: 168
         }
       };
       if (options.x) {
@@ -367,11 +371,19 @@
           data: null,
           visible: null
         },
-        mean: {
-          scale: this.getDomainMean(this.definition.x)
+        interval: {
+          data: null,
+          visible: null
+        },
+        zoom: 1,
+        request: {
+          data: null,
+          visible: null
         }
       };
       this.setDataState();
+      this.setIntervalState();
+      this.setDataRequirement();
     }
 
     LinePlot.prototype.processData = function(data) {
@@ -421,14 +433,47 @@
       }
       this.data.full = this.data.full.sort(this.sortDatetimeAsc);
       console.log("LinePlot.appendData(data) (@data)", this.data);
-      return this.setDataState();
+      this.setDataState();
+      this.setIntervalState();
+      return this.setDataRequirement();
+    };
+
+    LinePlot.prototype.appendVisible = function(key, length) {
+      var _append, _max, _min;
+      _min = key;
+      _max = key + length;
+      if (length < 0) {
+        _min = key + length;
+        _max = key;
+      }
+      _append = this.data.full.slice(_min, _max);
+      console.log("Appending... (_min, _max, _append)", _min, _max, _append);
+      this.data.visible = this.data.visible.concat(_append);
+      this.data.visible.sort(this.sortDatetimeAsc);
+      this.update();
+      this.setDataState();
+      this.setIntervalState();
+      return this.setDataRequirement();
     };
 
     LinePlot.prototype.setVisibleData = function() {
-      var _current_center, preError;
+      var _data_key, _min, key, preError, ref, row;
       preError = this.preError + "setVisibleData()";
-      _current_center = "";
-      return console.log("Current Scroll Range (range, center, length)", this.state.range, this.state.center, this.state.length);
+      console.log("Current Visible Request (request.visible)", this.state.request.visible);
+      if (this.state.request.visible.min) {
+        _min = this.data.visible[0];
+        ref = this.data.full;
+        for (key in ref) {
+          row = ref[key];
+          if (row.x === _min.x) {
+            _data_key = parseInt(key);
+            break;
+          }
+        }
+        if (_data_key > 0) {
+          return this.appendVisible(_data_key, parseInt(-1 * this.options.requestInterval.visible));
+        }
+      }
     };
 
     LinePlot.prototype.setDataState = function() {
@@ -452,16 +497,38 @@
       return this.state.length.visible = this.data.visible.length;
     };
 
+    LinePlot.prototype.setIntervalState = function() {
+      this.state.interval.visible = {
+        min: (this.state.range.scale.min.getTime() - this.state.range.visible.min.getTime()) / 3600000,
+        max: (this.state.range.visible.max.getTime() - this.state.range.scale.max.getTime()) / 3600000
+      };
+      return this.state.interval.data = {
+        min: (this.state.range.scale.min.getTime() - this.state.range.data.min.getTime()) / 3600000,
+        max: (this.state.range.data.max.getTime() - this.state.range.scale.max.getTime()) / 3600000
+      };
+    };
+
+    LinePlot.prototype.setDataRequirement = function() {
+      this.state.request.data = {
+        min: this.state.interval.data.min < this.options.requestInterval.data,
+        max: this.state.interval.data.max < this.options.requestInterval.data
+      };
+      return this.state.request.visible = {
+        min: this.state.interval.visible.min < this.options.requestInterval.visible,
+        max: this.state.interval.visible.max < this.options.requestInterval.visible
+      };
+    };
+
+    LinePlot.prototype.setZoomState = function(k) {
+      return this.state.zoom = k;
+    };
+
     LinePlot.prototype.getDomainScale = function(axis) {
       var result;
       return result = {
         min: axis.domain()[0],
         max: axis.domain()[1]
       };
-    };
-
-    LinePlot.prototype.getDomainMean = function(axis) {
-      return new Date(d3.mean(axis.domain()));
     };
 
     LinePlot.prototype.getDefinition = function() {
@@ -622,23 +689,21 @@
       return this.appendZoomTarget();
     };
 
-    LinePlot.prototype.update = function(data) {
-      var _, dtOffset, preError;
+    LinePlot.prototype.update = function() {
+      var _, preError;
       preError = this.preError + "update()";
       _ = this;
-      dtOffset = new Date(this.definition.x.max);
-      this.appendData(data);
       this.svg.select(".line-plot-area").datum(this.data.visible).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data.visible).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data.visible).attr("d", this.definition.line);
       this.svg.select(".line-plot-path2").datum(this.data.visible).attr("d", this.definition.line2);
       this.calculateYAxisDims(this.data.visible);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.svg.select(".line-plot-area").datum(this.data.visible).transition().duration(this.options.transitionDuration).attr("d", this.definition.area);
-      this.svg.select(".line-plot-area2").datum(this.data.visible).transition().duration(this.options.transitionDuration).attr("d", this.definition.area2);
-      this.svg.select(".line-plot-path").datum(this.data.visible).transition().duration(this.options.transitionDuration).attr("d", this.definition.line);
-      this.svg.select(".line-plot-path2").datum(this.data.visible).transition().duration(this.options.transitionDuration).attr("d", this.definition.line2);
-      return this.svg.select(".line-plot-axis-y").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).transition().duration(this.options.transitionDuration).ease(d3.easeLinear).call(this.definition.yAxis);
+      this.svg.select(".line-plot-area").datum(this.data.visible).attr("d", this.definition.area);
+      this.svg.select(".line-plot-area2").datum(this.data.visible).attr("d", this.definition.area2);
+      this.svg.select(".line-plot-path").datum(this.data.visible).attr("d", this.definition.line);
+      this.svg.select(".line-plot-path2").datum(this.data.visible).attr("d", this.definition.line2);
+      return this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
     };
 
     LinePlot.prototype.appendCrosshairTarget = function(transform) {
@@ -671,7 +736,9 @@
       _rescaleX = _transform.rescaleX(this.definition.x);
       this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
       this.state.range.scale = this.getDomainScale(_rescaleX);
-      this.state.mean.scale = this.getDomainMean(_rescaleX);
+      this.setIntervalState();
+      this.setDataRequirement();
+      this.setZoomState(_transform.k);
       this.definition.area = d3.area().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -822,6 +889,8 @@
       return this.state;
     };
 
+    LinePlot.prototype.getDataStatus = function() {};
+
     return LinePlot;
 
   })();
@@ -878,6 +947,22 @@
       this.getTemplate();
       this.getTemplatePlotData();
       return this.append();
+    };
+
+    Handler.prototype.listen = function() {
+      var key, plot, ref, state;
+      ref = this.template;
+      for (key in ref) {
+        plot = ref[key];
+        state = plot.proto.getState();
+        if (state.request.data.min) {
+          this.prependData(key);
+        }
+        if (state.request.visible.min) {
+          plot.proto.setVisibleData();
+        }
+      }
+      return setTimeout(Plotting.Handler.prototype.listen.bind(this), 5000);
     };
 
     Handler.prototype.getTemplate = function(template_uri) {
@@ -957,26 +1042,21 @@
       _ = this;
       args = dataParams;
       callback = function(data) {
-        return _.template[plotId].proto.appendData(data.responseJSON.results);
+        _.template[plotId].proto.appendData(data.responseJSON.results);
+        return _.template[plotId].proto.setVisibleData();
       };
       return this.api.get(target, args, callback);
     };
 
-    Handler.prototype.prependData = function() {
-      var dataParams, key, plot, preError, ref, results, state;
+    Handler.prototype.prependData = function(key) {
+      var dataParams, plot, preError, state;
       preError = this.preError + ".prependData()";
-      ref = this.template;
-      results = [];
-      for (key in ref) {
-        plot = ref[key];
-        state = plot.proto.getState();
-        dataParams = plot.proto.options.dataParams;
-        dataParams.max_datetime = this.format(state.range.data.min);
-        dataParams.limit = this.options.updateLength;
-        console.log(preError + " (key, dataParams)", key, dataParams);
-        results.push(this.getPrependData(key, dataParams));
-      }
-      return results;
+      plot = this.template[key];
+      state = plot.proto.getState();
+      dataParams = plot.proto.options.dataParams;
+      dataParams.max_datetime = this.format(state.range.data.min);
+      dataParams.limit = this.options.updateLength;
+      return this.getPrependData(key, dataParams);
     };
 
     Handler.prototype.appendData = function() {

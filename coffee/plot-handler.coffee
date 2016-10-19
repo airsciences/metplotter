@@ -65,7 +65,18 @@ window.Plotting.Handler = class Handler
     @getTemplate()
     @getTemplatePlotData()
     @append()
-    
+
+  listen: ->
+    # Listen to Plot States & Update Data & Visible if Needed
+    for key, plot of @template
+      state = plot.proto.getState()
+      if state.request.data.min
+        @prependData(key)
+      if state.request.visible.min
+        plot.proto.setVisibleData()
+
+    setTimeout(Plotting.Handler.prototype.listen.bind(@), 5000)
+
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
@@ -132,21 +143,23 @@ window.Plotting.Handler = class Handler
 
     callback = (data) ->
       _.template[plotId].proto.appendData(data.responseJSON.results)
+      _.template[plotId].proto.setVisibleData()
     
     @api.get target, args, callback
 
-  prependData: ->
+  prependData: (key) ->
     # Move forward a certain offset of time records on all plots.
     preError = "#{@preError}.prependData()"
-    for key, plot of @template
-      state = plot.proto.getState()
-      dataParams = plot.proto.options.dataParams
-      dataParams.max_datetime = @format(state.range.data.min)
-      dataParams.limit = @options.updateLength
-      
-      console.log("#{preError} (key, dataParams)", key, dataParams)
-      
-      @getPrependData(key, dataParams)
+    
+    plot = @template[key]
+    state = plot.proto.getState()
+    dataParams = plot.proto.options.dataParams
+    dataParams.max_datetime = @format(state.range.data.min)
+    dataParams.limit = @options.updateLength
+    
+    # console.log("#{preError} (key, dataParams)", key, dataParams)
+    
+    @getPrependData(key, dataParams)
     
   appendData: ->
     # Move forward a certain offset of time records on all plots.
