@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/2.3.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/2.3.2/js/bootstrap.min.js"></script>
+  <script>
+  $('#myDropdown .dropdown-menu').on({
+  	"click":function(e){
+        e.stopPropagation();
+      }
+  });
+</script>
+</head>
+<body>
+
+  <div class="btn-group" id="myDropdown">
+  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+    Menu
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu">
+    <li class="dropdown-item"><a href="#">Choice1</a></li>
+    <li class="dropdown-item"><a href="#">Choice2</a></li>
+    <li class="dropdown-item"><a href="#">Choice3</a></li>
+    <li class="divider dropdown-item"></li>
+    <li class="dropdown-item"><a href="#">Choice..</a></li>
+  </ul>
+</div>
+
+</body>
+</html>

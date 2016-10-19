@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script>
+$(document).ready(function(){
+    $(".subheader").click(function(event){
+        $(this).next().toggle()
+    });
+});
+
+$(document).ready(function(){
+    $(".station").click(function(event){
+        if ($(this).hasClass("selected")){
+          $(this).removeClass("selected");
+          $(this).removeClass("color1");
+        }
+        else {
+          $(this).addClass("selected");
+          $(this).addClass("color1");
+        }
+    });
+});
+</script>
+  <style>
+    .station {padding: "2px 5px";}
+    .subheader {padding: "4px 5";}
+    .color1 {background-color: rgb(27, 188, 155);}
+    .color2 {background-color: rgb(45, 204, 112);}
+    .color3 {background-color: rgb(53, 152, 219);}
+    .color4 {background-color: rgb(155, 88, 181);}
+    .color5 {background-color: rgb(52, 73, 94);}
+    .color6 {background-color: rgb(241, 196, 14);}
+</style>
+</head>
+<body>
+  <ul class="list-group">
+    <li class="list-group-item subheader">Region 1</li>
+    <li>
+      <ul class= "list-group-item sublist Region1">
+        <li class="list-group-item station">Snoqualimie Base-4000 ft</li>
+        <li class="list-group-item station">Snoqualimie Base-4000 ft</li>
+        <li class="list-group-item station">Snoqualimie Base-4000 ft</li>
+      </ul>
+    </li>
+    <li class="list-group-item subheader Region2">Region 2</li>
+    <li>
+      <ul class= "list-group-item sublist Region2">
+        <li class="list-group-item station">Snoqualimie Base-4000 ft</li>
+        <li class="list-group-item station">Snoqualimie Base-4000 ft</li>
+        <li class="list-group-item station">Snoqualimie Base-4000 ft</li>
+      </ul>
+    </li>
+  </ul>
+</body>
+</html>
