@@ -65,6 +65,7 @@ window.Plotting.Handler = class Handler
     @getTemplate()
     @getTemplatePlotData()
     @append()
+    @listen()
 
   listen: ->
     # Listen to Plot States & Update Data & Visible if Needed

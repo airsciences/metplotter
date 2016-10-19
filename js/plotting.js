@@ -946,7 +946,8 @@
     Handler.prototype.initialize = function() {
       this.getTemplate();
       this.getTemplatePlotData();
-      return this.append();
+      this.append();
+      return this.listen();
     };
 
     Handler.prototype.listen = function() {
