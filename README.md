@@ -10,7 +10,7 @@ cd /path/to/nwac-repo
 npm install
 ```
 
-***Add your Development Access Token**
+***Add your Development Access Token***
 
 ```sh
 export NWAC_TOKEN={{ACCESS_TOKEN}}
