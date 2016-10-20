@@ -1,0 +1,8 @@
+{
+  "name": "NWAC Emulator",
+  "description": "A barebones NWAC API Emulator for development",
+  "repository": "https://github.com/airsciences/nwac",
+  "logo": "http://node-js-sample.herokuapp.com/node.svg",
+  "keywords": ["node", "express", "static", "nwac"],
+  "image": "heroku/nodejs"
+}

@@ -11,7 +11,7 @@ window.Plotting.Handler = class Handler
     defaults =
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
-      updateLength: 1095
+      updateLength: 110
       colors:
         light: [
           "rgb(53, 152, 219)",
@@ -76,7 +76,7 @@ window.Plotting.Handler = class Handler
       if state.request.visible.min
         plot.proto.setVisibleData()
 
-    setTimeout(Plotting.Handler.prototype.listen.bind(@), 5000)
+    setTimeout(Plotting.Handler.prototype.listen.bind(@), 200)
 
   getTemplate: (template_uri) ->
     # Request the Template
@@ -109,6 +109,17 @@ window.Plotting.Handler = class Handler
     preError = "#{@preError}.getPlotData()"
     for key, plot of @template
       @getStationParamData key
+  
+  getParameterDropdown: () ->
+    # Get a dropdown for each plot
+    preError = "#{@preError}.getStationParamData()"
+    target = "template/1"
+    _ = @
+    args = @template[plotId].dataParams
+  
+  getStationDropdown: () ->
+    # Get a dropdown for each plot
+    preError = ""
   
   append: () ->
     # Master append plots.
@@ -189,6 +200,10 @@ window.Plotting.Handler = class Handler
 
   appendDropdown: (target, type, data) ->
     # Constuct and append the button dropdown list.
+    head = ""
+    list = ""
+    foot = ""
+    
     switch type
       when 'station'
         head = "<button class=\"btn btn-xs btn-default dropdown-toggle\"
@@ -199,11 +214,27 @@ window.Plotting.Handler = class Handler
           </button>
           <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">"
         for station in data.stations
-          list = "#{html}
-            <li><i style=\"\" class=\"icon-circle\"></i>#{station.station}</li>"
+          list = "#{list}
+            <li><a onclick=\"#{parameter.onclick}\">
+              <i style=\"color: #{parameter.color}\"
+              class=\"icon-circle\"></i> #{station.station}
+            </a></li>"
         foot = "</ul>"
       when 'parameter'
-        html = ""
+        head = "<button class=\"btn btn-xs btn-default dropdown-toggle\"
+            type=\"button\" id=\"dropdownMenu3\" data-toggle=\"dropdown\"
+            aria-haspopup=\"true\" aria-expanded=\"false\">
+            <span>Stations </span>
+            <span class=\"caret\"></span>
+          </button>
+          <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">"
+        for parameter in data.parameters
+          list = "#{list}
+            <li><a onclick=\"#{parameter.onclick}\">
+              <i style=\"color: #{parameter.color}\"
+              class=\"icon-circle\"></i> #{parameter.title}
+            </a></li>"
+        foot = "</ul>"
     
     result = "#{head}
         #{list}

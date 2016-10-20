@@ -909,7 +909,7 @@
       defaults = {
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
-        updateLength: 1095,
+        updateLength: 110,
         colors: {
           light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
           dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
@@ -963,7 +963,7 @@
           plot.proto.setVisibleData();
         }
       }
-      return setTimeout(Plotting.Handler.prototype.listen.bind(this), 5000);
+      return setTimeout(Plotting.Handler.prototype.listen.bind(this), 200);
     };
 
     Handler.prototype.getTemplate = function(template_uri) {
@@ -1004,6 +1004,19 @@
         results.push(this.getStationParamData(key));
       }
       return results;
+    };
+
+    Handler.prototype.getParameterDropdown = function() {
+      var _, args, preError, target;
+      preError = this.preError + ".getStationParamData()";
+      target = "template/1";
+      _ = this;
+      return args = this.template[plotId].dataParams;
+    };
+
+    Handler.prototype.getStationDropdown = function() {
+      var preError;
+      return preError = "";
     };
 
     Handler.prototype.append = function() {
@@ -1110,19 +1123,28 @@
     };
 
     Handler.prototype.appendDropdown = function(target, type, data) {
-      var foot, head, html, i, len, list, ref, result, station;
+      var foot, head, i, j, len, len1, list, parameter, ref, ref1, result, station;
+      head = "";
+      list = "";
+      foot = "";
       switch (type) {
         case 'station':
           head = "<button class=\"btn btn-xs btn-default dropdown-toggle\" type=\"button\" id=\"dropdownMenu3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> <span>Stations </span> <span class=\"caret\"></span> </button> <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">";
           ref = data.stations;
           for (i = 0, len = ref.length; i < len; i++) {
             station = ref[i];
-            list = html + " <li><i style=\"\" class=\"icon-circle\"></i>" + station.station + "</li>";
+            list = list + " <li><a onclick=\"" + parameter.onclick + "\"> <i style=\"color: " + parameter.color + "\" class=\"icon-circle\"></i> " + station.station + " </a></li>";
           }
           foot = "</ul>";
           break;
         case 'parameter':
-          html = "";
+          head = "<button class=\"btn btn-xs btn-default dropdown-toggle\" type=\"button\" id=\"dropdownMenu3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> <span>Stations </span> <span class=\"caret\"></span> </button> <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">";
+          ref1 = data.parameters;
+          for (j = 0, len1 = ref1.length; j < len1; j++) {
+            parameter = ref1[j];
+            list = list + " <li><a onclick=\"" + parameter.onclick + "\"> <i style=\"color: " + parameter.color + "\" class=\"icon-circle\"></i> " + parameter.title + " </a></li>";
+          }
+          foot = "</ul>";
       }
       result = head + " " + list + " " + foot;
       return $(target).append(result);
