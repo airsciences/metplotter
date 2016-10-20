@@ -2,13 +2,14 @@ var express = require('express');
 var app = express();
 
 /** Set Configurations */
+app.set('port', (process.env.PORT || 5000));
 app.set('view engine', 'pug');
-app.set('views', './express/views');
+app.set('views', __dirname + '/express/views');
 
 /** Static Files */
-app.use(express.static('font'));
-app.use(express.static('js'));
-app.use(express.static('style'));
+app.use(express.static(__dirname + '/font'));
+app.use(express.static(__dirname + '/js'));
+app.use(express.static(__dirname + '/style'));
 
 /** Routing Calls */
 app.get('/', function (req, res) {
@@ -304,9 +305,7 @@ app.get('/parameter/:dataLoggerId', function (req, res) {
 });
 
 /** Run Server Listen */
-var server = app.listen(3000, function () {
-    var host = server.address().address;
-    var port = server.address().port;
-
+var server = app.listen(app.get('port'), function () {
+    var port = app.get('port');
     console.log("NWAC Development Emulator Listening (http://localhost:"+port+")...");
 });
