@@ -301,7 +301,7 @@
         },
         zoom: {
           scale: {
-            min: 0.1,
+            min: 0.2,
             max: 5
           }
         },
@@ -379,6 +379,9 @@
         request: {
           data: null,
           visible: null
+        },
+        mean: {
+          scale: this.getDomainMean(this.definition.x)
         }
       };
       this.setDataState();
@@ -456,7 +459,7 @@
     };
 
     LinePlot.prototype.setVisibleData = function() {
-      var _data_key, _max, _min, key, preError, ref, ref1, row;
+      var _data_key, _max, _mid_key, _min, key, preError, ref, ref1, ref2, row;
       preError = this.preError + "setVisibleData()";
       if (this.state.request.visible.min) {
         _min = this.data.visible[0];
@@ -483,8 +486,19 @@
           }
         }
         if (_data_key > 0) {
-          return this.appendVisible(_data_key, parseInt(this.options.requestInterval.visible));
+          this.appendVisible(_data_key, parseInt(this.options.requestInterval.visible));
         }
+      }
+      if (this.state.length.visible > this.options.visible.limit) {
+        ref2 = this.data.visible;
+        for (key in ref2) {
+          row = ref2[key];
+          if (row.x === this.state.mean.scale) {
+            _mid_key = parseInt(key);
+            break;
+          }
+        }
+        return console.log("Plot Exceeds Visible Limit! (_mid_key, mean, row.x)", _mid_key, this.state.mean.scale);
       }
     };
 
@@ -541,6 +555,10 @@
         min: axis.domain()[0],
         max: axis.domain()[1]
       };
+    };
+
+    LinePlot.prototype.getDomainMean = function(axis) {
+      return new Date(d3.mean(axis.domain()));
     };
 
     LinePlot.prototype.getDefinition = function() {
@@ -709,6 +727,7 @@
       this.svg.select(".line-plot-area2").datum(this.data.visible).attr("d", this.definition.area2);
       this.svg.select(".line-plot-path").datum(this.data.visible).attr("d", this.definition.line);
       this.svg.select(".line-plot-path2").datum(this.data.visible).attr("d", this.definition.line2);
+      this.overlay.datum(this.data.visible);
       this.calculateYAxisDims(this.data.visible);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       this.svg.select(".line-plot-area").datum(this.data.visible).attr("d", this.definition.area);
@@ -748,6 +767,7 @@
       _rescaleX = _transform.rescaleX(this.definition.x);
       this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
       this.state.range.scale = this.getDomainScale(_rescaleX);
+      this.state.mean.scale = this.getDomainMean(_rescaleX);
       this.setIntervalState();
       this.setDataRequirement();
       this.setZoomState(_transform.k);
@@ -919,6 +939,7 @@
       defaults = {
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
+        refresh: 200,
         updateLength: 110,
         colors: {
           light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
@@ -979,7 +1000,7 @@
           plot.proto.setVisibleData();
         }
       }
-      return setTimeout(Plotting.Handler.prototype.listen.bind(this), 200);
+      return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
     };
 
     Handler.prototype.getTemplate = function(template_uri) {

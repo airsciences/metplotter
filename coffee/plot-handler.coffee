@@ -11,6 +11,7 @@ window.Plotting.Handler = class Handler
     defaults =
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+      refresh: 200
       updateLength: 110
       colors:
         light: [
@@ -82,8 +83,7 @@ window.Plotting.Handler = class Handler
       if state.request.visible.max
         plot.proto.setVisibleData()
 
-
-    setTimeout(Plotting.Handler.prototype.listen.bind(@), 200)
+    setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
 
   getTemplate: (template_uri) ->
     # Request the Template

@@ -38,7 +38,7 @@ window.Plotting.LinePlot = class LinePlot
         maxVariable: null
       zoom:
         scale:
-          min: 0.1
+          min: 0.2
           max: 5
       visible:
         limit: 2190
@@ -98,6 +98,8 @@ window.Plotting.LinePlot = class LinePlot
       request:
         data: null
         visible: null
+      mean:
+        scale: @getDomainMean(@definition.x)
     @setDataState()
     @setIntervalState()
     @setDataRequirement()
@@ -179,8 +181,6 @@ window.Plotting.LinePlot = class LinePlot
     # Set the Visible Data to a Selection of @data.full
     preError = "#{@preError}setVisibleData()"
     
-    #console.log("Current Visible Request (request.visible)",
-    #  @state.request.visible)
     if @state.request.visible.min
       _min = @data.visible[0]
       for key, row of @data.full
@@ -199,6 +199,13 @@ window.Plotting.LinePlot = class LinePlot
        if _data_key > 0
          @appendVisible(_data_key,
            parseInt(@options.requestInterval.visible))
+    if @state.length.visible > @options.visible.limit
+      for key, row of @data.visible
+        if row.x == @state.mean.scale
+          _mid_key = parseInt(key)
+          break
+      console.log("Plot Exceeds Visible Limit! (_mid_key, mean, row.x)",
+        _mid_key, @state.mean.scale)
 
   setDataState: ->
     # Set Data Ranges
@@ -242,6 +249,10 @@ window.Plotting.LinePlot = class LinePlot
     result =
       min: axis.domain()[0]
       max: axis.domain()[1]
+
+  getDomainMean: (axis) ->
+    # Calculat the Mean of an Axis
+    new Date(d3.mean(axis.domain()))
 
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
@@ -567,6 +578,8 @@ window.Plotting.LinePlot = class LinePlot
       .datum(@data.visible)
       .attr("d", @definition.line2)
 
+    @overlay.datum(@data.visible)
+
     @calculateYAxisDims @data.visible
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
@@ -658,6 +671,7 @@ window.Plotting.LinePlot = class LinePlot
     
     # Set the scaleRange
     @state.range.scale = @getDomainScale(_rescaleX)
+    @state.mean.scale = @getDomainMean(_rescaleX)
     @setIntervalState()
     @setDataRequirement()
     @setZoomState(_transform.k)
