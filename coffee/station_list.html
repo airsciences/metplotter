@@ -352,16 +352,22 @@ $(document).ready(function(){
           for(var j = 0; j < regionlist[i].stations.length; j++) {
             var stn = document.createElement('li');
             stn.className = "list-group-item station";
-            stn.appendChild(document.createTextNode(regionlist[i].stations[j].name));
+            stn.appendChild(document.createTextNode(regionlist[i].stations[j].name + ' - ' + regionlist[i].stations[j].elevation + ' ft'));
             stns.appendChild(stn);
           }
 
       }
       $("body").append(list);
       $(".subheader").next().hide()
+      var headers = $(".subheader")
+      headers.css("background-color","rgb(235,235,235)");
+      headers.css("border-color","rgb(200,200,200)");
+      headers.css("padding","3px 10px");
+      $(".station").css("padding","1px 5px");
+      $(".sublist").css("padding","1px 1px");
   });
 
-// Toggle regions on off
+// Expand and collapse regions
 $(document).ready(function(){
     $(".subheader").click(function(event){
         var next = $(this).next();
@@ -373,15 +379,22 @@ $(document).ready(function(){
     });
 });
 
+// Color selected station and regions
 $(document).ready(function(){
     $(".station").click(function(event){
         if ($(this).hasClass("selected")){
           $(this).removeClass("selected");
           $(this).removeClass("color1");
+          if ($(this).siblings().filter(":not(.selected)").length == $(this).siblings().length){
+            $(this).parent().prev().css("background-color","rgb(235,235,235)");
+            $(this).parent().prev().css("border-color","rgb(200,200,200)");
+          }
         }
         else {
           $(this).addClass("selected");
           $(this).addClass("color1");
+          $(this).parent().prev().css("background-color","rgb(210,210,210)")
+          $(this).parent().prev().css("border-color","rgb(170,170,170)");
         }
     });
 });
