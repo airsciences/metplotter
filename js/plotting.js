@@ -447,7 +447,6 @@
         _max = key;
       }
       _append = this.data.full.slice(_min, _max);
-      console.log("Appending... (_min, _max, _append)", _min, _max, _append);
       this.data.visible = this.data.visible.concat(_append);
       this.data.visible.sort(this.sortDatetimeAsc);
       this.update();
@@ -457,9 +456,8 @@
     };
 
     LinePlot.prototype.setVisibleData = function() {
-      var _data_key, _min, key, preError, ref, row;
+      var _data_key, _max, _min, key, preError, ref, ref1, row;
       preError = this.preError + "setVisibleData()";
-      console.log("Current Visible Request (request.visible)", this.state.request.visible);
       if (this.state.request.visible.min) {
         _min = this.data.visible[0];
         ref = this.data.full;
@@ -471,7 +469,21 @@
           }
         }
         if (_data_key > 0) {
-          return this.appendVisible(_data_key, parseInt(-1 * this.options.requestInterval.visible));
+          this.appendVisible(_data_key, parseInt(-1 * this.options.requestInterval.visible));
+        }
+      }
+      if (this.state.request.visible.max) {
+        _max = this.data.visible[this.data.visible.length - 1];
+        ref1 = this.data.full;
+        for (key in ref1) {
+          row = ref1[key];
+          if (row.x === _max.x) {
+            _data_key = parseInt(key);
+            break;
+          }
+        }
+        if (_data_key > 0) {
+          return this.appendVisible(_data_key, parseInt(this.options.requestInterval.visible));
         }
       }
     };
@@ -889,8 +901,6 @@
       return this.state;
     };
 
-    LinePlot.prototype.getDataStatus = function() {};
-
     return LinePlot;
 
   })();
@@ -960,6 +970,12 @@
           this.prependData(key);
         }
         if (state.request.visible.min) {
+          plot.proto.setVisibleData();
+        }
+        if (state.request.data.max) {
+          this.appendData(key);
+        }
+        if (state.request.visible.max) {
           plot.proto.setVisibleData();
         }
       }
@@ -1062,6 +1078,19 @@
       return this.api.get(target, args, callback);
     };
 
+    Handler.prototype.getAppendData = function(plotId, dataParams) {
+      var _, args, callback, preError, target;
+      preError = this.preError + ".getAppendData(key, dataParams)";
+      target = "http://dev.nwac.us/api/v5/measurement";
+      _ = this;
+      args = dataParams;
+      callback = function(data) {
+        _.template[plotId].proto.appendData(data.responseJSON.results);
+        return _.template[plotId].proto.setVisibleData();
+      };
+      return this.api.get(target, args, callback);
+    };
+
     Handler.prototype.prependData = function(key) {
       var dataParams, plot, preError, state;
       preError = this.preError + ".prependData()";
@@ -1073,9 +1102,21 @@
       return this.getPrependData(key, dataParams);
     };
 
-    Handler.prototype.appendData = function() {
-      var preError;
-      return preError = this.preError + ".forward()";
+    Handler.prototype.appendData = function(key) {
+      var _max_datetime, _new_max_datetime, _now, dataParams, plot, preError, state;
+      preError = this.preError + ".appendData()";
+      _now = new Date();
+      plot = this.template[key];
+      state = plot.proto.getState();
+      if (state.range.data.max >= _now) {
+        return;
+      }
+      _max_datetime = state.range.data.max.getTime();
+      _new_max_datetime = _max_datetime + (this.options.updateLength * 3600000);
+      dataParams = plot.proto.options.dataParams;
+      dataParams.max_datetime = this.format(new Date(_new_max_datetime));
+      dataParams.limit = this.options.updateLength;
+      return this.getPrependData(key, dataParams);
     };
 
     Handler.prototype.zoom = function(transform) {

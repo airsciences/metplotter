@@ -165,7 +165,7 @@ window.Plotting.LinePlot = class LinePlot
       _min = (key + length)
       _max = key
     _append = @data.full.slice(_min, _max)
-    console.log("Appending... (_min, _max, _append)", _min, _max, _append)
+    # console.log("Appending... (_min, _max, _append)", _min, _max, _append)
     @data.visible = @data.visible.concat(_append)
     @data.visible.sort(@sortDatetimeAsc)
     
@@ -175,13 +175,12 @@ window.Plotting.LinePlot = class LinePlot
     @setIntervalState()
     @setDataRequirement()
     
-    
   setVisibleData: ->
     # Set the Visible Data to a Selection of @data.full
     preError = "#{@preError}setVisibleData()"
     
-    console.log("Current Visible Request (request.visible)",
-      @state.request.visible)
+    #console.log("Current Visible Request (request.visible)",
+    #  @state.request.visible)
     if @state.request.visible.min
       _min = @data.visible[0]
       for key, row of @data.full
@@ -191,6 +190,15 @@ window.Plotting.LinePlot = class LinePlot
        if _data_key > 0
          @appendVisible(_data_key,
            parseInt(-1*@options.requestInterval.visible))
+    if @state.request.visible.max
+      _max = @data.visible[@data.visible.length - 1]
+      for key, row of @data.full
+        if row.x == _max.x
+          _data_key = parseInt(key)
+          break
+       if _data_key > 0
+         @appendVisible(_data_key,
+           parseInt(@options.requestInterval.visible))
 
   setDataState: ->
     # Set Data Ranges
@@ -855,6 +863,3 @@ window.Plotting.LinePlot = class LinePlot
   getState: ->
     # Return the Current Plot state.
     return @state
-
-  getDataStatus: ->
-    # Return the Current R

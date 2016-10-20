@@ -71,10 +71,17 @@ window.Plotting.Handler = class Handler
     # Listen to Plot States & Update Data & Visible if Needed
     for key, plot of @template
       state = plot.proto.getState()
+      # Min-Side Events
       if state.request.data.min
         @prependData(key)
       if state.request.visible.min
         plot.proto.setVisibleData()
+      # Max-Side Events
+      if state.request.data.max
+        @appendData(key)
+      if state.request.visible.max
+        plot.proto.setVisibleData()
+
 
     setTimeout(Plotting.Handler.prototype.listen.bind(@), 200)
 
@@ -159,6 +166,19 @@ window.Plotting.Handler = class Handler
     
     @api.get target, args, callback
 
+  getAppendData: (plotId, dataParams) ->
+    # Request a station's dataset (param specific)
+    preError = "#{@preError}.getAppendData(key, dataParams)"
+    target = "http://dev.nwac.us/api/v5/measurement"
+    _ = @
+    args = dataParams
+
+    callback = (data) ->
+      _.template[plotId].proto.appendData(data.responseJSON.results)
+      _.template[plotId].proto.setVisibleData()
+        
+    @api.get target, args, callback
+
   prependData: (key) ->
     # Move forward a certain offset of time records on all plots.
     preError = "#{@preError}.prependData()"
@@ -168,15 +188,29 @@ window.Plotting.Handler = class Handler
     dataParams = plot.proto.options.dataParams
     dataParams.max_datetime = @format(state.range.data.min)
     dataParams.limit = @options.updateLength
-    
-    # console.log("#{preError} (key, dataParams)", key, dataParams)
-    
+
     @getPrependData(key, dataParams)
     
-  appendData: ->
+  appendData: (key) ->
     # Move forward a certain offset of time records on all plots.
-    preError = "#{@preError}.forward()"
-    # @getPlotData("forward")
+    preError = "#{@preError}.appendData()"
+    _now = new Date()
+    
+    # Get the Current Plot & Plot State
+    plot = @template[key]
+    state = plot.proto.getState()
+    
+    if state.range.data.max >= _now
+      return
+    
+    _max_datetime = state.range.data.max.getTime()
+    _new_max_datetime = _max_datetime + (@options.updateLength * 3600000)
+    
+    dataParams = plot.proto.options.dataParams
+    dataParams.max_datetime = @format(new Date(_new_max_datetime))
+    dataParams.limit = @options.updateLength
+    
+    @getPrependData(key, dataParams)
       
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
