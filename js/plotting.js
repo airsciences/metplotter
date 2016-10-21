@@ -1071,7 +1071,7 @@
     Handler.prototype.getStationParamData = function(plotId) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData()";
-      target = "http://dev.nwac.us/api/v5/measurement";
+      target = "dev.nwac.us/api/v5/measurement";
       _ = this;
       args = this.template[plotId].dataParams;
       callback = function(data) {
