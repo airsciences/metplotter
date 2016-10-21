@@ -76,7 +76,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "elevation":4470
                 },
                 "dataParams": {
-                    "data_logger": "42,43",
+                    "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
