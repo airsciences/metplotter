@@ -103,7 +103,7 @@ window.Plotting.Handler = class Handler
   getStationParamData: (plotId) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
-    target = "dev.nwac.us/api/v5/measurement"
+    target = "#{location.protocol}//dev.nwac.us/api/v5/measurement"
     _ = @
     args = @template[plotId].dataParams
 
