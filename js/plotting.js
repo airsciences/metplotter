@@ -301,7 +301,7 @@
         },
         zoom: {
           scale: {
-            min: 0.2,
+            min: 0.3,
             max: 5
           }
         },
@@ -337,6 +337,7 @@
         options.y2 = Object.mergeDefaults(options.y2, defaults.y2);
       }
       this.options = Object.mergeDefaults(options, defaults);
+      this.device = 'full';
       this.log = function() {
         var log;
         log = 1 <= arguments.length ? slice.call(arguments, 0) : [];
@@ -395,7 +396,7 @@
       for (key in data) {
         row = data[key];
         result[key] = {
-          x: this.parseDate(row[this.options.x.variable]),
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
           y: row[this.options.y.variable]
         };
         if (this.options.y2.variable !== null) {
@@ -418,7 +419,7 @@
       for (key in data) {
         row = data[key];
         dtaRow = {
-          x: this.parseDate(row[this.options.x.variable]),
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
           y: row[this.options.y.variable]
         };
         if (this.options.y2.variable !== null) {
@@ -618,12 +619,34 @@
       var height, margin, width;
       width = Math.round($(this.options.target).width());
       height = Math.round(width / this.options.aspectDivisor);
-      margin = {
-        top: Math.round(height * 0.16),
-        right: Math.round(Math.pow(width, 0.6)),
-        bottom: Math.round(height * 0.16),
-        left: Math.round(Math.pow(width, 0.6))
-      };
+      if (width > 1000) {
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.6)),
+          bottom: Math.round(height * 0.08),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      } else if (width > 600) {
+        this.device = 'mid';
+        this.options.font.size = this.options.font.size / 1.25;
+        height = Math.round(width / (this.options.aspectDivisor / 1.25));
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.6)),
+          bottom: Math.round(height * 0.12),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      } else {
+        this.device = 'small';
+        this.options.font.size = this.options.font.size / 1.5;
+        height = Math.round(width / (this.options.aspectDivisor / 1.5));
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.6)),
+          bottom: Math.round(height * 0.18),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      }
       this.definition.dimensions = {
         width: width,
         height: height,
@@ -684,13 +707,30 @@
     };
 
     LinePlot.prototype.append = function() {
-      var _, preError;
+      var _, _y2_title, _y_offset, _y_title, _y_vert, preError;
       preError = this.preError + "append()";
       _ = this;
       this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
-      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      _y_title = "" + this.options.y.title;
+      if (this.options.y.units) {
+        _y_title = _y_title + " " + this.options.y.units;
+      }
+      _y_vert = -95;
+      _y_offset = -40;
+      if (this.device === 'small') {
+        _y_vert = -50;
+        _y_offset = -30;
+      }
+      this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
+      if (this.options.y2.title) {
+        _y2_title = _y2_title + " " + this.options.y2.title;
+      }
+      if (this.options.y2.units) {
+        _y2_title = _y2_title + " " + this.options.y2.units;
+      }
       if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
         this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.line1Color).style("opacity", 0.15).style("stroke", function() {
           return d3.color(_.options.line1Color).darker(1);
@@ -910,10 +950,19 @@
     };
 
     LinePlot.prototype.appendTitle = function(title, subtitle) {
+      var _mainSize, _offsetFactor, _subSize;
+      _offsetFactor = 1;
+      _mainSize = '16px';
+      _subSize = '12px';
+      if (this.device === 'small') {
+        _offsetFactor = 0.4;
+        _mainSize = '10px';
+        _subSize = '7px';
+      }
       this.title = this.svg.append("g").attr("class", "line-plot-title");
-      this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 - 4).style("font-size", "16px").style("font-weight", 600).text(title);
+      this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 - (4 * _offsetFactor)).style("font-size", _mainSize).style("font-weight", 600).text(title);
       if (subtitle) {
-        return this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 + 12).style("font-size", "12px").text(subtitle);
+        return this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 + (12 * _offsetFactor)).style("font-size", _subSize).text(subtitle);
       }
     };
 
@@ -1078,7 +1127,6 @@
         console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
-        instance.appendTitle(title.title, title.subtitle);
         results.push(this.template[key].proto = instance);
       }
       return results;
@@ -1221,10 +1269,7 @@
       result = {};
       if (plot.type === 'station') {
         result.title = plot.station.station;
-        result.subtitle = "" + plot.options.y.title;
-        if (plot.options.y2) {
-          result.subtitle = plot.options.y.title + " & " + plot.options.y2.title;
-        }
+        result.subtitle = "";
       } else if (plot.type === 'parameter') {
         result.title = plot.options.y.title;
         result.subtitle = "";

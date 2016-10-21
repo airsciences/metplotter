@@ -19,6 +19,7 @@ app.get('/', function (req, res) {
     var expires = new Date(date.getTime() + minutes*60000);
     
     var data = {
+        title: "Berne Snow Camp",
         token: {
             token: access,
             expires: expires
@@ -42,8 +43,8 @@ app.get('/template/:plotTemplateId', function(req, res) {
     xVar =  {
         "variable": "datetime", 
         "format": "%Y-%m-%dT%H:%M:%SZ",
-        "min": "2016-10-06T00:00:00Z",
-        "max": "2016-10-13T00:00:00Z"
+        "min": "2016-02-21T00:00:00Z",
+        "max": "2016-02-28T00:00:00Z"
     };
     
     if (plotTempateId === 1) {
@@ -52,13 +53,13 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "pageOrder": 1,
                 "type": "station",
                 "station": {
-                    "station":"White Pass",
-                    "region":"White Pass Upper",
-                    "elevation":5800.0
+                    "station":"Berne Snow Camp",
+                    "region":"Berne Snow Camp",
+                    "elevation":2700
                 },
                 "dataParams": {
-                    "data_logger": 42,
-                    "max_datetime": "2016-10-19T00:00:00Z",
+                    "data_logger": 14,
+                    "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
@@ -84,13 +85,13 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "pageOrder": 2,
                 "type": "station",
                 "station": {
-                    "station":"White Pass",
-                    "region":"White Pass Upper",
-                    "elevation":5800.0
+                    "station":"Berne Snow Camp",
+                    "region":"Berne Snow Camp",
+                    "elevation":2700
                 },
                 "dataParams": {
-                    "data_logger": 42,
-                    "max_datetime": "2016-10-19T00:00:00Z",
+                    "data_logger": 14,
+                    "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
@@ -107,13 +108,13 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "pageOrder": 3,
                 "type": "station",
                 "station": {
-                    "station":"White Pass",
-                    "region":"White Pass Upper",
-                    "elevation":5800.0
+                    "station":"Berne Snow Camp",
+                    "region":"Berne Snow Camp",
+                    "elevation":2700
                 },
                 "dataParams": {
-                    "data_logger": 42,
-                    "max_datetime": "2016-10-19T00:00:00Z",
+                    "data_logger": 14,
+                    "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
@@ -138,13 +139,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "elevation":5800.0
                 },
                 "dataParams": {
-                    "data_logger": 34,
+                    "data_logger": 90,
                     "max_datetime": "2016-10-19T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
-                    "line1Color": "rgb(41,128,185)",
-                    "line2Color": "rgb(39,174,96)",
                     "x": xVar,
                     "y": {
                         "variable": "wind_speed_average",
@@ -171,7 +170,6 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "limit": 504
                 },
                 "options": {
-                    "line1Color": "rgb(142,68,173)",
                     "x": xVar,
                     "y": {
                         "variable": "temperature",
@@ -193,7 +191,6 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "limit": 504
                 },
                 "options": {
-                    "line1Color": "rgb(243,156,18)",
                     "x": xVar,
                     "y": {
                         "variable": "solar_pyranometer",

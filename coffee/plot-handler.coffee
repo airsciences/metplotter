@@ -147,7 +147,7 @@ window.Plotting.Handler = class Handler
       console.log "#{preError} (plot, data)", plot, data
       instance = new window.Plotting.LinePlot data, plot.options
       instance.append()
-      instance.appendTitle(title.title, title.subtitle)
+      #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
 
   mergeTemplateOption: () ->
@@ -285,9 +285,10 @@ window.Plotting.Handler = class Handler
     result = {}
     if plot.type == 'station'
       result.title = plot.station.station
-      result.subtitle = "#{plot.options.y.title}"
-      if plot.options.y2
-        result.subtitle = "#{plot.options.y.title} & #{plot.options.y2.title}"
+      #result.subtitle = "#{plot.options.y.title}"
+      #if plot.options.y2
+      #  result.subtitle = "#{plot.options.y.title} & #{plot.options.y2.title}"
+      result.subtitle = ""
     else if plot.type == 'parameter'
       result.title = plot.options.y.title
       result.subtitle = ""
