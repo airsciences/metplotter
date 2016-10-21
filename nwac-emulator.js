@@ -61,8 +61,8 @@ app.get('/template/:plotTemplateId', function(req, res) {
     xVar =  {
         "variable": "datetime", 
         "format": "%Y-%m-%dT%H:%M:%SZ",
-        "min": "2016-02-21T00:00:00Z",
-        "max": "2016-02-28T00:00:00Z"
+        "min": "2016-02-19T00:00:00Z",
+        "max": "2016-02-26T00:00:00Z"
     };
     
     if (plotTempateId === 1) {
