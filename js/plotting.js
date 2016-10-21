@@ -301,7 +301,7 @@
         },
         zoom: {
           scale: {
-            min: 0.2,
+            min: 0.1,
             max: 5
           }
         },
@@ -324,7 +324,7 @@
         },
         requestInterval: {
           data: 336,
-          visible: 168
+          visible: 336
         }
       };
       if (options.x) {
@@ -435,22 +435,36 @@
         this.data.full.push(dtaRow);
       }
       this.data.full = this.data.full.sort(this.sortDatetimeAsc);
-      console.log("LinePlot.appendData(data) (@data)", this.data);
       this.setDataState();
       this.setIntervalState();
       return this.setDataRequirement();
     };
 
     LinePlot.prototype.appendVisible = function(key, length) {
-      var _append, _max, _min;
+      var _append, _length, _max, _min, _visible;
       _min = key;
       _max = key + length;
       if (length < 0) {
         _min = key + length;
         _max = key;
       }
-      _append = this.data.full.slice(_min, _max);
-      this.data.visible = this.data.visible.concat(_append);
+      _min = d3.max([0, _min]);
+      _max = d3.min([_max, this.data.full.length]);
+      _append = $.extend(true, [], this.data.full.slice(_min, _max));
+      _length = _append.length;
+      _visible = $.extend(true, [], this.data.visible);
+      if (this.data.visible.length > this.options.visible.limit) {
+        if (length > 0) {
+          console.log("New-Vis Trimming Right End");
+          _visible = _visible.slice(0, _visible.length - 1 - _append.length);
+        } else if (length < 0) {
+          console.log("New-Vis Trimming Left End");
+          _visible = $.extend(true, [], this.data.visible.slice(_append.length, this.data.visible.length - 1));
+        }
+      }
+      this.data.visible = [];
+      this.data.visible = _visible.concat(_append);
+      console.log("New-Vis (_min, _append[0], visible[0], visible[max])", _min, _append[0], this.data.visible[0], this.data.visible[this.data.visible.length - 1]);
       this.data.visible.sort(this.sortDatetimeAsc);
       this.update();
       this.setDataState();
@@ -459,19 +473,21 @@
     };
 
     LinePlot.prototype.setVisibleData = function() {
-      var _data_key, _max, _mid_key, _min, key, preError, ref, ref1, ref2, row;
+      var _data_key, _max, _min, key, preError, ref, ref1, row;
       preError = this.preError + "setVisibleData()";
       if (this.state.request.visible.min) {
+        console.log("Updating Vis-Min");
         _min = this.data.visible[0];
         ref = this.data.full;
         for (key in ref) {
           row = ref[key];
-          if (row.x === _min.x) {
+          if (row.x.valueOf() === _min.x.valueOf()) {
             _data_key = parseInt(key);
             break;
           }
         }
         if (_data_key > 0) {
+          console.log("Appending Vis-Min Data (key)", _data_key);
           this.appendVisible(_data_key, parseInt(-1 * this.options.requestInterval.visible));
         }
       }
@@ -480,25 +496,14 @@
         ref1 = this.data.full;
         for (key in ref1) {
           row = ref1[key];
-          if (row.x === _max.x) {
+          if (row.x.valueOf() === _max.x.valueOf()) {
             _data_key = parseInt(key);
             break;
           }
         }
         if (_data_key > 0) {
-          this.appendVisible(_data_key, parseInt(this.options.requestInterval.visible));
+          return this.appendVisible(_data_key, parseInt(this.options.requestInterval.visible));
         }
-      }
-      if (this.state.length.visible > this.options.visible.limit) {
-        ref2 = this.data.visible;
-        for (key in ref2) {
-          row = ref2[key];
-          if (row.x === this.state.mean.scale) {
-            _mid_key = parseInt(key);
-            break;
-          }
-        }
-        return console.log("Plot Exceeds Visible Limit! (_mid_key, mean, row.x)", _mid_key, this.state.mean.scale);
       }
     };
 
@@ -535,13 +540,23 @@
     };
 
     LinePlot.prototype.setDataRequirement = function() {
+      var _data_max, _now, _visible_max;
+      _now = new Date();
+      _data_max = false;
+      _visible_max = false;
+      if (this.state.range.data.max < _now) {
+        _data_max = this.state.interval.data.max < this.options.requestInterval.data;
+      }
+      if (this.state.range.visible.max < _now) {
+        _visible_max = this.state.interval.visible.max < this.options.requestInterval.visible;
+      }
       this.state.request.data = {
         min: this.state.interval.data.min < this.options.requestInterval.data,
-        max: this.state.interval.data.max < this.options.requestInterval.data
+        max: _data_max
       };
       return this.state.request.visible = {
         min: this.state.interval.visible.min < this.options.requestInterval.visible,
-        max: this.state.interval.visible.max < this.options.requestInterval.visible
+        max: _visible_max
       };
     };
 
@@ -558,7 +573,13 @@
     };
 
     LinePlot.prototype.getDomainMean = function(axis) {
-      return new Date(d3.mean(axis.domain()));
+      var center;
+      center = new Date(d3.mean(axis.domain()));
+      center.setHours(center.getHours() + Math.round(center.getMinutes() / 60));
+      center.setMinutes(0);
+      center.setSeconds(0);
+      center.setMilliseconds(0);
+      return center;
     };
 
     LinePlot.prototype.getDefinition = function() {
@@ -768,6 +789,7 @@
       this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
       this.state.range.scale = this.getDomainScale(_rescaleX);
       this.state.mean.scale = this.getDomainMean(_rescaleX);
+      this.setDataState();
       this.setIntervalState();
       this.setDataRequirement();
       this.setZoomState(_transform.k);
@@ -940,6 +962,7 @@
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 200,
+        refreshViewport: 50,
         updateLength: 110,
         colors: {
           light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
@@ -978,7 +1001,8 @@
       this.getTemplate();
       this.getTemplatePlotData();
       this.append();
-      return this.listen();
+      this.listen();
+      return this.listenViewport();
     };
 
     Handler.prototype.listen = function() {
@@ -990,17 +1014,29 @@
         if (state.request.data.min) {
           this.prependData(key);
         }
-        if (state.request.visible.min) {
-          plot.proto.setVisibleData();
-        }
         if (state.request.data.max) {
           this.appendData(key);
         }
+      }
+      return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
+    };
+
+    Handler.prototype.listenViewport = function() {
+      var key, plot, ref, state;
+      ref = this.template;
+      for (key in ref) {
+        plot = ref[key];
+        state = plot.proto.getState();
+        if (state.request.visible.min) {
+          console.log("Listen[" + key + "]: Request Visible Min Update");
+          plot.proto.setVisibleData();
+        }
         if (state.request.visible.max) {
+          console.log("Listen[" + key + "]: Request Visible Max Update");
           plot.proto.setVisibleData();
         }
       }
-      return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
+      return setTimeout(Plotting.Handler.prototype.listenViewport.bind(this), this.options.refreshViewport);
     };
 
     Handler.prototype.getTemplate = function(template_uri) {

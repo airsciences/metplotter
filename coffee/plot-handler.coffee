@@ -12,6 +12,7 @@ window.Plotting.Handler = class Handler
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       refresh: 200
+      refreshViewport: 50
       updateLength: 110
       colors:
         light: [
@@ -67,6 +68,7 @@ window.Plotting.Handler = class Handler
     @getTemplatePlotData()
     @append()
     @listen()
+    @listenViewport()
 
   listen: ->
     # Listen to Plot States & Update Data & Visible if Needed
@@ -75,16 +77,28 @@ window.Plotting.Handler = class Handler
       # Min-Side Events
       if state.request.data.min
         @prependData(key)
-      if state.request.visible.min
-        plot.proto.setVisibleData()
       # Max-Side Events
       if state.request.data.max
         @appendData(key)
-      if state.request.visible.max
-        plot.proto.setVisibleData()
 
     setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
 
+  listenViewport: ->
+    # Listen to Plot States & Update Data & Visible if Needed
+    for key, plot of @template
+      state = plot.proto.getState()
+      # Min-Side Events
+      if state.request.visible.min
+        console.log("Listen[#{key}]: Request Visible Min Update")
+        plot.proto.setVisibleData()
+      # Max-Side Events
+      if state.request.visible.max
+        console.log("Listen[#{key}]: Request Visible Max Update")
+        plot.proto.setVisibleData()
+
+    setTimeout(Plotting.Handler.prototype.listenViewport.bind(@),
+      @options.refreshViewport)
+  
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"

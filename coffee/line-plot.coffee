@@ -38,7 +38,7 @@ window.Plotting.LinePlot = class LinePlot
         maxVariable: null
       zoom:
         scale:
-          min: 0.2
+          min: 0.1
           max: 5
       visible:
         limit: 2190
@@ -56,7 +56,7 @@ window.Plotting.LinePlot = class LinePlot
         color: "rgb(149, 165, 166)"
       requestInterval:
         data: 336
-        visible: 168
+        visible: 336
     if options.x
       options.x = Object.mergeDefaults(options.x, defaults.x)
     if options.y
@@ -153,7 +153,7 @@ window.Plotting.LinePlot = class LinePlot
     # Sort the Data
     @data.full = @data.full.sort(@sortDatetimeAsc)
     
-    console.log("LinePlot.appendData(data) (@data)", @data)
+    # console.log("LinePlot.appendData(data) (@data)", @data)
     
     # Reset the Data Range
     @setDataState()
@@ -166,9 +166,38 @@ window.Plotting.LinePlot = class LinePlot
     if length < 0
       _min = (key + length)
       _max = key
-    _append = @data.full.slice(_min, _max)
-    # console.log("Appending... (_min, _max, _append)", _min, _max, _append)
-    @data.visible = @data.visible.concat(_append)
+    
+    _min = d3.max([0, _min])
+    _max = d3.min([_max, @data.full.length])
+    
+    _append = $.extend(true, [], @data.full.slice(_min, _max))
+    _length = _append.length
+    
+    _visible = $.extend(true, [], @data.visible)
+    
+    # Trim the Opposite End
+    if @data.visible.length > @options.visible.limit
+      if length > 0
+        console.log("New-Vis Trimming Right End")
+        _visible = _visible.slice(0, (_visible.length-1-_append.length))
+      else if length < 0
+        console.log("New-Vis Trimming Left End")
+        _visible = $.extend(
+          true, [],
+          @data.visible.slice(_append.length, (@data.visible.length-1))
+        )
+    
+    
+    @data.visible = []
+    @data.visible = _visible.concat(_append)
+    #@data.visible = @data.visible.concat(_append)
+    
+    console.log("New-Vis (_min, _append[0], visible[0], visible[max])",
+      _min, _append[0], @data.visible[0],
+      @data.visible[(@data.visible.length-1)]
+    )
+    
+    # Sort & Update the Visible Data
     @data.visible.sort(@sortDatetimeAsc)
     
     @update()
@@ -182,30 +211,26 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}setVisibleData()"
     
     if @state.request.visible.min
+      console.log("Updating Vis-Min")
       _min = @data.visible[0]
       for key, row of @data.full
-        if row.x == _min.x
+        if row.x.valueOf() == _min.x.valueOf()
           _data_key = parseInt(key)
           break
-       if _data_key > 0
-         @appendVisible(_data_key,
-           parseInt(-1*@options.requestInterval.visible))
+      if _data_key > 0
+        console.log("Appending Vis-Min Data (key)", _data_key)
+        @appendVisible(_data_key,
+          parseInt(-1*@options.requestInterval.visible))
+    
     if @state.request.visible.max
       _max = @data.visible[@data.visible.length - 1]
       for key, row of @data.full
-        if row.x == _max.x
+        if row.x.valueOf() == _max.x.valueOf()
           _data_key = parseInt(key)
           break
-       if _data_key > 0
-         @appendVisible(_data_key,
-           parseInt(@options.requestInterval.visible))
-    if @state.length.visible > @options.visible.limit
-      for key, row of @data.visible
-        if row.x == @state.mean.scale
-          _mid_key = parseInt(key)
-          break
-      console.log("Plot Exceeds Visible Limit! (_mid_key, mean, row.x)",
-        _mid_key, @state.mean.scale)
+      if _data_key > 0
+        @appendVisible(_data_key,
+          parseInt(@options.requestInterval.visible))
 
   setDataState: ->
     # Set Data Ranges
@@ -234,12 +259,24 @@ window.Plotting.LinePlot = class LinePlot
 
   setDataRequirement: ->
     # Calculate how necessary a download, in what direction, and visible or data
+    _now = new Date()
+    
+    _data_max = false
+    _visible_max = false
+    
+    if @state.range.data.max < _now
+      _data_max = @state.interval.data.max < @options.requestInterval.data
+    
+    if @state.range.visible.max < _now
+      _visible_max = (@state.interval.visible.max <
+        @options.requestInterval.visible)
+    
     @state.request.data =
       min: @state.interval.data.min < @options.requestInterval.data
-      max: @state.interval.data.max < @options.requestInterval.data
+      max: _data_max
     @state.request.visible =
       min: @state.interval.visible.min < @options.requestInterval.visible
-      max: @state.interval.visible.max < @options.requestInterval.visible
+      max: _visible_max
 
   setZoomState: (k)->
     @state.zoom = k
@@ -252,8 +289,13 @@ window.Plotting.LinePlot = class LinePlot
 
   getDomainMean: (axis) ->
     # Calculat the Mean of an Axis
-    new Date(d3.mean(axis.domain()))
-
+    center = new Date(d3.mean(axis.domain()))
+    center.setHours(center.getHours() + Math.round(center.getMinutes()/60))
+    center.setMinutes(0)
+    center.setSeconds(0)
+    center.setMilliseconds(0)
+    return center
+    
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
     _ = @
@@ -557,7 +599,7 @@ window.Plotting.LinePlot = class LinePlot
     @appendCrosshairTarget()
     @appendZoomTarget()
 
-  update: () ->
+  update: ->
     preError = "#{@preError}update()"
     _ = @
 
@@ -586,36 +628,23 @@ window.Plotting.LinePlot = class LinePlot
     # Redraw the Bands
     @svg.select(".line-plot-area")
       .datum(@data.visible)
-      #.transition()
-      #.duration(@options.transitionDuration)
       .attr("d", @definition.area)
 
     @svg.select(".line-plot-area2")
       .datum(@data.visible)
-      #.transition()
-      #.duration(@options.transitionDuration)
       .attr("d", @definition.area2)
 
     # Redraw the Line Paths
     @svg.select(".line-plot-path")
       .datum(@data.visible)
-      #.transition()
-      #.duration(@options.transitionDuration)
       .attr("d", @definition.line)
 
     @svg.select(".line-plot-path2")
       .datum(@data.visible)
-      #.transition()
-      #.duration(@options.transitionDuration)
       .attr("d", @definition.line2)
 
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
-      #.style("font-size", @options.font.size)
-      #.style("font-weight", @options.font.weight)
-      #.transition()
-      #.duration(@options.transitionDuration)
-      #.ease(d3.easeLinear)
       .call(@definition.yAxis)
           
   appendCrosshairTarget: (transform) ->
@@ -672,6 +701,7 @@ window.Plotting.LinePlot = class LinePlot
     # Set the scaleRange
     @state.range.scale = @getDomainScale(_rescaleX)
     @state.mean.scale = @getDomainMean(_rescaleX)
+    @setDataState()
     @setIntervalState()
     @setDataRequirement()
     @setZoomState(_transform.k)
