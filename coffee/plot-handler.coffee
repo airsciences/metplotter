@@ -11,8 +11,8 @@ window.Plotting.Handler = class Handler
     defaults =
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
-      refresh: 200
-      updateLength: 110
+      refresh: 1000
+      updateLength: 1024
       colors:
         light: [
           "rgb(53, 152, 219)",

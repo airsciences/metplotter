@@ -19,12 +19,30 @@ app.get('/', function (req, res) {
     var expires = new Date(date.getTime() + minutes*60000);
     
     var data = {
-        title: "Berne Snow Camp",
+        title: "White Pass - Upper & Pigtail",
         token: {
             token: access,
             expires: expires
         },
         plotTemplateId: 1
+    };
+    
+    res.render('advanced', data);
+});
+
+app.get('/full', function (req, res) {
+    var minutes = 60;
+    var access = process.env.NWAC_TOKEN;
+    var date = new Date();
+    var expires = new Date(date.getTime() + minutes*60000);
+    
+    var data = {
+        title: "White Pass - Upper, Base, & Pigtail",
+        token: {
+            token: access,
+            expires: expires
+        },
+        plotTemplateId: 2
     };
     
     res.render('advanced', data);
@@ -53,12 +71,104 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "pageOrder": 1,
                 "type": "station",
                 "station": {
-                    "station":"Berne Snow Camp",
-                    "region":"Berne Snow Camp",
-                    "elevation":2700
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
                 },
                 "dataParams": {
-                    "data_logger": 14,
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "temperature",
+                        "title": "Temperature",
+                        "units": "°F",
+                        "min": 0
+                    }
+                }
+            },
+            {
+                "pageOrder": 2,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "snow_depth",
+                        "title": "Total Snow Depth",
+                        "units": "In.",
+                        "min": 0
+                    }
+                }
+            },
+            {
+                "pageOrder": 3,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "snowfall_24_hour",
+                        "title": "24-Hour Snow Fall",
+                        "units": "In.",
+                        "min": 0
+                    }
+                }
+            },
+            {
+                "pageOrder": 4,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "precipitation",
+                        "title": "Precipitation",
+                        "units": "In.",
+                        "min": 0
+                    }
+                }
+            },
+            {
+                "pageOrder": 5,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Pigtail",
+                    "region":"West Slopes South",
+                    "elevation":5970
+                },
+                "dataParams": {
+                    "data_logger": 40,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
@@ -74,23 +184,21 @@ app.get('/template/:plotTemplateId', function(req, res) {
                         "minVariable": "wind_speed_minimum",
                         "maxVariable": "wind_speed_maximum",
                     },
-                    "y2": {
-                        "variable": "battery_voltage",
-                        "title": "Battery Voltage",
-                        "units": "V"
-                    }
                 }
-            },
+            }
+        ]};
+    } else if (plotTemplateId === 2) {
+        result = {"templateData": [
             {
-                "pageOrder": 2,
+                "pageOrder": 1,
                 "type": "station",
                 "station": {
-                    "station":"Berne Snow Camp",
-                    "region":"Berne Snow Camp",
-                    "elevation":2700
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
                 },
                 "dataParams": {
-                    "data_logger": 14,
+                    "data_logger": "42,43",
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
@@ -105,98 +213,99 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 }
             },
             {
-                "pageOrder": 3,
+                "pageOrder": 2,
                 "type": "station",
                 "station": {
-                    "station":"Berne Snow Camp",
-                    "region":"Berne Snow Camp",
-                    "elevation":2700
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
                 },
                 "dataParams": {
-                    "data_logger": 14,
+                    "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
                     "x": xVar,
                     "y": {
-                        "variable": "relative_humidity",
-                        "title": "Relative Humidity",
-                        "units": "%",
+                        "variable": "snow_depth",
+                        "title": "Total Snow Depth",
+                        "units": "In.",
                         "min": 0
                     }
                 }
-            }
-        ]};
-    } else if (plotTemplateId === 2) {
-        result = {"templateData": [
+            },
             {
-                "pageOrder": 1,
-                "type": "parameter",
+                "pageOrder": 3,
+                "type": "station",
                 "station": {
-                    "station":"White Pass",
-                    "region":"White Pass Upper",
-                    "elevation":5800.0
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
                 },
                 "dataParams": {
-                    "data_logger": 90,
-                    "max_datetime": "2016-10-19T00:00:00Z",
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "snowfall_24_hour",
+                        "title": "24-Hour Snow Fall",
+                        "units": "In.",
+                        "min": 0
+                    }
+                }
+            },
+            {
+                "pageOrder": 4,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "precipitation",
+                        "title": "Precipitation",
+                        "units": "In.",
+                        "min": 0
+                    }
+                }
+            },
+            {
+                "pageOrder": 5,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Pigtail",
+                    "region":"West Slopes South",
+                    "elevation":5970
+                },
+                "dataParams": {
+                    "data_logger": 40,
+                    "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
                     "x": xVar,
                     "y": {
                         "variable": "wind_speed_average",
-                        "title": "Wind Speed Average",
-                        "units": "m/s"
+                        "title": "Wind Speed",
+                        "units": "m/s",
+                        "min": 0
                     },
-                    "y2": {
-                        "variable": "wind_speed_minimum",
-                        "title": "Wind Speed Minimum",
-                        "units": "m/s"
-                    }
-                }                    
-            },
-            {
-                "pageOrder": 2,
-                "station": {
-                    "station":"White Pass",
-                    "region":"White Pass Upper",
-                    "elevation":5800.0
-                },
-                "dataParams": {
-                    "data_logger": 34,
-                    "max_datetime": "2016-10-19T00:00:00Z",
-                    "limit": 504
-                },
-                "options": {
-                    "x": xVar,
-                    "y": {
-                        "variable": "temperature",
-                        "title": "Temperature",
-                        "units": "°F"
-                    }
-                }
-            },
-            {
-                "pageOrder": 3,
-                "station": {
-                    "station":"White Pass",
-                    "region":"White Pass Upper",
-                    "elevation":5800.0
-                },
-                "dataParams": {
-                    "data_logger": 34,
-                    "max_datetime": "2016-10-19T00:00:00Z",
-                    "limit": 504
-                },
-                "options": {
-                    "x": xVar,
-                    "y": {
-                        "variable": "solar_pyranometer",
-                        "title": "Solar Radiation",
-                        "units": "W/sq-m"
-                    }
+                    "yBand": {
+                        "minVariable": "wind_speed_minimum",
+                        "maxVariable": "wind_speed_maximum",
+                    },
                 }
             }
         ]};

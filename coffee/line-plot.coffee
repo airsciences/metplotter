@@ -42,7 +42,7 @@ window.Plotting.LinePlot = class LinePlot
           max: 5
       visible:
         limit: 2190
-      aspectDivisor: 4
+      aspectDivisor: 5
       transitionDuration: 500
       line1Color: "rgb(41, 128, 185)"
       line2Color: "rgb(39, 174, 96)"
@@ -468,7 +468,7 @@ window.Plotting.LinePlot = class LinePlot
       _y_title = "#{_y_title} #{@options.y.units}"
     
     _y_vert = -95
-    _y_offset = -40
+    _y_offset = -46
     if @device == 'small'
       _y_vert = -50
       _y_offset = -30

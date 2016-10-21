@@ -308,7 +308,7 @@
         visible: {
           limit: 2190
         },
-        aspectDivisor: 4,
+        aspectDivisor: 5,
         transitionDuration: 500,
         line1Color: "rgb(41, 128, 185)",
         line2Color: "rgb(39, 174, 96)",
@@ -719,7 +719,7 @@
         _y_title = _y_title + " " + this.options.y.units;
       }
       _y_vert = -95;
-      _y_offset = -40;
+      _y_offset = -46;
       if (this.device === 'small') {
         _y_vert = -50;
         _y_offset = -30;
@@ -988,8 +988,8 @@
       defaults = {
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
-        refresh: 200,
-        updateLength: 110,
+        refresh: 1000,
+        updateLength: 1024,
         colors: {
           light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
           dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
