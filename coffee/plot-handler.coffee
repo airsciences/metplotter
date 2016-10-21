@@ -88,7 +88,7 @@ window.Plotting.Handler = class Handler
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
-    target = "template/1"
+    target = "template/#{@options.plotHandlerId}"
     args = null
     _ = @
     
@@ -100,27 +100,42 @@ window.Plotting.Handler = class Handler
     
     @syncronousapi.get target, args, callback
 
-  getStationParamData: (plotId) ->
+  getStationParamData: (plotId, key) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
     target = "#{location.protocol}//dev.nwac.us/api/v5/measurement"
     _ = @
-    args = @template[plotId].dataParams
+    _is_array = @template[plotId].dataParams instanceof Array
+    if _is_array
+      args = @template[plotId].dataParams[key]
+    else
+      args = @template[plotId].dataParams
 
     callback = (data) ->
-      _.template[plotId].data = data.responseJSON
+      if _is_array
+        console.log("Key", key)
+        if parseInt(key) == 0
+          _.template[plotId].data = []
+        _.template[plotId].data[key] = data.responseJSON
+      else
+        console.log("Flat")
+        _.template[plotId].data = data.responseJSON
     
     @syncronousapi.get target, args, callback
     
   getTemplatePlotData: ->
     preError = "#{@preError}.getPlotData()"
     for key, plot of @template
-      @getStationParamData key
+      if @template[key].dataParams instanceof Array
+        for subKey, params of @template[key].dataParams
+          @getStationParamData key, subKey
+      else
+        @getStationParamData key
   
   getParameterDropdown: () ->
     # Get a dropdown for each plot
     preError = "#{@preError}.getStationParamData()"
-    target = "template/1"
+    target = "template/#{plotHandlerId}"
     _ = @
     args = @template[plotId].dataParams
   
@@ -140,8 +155,16 @@ window.Plotting.Handler = class Handler
       plot.options.dataParams = plot.dataParams
       plot.options.line1Color = @getColor('dark', key)
       plot.options.line1Color = @getColor('light', key)
-      data =
-        data: plot.data.results
+      
+      if plot.data instanceof Array
+        plot.options.merge = true
+        data =
+          data: []
+        for key, row of plot.data
+          data.data[key] = row.results
+      else
+        data =
+          data: plot.data.results
       plot.data = null
       title = @getTitle(plot)
       console.log "#{preError} (plot, data)", plot, data

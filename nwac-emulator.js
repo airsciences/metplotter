@@ -51,7 +51,7 @@ app.get('/full', function (req, res) {
 /** Routing API Calls */
 app.get('/template/:plotTemplateId', function(req, res) {
     /** Get a Template */
-    var plotTempateId = parseInt(req.params.plotTemplateId);
+    var plotTemplateId = parseInt(req.params.plotTemplateId);
     var max_datetime = new Date();
     var result = {
         "error": true,
@@ -65,13 +65,13 @@ app.get('/template/:plotTemplateId', function(req, res) {
         "max": "2016-02-26T00:00:00Z"
     };
     
-    if (plotTempateId === 1) {
+    if (plotTemplateId === 1) {
         result = {"templateData": [
             {
                 "pageOrder": 1,
                 "type": "station",
                 "station": {
-                    "station":"White Pass Base",
+                    "station":"White Pass Base & Upper",
                     "region":"West Slopes South",
                     "elevation":4470
                 },
@@ -192,16 +192,30 @@ app.get('/template/:plotTemplateId', function(req, res) {
             {
                 "pageOrder": 1,
                 "type": "station",
-                "station": {
-                    "station":"White Pass Base",
-                    "region":"West Slopes South",
-                    "elevation":4470
-                },
-                "dataParams": {
-                    "data_logger": "42,43",
-                    "max_datetime": "2016-02-28T00:00:00Z",
-                    "limit": 504
-                },
+                "station": [
+                    {
+                        "station":"White Pass Base",
+                        "region":"West Slopes South",
+                        "elevation":4470
+                    },
+                    {
+                        "station":"White Pass Upper",
+                        "region":"West Slopes South",
+                        "elevation":5800
+                    },
+                ],
+                "dataParams": [
+                    {
+                        "data_logger": 43,
+                        "max_datetime": "2016-02-28T00:00:00Z",
+                        "limit": 504
+                    },
+                    {
+                        "data_logger": 42,
+                        "max_datetime": "2016-02-28T00:00:00Z",
+                        "limit": 504
+                    }
+                ],
                 "options": {
                     "x": xVar,
                     "y": {

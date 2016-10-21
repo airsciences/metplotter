@@ -272,6 +272,7 @@
         debug: true,
         target: null,
         dataParams: null,
+        merge: false,
         x: {
           variable: null,
           format: "%Y-%m-%d %H:%M:%S",
@@ -356,7 +357,13 @@
       this.sortDatetimeAsc = function(a, b) {
         return a.x - b.x;
       };
-      _initial = this.processData(data.data);
+      if (this.options.merge) {
+        _initial = this.mergeData(data.data);
+        this.options.y2.variable = this.options.y.variable + "2";
+        this.options.y2.units = "" + this.options.y.units;
+      } else {
+        _initial = this.processData(data.data);
+      }
       this.data = {
         full: _initial.slice(0),
         visible: _initial.slice(0)
@@ -441,6 +448,32 @@
       this.setIntervalState();
       return this.setDataRequirement();
     };
+
+    LinePlot.prototype.mergeData = function(data) {
+      var key, ref, result, row;
+      result = [];
+      ref = data[0];
+      for (key in ref) {
+        row = ref[key];
+        result[key] = {
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
+          y: row[this.options.y.variable],
+          y2: data[1][key][this.options.y.variable]
+        };
+        if (this.options.y2.variable !== null) {
+          result[key].y2 = row[this.options.y2.variable];
+        }
+        if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
+          result[key].yMin = row[this.options.yBand.minVariable];
+          result[key].yMax = row[this.options.yBand.maxVariable];
+          result[key].y2Min = row[this.options.y2Band.minVariable];
+          result[key].y2Max = row[this.options.y2Band.maxVariable];
+        }
+      }
+      return result.sort(this.sortDatetimeAsc);
+    };
+
+    LinePlot.prototype.appendMergeData = function(data) {};
 
     LinePlot.prototype.appendVisible = function(key, length) {
       var _append, _max, _min;
@@ -1055,7 +1088,7 @@
     Handler.prototype.getTemplate = function(template_uri) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getTemplate(...)";
-      target = "template/1";
+      target = "template/" + this.options.plotHandlerId;
       args = null;
       _ = this;
       callback = function(data) {
@@ -1068,26 +1101,53 @@
       return this.syncronousapi.get(target, args, callback);
     };
 
-    Handler.prototype.getStationParamData = function(plotId) {
-      var _, args, callback, preError, target;
+    Handler.prototype.getStationParamData = function(plotId, key) {
+      var _, _is_array, args, callback, preError, target;
       preError = this.preError + ".getStationParamData()";
       target = location.protocol + "//dev.nwac.us/api/v5/measurement";
       _ = this;
-      args = this.template[plotId].dataParams;
+      _is_array = this.template[plotId].dataParams instanceof Array;
+      if (_is_array) {
+        args = this.template[plotId].dataParams[key];
+      } else {
+        args = this.template[plotId].dataParams;
+      }
       callback = function(data) {
-        return _.template[plotId].data = data.responseJSON;
+        if (_is_array) {
+          console.log("Key", key);
+          if (parseInt(key) === 0) {
+            _.template[plotId].data = [];
+          }
+          return _.template[plotId].data[key] = data.responseJSON;
+        } else {
+          console.log("Flat");
+          return _.template[plotId].data = data.responseJSON;
+        }
       };
       return this.syncronousapi.get(target, args, callback);
     };
 
     Handler.prototype.getTemplatePlotData = function() {
-      var key, plot, preError, ref, results;
+      var key, params, plot, preError, ref, results, subKey;
       preError = this.preError + ".getPlotData()";
       ref = this.template;
       results = [];
       for (key in ref) {
         plot = ref[key];
-        results.push(this.getStationParamData(key));
+        if (this.template[key].dataParams instanceof Array) {
+          results.push((function() {
+            var ref1, results1;
+            ref1 = this.template[key].dataParams;
+            results1 = [];
+            for (subKey in ref1) {
+              params = ref1[subKey];
+              results1.push(this.getStationParamData(key, subKey));
+            }
+            return results1;
+          }).call(this));
+        } else {
+          results.push(this.getStationParamData(key));
+        }
       }
       return results;
     };
@@ -1095,7 +1155,7 @@
     Handler.prototype.getParameterDropdown = function() {
       var _, args, preError, target;
       preError = this.preError + ".getStationParamData()";
-      target = "template/1";
+      target = "template/" + plotHandlerId;
       _ = this;
       return args = this.template[plotId].dataParams;
     };
@@ -1106,7 +1166,7 @@
     };
 
     Handler.prototype.append = function() {
-      var data, instance, key, plot, preError, ref, results, target, title;
+      var data, instance, key, plot, preError, ref, ref1, results, row, target, title;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
@@ -1119,9 +1179,21 @@
         plot.options.dataParams = plot.dataParams;
         plot.options.line1Color = this.getColor('dark', key);
         plot.options.line1Color = this.getColor('light', key);
-        data = {
-          data: plot.data.results
-        };
+        if (plot.data instanceof Array) {
+          plot.options.merge = true;
+          data = {
+            data: []
+          };
+          ref1 = plot.data;
+          for (key in ref1) {
+            row = ref1[key];
+            data.data[key] = row.results;
+          }
+        } else {
+          data = {
+            data: plot.data.results
+          };
+        }
         plot.data = null;
         title = this.getTitle(plot);
         console.log(preError + " (plot, data)", plot, data);

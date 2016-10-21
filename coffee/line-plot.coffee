@@ -14,6 +14,7 @@ window.Plotting.LinePlot = class LinePlot
       debug: true
       target: null
       dataParams: null
+      merge: false
       x:
         variable: null
         format: "%Y-%m-%d %H:%M:%S"
@@ -77,7 +78,12 @@ window.Plotting.LinePlot = class LinePlot
     @sortDatetimeAsc = (a, b) -> a.x - b.x
 
     # Prepare the Data & Definition
-    _initial = @processData(data.data)
+    if @options.merge
+      _initial = @mergeData(data.data)
+      @options.y2.variable = "#{@options.y.variable}2"
+      @options.y2.units = "#{@options.y.units}"
+    else
+      _initial = @processData(data.data)
     @data =
       full: _initial.slice(0)
       visible: _initial.slice(0)
@@ -162,6 +168,31 @@ window.Plotting.LinePlot = class LinePlot
     @setDataState()
     @setIntervalState()
     @setDataRequirement()
+
+  mergeData: (data) ->
+    # Process a data set.
+    result = []
+    for key, row of data[0]
+      result[key] =
+        #x: @parseDate(row[@options.x.variable])
+        x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
+        y: row[@options.y.variable]
+        y2: data[1][key][@options.y.variable]
+      if @options.y2.variable != null
+        result[key].y2 = row[@options.y2.variable]
+      if (
+        @options.yBand.minVariable != null and
+        @options.yBand.maxVariable != null
+      )
+        result[key].yMin = row[@options.yBand.minVariable]
+        result[key].yMax = row[@options.yBand.maxVariable]
+        result[key].y2Min = row[@options.y2Band.minVariable]
+        result[key].y2Max = row[@options.y2Band.maxVariable]
+    
+    return result.sort(@sortDatetimeAsc)
+    
+  appendMergeData: (data) ->
+    # Test
     
   appendVisible: (key, length) ->
     _min = key
