@@ -76,7 +76,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "elevation":4470
                 },
                 "dataParams": {
-                    "data_logger": 43,
+                    "data_logger": "42,43",
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
@@ -92,75 +92,6 @@ app.get('/template/:plotTemplateId', function(req, res) {
             },
             {
                 "pageOrder": 2,
-                "type": "station",
-                "station": {
-                    "station":"White Pass Base",
-                    "region":"West Slopes South",
-                    "elevation":4470
-                },
-                "dataParams": {
-                    "data_logger": 43,
-                    "max_datetime": "2016-02-28T00:00:00Z",
-                    "limit": 504
-                },
-                "options": {
-                    "x": xVar,
-                    "y": {
-                        "variable": "snow_depth",
-                        "title": "Total Snow Depth",
-                        "units": "In.",
-                        "min": 0
-                    }
-                }
-            },
-            {
-                "pageOrder": 3,
-                "type": "station",
-                "station": {
-                    "station":"White Pass Base",
-                    "region":"West Slopes South",
-                    "elevation":4470
-                },
-                "dataParams": {
-                    "data_logger": 43,
-                    "max_datetime": "2016-02-28T00:00:00Z",
-                    "limit": 504
-                },
-                "options": {
-                    "x": xVar,
-                    "y": {
-                        "variable": "snowfall_24_hour",
-                        "title": "24-Hour Snow Fall",
-                        "units": "In.",
-                        "min": 0
-                    }
-                }
-            },
-            {
-                "pageOrder": 4,
-                "type": "station",
-                "station": {
-                    "station":"White Pass Base",
-                    "region":"West Slopes South",
-                    "elevation":4470
-                },
-                "dataParams": {
-                    "data_logger": 43,
-                    "max_datetime": "2016-02-28T00:00:00Z",
-                    "limit": 504
-                },
-                "options": {
-                    "x": xVar,
-                    "y": {
-                        "variable": "precipitation",
-                        "title": "Precipitation",
-                        "units": "In.",
-                        "min": 0
-                    }
-                }
-            },
-            {
-                "pageOrder": 5,
                 "type": "station",
                 "station": {
                     "station":"White Pass Pigtail",
@@ -184,6 +115,75 @@ app.get('/template/:plotTemplateId', function(req, res) {
                         "minVariable": "wind_speed_minimum",
                         "maxVariable": "wind_speed_maximum",
                     },
+                }
+            },
+            {
+                "pageOrder": 3,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "precipitation",
+                        "title": "Precipitation",
+                        "units": "In.",
+                        "min": 0
+                    }
+                }
+            },
+            {
+                "pageOrder": 4,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "snowfall_24_hour",
+                        "title": "24-Hour Snow Fall",
+                        "units": "In.",
+                        "min": 0
+                    }
+                }
+            },
+            {
+                "pageOrder": 5,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "snow_depth",
+                        "title": "Total Snow Depth",
+                        "units": "In.",
+                        "min": 0
+                    }
                 }
             }
         ]};
@@ -216,50 +216,31 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "pageOrder": 2,
                 "type": "station",
                 "station": {
-                    "station":"White Pass Base",
+                    "station":"White Pass Pigtail",
                     "region":"West Slopes South",
-                    "elevation":4470
+                    "elevation":5970
                 },
                 "dataParams": {
-                    "data_logger": 43,
+                    "data_logger": 40,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
                     "x": xVar,
                     "y": {
-                        "variable": "snow_depth",
-                        "title": "Total Snow Depth",
-                        "units": "In.",
+                        "variable": "wind_speed_average",
+                        "title": "Wind Speed",
+                        "units": "m/s",
                         "min": 0
-                    }
+                    },
+                    "yBand": {
+                        "minVariable": "wind_speed_minimum",
+                        "maxVariable": "wind_speed_maximum",
+                    },
                 }
             },
             {
                 "pageOrder": 3,
-                "type": "station",
-                "station": {
-                    "station":"White Pass Base",
-                    "region":"West Slopes South",
-                    "elevation":4470
-                },
-                "dataParams": {
-                    "data_logger": 43,
-                    "max_datetime": "2016-02-28T00:00:00Z",
-                    "limit": 504
-                },
-                "options": {
-                    "x": xVar,
-                    "y": {
-                        "variable": "snowfall_24_hour",
-                        "title": "24-Hour Snow Fall",
-                        "units": "In.",
-                        "min": 0
-                    }
-                }
-            },
-            {
-                "pageOrder": 4,
                 "type": "station",
                 "station": {
                     "station":"White Pass Base",
@@ -282,30 +263,49 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 }
             },
             {
-                "pageOrder": 5,
+                "pageOrder": 4,
                 "type": "station",
                 "station": {
-                    "station":"White Pass Pigtail",
+                    "station":"White Pass Base",
                     "region":"West Slopes South",
-                    "elevation":5970
+                    "elevation":4470
                 },
                 "dataParams": {
-                    "data_logger": 40,
+                    "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
                 },
                 "options": {
                     "x": xVar,
                     "y": {
-                        "variable": "wind_speed_average",
-                        "title": "Wind Speed",
-                        "units": "m/s",
+                        "variable": "snowfall_24_hour",
+                        "title": "24-Hour Snow Fall",
+                        "units": "In.",
                         "min": 0
-                    },
-                    "yBand": {
-                        "minVariable": "wind_speed_minimum",
-                        "maxVariable": "wind_speed_maximum",
-                    },
+                    }
+                }
+            },
+            {
+                "pageOrder": 5,
+                "type": "station",
+                "station": {
+                    "station":"White Pass Base",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 43,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "snow_depth",
+                        "title": "Total Snow Depth",
+                        "units": "In.",
+                        "min": 0
+                    }
                 }
             }
         ]};
