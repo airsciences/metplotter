@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/2.3.2/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/2.3.2/js/bootstrap.min.js"></script>
   <script>
   var regionlist = [
       {
@@ -329,42 +329,53 @@
       }
   ]
 
+
+
 $(document).ready(function(){
 
-      // Create the Region Unordered list
+  var dropdownhtml = '<div class=\"btn-group" id=\"station-dropdown\">\
+    <a class=\"btn dropdown-toggle\" data-toggle="dropdown\" href=\"#\">\
+      <i class=\"icon-list\"></i>\
+    </a>adsfadsfadsf\
+  </div>'
+// 	  Create the button dropdown div
+	  $("body").html(dropdownhtml);
+
+//       Create the Region Unordered list
       var list = document.createElement('ul');
-      list.className = "list-group"
+      list.className = "list-group dropdown-menu"
 
       for(var i = 0; i < regionlist.length; i++) {
 
-          // Create the list item for region:
+//           Create the list item for region:
           var region = document.createElement('li');
           region.className = "list-group-item subheader"
           region.appendChild(document.createTextNode(regionlist[i].region));
           list.appendChild(region);
 
-          // Create the unordered list for stations in one region:
+//           Create the unordered list for stations in one region:
           var stnlist = document.createElement('ul');
           stnlist.className = "list-group-item sublist";
           var stns = list.appendChild(stnlist);
 
-          // Create the list items for stations (stations):
+//           Create the list items for stations (stations):
           for(var j = 0; j < regionlist[i].stations.length; j++) {
             var stn = document.createElement('li');
             stn.className = "list-group-item station";
             stn.appendChild(document.createTextNode(regionlist[i].stations[j].name + ' - ' + regionlist[i].stations[j].elevation + ' ft'));
             stns.appendChild(stn);
           }
-
-      }
-      $("body").append(list);
+	  }
+      $("#station-dropdown").append(list);
       $(".subheader").next().hide()
       var headers = $(".subheader")
       headers.css("background-color","rgb(235,235,235)");
-      headers.css("border-color","rgb(200,200,200)");
+      headers.css("border-top","1px solid rgb(190,190,190)");
       headers.css("padding","3px 10px");
+
       $(".station").css("padding","1px 5px");
       $(".sublist").css("padding","1px 1px");
+      $(".station").css("list-style-type","none");
   });
 
 // Expand and collapse regions
@@ -387,17 +398,24 @@ $(document).ready(function(){
           $(this).removeClass("color1");
           if ($(this).siblings().filter(":not(.selected)").length == $(this).siblings().length){
             $(this).parent().prev().css("background-color","rgb(235,235,235)");
-            $(this).parent().prev().css("border-color","rgb(200,200,200)");
+//             $(this).parent().prev().css("border-color","rgb(200,200,200)");
           }
         }
         else {
           $(this).addClass("selected");
           $(this).addClass("color1");
           $(this).parent().prev().css("background-color","rgb(210,210,210)")
-          $(this).parent().prev().css("border-color","rgb(170,170,170)");
+//           $(this).parent().prev().css("border-color","rgb(170,170,170)");
+//           $(this).parent().prev().css("border-style", "solid");
         }
+
+      event.stopPropagation();
     });
+	$('.dropdown-menu').click(function(event){event.stopPropagation();});
 });
+
+
+
 </script>
   <style>
     .station {padding: "2px 5px";}
