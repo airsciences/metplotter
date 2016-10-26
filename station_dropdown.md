@@ -8,6 +8,13 @@ all stations that have that parameter grouped by region. The following example
 shows an array of many regions with many stations. Latitude and longitude will
 be used by the map based stations selector
 
+Example Request
+
+```
+http://nwac.us/api/v5/stations?parameter=windspeed
+```
+
+***
 
 ```json
 [
