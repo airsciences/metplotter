@@ -239,6 +239,22 @@
 }).call(this);
 
 (function() {
+  var Handler;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.Handler = Handler = (function() {
+    function Handler(access, options, plots) {
+      this.preError = "Plotting.Handler";
+    }
+
+    return Handler;
+
+  })();
+
+}).call(this);
+
+(function() {
   if (!Object.mergeDefaults) {
     Object.mergeDefaults = function(args, defaults) {
       var key, key1, merge, val, val1;
@@ -454,6 +470,9 @@
       ref = data[0];
       for (key in ref) {
         row = ref[key];
+        if (this.parseDate(row[this.options.x.variable]).getTime() !== this.parseDate(data[1][key][this.options.x.variable]).getTime()) {
+          console.log("Merge: Timestamp Mismatch", this.parseDate(row[this.options.x.variable]), this.parseDate(data[1][key][this.options.x.variable]));
+        }
         result[key] = {
           x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
           y: row[this.options.y.variable],
@@ -477,14 +496,14 @@
       ref = data[0];
       for (key in ref) {
         row = ref[key];
+        if (this.parseDate(row[this.options.x.variable]).getTime() !== this.parseDate(data[1][key][this.options.x.variable]).getTime()) {
+          console.log("Merge-Append: Timestamp Mismatch", this.parseDate(row[this.options.x.variable]), this.parseDate(data[1][key][this.options.x.variable]));
+        }
         dtaRow = {
           x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
           y: row[this.options.y.variable],
           y2: data[1][key][this.options.y.variable]
         };
-        if (this.options.y2.variable !== null) {
-          dtaRow.y2 = row[this.options.y2.variable];
-        }
         if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
           dtaRow.yMin = row[this.options.yBand.minVariable];
           dtaRow.yMax = row[this.options.yBand.maxVariable];
@@ -1244,12 +1263,13 @@
             row = ref1[dKey];
             data.data[dKey] = row.results;
           }
+          plot.data = [null, null];
         } else {
           data = {
             data: plot.data.results
           };
+          plot.data = null;
         }
-        plot.data = null;
         title = this.getTitle(plot);
         console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
@@ -1270,11 +1290,11 @@
       args = dataParams;
       if (_is_array) {
         console.log(preError + " (_is_array, args)", _is_array, args);
-        _.template[plotId].data = [null, null];
         append = function() {
           console.log("Appending data set (_.template[plotId].data)", _.template[plotId].data);
           _.template[plotId].proto.appendMergeData(_.template[plotId].data);
-          return _.template[plotId].proto.setVisibleData();
+          _.template[plotId].proto.setVisibleData();
+          return _.template[plotId].data = [null, null];
         };
         callback1 = function(data) {
           console.log("Callback1 (data)", data);
@@ -1290,8 +1310,8 @@
             return append();
           }
         };
-        this.api.get(target, args, callback1);
-        return this.api.get(target, args, callback2);
+        this.api.get(target, args[0], callback1);
+        return this.api.get(target, args[1], callback2);
       } else {
         callback = function(data) {
           _.template[plotId].proto.appendData(data.responseJSON.results);

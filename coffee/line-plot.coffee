@@ -171,6 +171,13 @@ window.Plotting.LinePlot = class LinePlot
     # Process a data set.
     result = []
     for key, row of data[0]
+      if (
+        @parseDate(row[@options.x.variable]).getTime() isnt
+        @parseDate(data[1][key][@options.x.variable]).getTime()
+      )
+        console.log("Merge: Timestamp Mismatch",
+          @parseDate(row[@options.x.variable]),
+          @parseDate(data[1][key][@options.x.variable]))
       result[key] =
         #x: @parseDate(row[@options.x.variable])
         x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
@@ -193,13 +200,17 @@ window.Plotting.LinePlot = class LinePlot
     # Test
     # Append the full data set.
     for key, row of data[0]
+      if (
+        @parseDate(row[@options.x.variable]).getTime() isnt
+        @parseDate(data[1][key][@options.x.variable]).getTime()
+      )
+        console.log("Merge-Append: Timestamp Mismatch",
+          @parseDate(row[@options.x.variable]),
+          @parseDate(data[1][key][@options.x.variable]))
       dtaRow =
-        #x: @parseDate(row[@options.x.variable])
         x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
         y: row[@options.y.variable]
         y2: data[1][key][@options.y.variable]
-      if @options.y2.variable != null
-        dtaRow.y2 = row[@options.y2.variable]
       if (
         @options.yBand.minVariable != null and
         @options.yBand.maxVariable != null

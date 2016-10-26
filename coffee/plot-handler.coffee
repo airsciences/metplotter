@@ -173,11 +173,12 @@ window.Plotting.Handler = class Handler
           data: []
         for dKey, row of plot.data
           data.data[dKey] = row.results
+        plot.data = [null, null]
       else
         data =
           data: plot.data.results
-          
-      plot.data = null
+        plot.data = null
+      
       title = @getTitle(plot)
       console.log "#{preError} (plot, data)", plot, data
       instance = new window.Plotting.LinePlot data, plot.options
@@ -198,12 +199,12 @@ window.Plotting.Handler = class Handler
     
     if _is_array
       console.log("#{preError} (_is_array, args)", _is_array, args)
-      _.template[plotId].data = [null, null]
       append = ->
         console.log("Appending data set (_.template[plotId].data)",
           _.template[plotId].data)
         _.template[plotId].proto.appendMergeData(_.template[plotId].data)
         _.template[plotId].proto.setVisibleData()
+        _.template[plotId].data = [null, null]
       
       callback1 = (data) ->
         console.log("Callback1 (data)", data)
@@ -219,8 +220,8 @@ window.Plotting.Handler = class Handler
             _.template[plotId].data[1] != null)
           append()
     
-      @api.get(target, args, callback1)
-      @api.get(target, args, callback2)
+      @api.get(target, args[0], callback1)
+      @api.get(target, args[1], callback2)
     else
       callback = (data) ->
         _.template[plotId].proto.appendData(data.responseJSON.results)
