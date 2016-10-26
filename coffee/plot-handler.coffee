@@ -126,12 +126,10 @@ window.Plotting.Handler = class Handler
 
     callback = (data) ->
       if _is_array
-        console.log("Key", key)
         if parseInt(key) == 0
           _.template[plotId].data = []
         _.template[plotId].data[key] = data.responseJSON
       else
-        console.log("Flat")
         _.template[plotId].data = data.responseJSON
     
     @syncronousapi.get target, args, callback
@@ -178,6 +176,7 @@ window.Plotting.Handler = class Handler
       else
         data =
           data: plot.data.results
+          
       plot.data = null
       title = @getTitle(plot)
       console.log "#{preError} (plot, data)", plot, data
@@ -189,19 +188,45 @@ window.Plotting.Handler = class Handler
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options
 
-  getPrependData: (plotId, dataParams) ->
+  getPrependData: (plotId, dataParams, key) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getPrependData(key, dataParams)"
     target = "http://dev.nwac.us/api/v5/measurement"
     _ = @
+    _is_array = dataParams instanceof Array
     args = dataParams
-
-    callback = (data) ->
-      _.template[plotId].proto.appendData(data.responseJSON.results)
-      _.template[plotId].proto.setVisibleData()
+      
+    if _is_array
+      _ready = [false, false]
+      _.template[plotId].data = []
+      append = ->
+        console.log("Appending data set (_.template[plotId].data)",
+          _.template[plotId].data)
+        _.template[plotId].proto.appendMergeData(_.template[plotId].data)
+        _.template[plotId].proto.setVisibleData()
+      
+      callback1 = (data) ->
+        console.log("Callback1 (data)", data)
+        _.template[plotId].data[0] = data.responseJSON.results
+        _ready[0] = true
+        if _ready[0] and _ready[1]
+          append()
     
-    @api.get target, args, callback
+      callback2 = (data) ->
+        console.log("Callback2 (data)", data)
+        _.template[plotId].data[1] = data.responseJSON.results
+        _ready[1] = true
+        if _ready[0] and _ready[1]
+          append()
 
+    else
+      args = @template[plotId].dataParams
+      callback = (data) ->
+        _.template[plotId].proto.appendData(data.responseJSON.results)
+        _.template[plotId].proto.setVisibleData()
+    
+      @api.get target, args, callback
+      
   getAppendData: (plotId, dataParams) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getAppendData(key, dataParams)"
@@ -218,12 +243,19 @@ window.Plotting.Handler = class Handler
   prependData: (key) ->
     # Move forward a certain offset of time records on all plots.
     preError = "#{@preError}.prependData()"
-    
     plot = @template[key]
     state = plot.proto.getState()
-    dataParams = plot.proto.options.dataParams
-    dataParams.max_datetime = @format(state.range.data.min)
-    dataParams.limit = @options.updateLength
+    
+    if plot.proto.options.dataParams instanceof Array
+      dataParams = []
+      for key, params of plot.proto.options.dataParams
+        dataParams[key] = params
+        dataParams[key].max_datetime = @format(state.range.data.min)
+        dataParams[key].limit = @options.updateLength
+    else
+      dataParams = plot.proto.options.dataParams
+      dataParams.max_datetime = @format(state.range.data.min)
+      dataParams.limit = @options.updateLength
 
     @getPrependData(key, dataParams)
     
@@ -242,9 +274,16 @@ window.Plotting.Handler = class Handler
     _max_datetime = state.range.data.max.getTime()
     _new_max_datetime = _max_datetime + (@options.updateLength * 3600000)
     
-    dataParams = plot.proto.options.dataParams
-    dataParams.max_datetime = @format(new Date(_new_max_datetime))
-    dataParams.limit = @options.updateLength
+    if plot.proto.options.dataParams instanceof Array
+      dataParams = []
+      for key, params of plot.proto.options.dataParams
+        dataParams[key] = plot.proto.options.dataParams[key]
+        dataParams[key].max_datetime = @format(new Date(_new_max_datetime))
+        dataParams[key].limit = @options.updateLength
+    else
+      dataParams = plot.proto.options.dataParams
+      dataParams.max_datetime = @format(new Date(_new_max_datetime))
+      dataParams.limit = @options.updateLength
     
     @getPrependData(key, dataParams)
       

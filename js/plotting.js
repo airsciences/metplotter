@@ -472,7 +472,33 @@
       return result.sort(this.sortDatetimeAsc);
     };
 
-    LinePlot.prototype.appendMergeData = function(data) {};
+    LinePlot.prototype.appendMergeData = function(data) {
+      var dtaRow, key, ref, row;
+      ref = data[0];
+      for (key in ref) {
+        row = ref[key];
+        dtaRow = {
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
+          y: row[this.options.y.variable],
+          y2: data[1][key][this.options.y.variable]
+        };
+        if (this.options.y2.variable !== null) {
+          dtaRow.y2 = row[this.options.y2.variable];
+        }
+        if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
+          dtaRow.yMin = row[this.options.yBand.minVariable];
+          dtaRow.yMax = row[this.options.yBand.maxVariable];
+          dtaRow.y2Min = row[this.options.y2Band.minVariable];
+          dtaRow.y2Max = row[this.options.y2Band.maxVariable];
+        }
+        this.data.full.push(dtaRow);
+      }
+      this.data.full = this.data.full.sort(this.sortDatetimeAsc);
+      console.log("LinePlot.appendMergeData(data) (@data)", this.data);
+      this.setDataState();
+      this.setIntervalState();
+      return this.setDataRequirement();
+    };
 
     LinePlot.prototype.appendVisible = function(key, length) {
       var _append, _length, _max, _min, _visible;
@@ -489,16 +515,13 @@
       _visible = $.extend(true, [], this.data.visible);
       if (this.data.visible.length > this.options.visible.limit) {
         if (length > 0) {
-          console.log("New-Vis Trimming Right End");
           _visible = _visible.slice(0, _visible.length - 1 - _append.length);
         } else if (length < 0) {
-          console.log("New-Vis Trimming Left End");
           _visible = $.extend(true, [], this.data.visible.slice(_append.length, this.data.visible.length - 1));
         }
       }
       this.data.visible = [];
       this.data.visible = _visible.concat(_append);
-      console.log("New-Vis (_min, _append[0], visible[0], visible[max])", _min, _append[0], this.data.visible[0], this.data.visible[this.data.visible.length - 1]);
       this.data.visible.sort(this.sortDatetimeAsc);
       this.update();
       this.setDataState();
@@ -510,7 +533,6 @@
       var _data_key, _max, _min, key, preError, ref, ref1, row;
       preError = this.preError + "setVisibleData()";
       if (this.state.request.visible.min) {
-        console.log("Updating Vis-Min");
         _min = this.data.visible[0];
         ref = this.data.full;
         for (key in ref) {
@@ -521,7 +543,6 @@
           }
         }
         if (_data_key > 0) {
-          console.log("Appending Vis-Min Data (key)", _data_key);
           this.appendVisible(_data_key, parseInt(-1 * this.options.requestInterval.visible));
         }
       }
@@ -1147,13 +1168,11 @@
       }
       callback = function(data) {
         if (_is_array) {
-          console.log("Key", key);
           if (parseInt(key) === 0) {
             _.template[plotId].data = [];
           }
           return _.template[plotId].data[key] = data.responseJSON;
         } else {
-          console.log("Flat");
           return _.template[plotId].data = data.responseJSON;
         }
       };
@@ -1239,17 +1258,45 @@
 
     Handler.prototype.mergeTemplateOption = function() {};
 
-    Handler.prototype.getPrependData = function(plotId, dataParams) {
-      var _, args, callback, preError, target;
+    Handler.prototype.getPrependData = function(plotId, dataParams, key) {
+      var _, _is_array, _ready, append, args, callback, callback1, callback2, preError, target;
       preError = this.preError + ".getPrependData(key, dataParams)";
       target = "http://dev.nwac.us/api/v5/measurement";
       _ = this;
+      _is_array = dataParams instanceof Array;
       args = dataParams;
-      callback = function(data) {
-        _.template[plotId].proto.appendData(data.responseJSON.results);
-        return _.template[plotId].proto.setVisibleData();
-      };
-      return this.api.get(target, args, callback);
+      if (_is_array) {
+        _ready = [false, false];
+        _.template[plotId].data = [];
+        append = function() {
+          console.log("Appending data set (_.template[plotId].data)", _.template[plotId].data);
+          _.template[plotId].proto.appendMergeData(_.template[plotId].data);
+          return _.template[plotId].proto.setVisibleData();
+        };
+        callback1 = function(data) {
+          console.log("Callback1 (data)", data);
+          _.template[plotId].data[0] = data.responseJSON.results;
+          _ready[0] = true;
+          if (_ready[0] && _ready[1]) {
+            return append();
+          }
+        };
+        return callback2 = function(data) {
+          console.log("Callback2 (data)", data);
+          _.template[plotId].data[1] = data.responseJSON.results;
+          _ready[1] = true;
+          if (_ready[0] && _ready[1]) {
+            return append();
+          }
+        };
+      } else {
+        args = this.template[plotId].dataParams;
+        callback = function(data) {
+          _.template[plotId].proto.appendData(data.responseJSON.results);
+          return _.template[plotId].proto.setVisibleData();
+        };
+        return this.api.get(target, args, callback);
+      }
     };
 
     Handler.prototype.getAppendData = function(plotId, dataParams) {
@@ -1266,18 +1313,29 @@
     };
 
     Handler.prototype.prependData = function(key) {
-      var dataParams, plot, preError, state;
+      var dataParams, params, plot, preError, ref, state;
       preError = this.preError + ".prependData()";
       plot = this.template[key];
       state = plot.proto.getState();
-      dataParams = plot.proto.options.dataParams;
-      dataParams.max_datetime = this.format(state.range.data.min);
-      dataParams.limit = this.options.updateLength;
+      if (plot.proto.options.dataParams instanceof Array) {
+        dataParams = [];
+        ref = plot.proto.options.dataParams;
+        for (key in ref) {
+          params = ref[key];
+          dataParams[key] = params;
+          dataParams[key].max_datetime = this.format(state.range.data.min);
+          dataParams[key].limit = this.options.updateLength;
+        }
+      } else {
+        dataParams = plot.proto.options.dataParams;
+        dataParams.max_datetime = this.format(state.range.data.min);
+        dataParams.limit = this.options.updateLength;
+      }
       return this.getPrependData(key, dataParams);
     };
 
     Handler.prototype.appendData = function(key) {
-      var _max_datetime, _new_max_datetime, _now, dataParams, plot, preError, state;
+      var _max_datetime, _new_max_datetime, _now, dataParams, params, plot, preError, ref, state;
       preError = this.preError + ".appendData()";
       _now = new Date();
       plot = this.template[key];
@@ -1287,9 +1345,20 @@
       }
       _max_datetime = state.range.data.max.getTime();
       _new_max_datetime = _max_datetime + (this.options.updateLength * 3600000);
-      dataParams = plot.proto.options.dataParams;
-      dataParams.max_datetime = this.format(new Date(_new_max_datetime));
-      dataParams.limit = this.options.updateLength;
+      if (plot.proto.options.dataParams instanceof Array) {
+        dataParams = [];
+        ref = plot.proto.options.dataParams;
+        for (key in ref) {
+          params = ref[key];
+          dataParams[key] = plot.proto.options.dataParams[key];
+          dataParams[key].max_datetime = this.format(new Date(_new_max_datetime));
+          dataParams[key].limit = this.options.updateLength;
+        }
+      } else {
+        dataParams = plot.proto.options.dataParams;
+        dataParams.max_datetime = this.format(new Date(_new_max_datetime));
+        dataParams.limit = this.options.updateLength;
+      }
       return this.getPrependData(key, dataParams);
     };
 
