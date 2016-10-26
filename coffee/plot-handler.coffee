@@ -11,9 +11,8 @@ window.Plotting.Handler = class Handler
     defaults =
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
-      refresh: 200
-      refreshViewport: 50
-      updateLength: 110
+      refresh: 100
+      updateLength: 256
       colors:
         light: [
           "rgb(53, 152, 219)",
@@ -102,7 +101,7 @@ window.Plotting.Handler = class Handler
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
-    target = "template/1"
+    target = "template/#{@options.plotHandlerId}"
     args = null
     _ = @
     
@@ -114,27 +113,42 @@ window.Plotting.Handler = class Handler
     
     @syncronousapi.get target, args, callback
 
-  getStationParamData: (plotId) ->
+  getStationParamData: (plotId, key) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
-    target = "http://dev.nwac.us/api/v5/measurement"
+    target = "#{location.protocol}//dev.nwac.us/api/v5/measurement"
     _ = @
-    args = @template[plotId].dataParams
+    _is_array = @template[plotId].dataParams instanceof Array
+    if _is_array
+      args = @template[plotId].dataParams[key]
+    else
+      args = @template[plotId].dataParams
 
     callback = (data) ->
-      _.template[plotId].data = data.responseJSON
+      if _is_array
+        console.log("Key", key)
+        if parseInt(key) == 0
+          _.template[plotId].data = []
+        _.template[plotId].data[key] = data.responseJSON
+      else
+        console.log("Flat")
+        _.template[plotId].data = data.responseJSON
     
     @syncronousapi.get target, args, callback
     
   getTemplatePlotData: ->
     preError = "#{@preError}.getPlotData()"
     for key, plot of @template
-      @getStationParamData key
+      if @template[key].dataParams instanceof Array
+        for subKey, params of @template[key].dataParams
+          @getStationParamData key, subKey
+      else
+        @getStationParamData key
   
   getParameterDropdown: () ->
     # Get a dropdown for each plot
     preError = "#{@preError}.getStationParamData()"
-    target = "template/1"
+    target = "template/#{plotHandlerId}"
     _ = @
     args = @template[plotId].dataParams
   
@@ -154,14 +168,22 @@ window.Plotting.Handler = class Handler
       plot.options.dataParams = plot.dataParams
       plot.options.line1Color = @getColor('dark', key)
       plot.options.line1Color = @getColor('light', key)
-      data =
-        data: plot.data.results
+      
+      if plot.data instanceof Array
+        plot.options.merge = true
+        data =
+          data: []
+        for key, row of plot.data
+          data.data[key] = row.results
+      else
+        data =
+          data: plot.data.results
       plot.data = null
       title = @getTitle(plot)
       console.log "#{preError} (plot, data)", plot, data
       instance = new window.Plotting.LinePlot data, plot.options
       instance.append()
-      instance.appendTitle(title.title, title.subtitle)
+      #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
 
   mergeTemplateOption: () ->
@@ -299,9 +321,10 @@ window.Plotting.Handler = class Handler
     result = {}
     if plot.type == 'station'
       result.title = plot.station.station
-      result.subtitle = "#{plot.options.y.title}"
-      if plot.options.y2
-        result.subtitle = "#{plot.options.y.title} & #{plot.options.y2.title}"
+      #result.subtitle = "#{plot.options.y.title}"
+      #if plot.options.y2
+      #  result.subtitle = "#{plot.options.y.title} & #{plot.options.y2.title}"
+      result.subtitle = ""
     else if plot.type == 'parameter'
       result.title = plot.options.y.title
       result.subtitle = ""

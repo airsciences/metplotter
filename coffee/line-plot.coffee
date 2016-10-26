@@ -14,6 +14,7 @@ window.Plotting.LinePlot = class LinePlot
       debug: true
       target: null
       dataParams: null
+      merge: false
       x:
         variable: null
         format: "%Y-%m-%d %H:%M:%S"
@@ -38,11 +39,11 @@ window.Plotting.LinePlot = class LinePlot
         maxVariable: null
       zoom:
         scale:
-          min: 0.1
+          min: 0.2
           max: 5
       visible:
         limit: 2190
-      aspectDivisor: 4
+      aspectDivisor: 5
       transitionDuration: 500
       line1Color: "rgb(41, 128, 185)"
       line2Color: "rgb(39, 174, 96)"
@@ -64,6 +65,7 @@ window.Plotting.LinePlot = class LinePlot
     if options.y2
       options.y2 = Object.mergeDefaults(options.y2, defaults.y2)
     @options = Object.mergeDefaults options, defaults
+    @device = 'full'
 
     # Wrapped Logging Functions
     @log = (log...) ->
@@ -76,7 +78,12 @@ window.Plotting.LinePlot = class LinePlot
     @sortDatetimeAsc = (a, b) -> a.x - b.x
 
     # Prepare the Data & Definition
-    _initial = @processData(data.data)
+    if @options.merge
+      _initial = @mergeData(data.data)
+      @options.y2.variable = "#{@options.y.variable}2"
+      @options.y2.units = "#{@options.y.units}"
+    else
+      _initial = @processData(data.data)
     @data =
       full: _initial.slice(0)
       visible: _initial.slice(0)
@@ -109,7 +116,8 @@ window.Plotting.LinePlot = class LinePlot
     result = []
     for key, row of data
       result[key] =
-        x: @parseDate(row[@options.x.variable])
+        #x: @parseDate(row[@options.x.variable])
+        x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
         y: row[@options.y.variable]
       if @options.y2.variable != null
         result[key].y2 = row[@options.y2.variable]
@@ -132,7 +140,8 @@ window.Plotting.LinePlot = class LinePlot
     # Append the full data set.
     for key, row of data
       dtaRow =
-        x: @parseDate(row[@options.x.variable])
+        #x: @parseDate(row[@options.x.variable])
+        x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
         y: row[@options.y.variable]
       if @options.y2.variable != null
         dtaRow.y2 = row[@options.y2.variable]
@@ -159,6 +168,31 @@ window.Plotting.LinePlot = class LinePlot
     @setDataState()
     @setIntervalState()
     @setDataRequirement()
+
+  mergeData: (data) ->
+    # Process a data set.
+    result = []
+    for key, row of data[0]
+      result[key] =
+        #x: @parseDate(row[@options.x.variable])
+        x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
+        y: row[@options.y.variable]
+        y2: data[1][key][@options.y.variable]
+      if @options.y2.variable != null
+        result[key].y2 = row[@options.y2.variable]
+      if (
+        @options.yBand.minVariable != null and
+        @options.yBand.maxVariable != null
+      )
+        result[key].yMin = row[@options.yBand.minVariable]
+        result[key].yMax = row[@options.yBand.maxVariable]
+        result[key].y2Min = row[@options.y2Band.minVariable]
+        result[key].y2Max = row[@options.y2Band.maxVariable]
+    
+    return result.sort(@sortDatetimeAsc)
+    
+  appendMergeData: (data) ->
+    # Test
     
   appendVisible: (key, length) ->
     _min = key
@@ -368,11 +402,30 @@ window.Plotting.LinePlot = class LinePlot
     # Calculate Basic DOM & SVG Dimensions
     width = Math.round($(@options.target).width())
     height = Math.round(width/@options.aspectDivisor)
-    margin =
-      top: Math.round(height * 0.16)
-      right: Math.round(Math.pow(width, 0.6))
-      bottom: Math.round(height * 0.16)
-      left: Math.round(Math.pow(width, 0.6))
+    if width > 1000
+      margin =
+        top: Math.round(height * 0.04)
+        right: Math.round(Math.pow(width, 0.6))
+        bottom: Math.round(height * 0.08)
+        left: Math.round(Math.pow(width, 0.6))
+    else if width > 600
+      @device = 'mid'
+      @options.font.size = @options.font.size/1.25
+      height = Math.round(width/(@options.aspectDivisor/1.25))
+      margin =
+        top: Math.round(height * 0.04)
+        right: Math.round(Math.pow(width, 0.6))
+        bottom: Math.round(height * 0.12)
+        left: Math.round(Math.pow(width, 0.6))
+    else
+      @device = 'small'
+      @options.font.size = @options.font.size/1.5
+      height = Math.round(width/(@options.aspectDivisor/1.5))
+      margin =
+        top: Math.round(height * 0.04)
+        right: Math.round(Math.pow(width, 0.6))
+        bottom: Math.round(height * 0.18)
+        left: Math.round(Math.pow(width, 0.6))
 
     # Basic Dimention
     @definition.dimensions =
@@ -465,6 +518,8 @@ window.Plotting.LinePlot = class LinePlot
       .attr("class", "line-plot-axis-x")
       .style("fill", "none")
       .style("stroke", @options.axisColor)
+      .style("font-size", @options.font.size)
+      .style("font-weight", @options.font.weight)
       .call(@definition.xAxis)
       .attr("transform",
         "translate(0, #{@definition.dimensions.bottomPadding})"
@@ -479,6 +534,34 @@ window.Plotting.LinePlot = class LinePlot
       .style("font-weight", @options.font.weight)
       .call(@definition.yAxis)
       .attr("transform", "translate(#{@definition.dimensions.leftPadding}, 0)")
+     
+    # Append Axis Label
+    _y_title = "#{@options.y.title}"
+    if @options.y.units
+      _y_title = "#{_y_title} #{@options.y.units}"
+    
+    _y_vert = -95
+    _y_offset = -46
+    if @device == 'small'
+      _y_vert = -50
+      _y_offset = -30
+      
+    @svg.select(".line-plot-axis-y")
+      .append("text")
+      .text(_y_title)
+      .attr("class", "line-plot-y-label")
+      .attr("x", _y_vert)
+      .attr("y", _y_offset)
+      .attr("dy", ".75em")
+      .attr("transform", "rotate(-90)")
+      .style("font-size", @options.font.size)
+      .style("font-weight", @options.font.weight)
+
+    if @options.y2.title
+      _y2_title = "#{_y2_title} #{@options.y2.title}"
+      
+    if @options.y2.units
+      _y2_title = "#{_y2_title} #{@options.y2.units}"
 
     # Append Bands
     if (
@@ -887,21 +970,33 @@ window.Plotting.LinePlot = class LinePlot
 
   appendTitle: (title, subtitle) ->
     # Append a Plot Title
+    _offsetFactor = 1
+    _mainSize = '16px'
+    _subSize = '12px'
+    # if @device = 'mid'
+    #   _offsetFactor = 0.6
+    #   _mainSize = '12px'
+    #   _subSize = '8px'
+    if @device == 'small'
+      _offsetFactor = 0.4
+      _mainSize = '10px'
+      _subSize = '7px'
+    
     @title = @svg.append("g")
       .attr("class", "line-plot-title")
       
     @title.append("text")
       .attr("x", (@definition.dimensions.margin.left + 10))
-      .attr("y", (@definition.dimensions.margin.top / 2 - 4))
-      .style("font-size", "16px")
+      .attr("y", (@definition.dimensions.margin.top / 2 - (4*_offsetFactor)))
+      .style("font-size", _mainSize)
       .style("font-weight", 600)
       .text(title)
     
     if subtitle
       @title.append("text")
         .attr("x", (@definition.dimensions.margin.left + 10))
-        .attr("y", (@definition.dimensions.margin.top / 2 + 12))
-        .style("font-size", "12px")
+        .attr("y", (@definition.dimensions.margin.top / 2 + (12*_offsetFactor)))
+        .style("font-size", _subSize)
         .text(subtitle)
 
   getState: ->

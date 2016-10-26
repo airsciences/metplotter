@@ -272,6 +272,7 @@
         debug: true,
         target: null,
         dataParams: null,
+        merge: false,
         x: {
           variable: null,
           format: "%Y-%m-%d %H:%M:%S",
@@ -301,14 +302,14 @@
         },
         zoom: {
           scale: {
-            min: 0.1,
+            min: 0.2,
             max: 5
           }
         },
         visible: {
           limit: 2190
         },
-        aspectDivisor: 4,
+        aspectDivisor: 5,
         transitionDuration: 500,
         line1Color: "rgb(41, 128, 185)",
         line2Color: "rgb(39, 174, 96)",
@@ -337,6 +338,7 @@
         options.y2 = Object.mergeDefaults(options.y2, defaults.y2);
       }
       this.options = Object.mergeDefaults(options, defaults);
+      this.device = 'full';
       this.log = function() {
         var log;
         log = 1 <= arguments.length ? slice.call(arguments, 0) : [];
@@ -355,7 +357,13 @@
       this.sortDatetimeAsc = function(a, b) {
         return a.x - b.x;
       };
-      _initial = this.processData(data.data);
+      if (this.options.merge) {
+        _initial = this.mergeData(data.data);
+        this.options.y2.variable = this.options.y.variable + "2";
+        this.options.y2.units = "" + this.options.y.units;
+      } else {
+        _initial = this.processData(data.data);
+      }
       this.data = {
         full: _initial.slice(0),
         visible: _initial.slice(0)
@@ -395,7 +403,7 @@
       for (key in data) {
         row = data[key];
         result[key] = {
-          x: this.parseDate(row[this.options.x.variable]),
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
           y: row[this.options.y.variable]
         };
         if (this.options.y2.variable !== null) {
@@ -418,7 +426,7 @@
       for (key in data) {
         row = data[key];
         dtaRow = {
-          x: this.parseDate(row[this.options.x.variable]),
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
           y: row[this.options.y.variable]
         };
         if (this.options.y2.variable !== null) {
@@ -439,6 +447,32 @@
       this.setIntervalState();
       return this.setDataRequirement();
     };
+
+    LinePlot.prototype.mergeData = function(data) {
+      var key, ref, result, row;
+      result = [];
+      ref = data[0];
+      for (key in ref) {
+        row = ref[key];
+        result[key] = {
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
+          y: row[this.options.y.variable],
+          y2: data[1][key][this.options.y.variable]
+        };
+        if (this.options.y2.variable !== null) {
+          result[key].y2 = row[this.options.y2.variable];
+        }
+        if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
+          result[key].yMin = row[this.options.yBand.minVariable];
+          result[key].yMax = row[this.options.yBand.maxVariable];
+          result[key].y2Min = row[this.options.y2Band.minVariable];
+          result[key].y2Max = row[this.options.y2Band.maxVariable];
+        }
+      }
+      return result.sort(this.sortDatetimeAsc);
+    };
+
+    LinePlot.prototype.appendMergeData = function(data) {};
 
     LinePlot.prototype.appendVisible = function(key, length) {
       var _append, _length, _max, _min, _visible;
@@ -639,12 +673,34 @@
       var height, margin, width;
       width = Math.round($(this.options.target).width());
       height = Math.round(width / this.options.aspectDivisor);
-      margin = {
-        top: Math.round(height * 0.16),
-        right: Math.round(Math.pow(width, 0.6)),
-        bottom: Math.round(height * 0.16),
-        left: Math.round(Math.pow(width, 0.6))
-      };
+      if (width > 1000) {
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.6)),
+          bottom: Math.round(height * 0.08),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      } else if (width > 600) {
+        this.device = 'mid';
+        this.options.font.size = this.options.font.size / 1.25;
+        height = Math.round(width / (this.options.aspectDivisor / 1.25));
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.6)),
+          bottom: Math.round(height * 0.12),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      } else {
+        this.device = 'small';
+        this.options.font.size = this.options.font.size / 1.5;
+        height = Math.round(width / (this.options.aspectDivisor / 1.5));
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.6)),
+          bottom: Math.round(height * 0.18),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      }
       this.definition.dimensions = {
         width: width,
         height: height,
@@ -705,13 +761,30 @@
     };
 
     LinePlot.prototype.append = function() {
-      var _, preError;
+      var _, _y2_title, _y_offset, _y_title, _y_vert, preError;
       preError = this.preError + "append()";
       _ = this;
       this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
-      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      _y_title = "" + this.options.y.title;
+      if (this.options.y.units) {
+        _y_title = _y_title + " " + this.options.y.units;
+      }
+      _y_vert = -95;
+      _y_offset = -46;
+      if (this.device === 'small') {
+        _y_vert = -50;
+        _y_offset = -30;
+      }
+      this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
+      if (this.options.y2.title) {
+        _y2_title = _y2_title + " " + this.options.y2.title;
+      }
+      if (this.options.y2.units) {
+        _y2_title = _y2_title + " " + this.options.y2.units;
+      }
       if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
         this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.line1Color).style("opacity", 0.15).style("stroke", function() {
           return d3.color(_.options.line1Color).darker(1);
@@ -932,10 +1005,19 @@
     };
 
     LinePlot.prototype.appendTitle = function(title, subtitle) {
+      var _mainSize, _offsetFactor, _subSize;
+      _offsetFactor = 1;
+      _mainSize = '16px';
+      _subSize = '12px';
+      if (this.device === 'small') {
+        _offsetFactor = 0.4;
+        _mainSize = '10px';
+        _subSize = '7px';
+      }
       this.title = this.svg.append("g").attr("class", "line-plot-title");
-      this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 - 4).style("font-size", "16px").style("font-weight", 600).text(title);
+      this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 - (4 * _offsetFactor)).style("font-size", _mainSize).style("font-weight", 600).text(title);
       if (subtitle) {
-        return this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 + 12).style("font-size", "12px").text(subtitle);
+        return this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 + (12 * _offsetFactor)).style("font-size", _subSize).text(subtitle);
       }
     };
 
@@ -961,9 +1043,8 @@
       defaults = {
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
-        refresh: 200,
-        refreshViewport: 50,
-        updateLength: 110,
+        refresh: 100,
+        updateLength: 256,
         colors: {
           light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
           dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
@@ -1042,7 +1123,7 @@
     Handler.prototype.getTemplate = function(template_uri) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getTemplate(...)";
-      target = "template/1";
+      target = "template/" + this.options.plotHandlerId;
       args = null;
       _ = this;
       callback = function(data) {
@@ -1055,26 +1136,53 @@
       return this.syncronousapi.get(target, args, callback);
     };
 
-    Handler.prototype.getStationParamData = function(plotId) {
-      var _, args, callback, preError, target;
+    Handler.prototype.getStationParamData = function(plotId, key) {
+      var _, _is_array, args, callback, preError, target;
       preError = this.preError + ".getStationParamData()";
-      target = "http://dev.nwac.us/api/v5/measurement";
+      target = location.protocol + "//dev.nwac.us/api/v5/measurement";
       _ = this;
-      args = this.template[plotId].dataParams;
+      _is_array = this.template[plotId].dataParams instanceof Array;
+      if (_is_array) {
+        args = this.template[plotId].dataParams[key];
+      } else {
+        args = this.template[plotId].dataParams;
+      }
       callback = function(data) {
-        return _.template[plotId].data = data.responseJSON;
+        if (_is_array) {
+          console.log("Key", key);
+          if (parseInt(key) === 0) {
+            _.template[plotId].data = [];
+          }
+          return _.template[plotId].data[key] = data.responseJSON;
+        } else {
+          console.log("Flat");
+          return _.template[plotId].data = data.responseJSON;
+        }
       };
       return this.syncronousapi.get(target, args, callback);
     };
 
     Handler.prototype.getTemplatePlotData = function() {
-      var key, plot, preError, ref, results;
+      var key, params, plot, preError, ref, results, subKey;
       preError = this.preError + ".getPlotData()";
       ref = this.template;
       results = [];
       for (key in ref) {
         plot = ref[key];
-        results.push(this.getStationParamData(key));
+        if (this.template[key].dataParams instanceof Array) {
+          results.push((function() {
+            var ref1, results1;
+            ref1 = this.template[key].dataParams;
+            results1 = [];
+            for (subKey in ref1) {
+              params = ref1[subKey];
+              results1.push(this.getStationParamData(key, subKey));
+            }
+            return results1;
+          }).call(this));
+        } else {
+          results.push(this.getStationParamData(key));
+        }
       }
       return results;
     };
@@ -1082,7 +1190,7 @@
     Handler.prototype.getParameterDropdown = function() {
       var _, args, preError, target;
       preError = this.preError + ".getStationParamData()";
-      target = "template/1";
+      target = "template/" + plotHandlerId;
       _ = this;
       return args = this.template[plotId].dataParams;
     };
@@ -1093,7 +1201,7 @@
     };
 
     Handler.prototype.append = function() {
-      var data, instance, key, plot, preError, ref, results, target, title;
+      var data, instance, key, plot, preError, ref, ref1, results, row, target, title;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
@@ -1106,15 +1214,26 @@
         plot.options.dataParams = plot.dataParams;
         plot.options.line1Color = this.getColor('dark', key);
         plot.options.line1Color = this.getColor('light', key);
-        data = {
-          data: plot.data.results
-        };
+        if (plot.data instanceof Array) {
+          plot.options.merge = true;
+          data = {
+            data: []
+          };
+          ref1 = plot.data;
+          for (key in ref1) {
+            row = ref1[key];
+            data.data[key] = row.results;
+          }
+        } else {
+          data = {
+            data: plot.data.results
+          };
+        }
         plot.data = null;
         title = this.getTitle(plot);
         console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
-        instance.appendTitle(title.title, title.subtitle);
         results.push(this.template[key].proto = instance);
       }
       return results;
@@ -1257,10 +1376,7 @@
       result = {};
       if (plot.type === 'station') {
         result.title = plot.station.station;
-        result.subtitle = "" + plot.options.y.title;
-        if (plot.options.y2) {
-          result.subtitle = plot.options.y.title + " & " + plot.options.y2.title;
-        }
+        result.subtitle = "";
       } else if (plot.type === 'parameter') {
         result.title = plot.options.y.title;
         result.subtitle = "";

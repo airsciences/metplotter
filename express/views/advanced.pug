@@ -4,14 +4,20 @@ html(lang='en')
     meta(charset='utf-8')
     meta(http-equiv='X-UA-Compatible' content='IE=edge')
     meta(name='viewport' content='width=device-width, initial-scale=1')
-    title='NWAC D3 Plotting'
+    title='NWAC Plotting Tool Demo'
     link(rel='stylesheet', href='bootstrap.min.css')
     link(rel='stylesheet', href='font-awesome.css')
   body
     div(class='container')
       div(class='row-sm-12')
-        div(class='pull-right btn-group')
+        div(class='pull-right')
+          ul(class="nav nav-pills")
+            li(role="presentation")
+              a(href='/')='Standard'
+            //li(role="presentation")
+            //  a(href='/full')='Full'
         h1='NWAC Plotting Tool'
+        h5=title
         div(id='d3-dropdown-test-target')
         div(id='d3-plot-target')
         div(style='margin-bottom: 15px')
