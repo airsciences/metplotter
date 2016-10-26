@@ -11,7 +11,7 @@ window.Plotting.Handler = class Handler
     defaults =
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
-      refresh: 100
+      refresh: 500
       updateLength: 256
       colors:
         light: [
@@ -80,7 +80,7 @@ window.Plotting.Handler = class Handler
       if state.request.data.max
         @appendData(key)
 
-    setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
+    #setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
 
   listenViewport: ->
     # Listen to Plot States & Update Data & Visible if Needed
@@ -195,10 +195,10 @@ window.Plotting.Handler = class Handler
     _ = @
     _is_array = dataParams instanceof Array
     args = dataParams
-      
+    
     if _is_array
-      _ready = [false, false]
-      _.template[plotId].data = []
+      console.log("#{preError} (_is_array, args)", _is_array, args)
+      _.template[plotId].data = [null, null]
       append = ->
         console.log("Appending data set (_.template[plotId].data)",
           _.template[plotId].data)
@@ -208,24 +208,25 @@ window.Plotting.Handler = class Handler
       callback1 = (data) ->
         console.log("Callback1 (data)", data)
         _.template[plotId].data[0] = data.responseJSON.results
-        _ready[0] = true
-        if _ready[0] and _ready[1]
+        if (_.template[plotId].data[0] != null and
+            _.template[plotId].data[1] != null)
           append()
     
       callback2 = (data) ->
         console.log("Callback2 (data)", data)
         _.template[plotId].data[1] = data.responseJSON.results
-        _ready[1] = true
-        if _ready[0] and _ready[1]
+        if (_.template[plotId].data[0] != null and
+            _.template[plotId].data[1] != null)
           append()
-
+    
+      @api.get(target, args, callback1)
+      @api.get(target, args, callback2)
     else
-      args = @template[plotId].dataParams
       callback = (data) ->
         _.template[plotId].proto.appendData(data.responseJSON.results)
         _.template[plotId].proto.setVisibleData()
     
-      @api.get target, args, callback
+      @api.get(target, args, callback)
       
   getAppendData: (plotId, dataParams) ->
     # Request a station's dataset (param specific)
@@ -248,10 +249,10 @@ window.Plotting.Handler = class Handler
     
     if plot.proto.options.dataParams instanceof Array
       dataParams = []
-      for key, params of plot.proto.options.dataParams
-        dataParams[key] = params
-        dataParams[key].max_datetime = @format(state.range.data.min)
-        dataParams[key].limit = @options.updateLength
+      for pKey, params of plot.proto.options.dataParams
+        dataParams[pKey] = params
+        dataParams[pKey].max_datetime = @format(state.range.data.min)
+        dataParams[pKey].limit = @options.updateLength
     else
       dataParams = plot.proto.options.dataParams
       dataParams.max_datetime = @format(state.range.data.min)
@@ -276,10 +277,10 @@ window.Plotting.Handler = class Handler
     
     if plot.proto.options.dataParams instanceof Array
       dataParams = []
-      for key, params of plot.proto.options.dataParams
-        dataParams[key] = plot.proto.options.dataParams[key]
-        dataParams[key].max_datetime = @format(new Date(_new_max_datetime))
-        dataParams[key].limit = @options.updateLength
+      for pKey, params of plot.proto.options.dataParams
+        dataParams[pKey] = plot.proto.options.dataParams[pKey]
+        dataParams[pKey].max_datetime = @format(new Date(_new_max_datetime))
+        dataParams[pKey].limit = @options.updateLength
     else
       dataParams = plot.proto.options.dataParams
       dataParams.max_datetime = @format(new Date(_new_max_datetime))

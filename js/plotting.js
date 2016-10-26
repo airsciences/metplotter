@@ -302,7 +302,7 @@
         },
         zoom: {
           scale: {
-            min: 0.2,
+            min: 0.3,
             max: 5
           }
         },
@@ -1064,7 +1064,7 @@
       defaults = {
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
-        refresh: 100,
+        refresh: 500,
         updateLength: 256,
         colors: {
           light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
@@ -1108,8 +1108,9 @@
     };
 
     Handler.prototype.listen = function() {
-      var key, plot, ref, state;
+      var key, plot, ref, results, state;
       ref = this.template;
+      results = [];
       for (key in ref) {
         plot = ref[key];
         state = plot.proto.getState();
@@ -1117,10 +1118,12 @@
           this.prependData(key);
         }
         if (state.request.data.max) {
-          this.appendData(key);
+          results.push(this.appendData(key));
+        } else {
+          results.push(void 0);
         }
       }
-      return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
+      return results;
     };
 
     Handler.prototype.listenViewport = function() {
@@ -1259,15 +1262,15 @@
     Handler.prototype.mergeTemplateOption = function() {};
 
     Handler.prototype.getPrependData = function(plotId, dataParams, key) {
-      var _, _is_array, _ready, append, args, callback, callback1, callback2, preError, target;
+      var _, _is_array, append, args, callback, callback1, callback2, preError, target;
       preError = this.preError + ".getPrependData(key, dataParams)";
       target = "http://dev.nwac.us/api/v5/measurement";
       _ = this;
       _is_array = dataParams instanceof Array;
       args = dataParams;
       if (_is_array) {
-        _ready = [false, false];
-        _.template[plotId].data = [];
+        console.log(preError + " (_is_array, args)", _is_array, args);
+        _.template[plotId].data = [null, null];
         append = function() {
           console.log("Appending data set (_.template[plotId].data)", _.template[plotId].data);
           _.template[plotId].proto.appendMergeData(_.template[plotId].data);
@@ -1276,21 +1279,20 @@
         callback1 = function(data) {
           console.log("Callback1 (data)", data);
           _.template[plotId].data[0] = data.responseJSON.results;
-          _ready[0] = true;
-          if (_ready[0] && _ready[1]) {
+          if (_.template[plotId].data[0] !== null && _.template[plotId].data[1] !== null) {
             return append();
           }
         };
-        return callback2 = function(data) {
+        callback2 = function(data) {
           console.log("Callback2 (data)", data);
           _.template[plotId].data[1] = data.responseJSON.results;
-          _ready[1] = true;
-          if (_ready[0] && _ready[1]) {
+          if (_.template[plotId].data[0] !== null && _.template[plotId].data[1] !== null) {
             return append();
           }
         };
+        this.api.get(target, args, callback1);
+        return this.api.get(target, args, callback2);
       } else {
-        args = this.template[plotId].dataParams;
         callback = function(data) {
           _.template[plotId].proto.appendData(data.responseJSON.results);
           return _.template[plotId].proto.setVisibleData();
@@ -1313,18 +1315,18 @@
     };
 
     Handler.prototype.prependData = function(key) {
-      var dataParams, params, plot, preError, ref, state;
+      var dataParams, pKey, params, plot, preError, ref, state;
       preError = this.preError + ".prependData()";
       plot = this.template[key];
       state = plot.proto.getState();
       if (plot.proto.options.dataParams instanceof Array) {
         dataParams = [];
         ref = plot.proto.options.dataParams;
-        for (key in ref) {
-          params = ref[key];
-          dataParams[key] = params;
-          dataParams[key].max_datetime = this.format(state.range.data.min);
-          dataParams[key].limit = this.options.updateLength;
+        for (pKey in ref) {
+          params = ref[pKey];
+          dataParams[pKey] = params;
+          dataParams[pKey].max_datetime = this.format(state.range.data.min);
+          dataParams[pKey].limit = this.options.updateLength;
         }
       } else {
         dataParams = plot.proto.options.dataParams;
@@ -1335,7 +1337,7 @@
     };
 
     Handler.prototype.appendData = function(key) {
-      var _max_datetime, _new_max_datetime, _now, dataParams, params, plot, preError, ref, state;
+      var _max_datetime, _new_max_datetime, _now, dataParams, pKey, params, plot, preError, ref, state;
       preError = this.preError + ".appendData()";
       _now = new Date();
       plot = this.template[key];
@@ -1348,11 +1350,11 @@
       if (plot.proto.options.dataParams instanceof Array) {
         dataParams = [];
         ref = plot.proto.options.dataParams;
-        for (key in ref) {
-          params = ref[key];
-          dataParams[key] = plot.proto.options.dataParams[key];
-          dataParams[key].max_datetime = this.format(new Date(_new_max_datetime));
-          dataParams[key].limit = this.options.updateLength;
+        for (pKey in ref) {
+          params = ref[pKey];
+          dataParams[pKey] = plot.proto.options.dataParams[pKey];
+          dataParams[pKey].max_datetime = this.format(new Date(_new_max_datetime));
+          dataParams[pKey].limit = this.options.updateLength;
         }
       } else {
         dataParams = plot.proto.options.dataParams;

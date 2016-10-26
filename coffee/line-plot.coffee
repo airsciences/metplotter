@@ -39,7 +39,7 @@ window.Plotting.LinePlot = class LinePlot
         maxVariable: null
       zoom:
         scale:
-          min: 0.2
+          min: 0.3
           max: 5
       visible:
         limit: 2190
@@ -161,8 +161,6 @@ window.Plotting.LinePlot = class LinePlot
 
     # Sort the Data
     @data.full = @data.full.sort(@sortDatetimeAsc)
-    
-    # console.log("LinePlot.appendData(data) (@data)", @data)
     
     # Reset the Data Range
     @setDataState()
