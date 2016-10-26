@@ -88,11 +88,11 @@ window.Plotting.Handler = class Handler
       state = plot.proto.getState()
       # Min-Side Events
       if state.request.visible.min
-        console.log("Listen[#{key}]: Request Visible Min Update")
+        # console.log("Listen[#{key}]: Request Visible Min Update")
         plot.proto.setVisibleData()
       # Max-Side Events
       if state.request.visible.max
-        console.log("Listen[#{key}]: Request Visible Max Update")
+        # console.log("Listen[#{key}]: Request Visible Max Update")
         plot.proto.setVisibleData()
 
     setTimeout(Plotting.Handler.prototype.listenViewport.bind(@),
@@ -173,8 +173,8 @@ window.Plotting.Handler = class Handler
         plot.options.merge = true
         data =
           data: []
-        for key, row of plot.data
-          data.data[key] = row.results
+        for dKey, row of plot.data
+          data.data[dKey] = row.results
       else
         data =
           data: plot.data.results

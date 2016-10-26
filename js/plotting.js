@@ -1109,11 +1109,9 @@
         plot = ref[key];
         state = plot.proto.getState();
         if (state.request.visible.min) {
-          console.log("Listen[" + key + "]: Request Visible Min Update");
           plot.proto.setVisibleData();
         }
         if (state.request.visible.max) {
-          console.log("Listen[" + key + "]: Request Visible Max Update");
           plot.proto.setVisibleData();
         }
       }
@@ -1201,7 +1199,7 @@
     };
 
     Handler.prototype.append = function() {
-      var data, instance, key, plot, preError, ref, ref1, results, row, target, title;
+      var dKey, data, instance, key, plot, preError, ref, ref1, results, row, target, title;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
@@ -1220,9 +1218,9 @@
             data: []
           };
           ref1 = plot.data;
-          for (key in ref1) {
-            row = ref1[key];
-            data.data[key] = row.results;
+          for (dKey in ref1) {
+            row = ref1[dKey];
+            data.data[dKey] = row.results;
           }
         } else {
           data = {
