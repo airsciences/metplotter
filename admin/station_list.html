@@ -398,15 +398,15 @@ $(document).ready(function(){
           $(this).removeClass("color1");
           if ($(this).siblings().filter(":not(.selected)").length == $(this).siblings().length){
             $(this).parent().prev().css("background-color","rgb(235,235,235)");
-//             $(this).parent().prev().css("border-color","rgb(200,200,200)");
+            //             $(this).parent().prev().css("border-color","rgb(200,200,200)");
           }
         }
         else {
           $(this).addClass("selected");
           $(this).addClass("color1");
           $(this).parent().prev().css("background-color","rgb(210,210,210)")
-//           $(this).parent().prev().css("border-color","rgb(170,170,170)");
-//           $(this).parent().prev().css("border-style", "solid");
+          //           $(this).parent().prev().css("border-color","rgb(170,170,170)");
+          //           $(this).parent().prev().css("border-style", "solid");
         }
 
       event.stopPropagation();

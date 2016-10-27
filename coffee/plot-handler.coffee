@@ -353,6 +353,46 @@ window.Plotting.Handler = class Handler
     
     $(target).append(result)
     
+  appendStationDropdown: (plotId, appendTarget, parameter) ->
+    # Station Dropdown.
+    target = "http://localhost:5000/stations/#{parameter}"
+    args = {}
+    
+    callback = (data) ->
+      html = "<i class=\"icon-list\" style=\"cursor: pointer\"
+          onclick=\"plotter.toggleStationDropdown(#{plotId})\"></i>
+        <ul id=\"station-dropdown-#{plotId}\"
+          class=\"list-group\" style=\"display: none\">"
+     
+      for region in data.responseJSON
+        html = "#{html}
+            <li class=\"list-group-item subheader\"
+              style=\"background-color: rgb(235, 235, 235);
+              border-top: 1px solid rgb(190, 190, 190);
+              padding: 3px 10px;\">#{region.region}</li>
+            <ul class=\"list-group-item sublist\"
+              style=\"display: none; padding: 1px\">"
+        
+        for station in region
+          html = "#{html}
+            <li class=\"list-group-item station\"
+              style=\"padding: 1px 5px; list-style-type: none\">
+              #{station.name}</li>"
+        
+        html = "#{html}
+          </ul>"
+      
+      html = "#{html}
+        </ul>"
+    
+      $(appendTarget).append(html)
+    
+    @api.get(target, args, callback)
+
+  toggleStationDropdown: (plotId) ->
+    # Toggle the plotId's station down.
+    $("\#station-dropdown-#{plotId}").toggle()
+    
   getColor: (shade, key) ->
     # Return the Color from the ordered list.
     return @options.colors[shade][key]

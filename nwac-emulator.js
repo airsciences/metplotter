@@ -943,36 +943,35 @@ app.get('/stations/:parameter', function (req, res) {
 
 app.get('/parameter/:dataLoggerId', function (req, res) {
     console.log("API-Stations", req.params);
+    var data_logger_id = parseInt(req.params.dataLoggerId);
     var result;
     
-    switch (parseInt(req.params.dataLoggerId)) {
+    switch (data_logger_id) {
         case 81:
             result = [
-                {"title": "Wind Speed", "param": "wind_speed", "data_logger": 81},
-                {"title": "Temperature", "param": "temperature", "data_logger": 81},
-                {"title": "Snow Depth", "param": "snow_depth", "data_logger": 81},
-                {"title": "24Hr Snow Fall", "param": "snowfall_24_hour", "data_logger": 81},
-                {"title": "Precipitation", "param": "precip", "data_logger": 81}
+                {"title": "Windspeed (mph)", "parameter": ["wind_speed_average","wind_speed_maximum","wind_speed_minimum"]},
+                {"title": "Precipitation (In.)", "parameter": "precipitation"},
+                {"title": "Temperature (F)", "parameter": "temperature"},
+                {"title": "Relative Humidity (%)", "parameter": "relative_humidity"}
             ];
             break;
         case 90:
-            result = [
-                {"title": "Wind Speed", "param": "wind_speed", "data_logger": 90},
-                {"title": "Temperature", "param": "temperature", "data_logger": 90},
-                {"title": "Snow Depth", "param": "snow_depth", "data_logger": 90},
-                {"title": "24Hr Snow Fall", "param": "snowfall_24_hour", "data_logger": 90},
-                {"title": "Precipitation", "param": "precip", "data_logger": 90}
+        result = [
+                {"title": "Precipitation (In.)", "parameter": "precipitation"},
+                {"title": "Temperature (°F)", "parameter": "temperature"},
+                {"title": "Relative Humidity (%)", "parameter": "relative_humidity"}
             ];
             break;
         default:
-            /** Return All Stations */
-            data_logger_id = parseInt(req.params.dataLoggerId);
+            /** Return All Parameters */
             result = [
-                {"title": "Wind Speed", "param": "wind_speed", "data_logger": data_logger_id},
-                {"title": "Temperature", "param": "temperature", "data_logger": data_logger_id},
-                {"title": "Snow Depth", "param": "snow_depth", "data_logger": data_logger_id},
-                {"title": "24Hr Snow Fall", "param": "snowfall_24_hour", "data_logger": data_logger_id},
-                {"title": "Precipitation", "param": "precip", "data_logger": data_logger_id}
+                {"title": "Barometric Pressure", "parameter": "barometric_pressure"},
+                {"title": "Battery Voltage (V)", "parameter": "battery_voltage"},
+                {"title": "Equipment Temperature (°F)", "parameter": "equipment_temperature"},
+                {"title": "Windspeed (mph)", "parameter": ["wind_speed_average","wind_speed_maximum","wind_speed_minimum"]},
+                {"title": "Precipitation (In.)", "parameter": "precipitation"},
+                {"title": "Temperature (°F)", "parameter": "temperature"},
+                {"title": "Relative Humidity (%)", "parameter": "relative_humidity"}
             ];
     }
     

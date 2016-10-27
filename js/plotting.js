@@ -1456,6 +1456,33 @@
       return $(target).append(result);
     };
 
+    Handler.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
+      var args, callback, target;
+      target = "http://localhost:5000/stations/" + parameter;
+      args = {};
+      callback = function(data) {
+        var html, i, j, len, len1, ref, region, station;
+        html = "<i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.toggleStationDropdown(" + plotId + ")\"></i> <ul id=\"station-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none\">";
+        ref = data.responseJSON;
+        for (i = 0, len = ref.length; i < len; i++) {
+          region = ref[i];
+          html = html + " <li class=\"list-group-item subheader\" style=\"background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + region.region + "</li> <ul class=\"list-group-item sublist\" style=\"display: none; padding: 1px\">";
+          for (j = 0, len1 = region.length; j < len1; j++) {
+            station = region[j];
+            html = html + " <li class=\"list-group-item station\" style=\"padding: 1px 5px; list-style-type: none\"> " + station.name + "</li>";
+          }
+          html = html + " </ul>";
+        }
+        html = html + " </ul>";
+        return $(appendTarget).append(html);
+      };
+      return this.api.get(target, args, callback);
+    };
+
+    Handler.prototype.toggleStationDropdown = function(plotId) {
+      return $("\#station-dropdown-" + plotId).toggle();
+    };
+
     Handler.prototype.getColor = function(shade, key) {
       return this.options.colors[shade][key];
     };
