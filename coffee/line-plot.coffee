@@ -406,7 +406,6 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y))
-      .curve(d3.curveMonotoneX)
 
     @definition.line2 = d3.line()
       .defined((d)->
@@ -414,7 +413,6 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y2))
-      .curve(d3.curveMonotoneX)
 
     @definition.area = d3.area()
       .defined((d)->
@@ -423,7 +421,6 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.yMin))
       .y1((d) -> _.definition.y(d.yMax))
-      .curve(d3.curveMonotoneX)
 
     @definition.area2 = d3.area()
       .defined((d)->
@@ -432,7 +429,6 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.y2Min))
       .y1((d) -> _.definition.y(d.y2Max))
-      .curve(d3.curveMonotoneX)
 
   calculateChartDims: ->
     # Calculate Basic DOM & SVG Dimensions
@@ -833,7 +829,6 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
       .y0((d) -> _.definition.y(d.yMin))
       .y1((d) -> _.definition.y(d.yMax))
-      .curve(d3.curveMonotoneX)
 
     @svg.select(".line-plot-area")
       .attr("d", @definition.area)
@@ -845,7 +840,6 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
       .y((d) -> _.definition.y(d.y))
-      .curve(d3.curveMonotoneX)
 
     @svg.select(".line-plot-path")
       .attr("d", @definition.line)
@@ -858,7 +852,6 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
       .y0((d) -> _.definition.y(d.y2Min))
       .y1((d) -> _.definition.y(d.y2Max))
-      .curve(d3.curveMonotoneX)
      
     @svg.select(".line-plot-area2")
       .attr("d", @definition.area2)
@@ -870,7 +863,6 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
       .y((d) -> _.definition.y(d.y2))
-      .curve(d3.curveMonotoneX)
 
     @svg.select(".line-plot-path2")
       .attr("d", @definition.line2)

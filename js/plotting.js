@@ -681,14 +681,14 @@
         return _.definition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y);
-      }).curve(d3.curveMonotoneX);
+      });
       this.definition.line2 = d3.line().defined(function(d) {
         return !isNaN(d.y2) && d.y2 !== null;
       }).x(function(d) {
         return _.definition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y2);
-      }).curve(d3.curveMonotoneX);
+      });
       this.definition.area = d3.area().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -697,7 +697,7 @@
         return _.definition.y(d.yMin);
       }).y1(function(d) {
         return _.definition.y(d.yMax);
-      }).curve(d3.curveMonotoneX);
+      });
       return this.definition.area2 = d3.area().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -706,7 +706,7 @@
         return _.definition.y(d.y2Min);
       }).y1(function(d) {
         return _.definition.y(d.y2Max);
-      }).curve(d3.curveMonotoneX);
+      });
     };
 
     LinePlot.prototype.calculateChartDims = function() {
@@ -914,7 +914,7 @@
         return _.definition.y(d.yMin);
       }).y1(function(d) {
         return _.definition.y(d.yMax);
-      }).curve(d3.curveMonotoneX);
+      });
       this.svg.select(".line-plot-area").attr("d", this.definition.area);
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
@@ -922,7 +922,7 @@
         return _transform.applyX(_.definition.x(d.x));
       }).y(function(d) {
         return _.definition.y(d.y);
-      }).curve(d3.curveMonotoneX);
+      });
       this.svg.select(".line-plot-path").attr("d", this.definition.line);
       this.definition.area2 = d3.area().defined(function(d) {
         return !isNaN(d.y2Max) && d.y2Max !== null;
@@ -932,7 +932,7 @@
         return _.definition.y(d.y2Min);
       }).y1(function(d) {
         return _.definition.y(d.y2Max);
-      }).curve(d3.curveMonotoneX);
+      });
       this.svg.select(".line-plot-area2").attr("d", this.definition.area2);
       this.definition.line2 = d3.line().defined(function(d) {
         return !isNaN(d.y2) && d.y2 !== null;
@@ -940,7 +940,7 @@
         return _transform.applyX(_.definition.x(d.x));
       }).y(function(d) {
         return _.definition.y(d.y2);
-      }).curve(d3.curveMonotoneX);
+      });
       this.svg.select(".line-plot-path2").attr("d", this.definition.line2);
       this.appendCrosshairTarget(_transform);
       return _transform;
