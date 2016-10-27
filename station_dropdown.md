@@ -8,6 +8,29 @@ all stations that have that parameter grouped by region. The following example
 shows an array of many regions with many stations. Latitude and longitude will
 be used by the map based stations selector
 
+The order of both the regions and 
+stations within each region is important as it will dictate the order in the 
+dropdown.  Within each region the stations should be ordered from lowest elevation
+to highest elevation.  The regions should be ordered generally north to south: 
+
+1. Olympics	1
+2. Mt Baker	2
+3. Stevens Pass	3
+4. Alpental	4
+5. Snoqualmie Pass	5
+6. Crystal	6
+7. Rainier	7
+8. Chinook Pass	8
+8. White Pass	9
+9. Mt St Helens	10
+10. Washington Pass	11
+11. Lake Wenatchee to Leavenworth	12
+12. Blewett Pass	13
+13. Mission Ridge	14
+14. Mt Hood Meadows	15
+16. Timberline	16
+17. Ski Bowl	17
+
 Example Request
 
 ```
