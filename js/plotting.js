@@ -1398,23 +1398,6 @@
 
     Handler.prototype.mergeTemplateOption = function() {};
 
-    Handler.prototype.appendControls = function(plotId) {
-      var _down_control, _li_style, _new_control, _remove_control, _up_control, html, selector;
-      selector = "plot-controls-" + plotId;
-      _li_style = "";
-      _new_control = this.controls["new"]();
-      _remove_control = this.controls.remove(plotId);
-      _up_control = this.controls.move(plotId, 'up');
-      _down_control = this.controls.move(plotId, 'down');
-      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
-      $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
-      if (this.template[plotId].type === "station") {
-        return this.controls.appendParameterDropdown(plotId, '#' + selector, 1);
-      } else if (this.template[plotId].type === "parameter") {
-        return this.controls.appendStationDropdown(plotId, '#' + selector, 1);
-      }
-    };
-
     Handler.prototype.getPrependData = function(plotId, dataParams, key) {
       var _, _is_array, append, args, callback, callback1, callback2, preError, target;
       preError = this.preError + ".getPrependData(key, dataParams)";
@@ -1560,6 +1543,40 @@
         results.push(plot.proto.hideCrosshair());
       }
       return results;
+    };
+
+    Handler.prototype.appendControls = function(plotId) {
+      var _down_control, _li_style, _new_control, _remove_control, _up_control, html, selector;
+      selector = "plot-controls-" + plotId;
+      _li_style = "";
+      _new_control = this.controls["new"]();
+      _remove_control = this.controls.remove(plotId);
+      _up_control = this.controls.move(plotId, 'up');
+      _down_control = this.controls.move(plotId, 'down');
+      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
+      $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
+      if (this.template[plotId].type === "station") {
+        return this.controls.appendParameterDropdown(plotId, '#' + selector, 1);
+      } else if (this.template[plotId].type === "parameter") {
+        return this.controls.appendStationDropdown(plotId, '#' + selector, 1);
+      }
+    };
+
+    Handler.prototype.remove = function(plotId) {
+      $(this.template[plotId].proto.options.target).fadeOut(500, function() {
+        return $(this).remove();
+      });
+      return this.template[plotId] = null;
+    };
+
+    Handler.prototype.move = function(plotId, direction) {
+      var selected;
+      selected = $(this.template[plotId].proto.options.target);
+      if (direction === 'up') {
+        return selected.prev().insertAfter(selected);
+      } else if (direction === 'down') {
+        return selected.next().insertBefore(selected);
+      }
     };
 
     Handler.prototype.getColor = function(shade, key) {
