@@ -1457,24 +1457,47 @@
     };
 
     Handler.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
-      var args, callback, target;
+      var _, args, callback, target;
       target = "http://localhost:5000/stations/" + parameter;
+      _ = this;
       args = {};
       callback = function(data) {
-        var html, i, j, len, len1, ref, region, station;
-        html = "<i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.toggleStationDropdown(" + plotId + ")\"></i> <ul id=\"station-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none\">";
+        var html, i, j, len, len1, ref, ref1, region, station;
+        html = "<i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.toggleStationDropdown(" + plotId + ")\"></i> <ul id=\"station-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
         ref = data.responseJSON;
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
-          html = html + " <li class=\"list-group-item subheader\" style=\"background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + region.region + "</li> <ul class=\"list-group-item sublist\" style=\"display: none; padding: 1px\">";
-          for (j = 0, len1 = region.length; j < len1; j++) {
-            station = region[j];
+          html = html + " <li class=\"list-group-item subheader\" style=\"cursor:pointer; background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + region.region + "</li> <ul class=\"list-group-item sublist\" style=\"display: none; padding: 1px\">";
+          console.log("Region (stations)", region.stations);
+          ref1 = region.stations;
+          for (j = 0, len1 = ref1.length; j < len1; j++) {
+            station = ref1[j];
             html = html + " <li class=\"list-group-item station\" style=\"padding: 1px 5px; list-style-type: none\"> " + station.name + "</li>";
           }
           html = html + " </ul>";
         }
         html = html + " </ul>";
-        return $(appendTarget).append(html);
+        $(appendTarget).append(html);
+        $(".subheader").click(function(event) {
+          var next;
+          next = $(this).next();
+          if (next.is(":visible")) {
+            return next.slideUp();
+          } else {
+            return next.slideDown();
+          }
+        });
+        return $(".station").click(function(event) {
+          if ($(this).hasClass("selected")) {
+            $(this).removeClass("selected").css("background-color", "none");
+            if ($(this).siblings().filter(":not(.selected)").length === $(this).siblings().length) {
+              $(this).parent().prev().css("background-color", "rgb(235,235,235)");
+            }
+          } else {
+            $(this).addClass("selected").css("background-color", _.options.colors.light[7]).parent().prev().css("background-color", "rgb(210,210,210)");
+          }
+          return event.stopPropagation();
+        });
       };
       return this.api.get(target, args, callback);
     };
