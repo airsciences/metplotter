@@ -48,6 +48,7 @@ window.Plotting.Handler = class Handler
       
     @api = new window.Plotting.API access.token
     @syncronousapi = new window.Plotting.API access.token, false
+    @dropdown = new window.Plotting.Dropdown
     @parseDate = d3.timeParse(@options.dateFormat)
 
     @format = d3.utcFormat(@options.dateFormat)
@@ -308,125 +309,6 @@ window.Plotting.Handler = class Handler
     # Hide cursor crosshairs.
     for plot in @template
       plot.proto.hideCrosshair()
-
-  appendDropdown: (target, type, data) ->
-    # Constuct and append the button dropdown list.
-    head = ""
-    list = ""
-    foot = ""
-    
-    switch type
-      when 'station'
-        head = "<button class=\"btn btn-xs btn-default dropdown-toggle\"
-            type=\"button\" id=\"dropdownMenu3\" data-toggle=\"dropdown\"
-            aria-haspopup=\"true\" aria-expanded=\"false\">
-            <span>Stations </span>
-            <span class=\"caret\"></span>
-          </button>
-          <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">"
-        for station in data.stations
-          list = "#{list}
-            <li><a onclick=\"#{parameter.onclick}\">
-              <i style=\"color: #{parameter.color}\"
-              class=\"icon-circle\"></i> #{station.station}
-            </a></li>"
-        foot = "</ul>"
-      when 'parameter'
-        head = "<button class=\"btn btn-xs btn-default dropdown-toggle\"
-            type=\"button\" id=\"dropdownMenu3\" data-toggle=\"dropdown\"
-            aria-haspopup=\"true\" aria-expanded=\"false\">
-            <span>Stations </span>
-            <span class=\"caret\"></span>
-          </button>
-          <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">"
-        for parameter in data.parameters
-          list = "#{list}
-            <li><a onclick=\"#{parameter.onclick}\">
-              <i style=\"color: #{parameter.color}\"
-              class=\"icon-circle\"></i> #{parameter.title}
-            </a></li>"
-        foot = "</ul>"
-    
-    result = "#{head}
-        #{list}
-        #{foot}"
-    
-    $(target).append(result)
-    
-  appendStationDropdown: (plotId, appendTarget, parameter) ->
-    # Station Dropdown.
-    target = "http://localhost:5000/stations/#{parameter}"
-    _ = @
-    args = {}
-    
-    callback = (data) ->
-      html = "<i class=\"icon-list\" style=\"cursor: pointer\"
-          onclick=\"plotter.toggleStationDropdown(#{plotId})\"></i>
-        <ul id=\"station-dropdown-#{plotId}\"
-          class=\"list-group\" style=\"display: none;
-          position: absolute;
-          box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">"
-     
-      for region in data.responseJSON
-        html = "#{html}
-            <li class=\"list-group-item subheader\"
-              style=\"cursor:pointer;
-                background-color: rgb(235, 235, 235);
-              border-top: 1px solid rgb(190, 190, 190);
-              padding: 3px 10px;\">#{region.region}</li>
-            <ul class=\"list-group-item sublist\"
-              style=\"display: none; padding: 1px\">"
-        console.log("Region (stations)", region.stations)
-        for station in region.stations
-          html = "#{html}
-            <li class=\"list-group-item station\"
-              style=\"padding: 1px 5px; list-style-type: none\">
-              #{station.name}</li>"
-        
-        html = "#{html}
-          </ul>"
-      
-      html = "#{html}
-        </ul>"
-    
-      $(appendTarget).append(html)
-      
-      # Subheader Click Event.
-      $(".subheader").click((event) ->
-        next = $(this).next()
-        if next.is(":visible")
-          next.slideUp()
-        else
-          next.slideDown()
-      )
-      
-      # Station Click Event.
-      $(".station").click((event) ->
-        if $(this).hasClass("selected")
-          $(this).removeClass("selected")
-            .css("background-color", "none")
-          if (
-            $(this).siblings().filter(":not(.selected)").length is
-            $(this).siblings().length
-          )
-            $(this).parent()
-              .prev()
-              .css("background-color","rgb(235,235,235)")
-        else
-          $(this).addClass("selected")
-            .css("background-color", _.options.colors.light[7])
-            .parent()
-            .prev()
-            .css("background-color","rgb(210,210,210)")
-
-        event.stopPropagation()
-     )
-    
-    @api.get(target, args, callback)
-
-  toggleStationDropdown: (plotId) ->
-    # Toggle the plotId's station down.
-    $("\#station-dropdown-#{plotId}").toggle()
     
   getColor: (shade, key) ->
     # Return the Color from the ordered list.
@@ -446,17 +328,6 @@ window.Plotting.Handler = class Handler
       result.subtitle = ""
     return result
 
-  getAggregateMethod: (param, start, end) ->
-    # Returns the appropriate aggregate method for a give parameter and zoom.
-    aggregate = 'hourly'
-    interval = new Date end - new Date start
-    
-    switch param
-      when 'temp'
-        arregate = 'daily'
-      when 'precip'
-        aggregate = 'daily'
- 
   uuid: (length) ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
     

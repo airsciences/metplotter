@@ -255,6 +255,102 @@
 }).call(this);
 
 (function() {
+  var Dropdown;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.Dropdown = Dropdown = (function() {
+    function Dropdown(access, options) {
+      var accessToken, defaults;
+      this.preError = "Plotting.Dropdown";
+      defaults = {
+        target: null
+      };
+      this.options = Object.mergeDefaults(options, defaults);
+      accessToken = {
+        token: null,
+        expires: null,
+        expired: true
+      };
+      access = Object.mergeDefaults(access, accessToken);
+      this.api = new window.Plotting.API(access.token);
+    }
+
+    Dropdown.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
+      var _, args, callback, target;
+      target = "http://localhost:5000/stations/" + parameter;
+      _ = this;
+      args = {};
+      callback = function(data) {
+        var html, i, j, len, len1, ref, ref1, region, station;
+        html = "<i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.dropdown.toggle('\#station-dropdown-" + plotId + "')\"> </i> <ul id=\"station-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
+        ref = data.responseJSON;
+        for (i = 0, len = ref.length; i < len; i++) {
+          region = ref[i];
+          html = html + " <li class=\"list-group-item subheader\" style=\"cursor:pointer; background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + region.region + "</li> <ul class=\"list-group-item sublist\" style=\"display: none; padding: 1px\">";
+          ref1 = region.stations;
+          for (j = 0, len1 = ref1.length; j < len1; j++) {
+            station = ref1[j];
+            html = html + " <li class=\"list-group-item station\" style=\"cursor:pointer;padding: 1px 5px; list-style-type: none\"> " + station.name + "</li>";
+          }
+          html = html + " </ul>";
+        }
+        html = html + " </ul>";
+        $(appendTarget).append(html);
+        $(".subheader").click(function(event) {
+          var next;
+          next = $(this).next();
+          if (next.is(":visible")) {
+            return next.slideUp();
+          } else {
+            return next.slideDown();
+          }
+        });
+        return $(".station").click(function(event) {
+          if ($(this).hasClass("selected")) {
+            $(this).removeClass("selected").css("background-color", "none");
+            console.log($(this), $(this).css("background-color"));
+            if ($(this).siblings().filter(":not(.selected)").length === $(this).siblings().length) {
+              $(this).parent().prev().css("background-color", "rgb(235,235,235)");
+            }
+          } else {
+            $(this).addClass("selected").css("background-color", plotter.options.colors.light[7]).parent().prev().css("background-color", "rgb(210,210,210)");
+          }
+          return event.stopPropagation();
+        });
+      };
+      return this.api.get(target, args, callback);
+    };
+
+    Dropdown.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId) {
+      var args, callback, target;
+      target = "http://localhost:5000/parameters/" + dataLoggerId;
+      args = {};
+      callback = function(data) {
+        var html, i, len, parameter, ref;
+        html = "<i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.dropdown.toggle('\#param-dropdown-" + plotId + "')\"> </i> <ul id=\"param-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
+        ref = data.responseJSON;
+        for (i = 0, len = ref.length; i < len; i++) {
+          parameter = ref[i];
+          html = html + " <li class=\"list-group-item subheader\" style=\"cursor:pointer; background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + parameter.title + "</li>";
+        }
+        html = html + " </ul>";
+        return $(appendTarget).append(html);
+      };
+      return this.api.get(target, args, callback);
+    };
+
+    Dropdown.prototype.toggle = function(selector) {
+      return $(selector).toggle();
+    };
+
+    return Dropdown;
+
+  })();
+
+}).call(this);
+
+(function() {
   if (!Object.mergeDefaults) {
     Object.mergeDefaults = function(args, defaults) {
       var key, key1, merge, val, val1;
@@ -284,6 +380,7 @@
       var _initial, defaults;
       this.preError = "LinePlot.";
       defaults = {
+        plotId: null,
         uuid: '',
         debug: true,
         target: null,
@@ -711,7 +808,7 @@
 
     LinePlot.prototype.calculateChartDims = function() {
       var height, margin, width;
-      width = Math.round($(this.options.target).width());
+      width = Math.round($(this.options.target).width()) - 24;
       height = Math.round(width / this.options.aspectDivisor);
       if (width > 1000) {
         margin = {
@@ -805,6 +902,7 @@
       preError = this.preError + "append()";
       _ = this;
       this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.ctls = d3.select(this.options.target).append("div").attr("id", "line-plot-controls-" + this.options.plotId).style("width", 24).style("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
@@ -1101,6 +1199,7 @@
       access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API(access.token);
       this.syncronousapi = new window.Plotting.API(access.token, false);
+      this.dropdown = new window.Plotting.Dropdown;
       this.parseDate = d3.timeParse(this.options.dateFormat);
       this.format = d3.utcFormat(this.options.dateFormat);
       this.getNow = function() {
@@ -1428,84 +1527,6 @@
       return results;
     };
 
-    Handler.prototype.appendDropdown = function(target, type, data) {
-      var foot, head, i, j, len, len1, list, parameter, ref, ref1, result, station;
-      head = "";
-      list = "";
-      foot = "";
-      switch (type) {
-        case 'station':
-          head = "<button class=\"btn btn-xs btn-default dropdown-toggle\" type=\"button\" id=\"dropdownMenu3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> <span>Stations </span> <span class=\"caret\"></span> </button> <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">";
-          ref = data.stations;
-          for (i = 0, len = ref.length; i < len; i++) {
-            station = ref[i];
-            list = list + " <li><a onclick=\"" + parameter.onclick + "\"> <i style=\"color: " + parameter.color + "\" class=\"icon-circle\"></i> " + station.station + " </a></li>";
-          }
-          foot = "</ul>";
-          break;
-        case 'parameter':
-          head = "<button class=\"btn btn-xs btn-default dropdown-toggle\" type=\"button\" id=\"dropdownMenu3\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\"> <span>Stations </span> <span class=\"caret\"></span> </button> <ul class=\"dropdown-menu\" aria-labelledby=\"dropdownMenu3\">";
-          ref1 = data.parameters;
-          for (j = 0, len1 = ref1.length; j < len1; j++) {
-            parameter = ref1[j];
-            list = list + " <li><a onclick=\"" + parameter.onclick + "\"> <i style=\"color: " + parameter.color + "\" class=\"icon-circle\"></i> " + parameter.title + " </a></li>";
-          }
-          foot = "</ul>";
-      }
-      result = head + " " + list + " " + foot;
-      return $(target).append(result);
-    };
-
-    Handler.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
-      var _, args, callback, target;
-      target = "http://localhost:5000/stations/" + parameter;
-      _ = this;
-      args = {};
-      callback = function(data) {
-        var html, i, j, len, len1, ref, ref1, region, station;
-        html = "<i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.toggleStationDropdown(" + plotId + ")\"></i> <ul id=\"station-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
-        ref = data.responseJSON;
-        for (i = 0, len = ref.length; i < len; i++) {
-          region = ref[i];
-          html = html + " <li class=\"list-group-item subheader\" style=\"cursor:pointer; background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + region.region + "</li> <ul class=\"list-group-item sublist\" style=\"display: none; padding: 1px\">";
-          console.log("Region (stations)", region.stations);
-          ref1 = region.stations;
-          for (j = 0, len1 = ref1.length; j < len1; j++) {
-            station = ref1[j];
-            html = html + " <li class=\"list-group-item station\" style=\"padding: 1px 5px; list-style-type: none\"> " + station.name + "</li>";
-          }
-          html = html + " </ul>";
-        }
-        html = html + " </ul>";
-        $(appendTarget).append(html);
-        $(".subheader").click(function(event) {
-          var next;
-          next = $(this).next();
-          if (next.is(":visible")) {
-            return next.slideUp();
-          } else {
-            return next.slideDown();
-          }
-        });
-        return $(".station").click(function(event) {
-          if ($(this).hasClass("selected")) {
-            $(this).removeClass("selected").css("background-color", "none");
-            if ($(this).siblings().filter(":not(.selected)").length === $(this).siblings().length) {
-              $(this).parent().prev().css("background-color", "rgb(235,235,235)");
-            }
-          } else {
-            $(this).addClass("selected").css("background-color", _.options.colors.light[7]).parent().prev().css("background-color", "rgb(210,210,210)");
-          }
-          return event.stopPropagation();
-        });
-      };
-      return this.api.get(target, args, callback);
-    };
-
-    Handler.prototype.toggleStationDropdown = function(plotId) {
-      return $("\#station-dropdown-" + plotId).toggle();
-    };
-
     Handler.prototype.getColor = function(shade, key) {
       return this.options.colors[shade][key];
     };
@@ -1521,18 +1542,6 @@
         result.subtitle = "";
       }
       return result;
-    };
-
-    Handler.prototype.getAggregateMethod = function(param, start, end) {
-      var aggregate, arregate, interval;
-      aggregate = 'hourly';
-      interval = new Date(end - new Date(start));
-      switch (param) {
-        case 'temp':
-          return arregate = 'daily';
-        case 'precip':
-          return aggregate = 'daily';
-      }
     };
 
     Handler.prototype.uuid = function(length) {

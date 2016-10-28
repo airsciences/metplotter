@@ -10,6 +10,7 @@ window.Plotting.LinePlot = class LinePlot
 
     # Default Configuration
     defaults =
+      plotId: null
       uuid: ''
       debug: true
       target: null
@@ -432,7 +433,7 @@ window.Plotting.LinePlot = class LinePlot
 
   calculateChartDims: ->
     # Calculate Basic DOM & SVG Dimensions
-    width = Math.round($(@options.target).width())
+    width = Math.round($(@options.target).width()) - 24
     height = Math.round(width/@options.aspectDivisor)
     if width > 1000
       margin =
@@ -532,6 +533,12 @@ window.Plotting.LinePlot = class LinePlot
       .attr("class", "line-plot")
       .attr("width", @definition.dimensions.width)
       .attr("height", @definition.dimensions.height)
+    
+    # Create the Controls Div
+    @ctls = d3.select(@options.target).append("div")
+      .attr("id", "line-plot-controls-#{@options.plotId}")
+      .style("width", 24)
+      .style("height", @definition.dimensions.height)
       
     # Append a Clip Path
     @svg.append("defs")
@@ -1001,10 +1008,6 @@ window.Plotting.LinePlot = class LinePlot
     _offsetFactor = 1
     _mainSize = '16px'
     _subSize = '12px'
-    # if @device = 'mid'
-    #   _offsetFactor = 0.6
-    #   _mainSize = '12px'
-    #   _subSize = '8px'
     if @device == 'small'
       _offsetFactor = 0.4
       _mainSize = '10px'

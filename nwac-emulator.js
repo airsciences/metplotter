@@ -941,13 +941,13 @@ app.get('/stations/:parameter', function (req, res) {
     res.json(result);
 });
 
-app.get('/parameter/:dataLoggerId', function (req, res) {
+app.get('/parameters/:dataLoggerId', function (req, res) {
     console.log("API-Stations", req.params);
     var data_logger_id = parseInt(req.params.dataLoggerId);
     var result;
     
     switch (data_logger_id) {
-        case 81:
+        case 1:
             result = [
                 {"title": "Windspeed (mph)", "parameter": ["wind_speed_average","wind_speed_maximum","wind_speed_minimum"]},
                 {"title": "Precipitation (In.)", "parameter": "precipitation"},
@@ -955,7 +955,7 @@ app.get('/parameter/:dataLoggerId', function (req, res) {
                 {"title": "Relative Humidity (%)", "parameter": "relative_humidity"}
             ];
             break;
-        case 90:
+        case 43:
         result = [
                 {"title": "Precipitation (In.)", "parameter": "precipitation"},
                 {"title": "Temperature (°F)", "parameter": "temperature"},
