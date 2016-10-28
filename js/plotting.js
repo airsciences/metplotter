@@ -308,8 +308,7 @@
         });
         return $(".station").click(function(event) {
           if ($(this).hasClass("selected")) {
-            $(this).removeClass("selected").css("background-color", "none");
-            console.log($(this), $(this).css("background-color"));
+            $(this).removeClass("selected").css("background-color", "");
             if ($(this).siblings().filter(":not(.selected)").length === $(this).siblings().length) {
               $(this).parent().prev().css("background-color", "rgb(235,235,235)");
             }
@@ -902,7 +901,7 @@
       preError = this.preError + "append()";
       _ = this;
       this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.ctls = d3.select(this.options.target).append("div").attr("id", "line-plot-controls-" + this.options.plotId).style("width", 24).style("height", this.definition.dimensions.height);
+      this.ctls = d3.select(this.options.target).append("div").attr("id", "line-plot-controls-" + this.options.plotId).style("position", "absolute").style("right", 0).style("top", 0).style("width", 24).style("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");

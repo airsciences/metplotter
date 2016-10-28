@@ -69,8 +69,7 @@ window.Plotting.Dropdown = class Dropdown
       $(".station").click((event) ->
         if $(this).hasClass("selected")
           $(this).removeClass("selected")
-            .css("background-color", "none")
-          console.log($(this), $(this).css("background-color"))
+            .css("background-color", "")
           if (
             $(this).siblings().filter(":not(.selected)").length is
             $(this).siblings().length
