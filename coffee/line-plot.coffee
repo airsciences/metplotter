@@ -438,7 +438,7 @@ window.Plotting.LinePlot = class LinePlot
     if width > 1000
       margin =
         top: Math.round(height * 0.04)
-        right: Math.round(Math.pow(width, 0.6))
+        right: Math.round(Math.pow(width, 0.3))
         bottom: Math.round(height * 0.08)
         left: Math.round(Math.pow(width, 0.6))
     else if width > 600
@@ -447,7 +447,7 @@ window.Plotting.LinePlot = class LinePlot
       height = Math.round(width/(@options.aspectDivisor/1.25))
       margin =
         top: Math.round(height * 0.04)
-        right: Math.round(Math.pow(width, 0.6))
+        right: Math.round(Math.pow(width, 0.3))
         bottom: Math.round(height * 0.12)
         left: Math.round(Math.pow(width, 0.6))
     else
@@ -456,7 +456,7 @@ window.Plotting.LinePlot = class LinePlot
       height = Math.round(width/(@options.aspectDivisor/1.5))
       margin =
         top: Math.round(height * 0.04)
-        right: Math.round(Math.pow(width, 0.6))
+        right: Math.round(Math.pow(width, 0.3))
         bottom: Math.round(height * 0.18)
         left: Math.round(Math.pow(width, 0.6))
 
@@ -528,21 +528,27 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}append()"
     _ = @
 
+    # Create the Controls Div
+    @outer = d3.select(@options.target).append("div")
+      .attr("class", "line-plot-body")
+      .style("width", "#{@definition.dimensions.width}px")
+      .style("height", "#{@definition.dimensions.height}px")
+      .style("display", "inline-block")
+          
+    # Create the Controls Div
+    @ctls = d3.select(@options.target).append("div")
+      .attr("class", "line-plot-controls")
+      .style("width", '23px')
+      .style("height", "#{@definition.dimensions.height}px")
+      .style("display", "inline-block")
+      .style("vertical-align", "top")
+
     # Create the SVG
-    @svg = d3.select(@options.target).append("svg")
+    @svg = @outer.append("svg")
       .attr("class", "line-plot")
       .attr("width", @definition.dimensions.width)
       .attr("height", @definition.dimensions.height)
-    
-    # Create the Controls Div
-    @ctls = d3.select(@options.target).append("div")
-      .attr("id", "line-plot-controls-#{@options.plotId}")
-      .style("position", "absolute")
-      .style("right", 0)
-      .style("top", 0)
-      .style("width", 24)
-      .style("height", @definition.dimensions.height)
-      
+
     # Append a Clip Path
     @svg.append("defs")
       .append("clipPath")

@@ -239,28 +239,12 @@
 }).call(this);
 
 (function() {
-  var Handler;
+  var Controls;
 
   window.Plotting || (window.Plotting = {});
 
-  window.Plotting.Handler = Handler = (function() {
-    function Handler(access, options, plots) {
-      this.preError = "Plotting.Handler";
-    }
-
-    return Handler;
-
-  })();
-
-}).call(this);
-
-(function() {
-  var Dropdown;
-
-  window.Plotting || (window.Plotting = {});
-
-  window.Plotting.Dropdown = Dropdown = (function() {
-    function Dropdown(access, options) {
+  window.Plotting.Controls = Controls = (function() {
+    function Controls(access, options) {
       var accessToken, defaults;
       this.preError = "Plotting.Dropdown";
       defaults = {
@@ -276,14 +260,14 @@
       this.api = new window.Plotting.API(access.token);
     }
 
-    Dropdown.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
+    Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
       var _, args, callback, target;
       target = "http://localhost:5000/stations/" + parameter;
       _ = this;
       args = {};
       callback = function(data) {
         var html, i, j, len, len1, ref, ref1, region, station;
-        html = "<i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.dropdown.toggle('\#station-dropdown-" + plotId + "')\"> </i> <ul id=\"station-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
+        html = "<li><i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.dropdown.toggle('\#station-dropdown-" + plotId + "')\"> </i> <ul id=\"station-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
         ref = data.responseJSON;
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
@@ -295,8 +279,8 @@
           }
           html = html + " </ul>";
         }
-        html = html + " </ul>";
-        $(appendTarget).append(html);
+        html = html + " </ul> </li>";
+        $(appendTarget).prepend(html);
         $(".subheader").click(function(event) {
           var next;
           next = $(this).next();
@@ -321,29 +305,60 @@
       return this.api.get(target, args, callback);
     };
 
-    Dropdown.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId) {
+    Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId) {
       var args, callback, target;
       target = "http://localhost:5000/parameters/" + dataLoggerId;
       args = {};
       callback = function(data) {
         var html, i, len, parameter, ref;
-        html = "<i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.dropdown.toggle('\#param-dropdown-" + plotId + "')\"> </i> <ul id=\"param-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
+        html = "<li><i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.dropdown.toggle('\#param-dropdown-" + plotId + "')\"> </i> <ul id=\"param-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
         ref = data.responseJSON;
         for (i = 0, len = ref.length; i < len; i++) {
           parameter = ref[i];
           html = html + " <li class=\"list-group-item subheader\" style=\"cursor:pointer; background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + parameter.title + "</li>";
         }
-        html = html + " </ul>";
-        return $(appendTarget).append(html);
+        html = html + " </ul> </li>";
+        return $(appendTarget).prepend(html);
       };
       return this.api.get(target, args, callback);
     };
 
-    Dropdown.prototype.toggle = function(selector) {
+    Controls.prototype.toggle = function(selector) {
       return $(selector).toggle();
     };
 
-    return Dropdown;
+    Controls.prototype.move = function(plotId, direction) {
+      var html;
+      return html = "<i style=\"cursor: pointer;\" class=\"icon-arrow-" + direction + "\" onclick=\"plotter.move(" + plotId + ", '" + direction + "')\"></i>";
+    };
+
+    Controls.prototype.remove = function(plotId) {
+      var html;
+      return html = "<i style=\"cursor: pointer;\" class=\"icon-remove\" onclick=\"plotter.remove(" + plotId + ")\"></i>";
+    };
+
+    Controls.prototype["new"] = function() {
+      var html;
+      return html = "<i style=\"cursor: pointer;\" class=\"icon-plus\" onclick=\"plotter.add()\"></i>";
+    };
+
+    return Controls;
+
+  })();
+
+}).call(this);
+
+(function() {
+  var Handler;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.Handler = Handler = (function() {
+    function Handler(access, options, plots) {
+      this.preError = "Plotting.Handler";
+    }
+
+    return Handler;
 
   })();
 
@@ -812,7 +827,7 @@
       if (width > 1000) {
         margin = {
           top: Math.round(height * 0.04),
-          right: Math.round(Math.pow(width, 0.6)),
+          right: Math.round(Math.pow(width, 0.3)),
           bottom: Math.round(height * 0.08),
           left: Math.round(Math.pow(width, 0.6))
         };
@@ -822,7 +837,7 @@
         height = Math.round(width / (this.options.aspectDivisor / 1.25));
         margin = {
           top: Math.round(height * 0.04),
-          right: Math.round(Math.pow(width, 0.6)),
+          right: Math.round(Math.pow(width, 0.3)),
           bottom: Math.round(height * 0.12),
           left: Math.round(Math.pow(width, 0.6))
         };
@@ -832,7 +847,7 @@
         height = Math.round(width / (this.options.aspectDivisor / 1.5));
         margin = {
           top: Math.round(height * 0.04),
-          right: Math.round(Math.pow(width, 0.6)),
+          right: Math.round(Math.pow(width, 0.3)),
           bottom: Math.round(height * 0.18),
           left: Math.round(Math.pow(width, 0.6))
         };
@@ -900,8 +915,9 @@
       var _, _y2_title, _y_offset, _y_title, _y_vert, preError;
       preError = this.preError + "append()";
       _ = this;
-      this.svg = d3.select(this.options.target).append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.ctls = d3.select(this.options.target).append("div").attr("id", "line-plot-controls-" + this.options.plotId).style("position", "absolute").style("right", 0).style("top", 0).style("width", 24).style("height", this.definition.dimensions.height);
+      this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
+      this.ctls = d3.select(this.options.target).append("div").attr("class", "line-plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
+      this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
@@ -1198,7 +1214,7 @@
       access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API(access.token);
       this.syncronousapi = new window.Plotting.API(access.token, false);
-      this.dropdown = new window.Plotting.Dropdown;
+      this.controls = new window.Plotting.Controls;
       this.parseDate = d3.timeParse(this.options.dateFormat);
       this.format = d3.utcFormat(this.options.dateFormat);
       this.getNow = function() {
@@ -1346,6 +1362,8 @@
         plot = ref[key];
         target = this.utarget(this.options.target);
         $(this.options.target).append("<div id='" + target + "'></div>");
+        plot.type = "station";
+        plot.options.plotId = key;
         plot.options.uuid = this.uuid();
         plot.options.target = "\#" + target;
         plot.options.dataParams = plot.dataParams;
@@ -1372,12 +1390,30 @@
         console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
-        results.push(this.template[key].proto = instance);
+        this.template[key].proto = instance;
+        results.push(this.appendControls(key));
       }
       return results;
     };
 
     Handler.prototype.mergeTemplateOption = function() {};
+
+    Handler.prototype.appendControls = function(plotId) {
+      var _down_control, _li_style, _new_control, _remove_control, _up_control, html, selector;
+      selector = "plot-controls-" + plotId;
+      _li_style = "";
+      _new_control = this.controls["new"]();
+      _remove_control = this.controls.remove(plotId);
+      _up_control = this.controls.move(plotId, 'up');
+      _down_control = this.controls.move(plotId, 'down');
+      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
+      $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
+      if (this.template[plotId].type === "station") {
+        return this.controls.appendParameterDropdown(plotId, '#' + selector, 1);
+      } else if (this.template[plotId].type === "parameter") {
+        return this.controls.appendStationDropdown(plotId, '#' + selector, 1);
+      }
+    };
 
     Handler.prototype.getPrependData = function(plotId, dataParams, key) {
       var _, _is_array, append, args, callback, callback1, callback2, preError, target;

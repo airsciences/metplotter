@@ -48,7 +48,7 @@ window.Plotting.Handler = class Handler
       
     @api = new window.Plotting.API access.token
     @syncronousapi = new window.Plotting.API access.token, false
-    @dropdown = new window.Plotting.Dropdown
+    @controls = new window.Plotting.Controls
     @parseDate = d3.timeParse(@options.dateFormat)
 
     @format = d3.utcFormat(@options.dateFormat)
@@ -162,6 +162,8 @@ window.Plotting.Handler = class Handler
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
+      plot.type = "station"
+      plot.options.plotId = key
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
       plot.options.dataParams = plot.dataParams
@@ -186,9 +188,35 @@ window.Plotting.Handler = class Handler
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
+      @appendControls(key)
 
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options
+
+  appendControls: (plotId) ->
+    # Append the Control Set to the Plot
+    selector = "plot-controls-#{plotId}"
+    _li_style = ""
+    _new_control = @controls.new()
+    _remove_control = @controls.remove(plotId)
+    _up_control = @controls.move(plotId, 'up')
+    _down_control = @controls.move(plotId, 'down')
+    
+    html = "<ul id=\"#{selector}\" class=\"unstyled\"
+        style=\"list-style-type: none; padding-left: 6px;\">
+        <li>#{_up_control}</li>
+        <li>#{_remove_control}</li>
+        <li>#{_new_control}</li>
+        <li>#{_down_control}</i></li>
+      </ul>"
+    
+    $(@template[plotId].proto.options.target)
+      .find(".line-plot-controls").append(html)
+    
+    if @template[plotId].type is "station"
+      @controls.appendParameterDropdown(plotId, '#'+selector, 1)
+    else if @template[plotId].type is "parameter"
+      @controls.appendStationDropdown(plotId, '#'+selector, 1)
 
   getPrependData: (plotId, dataParams, key) ->
     # Request a station's dataset (param specific)

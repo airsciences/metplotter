@@ -2,7 +2,7 @@
 
 window.Plotting ||= {}
 
-window.Plotting.Dropdown = class Dropdown
+window.Plotting.Controls = class Controls
   constructor: (access, options) ->
     @preError = "Plotting.Dropdown"
     
@@ -25,7 +25,7 @@ window.Plotting.Dropdown = class Dropdown
     args = {}
     
     callback = (data) ->
-      html = "<i class=\"icon-list\" style=\"cursor: pointer\"
+      html = "<li><i class=\"icon-list\" style=\"cursor: pointer\"
           onclick=\"plotter.dropdown.toggle('\#station-dropdown-#{plotId}')\">
           </i>
         <ul id=\"station-dropdown-#{plotId}\"
@@ -52,9 +52,10 @@ window.Plotting.Dropdown = class Dropdown
           </ul>"
       
       html = "#{html}
-        </ul>"
+        </ul>
+        </li>"
     
-      $(appendTarget).append(html)
+      $(appendTarget).prepend(html)
       
       # Subheader Click Event.
       $(".subheader").click((event) ->
@@ -95,7 +96,7 @@ window.Plotting.Dropdown = class Dropdown
     args = {}
  
     callback = (data) ->
-      html = "<i class=\"icon-list\" style=\"cursor: pointer\"
+      html = "<li><i class=\"icon-list\" style=\"cursor: pointer\"
           onclick=\"plotter.dropdown.toggle('\#param-dropdown-#{plotId}')\">
           </i>
         <ul id=\"param-dropdown-#{plotId}\"
@@ -112,12 +113,26 @@ window.Plotting.Dropdown = class Dropdown
               padding: 3px 10px;\">#{parameter.title}</li>"
       
       html = "#{html}
-        </ul>"
+          </ul>
+        </li>"
           
-      $(appendTarget).append(html)
+      $(appendTarget).prepend(html)
         
     @api.get(target, args, callback)
 
   toggle: (selector) ->
     # Toggle the plotId's station down.
     $(selector).toggle()
+
+  move: (plotId, direction) ->
+    # Return the Move Control.
+    html = "<i style=\"cursor: pointer;\" class=\"icon-arrow-#{direction}\"
+      onclick=\"plotter.move(#{plotId}, '#{direction}')\"></i>"
+    
+  remove: (plotId) ->
+    html = "<i style=\"cursor: pointer;\" class=\"icon-remove\"
+      onclick=\"plotter.remove(#{plotId})\"></i>"
+
+  new: () ->
+    html = "<i style=\"cursor: pointer;\" class=\"icon-plus\"
+      onclick=\"plotter.add()\"></i>"
