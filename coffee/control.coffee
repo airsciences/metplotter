@@ -120,6 +120,10 @@ window.Plotting.Controls = class Controls
         
     @api.get(target, args, callback)
 
+  appendStationMap: (plotId, appendTarget, parameter) ->
+    # Append a google maps popover.
+    html = "<i class=\"icon-map-marker\"></i>"
+
   toggle: (selector) ->
     # Toggle the plotId's station down.
     $(selector).toggle()

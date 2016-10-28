@@ -324,6 +324,7 @@ window.Plotting.Handler = class Handler
     
     html = "<ul id=\"#{selector}\" class=\"unstyled\"
         style=\"list-style-type: none; padding-left: 6px;\">
+        <li><i class=\"icon-map-marker\"></i></li>
         <li>#{_up_control}</li>
         <li>#{_remove_control}</li>
         <li>#{_new_control}</li>
@@ -336,6 +337,7 @@ window.Plotting.Handler = class Handler
     if @template[plotId].type is "station"
       @controls.appendParameterDropdown(plotId, '#'+selector, 1)
     else if @template[plotId].type is "parameter"
+      @controls.appendStationMap(plotId, '#'+selector, 1)
       @controls.appendStationDropdown(plotId, '#'+selector, 1)
     
   remove: (plotId) ->

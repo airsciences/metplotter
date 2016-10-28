@@ -323,6 +323,11 @@
       return this.api.get(target, args, callback);
     };
 
+    Controls.prototype.appendStationMap = function(plotId, appendTarget, parameter) {
+      var html;
+      return html = "<i class=\"icon-map-marker\"></i>";
+    };
+
     Controls.prototype.toggle = function(selector) {
       return $(selector).toggle();
     };
@@ -1553,11 +1558,12 @@
       _remove_control = this.controls.remove(plotId);
       _up_control = this.controls.move(plotId, 'up');
       _down_control = this.controls.move(plotId, 'down');
-      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
+      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li><i class=\"icon-map-marker\"></i></li> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
       $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
       if (this.template[plotId].type === "station") {
         return this.controls.appendParameterDropdown(plotId, '#' + selector, 1);
       } else if (this.template[plotId].type === "parameter") {
+        this.controls.appendStationMap(plotId, '#' + selector, 1);
         return this.controls.appendStationDropdown(plotId, '#' + selector, 1);
       }
     };
