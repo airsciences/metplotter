@@ -16,6 +16,7 @@ window.Plotting.Controls = class Controls
       expired: true
     access = Object.mergeDefaults access, accessToken
     
+    @maps = []
     @api = new window.Plotting.API access.token
 
   appendStationDropdown: (plotId, appendTarget, parameter) ->
@@ -122,8 +123,41 @@ window.Plotting.Controls = class Controls
 
   appendStationMap: (plotId, appendTarget, parameter) ->
     # Append a google maps popover.
-    html = "<i class=\"icon-map-marker\"></i>"
+    _ = @
+    uuid = @uuid()
+    dom_uuid = "map-control-" + uuid
+    html = "<li>
+          <i class=\"icon-map-marker\" style=\"cursor: pointer\"
+          onclick=\"plotter.controls.toggleMap('#{uuid}')\"></i>
+        </li>
+        <div class=\"popover\">
+          <div class=\"arrow\"></div>
+          <div class=\"popover-content\">
+            <div id=\"#{dom_uuid}\" style=\"width: 512px;
+              height: 512px;\"></div>
+          </div>
+        </div>"
+    $(appendTarget).prepend(html)
+    
+    @maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
+      center: new google.maps.LatLng(47.6062, -122.3321),
+      zoom: 6,
+      mapTypeId: 'terrain',
+      zoomControl: true,
+      mapTypeControl: false,
+      scaleControl: false,
+      streetViewControl: false,
+      rotateControl: false,
+      fullscreenControl: false
+    })
+    
+    console.log("Controls.maps (@maps)", @maps)
 
+  toggleMap: (mapUuid) ->
+    # toggle the map div.
+    $("\#map-control-#{mapUuid}").parent().parent().toggle()
+    google.maps.event.trigger(plotter.controls.maps[mapUuid], 'resize')
+    
   toggle: (selector) ->
     # Toggle the plotId's station down.
     $(selector).toggle()
@@ -140,3 +174,6 @@ window.Plotting.Controls = class Controls
   new: () ->
     html = "<i style=\"cursor: pointer;\" class=\"icon-plus\"
       onclick=\"plotter.add()\"></i>"
+
+  uuid: ->
+    return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)

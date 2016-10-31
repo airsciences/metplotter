@@ -524,6 +524,8 @@ window.Plotting.LinePlot = class LinePlot
     @definition.y.max = if @options.y.max is null then @definition.y.max
     else @options.y.max
 
+  preAppend: ->
+
   append: ->
     preError = "#{@preError}append()"
     _ = @

@@ -162,7 +162,8 @@ window.Plotting.Handler = class Handler
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
-      plot.type = "station"
+      #plot.type = "station"
+      plot.type = "parameter"
       plot.options.plotId = key
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
@@ -324,7 +325,6 @@ window.Plotting.Handler = class Handler
     
     html = "<ul id=\"#{selector}\" class=\"unstyled\"
         style=\"list-style-type: none; padding-left: 6px;\">
-        <li><i class=\"icon-map-marker\"></i></li>
         <li>#{_up_control}</li>
         <li>#{_remove_control}</li>
         <li>#{_new_control}</li>
@@ -372,7 +372,7 @@ window.Plotting.Handler = class Handler
       result.subtitle = ""
     return result
 
-  uuid: (length) ->
+  uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
     
   utarget: (prepend) ->

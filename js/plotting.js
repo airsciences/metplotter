@@ -257,6 +257,7 @@
         expired: true
       };
       access = Object.mergeDefaults(access, accessToken);
+      this.maps = [];
       this.api = new window.Plotting.API(access.token);
     }
 
@@ -324,8 +325,29 @@
     };
 
     Controls.prototype.appendStationMap = function(plotId, appendTarget, parameter) {
-      var html;
-      return html = "<i class=\"icon-map-marker\"></i>";
+      var _, dom_uuid, html, uuid;
+      _ = this;
+      uuid = this.uuid();
+      dom_uuid = "map-control-" + uuid;
+      html = "<li> <i class=\"icon-map-marker\" style=\"cursor: pointer\" onclick=\"plotter.controls.toggleMap('" + uuid + "')\"></i> </li> <div class=\"popover\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 512px; height: 512px;\"></div> </div> </div>";
+      $(appendTarget).prepend(html);
+      this.maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
+        center: new google.maps.LatLng(47.6062, -122.3321),
+        zoom: 6,
+        mapTypeId: 'terrain',
+        zoomControl: true,
+        mapTypeControl: false,
+        scaleControl: false,
+        streetViewControl: false,
+        rotateControl: false,
+        fullscreenControl: false
+      });
+      return console.log("Controls.maps (@maps)", this.maps);
+    };
+
+    Controls.prototype.toggleMap = function(mapUuid) {
+      $("\#map-control-" + mapUuid).parent().parent().toggle();
+      return google.maps.event.trigger(plotter.controls.maps[mapUuid], 'resize');
     };
 
     Controls.prototype.toggle = function(selector) {
@@ -347,23 +369,11 @@
       return html = "<i style=\"cursor: pointer;\" class=\"icon-plus\" onclick=\"plotter.add()\"></i>";
     };
 
+    Controls.prototype.uuid = function() {
+      return (((1 + Math.random()) * 0x100000000) | 0).toString(16).substring(1);
+    };
+
     return Controls;
-
-  })();
-
-}).call(this);
-
-(function() {
-  var Handler;
-
-  window.Plotting || (window.Plotting = {});
-
-  window.Plotting.Handler = Handler = (function() {
-    function Handler(access, options, plots) {
-      this.preError = "Plotting.Handler";
-    }
-
-    return Handler;
 
   })();
 
@@ -916,6 +926,8 @@
       return this.definition.y.max = this.options.y.max === null ? this.definition.y.max : this.options.y.max;
     };
 
+    LinePlot.prototype.preAppend = function() {};
+
     LinePlot.prototype.append = function() {
       var _, _y2_title, _y_offset, _y_title, _y_vert, preError;
       preError = this.preError + "append()";
@@ -1367,7 +1379,7 @@
         plot = ref[key];
         target = this.utarget(this.options.target);
         $(this.options.target).append("<div id='" + target + "'></div>");
-        plot.type = "station";
+        plot.type = "parameter";
         plot.options.plotId = key;
         plot.options.uuid = this.uuid();
         plot.options.target = "\#" + target;
@@ -1558,7 +1570,7 @@
       _remove_control = this.controls.remove(plotId);
       _up_control = this.controls.move(plotId, 'up');
       _down_control = this.controls.move(plotId, 'down');
-      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li><i class=\"icon-map-marker\"></i></li> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
+      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
       $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
       if (this.template[plotId].type === "station") {
         return this.controls.appendParameterDropdown(plotId, '#' + selector, 1);
@@ -1602,7 +1614,7 @@
       return result;
     };
 
-    Handler.prototype.uuid = function(length) {
+    Handler.prototype.uuid = function() {
       return (((1 + Math.random()) * 0x100000000) | 0).toString(16).substring(1);
     };
 
