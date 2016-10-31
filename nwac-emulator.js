@@ -85,8 +85,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "temperature",
                         "title": "Temperature",
-                        "units": "°F",
-                        "min": 0
+                        "units": "°F"
                     }
                 }
             },
@@ -108,8 +107,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "wind_speed_average",
                         "title": "Wind Speed",
-                        "units": "m/s",
-                        "min": 0
+                        "units": "m/s"
                     },
                     "yBand": {
                         "minVariable": "wind_speed_minimum",
@@ -135,9 +133,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "wind_direction",
                         "title": "Wind Direction",
-                        "units": "°",
-                        "min": 0,
-                        "max": 360
+                        "units": "°"
                     }
                 }
             },
@@ -159,8 +155,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "precipitation",
                         "title": "Precipitation",
-                        "units": "In.",
-                        "min": 0
+                        "units": "In."
                     }
                 }
             },
@@ -182,8 +177,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "snowfall_24_hour",
                         "title": "24-Hour Snow Fall",
-                        "units": "In.",
-                        "min": 0
+                        "units": "In."
                     }
                 }
             },
@@ -205,8 +199,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "snow_depth",
                         "title": "Total Snow Depth",
-                        "units": "In.",
-                        "min": 0
+                        "units": "In."
                     }
                 }
             }
@@ -245,8 +238,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "temperature",
                         "title": "Temperature",
-                        "units": "°F",
-                        "min": 0
+                        "units": "°F"
                     }
                 }
             },
@@ -268,8 +260,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "wind_speed_average",
                         "title": "Wind Speed",
-                        "units": "m/s",
-                        "min": 0
+                        "units": "m/s"
                     },
                     "yBand": {
                         "minVariable": "wind_speed_minimum",
@@ -295,8 +286,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "precipitation",
                         "title": "Precipitation",
-                        "units": "In.",
-                        "min": 0
+                        "units": "In."
                     }
                 }
             },
@@ -318,8 +308,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "snowfall_24_hour",
                         "title": "24-Hour Snow Fall",
-                        "units": "In.",
-                        "min": 0
+                        "units": "In."
                     }
                 }
             },
@@ -341,8 +330,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "snow_depth",
                         "title": "Total Snow Depth",
-                        "units": "In.",
-                        "min": 0
+                        "units": "In."
                     }
                 }
             }
