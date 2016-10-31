@@ -426,7 +426,8 @@
           variable: null,
           ticks: 5,
           min: null,
-          max: null
+          max: null,
+          maxBarValue: null
         },
         yBand: {
           minVariable: null,
@@ -967,6 +968,9 @@
       }
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      if (this.options.y.maxBarValue !== null) {
+        this.svg.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(32)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
+      }
       this.crosshairs = this.svg.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
@@ -1386,6 +1390,9 @@
         plot.options.dataParams = plot.dataParams;
         plot.options.line1Color = this.getColor('dark', key);
         plot.options.line1Color = this.getColor('light', key);
+        if (plot.options.y.variable === 'temperature') {
+          plot.options.y.maxBarValue = 32;
+        }
         if (plot.data instanceof Array) {
           plot.options.merge = true;
           data = {

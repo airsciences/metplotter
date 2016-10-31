@@ -27,6 +27,7 @@ window.Plotting.LinePlot = class LinePlot
         ticks: 5
         min: null
         max: null
+        maxBarValue: null
       yBand:
         minVariable: null
         maxVariable: null
@@ -668,6 +669,16 @@ window.Plotting.LinePlot = class LinePlot
       .style("stroke-width",
         Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
+
+    if @options.y.maxBarValue != null
+      @svg.append("rect")
+        .attr("class", "line-plot-max-bar")
+        .attr("x", @definition.dimensions.leftPadding)
+        .attr("y", @definition.y(32))
+        .attr("width", (@definition.dimensions.innerWidth))
+        .attr("height", 1)
+        .style("color", '#gggggg')
+        .style("opacity", 0.4)
 
     # Create Crosshairs
     @crosshairs = @svg.append("g")
