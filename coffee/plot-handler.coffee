@@ -189,7 +189,7 @@ window.Plotting.Handler = class Handler
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
-      @appendControls(key)
+      #@appendControls(key)
 
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options

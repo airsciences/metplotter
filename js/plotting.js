@@ -1407,8 +1407,7 @@
         console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
-        this.template[key].proto = instance;
-        results.push(this.appendControls(key));
+        results.push(this.template[key].proto = instance);
       }
       return results;
     };
