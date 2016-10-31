@@ -162,8 +162,8 @@ window.Plotting.Handler = class Handler
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
-      #plot.type = "station"
-      plot.type = "parameter"
+      plot.type = "station"
+      #plot.type = "parameter"
       plot.options.plotId = key
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
@@ -296,6 +296,22 @@ window.Plotting.Handler = class Handler
       dataParams.limit = @options.updateLength
     
     @getPrependData(key, dataParams)
+
+  addVariable: (plotId, variable) ->
+    _bounds = @template[plotId].proto
+    if @template[plotId].proto.options.y is undefined
+      @template[plotId].proto.options.y =
+        variable: variable
+    else if  @template[plotId].proto.options.y2 is undefined
+      @template[plotId].proto.options.y2 =
+        variable: variable
+    
+    # @getStationParamData(plotId)
+    # @template[plotId].proto.append()
+    
+    console.log("addVariable().. (proto, variable, dataParams)",
+      @template[plotId].proto,
+      variable, @template[plotId].proto.options.dataParams)
       
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
@@ -338,7 +354,9 @@ window.Plotting.Handler = class Handler
       .find(".line-plot-controls").append(html)
     
     if @template[plotId].type is "station"
-      @controls.appendParameterDropdown(plotId, '#'+selector, 1)
+      current = @template[plotId].proto.options.y
+      current.color = @template[plotId].proto.options.line1Color
+      @controls.appendParameterDropdown(plotId, '#'+selector, 1, current)
     else if @template[plotId].type is "parameter"
       @controls.appendStationMap(plotId, '#'+selector, 1)
       @controls.appendStationDropdown(plotId, '#'+selector, 1)

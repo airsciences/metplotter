@@ -239,7 +239,8 @@
 }).call(this);
 
 (function() {
-  var Controls;
+  var Controls,
+    indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   window.Plotting || (window.Plotting = {});
 
@@ -306,20 +307,32 @@
       return this.api.get(target, args, callback);
     };
 
-    Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId) {
-      var args, callback, target;
+    Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
+      var args, callback, target, uuid;
       target = "http://localhost:5000/parameters/" + dataLoggerId;
       args = {};
+      uuid = this.uuid();
       callback = function(data) {
-        var html, i, len, parameter, ref;
-        html = "<li><i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.dropdown.toggle('\#param-dropdown-" + plotId + "')\"> </i> <ul id=\"param-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
+        var _add, _prepend, html, i, len, parameter, ref, ref1;
+        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
         ref = data.responseJSON;
         for (i = 0, len = ref.length; i < len; i++) {
           parameter = ref[i];
-          html = html + " <li class=\"list-group-item subheader\" style=\"cursor:pointer; background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + parameter.title + "</li>";
+          _prepend = "<i class=\"icon-circle\" style=\"\"></i>";
+          _add = parameter.parameter;
+          if (parameter.parameter instanceof Array) {
+            _add = parameter.parameter[0];
+            if (ref1 = current.variable, indexOf.call(parameter.parameter, ref1) >= 0) {
+              _prepend = "<i class=\"icon-circle\" style=\"color: " + current.color + "\"></i>";
+            }
+          } else if (current.variable === parameter.parameter) {
+            _prepend = "<i class=\"icon-circle\" style=\"color: " + current.color + "\"></i>";
+          }
+          html = html + " <li><a style=\"cursor: pointer\" onclick=\"plotter.addVariable(" + plotId + ", '" + _add + "')\">" + _prepend + " " + parameter.title + "</a></li>";
         }
-        html = html + " </ul> </li>";
-        return $(appendTarget).prepend(html);
+        html = html + " </ul> </li> </div>";
+        $(appendTarget).prepend(html);
+        return $('#' + uuid).dropdown();
       };
       return this.api.get(target, args, callback);
     };
@@ -1383,7 +1396,7 @@
         plot = ref[key];
         target = this.utarget(this.options.target);
         $(this.options.target).append("<div id='" + target + "'></div>");
-        plot.type = "parameter";
+        plot.type = "station";
         plot.options.plotId = key;
         plot.options.uuid = this.uuid();
         plot.options.target = "\#" + target;
@@ -1525,6 +1538,21 @@
       return this.getPrependData(key, dataParams);
     };
 
+    Handler.prototype.addVariable = function(plotId, variable) {
+      var _bounds;
+      _bounds = this.template[plotId].proto;
+      if (this.template[plotId].proto.options.y === void 0) {
+        this.template[plotId].proto.options.y = {
+          variable: variable
+        };
+      } else if (this.template[plotId].proto.options.y2 === void 0) {
+        this.template[plotId].proto.options.y2 = {
+          variable: variable
+        };
+      }
+      return console.log("addVariable().. (proto, variable, dataParams)", this.template[plotId].proto, variable, this.template[plotId].proto.options.dataParams);
+    };
+
     Handler.prototype.zoom = function(transform) {
       var i, len, plot, ref, results;
       ref = this.template;
@@ -1570,7 +1598,7 @@
     };
 
     Handler.prototype.appendControls = function(plotId) {
-      var _down_control, _li_style, _new_control, _remove_control, _up_control, html, selector;
+      var _down_control, _li_style, _new_control, _remove_control, _up_control, current, html, selector;
       selector = "plot-controls-" + plotId;
       _li_style = "";
       _new_control = this.controls["new"]();
@@ -1580,7 +1608,9 @@
       html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
       $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
       if (this.template[plotId].type === "station") {
-        return this.controls.appendParameterDropdown(plotId, '#' + selector, 1);
+        current = this.template[plotId].proto.options.y;
+        current.color = this.template[plotId].proto.options.line1Color;
+        return this.controls.appendParameterDropdown(plotId, '#' + selector, 1, current);
       } else if (this.template[plotId].type === "parameter") {
         this.controls.appendStationMap(plotId, '#' + selector, 1);
         return this.controls.appendStationDropdown(plotId, '#' + selector, 1);

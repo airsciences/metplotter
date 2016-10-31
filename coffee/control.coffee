@@ -91,33 +91,49 @@ window.Plotting.Controls = class Controls
     
     @api.get(target, args, callback)
 
-  appendParameterDropdown: (plotId, appendTarget, dataLoggerId) ->
+  appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.
     target = "http://localhost:5000/parameters/#{dataLoggerId}"
     args = {}
- 
+    uuid = @uuid()
+    
     callback = (data) ->
-      html = "<li><i class=\"icon-list\" style=\"cursor: pointer\"
-          onclick=\"plotter.dropdown.toggle('\#param-dropdown-#{plotId}')\">
-          </i>
+      html = "<div class=\"dropdown\">
+        <li><a id=\"#{uuid}\"
+          class=\"dropdown-toggle\" role=\"button\"
+          data-toggle=\"dropdown\" href=\"#\">
+          <i class=\"icon-list\"></i></a>
         <ul id=\"param-dropdown-#{plotId}\"
-          class=\"list-group\" style=\"display: none;
-          position: absolute;
-          box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">"
+          class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
+          aria-labelledby=\"#{uuid}\">"
            
       for parameter in data.responseJSON
+        _prepend = "<i class=\"icon-circle\"
+          style=\"\"></i>"
+        _add = parameter.parameter
+        if parameter.parameter instanceof Array
+          _add = parameter.parameter[0]
+          if current.variable in parameter.parameter
+            _prepend = "<i class=\"icon-circle\"
+              style=\"color: #{current.color}\"></i>"
+        else if current.variable == parameter.parameter
+          _prepend = "<i class=\"icon-circle\"
+            style=\"color: #{current.color}\"></i>"
+        
         html = "#{html}
-            <li class=\"list-group-item subheader\"
-              style=\"cursor:pointer;
-                background-color: rgb(235, 235, 235);
-              border-top: 1px solid rgb(190, 190, 190);
-              padding: 3px 10px;\">#{parameter.title}</li>"
+            <li><a style=\"cursor: pointer\"
+              onclick=\"plotter.addVariable(#{plotId},
+              '#{_add}')\">#{_prepend}
+             #{parameter.title}</a></li>"
       
       html = "#{html}
-          </ul>
-        </li>"
+            </ul>
+          </li>
+        </div>"
           
       $(appendTarget).prepend(html)
+      
+      $('#'+uuid).dropdown()
         
     @api.get(target, args, callback)
 
