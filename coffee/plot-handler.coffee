@@ -170,7 +170,10 @@ window.Plotting.Handler = class Handler
       plot.options.dataParams = plot.dataParams
       plot.options.line1Color = @getColor('dark', key)
       plot.options.line1Color = @getColor('light', key)
-      
+      _bounds = @getVariableBounds(plot.options.y.variable)
+      if _bounds
+        plot.options.y.min = _bounds.min
+        plot.options.y.max = _bounds.max
       if plot.options.y.variable == 'temperature'
         plot.options.y.maxBarValue = 32
       
@@ -192,10 +195,38 @@ window.Plotting.Handler = class Handler
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
-      @appendControls(key)
+      #@appendControls(key)
 
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options
+
+  getVariableBounds: (variable) ->
+    bounds =
+      battery_voltage:
+        min: 8
+        max: 16
+      net_solar:
+        min: 0
+        max: 800
+      relative_humidity:
+        min: 0
+        max: 100
+      snow_depth:
+        min: 0
+        max: 40
+      wind_direction:
+        min: 0
+        max: 360
+      precipitation:
+        min: 0
+        max: 0.7
+      temperature:
+        min: 0
+        max: 60
+      wind_speed:
+        min: 0
+        max: 60
+     return bounds[variable]
 
   getPrependData: (plotId, dataParams, key) ->
     # Request a station's dataset (param specific)

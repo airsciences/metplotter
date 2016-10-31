@@ -1388,7 +1388,7 @@
     };
 
     Handler.prototype.append = function() {
-      var dKey, data, instance, key, plot, preError, ref, ref1, results, row, target, title;
+      var _bounds, dKey, data, instance, key, plot, preError, ref, ref1, results, row, target, title;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
@@ -1403,6 +1403,11 @@
         plot.options.dataParams = plot.dataParams;
         plot.options.line1Color = this.getColor('dark', key);
         plot.options.line1Color = this.getColor('light', key);
+        _bounds = this.getVariableBounds(plot.options.y.variable);
+        if (_bounds) {
+          plot.options.y.min = _bounds.min;
+          plot.options.y.max = _bounds.max;
+        }
         if (plot.options.y.variable === 'temperature') {
           plot.options.y.maxBarValue = 32;
         }
@@ -1427,13 +1432,51 @@
         console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
-        this.template[key].proto = instance;
-        results.push(this.appendControls(key));
+        results.push(this.template[key].proto = instance);
       }
       return results;
     };
 
     Handler.prototype.mergeTemplateOption = function() {};
+
+    Handler.prototype.getVariableBounds = function(variable) {
+      var bounds;
+      bounds = {
+        battery_voltage: {
+          min: 8,
+          max: 16
+        },
+        net_solar: {
+          min: 0,
+          max: 800
+        },
+        relative_humidity: {
+          min: 0,
+          max: 100
+        },
+        snow_depth: {
+          min: 0,
+          max: 40
+        },
+        wind_direction: {
+          min: 0,
+          max: 360
+        },
+        precipitation: {
+          min: 0,
+          max: 0.7
+        },
+        temperature: {
+          min: 0,
+          max: 60
+        },
+        wind_speed: {
+          min: 0,
+          max: 60
+        }
+      };
+      return bounds[variable];
+    };
 
     Handler.prototype.getPrependData = function(plotId, dataParams, key) {
       var _, _is_array, append, args, callback, callback1, callback2, preError, target;
