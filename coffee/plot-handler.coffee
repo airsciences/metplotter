@@ -171,6 +171,9 @@ window.Plotting.Handler = class Handler
       plot.options.line1Color = @getColor('dark', key)
       plot.options.line1Color = @getColor('light', key)
       
+      if plot.options.y.variable == 'temperature'
+        plot.options.y.maxBarValue = 32
+      
       if plot.data instanceof Array
         plot.options.merge = true
         data =

@@ -121,6 +121,30 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "pageOrder": 3,
                 "type": "station",
                 "station": {
+                    "station":"White Pass Base & Upper",
+                    "region":"West Slopes South",
+                    "elevation":4470
+                },
+                "dataParams": {
+                    "data_logger": 42,
+                    "max_datetime": "2016-02-28T00:00:00Z",
+                    "limit": 504
+                },
+                "options": {
+                    "x": xVar,
+                    "y": {
+                        "variable": "wind_direction",
+                        "title": "Wind Direction",
+                        "units": "°",
+                        "min": 0,
+                        "max": 360
+                    }
+                }
+            },
+            {
+                "pageOrder": 4,
+                "type": "station",
+                "station": {
                     "station":"White Pass Base",
                     "region":"West Slopes South",
                     "elevation":4470
@@ -141,7 +165,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 }
             },
             {
-                "pageOrder": 4,
+                "pageOrder": 5,
                 "type": "station",
                 "station": {
                     "station":"White Pass Base",
@@ -164,7 +188,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 }
             },
             {
-                "pageOrder": 5,
+                "pageOrder": 6,
                 "type": "station",
                 "station": {
                     "station":"White Pass Base",
