@@ -114,7 +114,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "yBand": {
                         "minVariable": "wind_speed_minimum",
                         "maxVariable": "wind_speed_maximum",
-                    },
+                    }
                 }
             },
             {
