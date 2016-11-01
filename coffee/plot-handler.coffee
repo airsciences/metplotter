@@ -81,7 +81,7 @@ window.Plotting.Handler = class Handler
       if state.request.data.max
         @appendData(key)
 
-    #setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
+    setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
 
   listenViewport: ->
     # Listen to Plot States & Update Data & Visible if Needed
@@ -195,7 +195,7 @@ window.Plotting.Handler = class Handler
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
-      #@appendControls(key)
+      @appendControls(key)
 
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options
@@ -329,20 +329,35 @@ window.Plotting.Handler = class Handler
     @getPrependData(key, dataParams)
 
   addVariable: (plotId, variable) ->
-    _bounds = @template[plotId].proto
-    if @template[plotId].proto.options.y is undefined
+    
+    state = @template[plotId].proto.getState()
+    
+    _bounds = @getVariableBounds(variable)
+    _max_datetime = state.range.data.max.getTime()
+    
+    dataParams = @template[plotId].proto.options.dataParams
+    dataParams.max_datetime = @format(new Date(_max_datetime))
+    dataParams.limit = @template[plotId].proto.data.full.length
+    
+    if @template[plotId].proto.options.y.variable == null
+      console.log("Defining y")
       @template[plotId].proto.options.y =
         variable: variable
-    else if  @template[plotId].proto.options.y2 is undefined
+      if _bounds
+        @template[plotId].proto.options.y.min = _bounds.min
+        @template[plotId].proto.options.y.max = _bounds.max
+    else if  @template[plotId].proto.options.y2.variable == null
+      console.log("Defining y2")
       @template[plotId].proto.options.y2 =
         variable: variable
+      if _bounds
+        @template[plotId].proto.options.y2.min = _bounds.min
+        @template[plotId].proto.options.y2.max = _bounds.max
+
+    @getAppendData(plotId, dataParams)
     
-    # @getStationParamData(plotId)
-    # @template[plotId].proto.append()
-    
-    console.log("addVariable().. (proto, variable, dataParams)",
-      @template[plotId].proto,
-      variable, @template[plotId].proto.options.dataParams)
+    console.log("addVariable().. (data)",
+      @template[plotId].proto.data)
       
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.

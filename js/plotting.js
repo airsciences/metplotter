@@ -393,6 +393,144 @@
 }).call(this);
 
 (function() {
+  var Data,
+    indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.Data = Data = (function() {
+    function Data(data) {
+      var preError;
+      this.preError = "Data.";
+      preError = this.preError + ".constructor(data)";
+      if (!(data instanceof Array)) {
+        console.log(preError + " data not of type array.");
+        return;
+      }
+      this.data = $.extend(true, [], data);
+      this.test = function(row, joinRow, onKeys) {
+        var _calculated, _required, i, len, testResult, testRow;
+        _required = onKeys.length;
+        _calculated = 0;
+        testResult = false;
+        for (i = 0, len = onKeys.length; i < len; i++) {
+          testRow = onKeys[i];
+          if (row[testRow] === joinRow[testRow]) {
+            _calculated++;
+          }
+        }
+        if (_calculated === _required) {
+          testResult = true;
+        }
+        return testResult;
+      };
+    }
+
+    Data.prototype.join = function(data, onKeys) {
+      var _dataKeys, _key, _len, _primary, _protoKeys, _row, _secondary, _subKey, _test, _value, key, result, row;
+      result = [];
+      _protoKeys = Object.keys(this.data[0]);
+      _dataKeys = Object.keys(data[0]);
+      if (data.length > this.data.length) {
+        _primary = $.extend(true, [], data);
+        _secondary = $.extend(true, [], this.data);
+      } else {
+        _primary = $.extend(true, [], this.data);
+        _secondary = $.extend(true, [], data);
+      }
+      for (key in _primary) {
+        row = _primary[key];
+        for (_key in _secondary) {
+          _row = _secondary[_key];
+          _test = this.test(row, _row, onKeys);
+          _len = result.push($.extend(true, {}, row));
+          if (_test) {
+            for (_subKey in _row) {
+              _value = _row[_subKey];
+              if (indexOf.call(onKeys, _subKey) < 0) {
+                result[_len - 1][_subKey + "_2"] = _value;
+              }
+            }
+          }
+        }
+      }
+      this.data = $.extend(true, [], data);
+      return this.data;
+    };
+
+    Data.prototype.merge = function(data, onKeys) {
+      var _dataKeys, _key, _len, _primary, _protoKeys, _row, _secondary, _subKey, _test, _value, key, result, row;
+      result = [];
+      _protoKeys = Object.keys(this.data[0]);
+      _dataKeys = Object.keys(data[0]);
+      if (data.length > this.data.length) {
+        _primary = $.extend(true, [], data);
+        _secondary = $.extend(true, [], this.data);
+      } else {
+        _primary = $.extend(true, [], this.data);
+        _secondary = $.extend(true, [], data);
+      }
+      for (key in _primary) {
+        row = _primary[key];
+        for (_key in _secondary) {
+          _row = _secondary[_key];
+          _test = this.test(row, _row, onKeys);
+          _len = result.push($.extend(true, {}, row));
+          if (_test) {
+            for (_subKey in _row) {
+              _value = _row[_subKey];
+              if (indexOf.call(onKeys, _subKey) < 0) {
+                result[_len - 1][_subKey] = _value;
+              }
+            }
+          }
+        }
+      }
+      this.data = $.extend(true, [], data);
+      return this.data;
+    };
+
+    Data.prototype.append = function(data, onKeys) {
+      var _key, _primary, _row, _secondary, _subKey, _test, _total, _value, key, row;
+      _primary = $.extend(true, [], this.data);
+      _secondary = $.extend(true, [], data);
+      for (key in _primary) {
+        row = _primary[key];
+        for (_key in _secondary) {
+          _row = _secondary[_key];
+          _test = this.test(row, _row, onKeys);
+          if (_test) {
+            for (_subKey in _row) {
+              _value = _row[_subKey];
+              if (indexOf.call(onKeys, _subKey) < 0) {
+                _primary[key][_subKey] = _value;
+              }
+            }
+            delete _secondary[_key];
+          }
+        }
+      }
+      _total = _primary.concat(_secondary);
+      this.data = $.extend(true, [], _total);
+      return this.data;
+    };
+
+    Data.prototype.sub = function(start, end) {
+      this.data = $.extend(true, [], this.data.slice(start, end));
+      return this.data;
+    };
+
+    Data.prototype.get = function() {
+      return $.extend(true, [], this.data);
+    };
+
+    return Data;
+
+  })();
+
+}).call(this);
+
+(function() {
   if (!Object.mergeDefaults) {
     Object.mergeDefaults = function(args, defaults) {
       var key, key1, merge, val, val1;
@@ -578,146 +716,39 @@
     };
 
     LinePlot.prototype.appendData = function(data) {
-      var dtaRow, key, row;
-      for (key in data) {
-        row = data[key];
-        dtaRow = {
-          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
-          y: row[this.options.y.variable]
-        };
-        if (this.options.y2.variable !== null) {
-          dtaRow.y2 = row[this.options.y2.variable];
-        }
-        if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
-          dtaRow.yMin = row[this.options.yBand.minVariable];
-          dtaRow.yMax = row[this.options.yBand.maxVariable];
-        }
-        if (this.options.y2Band.minVariable !== null && this.options.y2Band.maxVariable !== null) {
-          dtaRow.y2Min = row[this.options.y2Band.minVariable];
-          dtaRow.y2Max = row[this.options.y2Band.maxVariable];
-        }
-        this.data.full.push(dtaRow);
-      }
+      var _data, _full;
+      _data = this.processData(data);
+      _full = new Plotting.Data(this.data.full);
+      this.data.full = _full.append(_data, ["x"]);
       this.data.full = this.data.full.sort(this.sortDatetimeAsc);
-      this.setDataState();
-      this.setIntervalState();
-      return this.setDataRequirement();
-    };
-
-    LinePlot.prototype.mergeData = function(data) {
-      var key, ref, result, row;
-      result = [];
-      ref = data[0];
-      for (key in ref) {
-        row = ref[key];
-        if (this.parseDate(row[this.options.x.variable]).getTime() !== this.parseDate(data[1][key][this.options.x.variable]).getTime()) {
-          console.log("Merge: Timestamp Mismatch", this.parseDate(row[this.options.x.variable]), this.parseDate(data[1][key][this.options.x.variable]));
-        }
-        result[key] = {
-          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
-          y: row[this.options.y.variable],
-          y2: data[1][key][this.options.y.variable]
-        };
-        if (this.options.y2.variable !== null) {
-          result[key].y2 = row[this.options.y2.variable];
-        }
-        if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
-          result[key].yMin = row[this.options.yBand.minVariable];
-          result[key].yMax = row[this.options.yBand.maxVariable];
-          result[key].y2Min = row[this.options.y2Band.minVariable];
-          result[key].y2Max = row[this.options.y2Band.maxVariable];
-        }
-      }
-      return result.sort(this.sortDatetimeAsc);
-    };
-
-    LinePlot.prototype.appendMergeData = function(data) {
-      var dtaRow, key, ref, row;
-      ref = data[0];
-      for (key in ref) {
-        row = ref[key];
-        if (this.parseDate(row[this.options.x.variable]).getTime() !== this.parseDate(data[1][key][this.options.x.variable]).getTime()) {
-          console.log("Merge-Append: Timestamp Mismatch", this.parseDate(row[this.options.x.variable]), this.parseDate(data[1][key][this.options.x.variable]));
-        }
-        dtaRow = {
-          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
-          y: row[this.options.y.variable],
-          y2: data[1][key][this.options.y.variable]
-        };
-        if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
-          dtaRow.yMin = row[this.options.yBand.minVariable];
-          dtaRow.yMax = row[this.options.yBand.maxVariable];
-          dtaRow.y2Min = row[this.options.y2Band.minVariable];
-          dtaRow.y2Max = row[this.options.y2Band.maxVariable];
-        }
-        this.data.full.push(dtaRow);
-      }
-      this.data.full = this.data.full.sort(this.sortDatetimeAsc);
-      console.log("LinePlot.appendMergeData(data) (@data)", this.data);
-      this.setDataState();
-      this.setIntervalState();
-      return this.setDataRequirement();
-    };
-
-    LinePlot.prototype.appendVisible = function(key, length) {
-      var _append, _length, _max, _min, _visible;
-      _min = key;
-      _max = key + length;
-      if (length < 0) {
-        _min = key + length;
-        _max = key;
-      }
-      _min = d3.max([0, _min]);
-      _max = d3.min([_max, this.data.full.length]);
-      _append = $.extend(true, [], this.data.full.slice(_min, _max));
-      _length = _append.length;
-      _visible = $.extend(true, [], this.data.visible);
-      if (this.data.visible.length > this.options.visible.limit) {
-        if (length > 0) {
-          _visible = _visible.slice(0, _visible.length - 1 - _append.length);
-        } else if (length < 0) {
-          _visible = $.extend(true, [], this.data.visible.slice(_append.length, this.data.visible.length - 1));
-        }
-      }
-      this.data.visible = [];
-      this.data.visible = _visible.concat(_append);
-      this.data.visible.sort(this.sortDatetimeAsc);
-      this.update();
       this.setDataState();
       this.setIntervalState();
       return this.setDataRequirement();
     };
 
     LinePlot.prototype.setVisibleData = function() {
-      var _data_key, _max, _min, key, preError, ref, ref1, row;
+      var _data_key, _full, _left, _length, _min, key, preError, ref, row;
       preError = this.preError + "setVisibleData()";
-      if (this.state.request.visible.min) {
-        _min = this.data.visible[0];
+      if (this.state.request.visible.min || this.state.request.visible.max) {
+        _min = this.state.range.scale.min;
+        _left = Math.floor(this.state.length.visible * 0.15);
+        _length = Math.floor(this.state.length.visible * 1.3);
         ref = this.data.full;
         for (key in ref) {
           row = ref[key];
-          if (row.x.valueOf() === _min.x.valueOf()) {
+          if (row.x.valueOf() === _min.valueOf()) {
             _data_key = parseInt(key);
             break;
           }
         }
-        if (_data_key > 0) {
-          this.appendVisible(_data_key, parseInt(-1 * this.options.requestInterval.visible));
-        }
-      }
-      if (this.state.request.visible.max) {
-        _max = this.data.visible[this.data.visible.length - 1];
-        ref1 = this.data.full;
-        for (key in ref1) {
-          row = ref1[key];
-          if (row.x.valueOf() === _max.x.valueOf()) {
-            _data_key = parseInt(key);
-            break;
-          }
-        }
-        if (_data_key > 0) {
-          return this.appendVisible(_data_key, parseInt(this.options.requestInterval.visible));
-        }
+        _full = new Plotting.Data(this.data.full);
+        _min = d3.max([0, _data_key - _left]);
+        this.data.visible = _full.sub(_min, _min + _length);
+        this.data.visible.sort(this.sortDatetimeAsc);
+        this.update();
+        this.setDataState();
+        this.setIntervalState();
+        return this.setDataRequirement();
       }
     };
 
@@ -1275,9 +1306,8 @@
     };
 
     Handler.prototype.listen = function() {
-      var key, plot, ref, results, state;
+      var key, plot, ref, state;
       ref = this.template;
-      results = [];
       for (key in ref) {
         plot = ref[key];
         state = plot.proto.getState();
@@ -1285,12 +1315,10 @@
           this.prependData(key);
         }
         if (state.request.data.max) {
-          results.push(this.appendData(key));
-        } else {
-          results.push(void 0);
+          this.appendData(key);
         }
       }
-      return results;
+      return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
     };
 
     Handler.prototype.listenViewport = function() {
@@ -1432,7 +1460,8 @@
         console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
-        results.push(this.template[key].proto = instance);
+        this.template[key].proto = instance;
+        results.push(this.appendControls(key));
       }
       return results;
     };
@@ -1582,18 +1611,34 @@
     };
 
     Handler.prototype.addVariable = function(plotId, variable) {
-      var _bounds;
-      _bounds = this.template[plotId].proto;
-      if (this.template[plotId].proto.options.y === void 0) {
+      var _bounds, _max_datetime, dataParams, state;
+      state = this.template[plotId].proto.getState();
+      _bounds = this.getVariableBounds(variable);
+      _max_datetime = state.range.data.max.getTime();
+      dataParams = this.template[plotId].proto.options.dataParams;
+      dataParams.max_datetime = this.format(new Date(_max_datetime));
+      dataParams.limit = this.template[plotId].proto.data.full.length;
+      if (this.template[plotId].proto.options.y.variable === null) {
+        console.log("Defining y");
         this.template[plotId].proto.options.y = {
           variable: variable
         };
-      } else if (this.template[plotId].proto.options.y2 === void 0) {
+        if (_bounds) {
+          this.template[plotId].proto.options.y.min = _bounds.min;
+          this.template[plotId].proto.options.y.max = _bounds.max;
+        }
+      } else if (this.template[plotId].proto.options.y2.variable === null) {
+        console.log("Defining y2");
         this.template[plotId].proto.options.y2 = {
           variable: variable
         };
+        if (_bounds) {
+          this.template[plotId].proto.options.y2.min = _bounds.min;
+          this.template[plotId].proto.options.y2.max = _bounds.max;
+        }
       }
-      return console.log("addVariable().. (proto, variable, dataParams)", this.template[plotId].proto, variable, this.template[plotId].proto.options.dataParams);
+      this.getAppendData(plotId, dataParams);
+      return console.log("addVariable().. (data)", this.template[plotId].proto.data);
     };
 
     Handler.prototype.zoom = function(transform) {

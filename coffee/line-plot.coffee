@@ -68,7 +68,7 @@ window.Plotting.LinePlot = class LinePlot
       options.y2 = Object.mergeDefaults(options.y2, defaults.y2)
     @options = Object.mergeDefaults options, defaults
     @device = 'full'
-
+    
     # Wrapped Logging Functions
     @log = (log...) ->
     if @options.debug
@@ -140,140 +140,15 @@ window.Plotting.LinePlot = class LinePlot
 
   appendData: (data) ->
     # Append the full data set.
-    for key, row of data
-      dtaRow =
-        #x: @parseDate(row[@options.x.variable])
-        x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
-        y: row[@options.y.variable]
-      if @options.y2.variable != null
-        dtaRow.y2 = row[@options.y2.variable]
-      if (
-        @options.yBand.minVariable != null and
-        @options.yBand.maxVariable != null
-      )
-        dtaRow.yMin = row[@options.yBand.minVariable]
-        dtaRow.yMax = row[@options.yBand.maxVariable]
-      if (
-        @options.y2Band.minVariable != null and
-        @options.y2Band.maxVariable != null
-      )
-        dtaRow.y2Min = row[@options.y2Band.minVariable]
-        dtaRow.y2Max = row[@options.y2Band.maxVariable]
-      @data.full.push(dtaRow)
-
-    # Sort the Data
+    
+    #console.log("appendData(): (full)", @data.full)
+    _data = @processData(data)
+    _full = new Plotting.Data(@data.full)
+    @data.full = _full.append(_data, ["x"])
     @data.full = @data.full.sort(@sortDatetimeAsc)
-    
+    #console.log("appendData(): new (full)", @data.full)
+
     # Reset the Data Range
-    @setDataState()
-    @setIntervalState()
-    @setDataRequirement()
-
-  mergeData: (data) ->
-    # Process a data set.
-    result = []
-    for key, row of data[0]
-      if (
-        @parseDate(row[@options.x.variable]).getTime() isnt
-        @parseDate(data[1][key][@options.x.variable]).getTime()
-      )
-        console.log("Merge: Timestamp Mismatch",
-          @parseDate(row[@options.x.variable]),
-          @parseDate(data[1][key][@options.x.variable]))
-      result[key] =
-        #x: @parseDate(row[@options.x.variable])
-        x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
-        y: row[@options.y.variable]
-        y2: data[1][key][@options.y.variable]
-      if @options.y2.variable != null
-        result[key].y2 = row[@options.y2.variable]
-      if (
-        @options.yBand.minVariable != null and
-        @options.yBand.maxVariable != null
-      )
-        result[key].yMin = row[@options.yBand.minVariable]
-        result[key].yMax = row[@options.yBand.maxVariable]
-        result[key].y2Min = row[@options.y2Band.minVariable]
-        result[key].y2Max = row[@options.y2Band.maxVariable]
-    
-    return result.sort(@sortDatetimeAsc)
-    
-  appendMergeData: (data) ->
-    # Test
-    # Append the full data set.
-    for key, row of data[0]
-      if (
-        @parseDate(row[@options.x.variable]).getTime() isnt
-        @parseDate(data[1][key][@options.x.variable]).getTime()
-      )
-        console.log("Merge-Append: Timestamp Mismatch",
-          @parseDate(row[@options.x.variable]),
-          @parseDate(data[1][key][@options.x.variable]))
-      dtaRow =
-        x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
-        y: row[@options.y.variable]
-        y2: data[1][key][@options.y.variable]
-      if (
-        @options.yBand.minVariable != null and
-        @options.yBand.maxVariable != null
-      )
-        dtaRow.yMin = row[@options.yBand.minVariable]
-        dtaRow.yMax = row[@options.yBand.maxVariable]
-        dtaRow.y2Min = row[@options.y2Band.minVariable]
-        dtaRow.y2Max = row[@options.y2Band.maxVariable]
-      @data.full.push(dtaRow)
-
-    # Sort the Data
-    @data.full = @data.full.sort(@sortDatetimeAsc)
-    
-    console.log("LinePlot.appendMergeData(data) (@data)", @data)
-    
-    # Reset the Data Range
-    @setDataState()
-    @setIntervalState()
-    @setDataRequirement()
-
-  appendVisible: (key, length) ->
-    _min = key
-    _max = (key + length)
-    if length < 0
-      _min = (key + length)
-      _max = key
-    
-    _min = d3.max([0, _min])
-    _max = d3.min([_max, @data.full.length])
-    
-    _append = $.extend(true, [], @data.full.slice(_min, _max))
-    _length = _append.length
-    
-    _visible = $.extend(true, [], @data.visible)
-    
-    # Trim the Opposite End
-    if @data.visible.length > @options.visible.limit
-      if length > 0
-        #console.log("New-Vis Trimming Right End")
-        _visible = _visible.slice(0, (_visible.length-1-_append.length))
-      else if length < 0
-        #console.log("New-Vis Trimming Left End")
-        _visible = $.extend(
-          true, [],
-          @data.visible.slice(_append.length, (@data.visible.length-1))
-        )
-    
-    @data.visible = []
-    @data.visible = _visible.concat(_append)
-    #@data.visible = @data.visible.concat(_append)
-    
-    # console.log("New-Vis (_min, _append[0], visible[0], visible[max])",
-    #   _min, _append[0], @data.visible[0],
-    #   @data.visible[(@data.visible.length-1)]
-    # )
-    
-    # Sort & Update the Visible Data
-    @data.visible.sort(@sortDatetimeAsc)
-    
-    @update()
-    
     @setDataState()
     @setIntervalState()
     @setDataRequirement()
@@ -282,27 +157,27 @@ window.Plotting.LinePlot = class LinePlot
     # Set the Visible Data to a Selection of @data.full
     preError = "#{@preError}setVisibleData()"
     
-    if @state.request.visible.min
-      # console.log("Updating Vis-Min")
-      _min = @data.visible[0]
+    if @state.request.visible.min or @state.request.visible.max
+      _min = @state.range.scale.min
+      _left = Math.floor(@state.length.visible*0.15)
+      _length = Math.floor(@state.length.visible*1.3)
+      
       for key, row of @data.full
-        if row.x.valueOf() == _min.x.valueOf()
+        if row.x.valueOf() == _min.valueOf()
           _data_key = parseInt(key)
           break
-      if _data_key > 0
-        # console.log("Appending Vis-Min Data (key)", _data_key)
-        @appendVisible(_data_key,
-          parseInt(-1*@options.requestInterval.visible))
-    
-    if @state.request.visible.max
-      _max = @data.visible[@data.visible.length - 1]
-      for key, row of @data.full
-        if row.x.valueOf() == _max.x.valueOf()
-          _data_key = parseInt(key)
-          break
-      if _data_key > 0
-        @appendVisible(_data_key,
-          parseInt(@options.requestInterval.visible))
+      
+      _full = new Plotting.Data(@data.full)
+      _min = d3.max([0, (_data_key-_left)])
+      @data.visible = _full.sub(_min, (_min + _length))
+      
+      @data.visible.sort(@sortDatetimeAsc)
+
+      @update()
+      
+      @setDataState()
+      @setIntervalState()
+      @setDataRequirement()
 
   setDataState: ->
     # Set Data Ranges
