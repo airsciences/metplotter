@@ -741,7 +741,6 @@
     LinePlot.prototype.setDataState = function() {
       this.state.range.data = {
         min: d3.min(this.data, function(d) {
-          console.log(d);
           return d.x;
         }),
         max: d3.max(this.data, function(d) {

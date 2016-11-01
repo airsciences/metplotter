@@ -138,7 +138,7 @@ window.Plotting.LinePlot = class LinePlot
   setDataState: ->
     # Set Data Ranges
     @state.range.data =
-      min: d3.min(@data, (d)-> console.log(d); d.x)
+      min: d3.min(@data, (d)-> d.x)
       max: d3.max(@data, (d)-> d.x)
     # Set Data Length States
     @state.length.data = @data.length
