@@ -43,8 +43,6 @@ window.Plotting.LinePlot = class LinePlot
         scale:
           min: 0.3
           max: 5
-      visible:
-        limit: 2190
       aspectDivisor: 5
       transitionDuration: 500
       line1Color: "rgb(41, 128, 185)"
@@ -59,7 +57,6 @@ window.Plotting.LinePlot = class LinePlot
         color: "rgb(149, 165, 166)"
       requestInterval:
         data: 336
-        visible: 336
     if options.x
       options.x = Object.mergeDefaults(options.x, defaults.x)
     if options.y
@@ -80,33 +77,21 @@ window.Plotting.LinePlot = class LinePlot
     @sortDatetimeAsc = (a, b) -> a.x - b.x
 
     # Prepare the Data & Definition
-    if @options.merge
-      _initial = @mergeData(data.data)
-      @options.y2.variable = "#{@options.y.variable}2"
-      @options.y2.units = "#{@options.y.units}"
-    else
-      _initial = @processData(data.data)
-    @data =
-      full: _initial.slice(0)
-      visible: _initial.slice(0)
+    @data = @processData(data.data)
     @getDefinition()
     
     # Initialize the State
     @state =
       range:
         data: null
-        visible: null
         scale: @getDomainScale(@definition.x)
       length:
         data: null
-        visible: null
       interval:
         data: null
-        visible: null
       zoom: 1
       request:
         data: null
-        visible: null
       mean:
         scale: @getDomainMean(@definition.x)
     @setDataState()
@@ -140,64 +125,26 @@ window.Plotting.LinePlot = class LinePlot
 
   appendData: (data) ->
     # Append the full data set.
-    
-    #console.log("appendData(): (full)", @data.full)
     _data = @processData(data)
-    _full = new Plotting.Data(@data.full)
-    @data.full = _full.append(_data, ["x"])
-    @data.full = @data.full.sort(@sortDatetimeAsc)
-    #console.log("appendData(): new (full)", @data.full)
-
+    _full = new Plotting.Data(@data)
+    @data = _full.append(_data, ["x"])
+    @data = @data.sort(@sortDatetimeAsc)
+    
     # Reset the Data Range
     @setDataState()
     @setIntervalState()
     @setDataRequirement()
     
-  setVisibleData: ->
-    # Set the Visible Data to a Selection of @data.full
-    preError = "#{@preError}setVisibleData()"
-    
-    if @state.request.visible.min or @state.request.visible.max
-      _min = @state.range.scale.min
-      _left = Math.floor(@state.length.visible*0.15)
-      _length = Math.floor(@state.length.visible*1.3)
-      
-      for key, row of @data.full
-        if row.x.valueOf() == _min.valueOf()
-          _data_key = parseInt(key)
-          break
-      
-      _full = new Plotting.Data(@data.full)
-      _min = d3.max([0, (_data_key-_left)])
-      @data.visible = _full.sub(_min, (_min + _length))
-      
-      @data.visible.sort(@sortDatetimeAsc)
-
-      @update()
-      
-      @setDataState()
-      @setIntervalState()
-      @setDataRequirement()
-
   setDataState: ->
     # Set Data Ranges
     @state.range.data =
-      min: d3.min(@data.full, (d)-> d.x)
-      max: d3.max(@data.full, (d)-> d.x)
-    @state.range.visible =
-      min: d3.min(@data.visible, (d)-> d.x)
-      max: d3.max(@data.visible, (d)-> d.x)
+      min: d3.min(@data, (d)-> console.log(d); d.x)
+      max: d3.max(@data, (d)-> d.x)
     # Set Data Length States
-    @state.length.data = @data.full.length
-    @state.length.visible = @data.visible.length
+    @state.length.data = @data.length
 
   setIntervalState: ->
     # Set the Data Collection Padding Intervals in Hours
-    @state.interval.visible =
-      min: ((@state.range.scale.min.getTime() -
-        @state.range.visible.min.getTime())/3600000)
-      max: ((@state.range.visible.max.getTime() -
-        @state.range.scale.max.getTime())/3600000)
     @state.interval.data =
       min: ((@state.range.scale.min.getTime() -
         @state.range.data.min.getTime())/3600000)
@@ -205,25 +152,16 @@ window.Plotting.LinePlot = class LinePlot
         @state.range.scale.max.getTime())/3600000)
 
   setDataRequirement: ->
-    # Calculate how necessary a download, in what direction, and visible or data
+    # Calculate how necessary a download, in what direction, and  or data
     _now = new Date()
-    
     _data_max = false
-    _visible_max = false
     
     if @state.range.data.max < _now
       _data_max = @state.interval.data.max < @options.requestInterval.data
     
-    if @state.range.visible.max < _now
-      _visible_max = (@state.interval.visible.max <
-        @options.requestInterval.visible)
-    
     @state.request.data =
       min: @state.interval.data.min < @options.requestInterval.data
       max: _data_max
-    @state.request.visible =
-      min: @state.interval.visible.min < @options.requestInterval.visible
-      max: _visible_max
 
   setZoomState: (k)->
     @state.zoom = k
@@ -251,7 +189,7 @@ window.Plotting.LinePlot = class LinePlot
     @definition =
       colorScale: d3.schemeCategory20
     @calculateChartDims()
-    @calculateAxisDims(@data.full)
+    @calculateAxisDims(@data)
 
     # Define D3 Methods
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
@@ -395,10 +333,8 @@ window.Plotting.LinePlot = class LinePlot
       @definition.y.max = @definition.y.min * 1.2
      
     # Revert to Options
-    @definition.y.min = if @options.y.min is null then @definition.y.min
-    else @options.y.min
-    @definition.y.max = if @options.y.max is null then @definition.y.max
-    else @options.y.max
+    @definition.y.min = d3.min([@options.y.min, @definition.y.min])
+    @definition.y.max = d3.max([@options.y.max, @definition.y.max])
 
   preAppend: ->
 
@@ -497,7 +433,7 @@ window.Plotting.LinePlot = class LinePlot
       @lineband = @svg.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
         .append("path")
-        .datum(@data.visible)
+        .datum(@data)
         .attr("d", @definition.area)
         .attr("class", "line-plot-area")
         .style("fill", @options.line1Color)
@@ -513,7 +449,7 @@ window.Plotting.LinePlot = class LinePlot
       @lineband2 = @svg.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
         .append("path")
-        .datum(@data.visible)
+        .datum(@data)
         .attr("d", @definition.area2)
         .attr("class", "line-plot-area2")
         .style("fill", @options.line2Color)
@@ -526,7 +462,7 @@ window.Plotting.LinePlot = class LinePlot
     @svg.append("g")
       .attr("clip-path", "url(\##{@options.target}_clip)")
       .append("path")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.line)
       .attr("class", "line-plot-path")
       .style("stroke", @options.line1Color)
@@ -537,7 +473,7 @@ window.Plotting.LinePlot = class LinePlot
     @svg.append("g")
       .attr("clip-path", "url(\##{@options.target}_clip)")
       .append("path")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.line2)
       .attr("class", "line-plot-path2")
       .style("stroke", @options.line2Color)
@@ -574,41 +510,43 @@ window.Plotting.LinePlot = class LinePlot
       .style("opacity", 0.1)
 
     # Create Focus Circles and Labels
-    if @options.y.variable != null
-      @focusCircle = @svg.append("circle")
-        .attr("r", 4)
-        .attr("id", "focus-circle-1")
-        .attr("class", "focus-circle")
-        .attr("fill", @options.line1Color)
-        .attr("transform", "translate(-10, -10)")
+    @focusCircle = @svg.append("circle")
+      .attr("r", 4)
+      .attr("id", "focus-circle-1")
+      .attr("class", "focus-circle")
+      .attr("fill", @options.line1Color)
+      .attr("transform", "translate(-10, -10)")
+      .style("display", "none")
 
-      @focusText = @svg.append("text")
-        .attr("id", "focus-text-1")
-        .attr("class", "focus-text")
-        .attr("x", 9)
-        .attr("y", 7)
-        .style("fill", @options.line1Color)
-        .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
-          2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
-          2px 2px 0 rgb(255,255,255)")
+    @focusText = @svg.append("text")
+      .attr("id", "focus-text-1")
+      .attr("class", "focus-text")
+      .attr("x", 9)
+      .attr("y", 7)
+      .style("display", "none")
+      .style("fill", @options.line1Color)
+      .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+        2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+        2px 2px 0 rgb(255,255,255)")
 
-    if @options.y2.variable != null
-      @focusCircle2 = @svg.append("circle")
-        .attr("r", 4)
-        .attr("id", "focus-circle-2")
-        .attr("class", "focus-circle")
-        .attr("fill", @options.line2Color)
-        .attr("transform", "translate(-10, -10)")
+    @focusCircle2 = @svg.append("circle")
+      .attr("r", 4)
+      .attr("id", "focus-circle-2")
+      .attr("class", "focus-circle")
+      .attr("fill", @options.line2Color)
+      .attr("transform", "translate(-10, -10)")
+      .style("display", "none")
 
-      @focusText2 = @svg.append("text")
-        .attr("id", "focus-text-2")
-        .attr("class", "focus-text")
-        .attr("x", 9)
-        .attr("y", 7)
-        .style("fill", @options.line2Color)
-        .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
-          2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
-          2px 2px 0 rgb(255,255,255)")
+    @focusText2 = @svg.append("text")
+      .attr("id", "focus-text-2")
+      .attr("class", "focus-text")
+      .attr("x", 9)
+      .attr("y", 7)
+      .style("display", "none")
+      .style("fill", @options.line2Color)
+      .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+        2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+        2px 2px 0 rgb(255,255,255)")
 
     # Append the Crosshair & Zoom Event Rectangle
     @overlay = @svg.append("rect")
@@ -624,42 +562,42 @@ window.Plotting.LinePlot = class LinePlot
 
     # Pre-Append Data For Smooth transform
     @svg.select(".line-plot-area")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.area)
 
     @svg.select(".line-plot-area2")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.area2)
 
     @svg.select(".line-plot-path")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.line)
 
     @svg.select(".line-plot-path2")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.line2)
 
-    @overlay.datum(@data.visible)
+    @overlay.datum(@data)
 
-    @calculateYAxisDims @data.visible
+    @calculateYAxisDims @data
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Redraw the Bands
     @svg.select(".line-plot-area")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.area)
 
     @svg.select(".line-plot-area2")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.area2)
 
     # Redraw the Line Paths
     @svg.select(".line-plot-path")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.line)
 
     @svg.select(".line-plot-path2")
-      .datum(@data.visible)
+      .datum(@data)
       .attr("d", @definition.line2)
 
     # Redraw the Y-Axis
@@ -671,7 +609,7 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}appendCrosshairTarget()"
     _ = @
     
-    @overlay.datum(@data.visible)
+    @overlay.datum(@data)
       .attr("class", "overlay")
       .attr("width", @definition.dimensions.innerWidth)
       .attr("height", @definition.dimensions.innerHeight)
@@ -791,9 +729,9 @@ window.Plotting.LinePlot = class LinePlot
       )
     i = _.bisectDate(_datum, x0, 1)
     d = if x0.getMinutes() >= 30 then _datum[i] else _datum[i - 1]
-    if x0.getTime() < @state.range.visible.min.getTime()
+    if x0.getTime() < @state.range.data.min.getTime()
       d = _datum[i - 1]
-    if x0.getTime() > @state.range.visible.max.getTime()
+    if x0.getTime() > @state.range.data.max.getTime()
       d = _datum[i - 1]
      
     dx = if transform then transform.applyX(@definition.x(d.x)) else

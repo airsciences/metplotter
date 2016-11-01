@@ -961,6 +961,7 @@ app.get('/parameters/:dataLoggerId', function (req, res) {
     switch (data_logger_id) {
         case 1:
             result = [
+                {"title": "Battery Voltage (V)", "parameter": "battery_voltage"},
                 {"title": "Windspeed (mph)", "parameter": ["wind_speed_average","wind_speed_maximum","wind_speed_minimum"]},
                 {"title": "Precipitation (In.)", "parameter": "precipitation"},
                 {"title": "Temperature (F)", "parameter": "temperature"},

@@ -313,20 +313,27 @@
       args = {};
       uuid = this.uuid();
       callback = function(data) {
-        var _add, _prepend, html, i, len, parameter, ref, ref1;
-        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+        var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
+        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
         ref = data.responseJSON;
         for (i = 0, len = ref.length; i < len; i++) {
           parameter = ref[i];
-          _prepend = "<i class=\"icon-circle\" style=\"\"></i>";
-          _add = parameter.parameter;
           if (parameter.parameter instanceof Array) {
             _add = parameter.parameter[0];
+            _id = _add.replace("_", "-");
+            id = _id + "-plot-" + plotId;
             if (ref1 = current.variable, indexOf.call(parameter.parameter, ref1) >= 0) {
-              _prepend = "<i class=\"icon-circle\" style=\"color: " + current.color + "\"></i>";
+              _prepend = "<i id=\"" + id + "\" class=\"parameter-" + parameter.parameter + " icon-circle\" style=\"color: " + current.color + "\"></i>";
             }
-          } else if (current.variable === parameter.parameter) {
-            _prepend = "<i class=\"icon-circle\" style=\"color: " + current.color + "\"></i>";
+          } else {
+            _add = parameter.parameter;
+            _id = _add.replace("_", "-");
+            id = _id + "-plot-" + plotId;
+            if (current.variable === parameter.parameter) {
+              _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" style=\"color: " + current.color + "\"></i>";
+            } else {
+              _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" style=\"\"></i>";
+            }
           }
           html = html + " <li><a style=\"cursor: pointer\" onclick=\"plotter.addVariable(" + plotId + ", '" + _add + "')\">" + _prepend + " " + parameter.title + "</a></li>";
         }
@@ -335,6 +342,23 @@
         return $('#' + uuid).dropdown();
       };
       return this.api.get(target, args, callback);
+    };
+
+    Controls.prototype.updateParameterDropdown = function(plotId) {
+      var _id, _options, id;
+      _options = plotter.template[plotId].proto.options;
+      if (_options.y.variable !== null) {
+        _id = _options.y.variable.replace('_', '-');
+        id = _id + "-plot-" + plotId;
+        console.log("Update-Dropdown y", id);
+        $(_options.target).find("\#" + id).css("color", _options.line1Color);
+      }
+      if (_options.y2.variable !== null) {
+        _id = _options.y2.variable.replace('_', '-');
+        id = _id + "-plot-" + plotId;
+        console.log("Update-Dropdown y2", id);
+        return $(_options.target).find("\#" + id).css("color", _options.line2Color);
+      }
     };
 
     Controls.prototype.appendStationMap = function(plotId, appendTarget, parameter) {
@@ -415,8 +439,14 @@
         testResult = false;
         for (i = 0, len = onKeys.length; i < len; i++) {
           testRow = onKeys[i];
-          if (row[testRow] === joinRow[testRow]) {
-            _calculated++;
+          if (row[testRow] instanceof Date) {
+            if (row[testRow].getTime() === joinRow[testRow].getTime()) {
+              _calculated++;
+            }
+          } else {
+            if (row[testRow] === joinRow[testRow]) {
+              _calculated++;
+            }
           }
         }
         if (_calculated === _required) {
@@ -557,7 +587,7 @@
 
   window.Plotting.LinePlot = LinePlot = (function() {
     function LinePlot(data, options) {
-      var _initial, defaults;
+      var defaults;
       this.preError = "LinePlot.";
       defaults = {
         plotId: null,
@@ -600,9 +630,6 @@
             max: 5
           }
         },
-        visible: {
-          limit: 2190
-        },
         aspectDivisor: 5,
         transitionDuration: 500,
         line1Color: "rgb(41, 128, 185)",
@@ -618,8 +645,7 @@
           color: "rgb(149, 165, 166)"
         },
         requestInterval: {
-          data: 336,
-          visible: 336
+          data: 336
         }
       };
       if (options.x) {
@@ -651,36 +677,22 @@
       this.sortDatetimeAsc = function(a, b) {
         return a.x - b.x;
       };
-      if (this.options.merge) {
-        _initial = this.mergeData(data.data);
-        this.options.y2.variable = this.options.y.variable + "2";
-        this.options.y2.units = "" + this.options.y.units;
-      } else {
-        _initial = this.processData(data.data);
-      }
-      this.data = {
-        full: _initial.slice(0),
-        visible: _initial.slice(0)
-      };
+      this.data = this.processData(data.data);
       this.getDefinition();
       this.state = {
         range: {
           data: null,
-          visible: null,
           scale: this.getDomainScale(this.definition.x)
         },
         length: {
-          data: null,
-          visible: null
+          data: null
         },
         interval: {
-          data: null,
-          visible: null
+          data: null
         },
         zoom: 1,
         request: {
-          data: null,
-          visible: null
+          data: null
         },
         mean: {
           scale: this.getDomainMean(this.definition.x)
@@ -718,66 +730,28 @@
     LinePlot.prototype.appendData = function(data) {
       var _data, _full;
       _data = this.processData(data);
-      _full = new Plotting.Data(this.data.full);
-      this.data.full = _full.append(_data, ["x"]);
-      this.data.full = this.data.full.sort(this.sortDatetimeAsc);
+      _full = new Plotting.Data(this.data);
+      this.data = _full.append(_data, ["x"]);
+      this.data = this.data.sort(this.sortDatetimeAsc);
       this.setDataState();
       this.setIntervalState();
       return this.setDataRequirement();
     };
 
-    LinePlot.prototype.setVisibleData = function() {
-      var _data_key, _full, _left, _length, _min, key, preError, ref, row;
-      preError = this.preError + "setVisibleData()";
-      if (this.state.request.visible.min || this.state.request.visible.max) {
-        _min = this.state.range.scale.min;
-        _left = Math.floor(this.state.length.visible * 0.15);
-        _length = Math.floor(this.state.length.visible * 1.3);
-        ref = this.data.full;
-        for (key in ref) {
-          row = ref[key];
-          if (row.x.valueOf() === _min.valueOf()) {
-            _data_key = parseInt(key);
-            break;
-          }
-        }
-        _full = new Plotting.Data(this.data.full);
-        _min = d3.max([0, _data_key - _left]);
-        this.data.visible = _full.sub(_min, _min + _length);
-        this.data.visible.sort(this.sortDatetimeAsc);
-        this.update();
-        this.setDataState();
-        this.setIntervalState();
-        return this.setDataRequirement();
-      }
-    };
-
     LinePlot.prototype.setDataState = function() {
       this.state.range.data = {
-        min: d3.min(this.data.full, function(d) {
+        min: d3.min(this.data, function(d) {
+          console.log(d);
           return d.x;
         }),
-        max: d3.max(this.data.full, function(d) {
+        max: d3.max(this.data, function(d) {
           return d.x;
         })
       };
-      this.state.range.visible = {
-        min: d3.min(this.data.visible, function(d) {
-          return d.x;
-        }),
-        max: d3.max(this.data.visible, function(d) {
-          return d.x;
-        })
-      };
-      this.state.length.data = this.data.full.length;
-      return this.state.length.visible = this.data.visible.length;
+      return this.state.length.data = this.data.length;
     };
 
     LinePlot.prototype.setIntervalState = function() {
-      this.state.interval.visible = {
-        min: (this.state.range.scale.min.getTime() - this.state.range.visible.min.getTime()) / 3600000,
-        max: (this.state.range.visible.max.getTime() - this.state.range.scale.max.getTime()) / 3600000
-      };
       return this.state.interval.data = {
         min: (this.state.range.scale.min.getTime() - this.state.range.data.min.getTime()) / 3600000,
         max: (this.state.range.data.max.getTime() - this.state.range.scale.max.getTime()) / 3600000
@@ -785,23 +759,15 @@
     };
 
     LinePlot.prototype.setDataRequirement = function() {
-      var _data_max, _now, _visible_max;
+      var _data_max, _now;
       _now = new Date();
       _data_max = false;
-      _visible_max = false;
       if (this.state.range.data.max < _now) {
         _data_max = this.state.interval.data.max < this.options.requestInterval.data;
       }
-      if (this.state.range.visible.max < _now) {
-        _visible_max = this.state.interval.visible.max < this.options.requestInterval.visible;
-      }
-      this.state.request.data = {
+      return this.state.request.data = {
         min: this.state.interval.data.min < this.options.requestInterval.data,
         max: _data_max
-      };
-      return this.state.request.visible = {
-        min: this.state.interval.visible.min < this.options.requestInterval.visible,
-        max: _visible_max
       };
     };
 
@@ -835,7 +801,7 @@
         colorScale: d3.schemeCategory20
       };
       this.calculateChartDims();
-      this.calculateAxisDims(this.data.full);
+      this.calculateAxisDims(this.data);
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
@@ -967,8 +933,8 @@
         this.definition.y.min = this.definition.y.min * 0.8;
         this.definition.y.max = this.definition.y.min * 1.2;
       }
-      this.definition.y.min = this.options.y.min === null ? this.definition.y.min : this.options.y.min;
-      return this.definition.y.max = this.options.y.max === null ? this.definition.y.max : this.options.y.max;
+      this.definition.y.min = d3.min([this.options.y.min, this.definition.y.min]);
+      return this.definition.y.max = d3.max([this.options.y.max, this.definition.y.max]);
     };
 
     LinePlot.prototype.preAppend = function() {};
@@ -1001,31 +967,27 @@
         _y2_title = _y2_title + " " + this.options.y2.units;
       }
       if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
-        this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.line1Color).style("opacity", 0.15).style("stroke", function() {
+        this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.line1Color).style("opacity", 0.15).style("stroke", function() {
           return d3.color(_.options.line1Color).darker(1);
         });
       }
       if (this.options.y2Band.minVariable !== null && this.options.y2Band.maxVariable !== null) {
-        this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", this.options.line2Color).style("opacity", 0.25).style("stroke", function() {
+        this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", this.options.line2Color).style("opacity", 0.25).style("stroke", function() {
           return d3.rgb(_.options.line2Color).darker(1);
         });
       }
-      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
-      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data.visible).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       if (this.options.y.maxBarValue !== null) {
         this.svg.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(32)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
       }
       this.crosshairs = this.svg.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
-      if (this.options.y.variable !== null) {
-        this.focusCircle = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-1").attr("class", "focus-circle").attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)");
-        this.focusText = this.svg.append("text").attr("id", "focus-text-1").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("fill", this.options.line1Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
-      }
-      if (this.options.y2.variable !== null) {
-        this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-2").attr("class", "focus-circle").attr("fill", this.options.line2Color).attr("transform", "translate(-10, -10)");
-        this.focusText2 = this.svg.append("text").attr("id", "focus-text-2").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("fill", this.options.line2Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
-      }
+      this.focusCircle = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-1").attr("class", "focus-circle").attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)").style("display", "none");
+      this.focusText = this.svg.append("text").attr("id", "focus-text-1").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.line1Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+      this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-2").attr("class", "focus-circle").attr("fill", this.options.line2Color).attr("transform", "translate(-10, -10)").style("display", "none");
+      this.focusText2 = this.svg.append("text").attr("id", "focus-text-2").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.line2Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget();
       return this.appendZoomTarget();
@@ -1035,17 +997,17 @@
       var _, preError;
       preError = this.preError + "update()";
       _ = this;
-      this.svg.select(".line-plot-area").datum(this.data.visible).attr("d", this.definition.area);
-      this.svg.select(".line-plot-area2").datum(this.data.visible).attr("d", this.definition.area2);
-      this.svg.select(".line-plot-path").datum(this.data.visible).attr("d", this.definition.line);
-      this.svg.select(".line-plot-path2").datum(this.data.visible).attr("d", this.definition.line2);
-      this.overlay.datum(this.data.visible);
-      this.calculateYAxisDims(this.data.visible);
+      this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
+      this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
+      this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
+      this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
+      this.overlay.datum(this.data);
+      this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.svg.select(".line-plot-area").datum(this.data.visible).attr("d", this.definition.area);
-      this.svg.select(".line-plot-area2").datum(this.data.visible).attr("d", this.definition.area2);
-      this.svg.select(".line-plot-path").datum(this.data.visible).attr("d", this.definition.line);
-      this.svg.select(".line-plot-path2").datum(this.data.visible).attr("d", this.definition.line2);
+      this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
+      this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
+      this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
+      this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
       return this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
     };
 
@@ -1053,7 +1015,7 @@
       var _, preError;
       preError = this.preError + "appendCrosshairTarget()";
       _ = this;
-      return this.overlay.datum(this.data.visible).attr("class", "overlay").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
+      return this.overlay.datum(this.data).attr("class", "overlay").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
         return plotter.showCrosshairs();
       }).on("mouseout", function() {
         return plotter.hideCrosshairs();
@@ -1138,10 +1100,10 @@
       }
       i = _.bisectDate(_datum, x0, 1);
       d = x0.getMinutes() >= 30 ? _datum[i] : _datum[i - 1];
-      if (x0.getTime() < this.state.range.visible.min.getTime()) {
+      if (x0.getTime() < this.state.range.data.min.getTime()) {
         d = _datum[i - 1];
       }
-      if (x0.getTime() > this.state.range.visible.max.getTime()) {
+      if (x0.getTime() > this.state.range.data.max.getTime()) {
         d = _datum[i - 1];
       }
       dx = transform ? transform.applyX(this.definition.x(d.x)) : this.definition.x(d.x);
@@ -1301,8 +1263,7 @@
       this.getTemplate();
       this.getTemplatePlotData();
       this.append();
-      this.listen();
-      return this.listenViewport();
+      return this.listen();
     };
 
     Handler.prototype.listen = function() {
@@ -1319,22 +1280,6 @@
         }
       }
       return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
-    };
-
-    Handler.prototype.listenViewport = function() {
-      var key, plot, ref, state;
-      ref = this.template;
-      for (key in ref) {
-        plot = ref[key];
-        state = plot.proto.getState();
-        if (state.request.visible.min) {
-          plot.proto.setVisibleData();
-        }
-        if (state.request.visible.max) {
-          plot.proto.setVisibleData();
-        }
-      }
-      return setTimeout(Plotting.Handler.prototype.listenViewport.bind(this), this.options.refreshViewport);
     };
 
     Handler.prototype.getTemplate = function(template_uri) {
@@ -1354,25 +1299,13 @@
     };
 
     Handler.prototype.getStationParamData = function(plotId, key) {
-      var _, _is_array, args, callback, preError, target;
+      var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData()";
       target = location.protocol + "//dev.nwac.us/api/v5/measurement";
       _ = this;
-      _is_array = this.template[plotId].dataParams instanceof Array;
-      if (_is_array) {
-        args = this.template[plotId].dataParams[key];
-      } else {
-        args = this.template[plotId].dataParams;
-      }
+      args = this.template[plotId].dataParams;
       callback = function(data) {
-        if (_is_array) {
-          if (parseInt(key) === 0) {
-            _.template[plotId].data = [];
-          }
-          return _.template[plotId].data[key] = data.responseJSON;
-        } else {
-          return _.template[plotId].data = data.responseJSON;
-        }
+        return _.template[plotId].data = data.responseJSON;
       };
       return this.syncronousapi.get(target, args, callback);
     };
@@ -1457,7 +1390,6 @@
           plot.data = null;
         }
         title = this.getTitle(plot);
-        console.log(preError + " (plot, data)", plot, data);
         instance = new window.Plotting.LinePlot(data, plot.options);
         instance.append();
         this.template[key].proto = instance;
@@ -1468,83 +1400,18 @@
 
     Handler.prototype.mergeTemplateOption = function() {};
 
-    Handler.prototype.getVariableBounds = function(variable) {
-      var bounds;
-      bounds = {
-        battery_voltage: {
-          min: 8,
-          max: 16
-        },
-        net_solar: {
-          min: 0,
-          max: 800
-        },
-        relative_humidity: {
-          min: 0,
-          max: 100
-        },
-        snow_depth: {
-          min: 0,
-          max: 40
-        },
-        wind_direction: {
-          min: 0,
-          max: 360
-        },
-        precipitation: {
-          min: 0,
-          max: 0.7
-        },
-        temperature: {
-          min: 0,
-          max: 60
-        },
-        wind_speed: {
-          min: 0,
-          max: 60
-        }
-      };
-      return bounds[variable];
-    };
-
     Handler.prototype.getPrependData = function(plotId, dataParams, key) {
-      var _, _is_array, append, args, callback, callback1, callback2, preError, target;
+      var _, _is_array, args, callback, preError, target;
       preError = this.preError + ".getPrependData(key, dataParams)";
       target = "http://dev.nwac.us/api/v5/measurement";
       _ = this;
       _is_array = dataParams instanceof Array;
       args = dataParams;
-      if (_is_array) {
-        console.log(preError + " (_is_array, args)", _is_array, args);
-        append = function() {
-          console.log("Appending data set (_.template[plotId].data)", _.template[plotId].data);
-          _.template[plotId].proto.appendMergeData(_.template[plotId].data);
-          _.template[plotId].proto.setVisibleData();
-          return _.template[plotId].data = [null, null];
-        };
-        callback1 = function(data) {
-          console.log("Callback1 (data)", data);
-          _.template[plotId].data[0] = data.responseJSON.results;
-          if (_.template[plotId].data[0] !== null && _.template[plotId].data[1] !== null) {
-            return append();
-          }
-        };
-        callback2 = function(data) {
-          console.log("Callback2 (data)", data);
-          _.template[plotId].data[1] = data.responseJSON.results;
-          if (_.template[plotId].data[0] !== null && _.template[plotId].data[1] !== null) {
-            return append();
-          }
-        };
-        this.api.get(target, args[0], callback1);
-        return this.api.get(target, args[1], callback2);
-      } else {
-        callback = function(data) {
-          _.template[plotId].proto.appendData(data.responseJSON.results);
-          return _.template[plotId].proto.setVisibleData();
-        };
-        return this.api.get(target, args, callback);
-      }
+      callback = function(data) {
+        _.template[plotId].proto.appendData(data.responseJSON.results);
+        return _.template[plotId].proto.update();
+      };
+      return this.api.get(target, args, callback);
     };
 
     Handler.prototype.getAppendData = function(plotId, dataParams) {
@@ -1555,7 +1422,7 @@
       args = dataParams;
       callback = function(data) {
         _.template[plotId].proto.appendData(data.responseJSON.results);
-        return _.template[plotId].proto.setVisibleData();
+        return _.template[plotId].proto.update();
       };
       return this.api.get(target, args, callback);
     };
@@ -1611,34 +1478,40 @@
     };
 
     Handler.prototype.addVariable = function(plotId, variable) {
-      var _bounds, _max_datetime, dataParams, state;
+      var _bounds, _info, _max_datetime, dataParams, state;
       state = this.template[plotId].proto.getState();
       _bounds = this.getVariableBounds(variable);
+      _info = this.getVariableInfo(variable);
       _max_datetime = state.range.data.max.getTime();
       dataParams = this.template[plotId].proto.options.dataParams;
       dataParams.max_datetime = this.format(new Date(_max_datetime));
-      dataParams.limit = this.template[plotId].proto.data.full.length;
+      dataParams.limit = state.length.data;
       if (this.template[plotId].proto.options.y.variable === null) {
-        console.log("Defining y");
         this.template[plotId].proto.options.y = {
           variable: variable
         };
+        if (_info) {
+          this.template[plotId].proto.options.y.title = _info.title;
+          this.template[plotId].proto.options.y.units = _info.units;
+        }
         if (_bounds) {
           this.template[plotId].proto.options.y.min = _bounds.min;
           this.template[plotId].proto.options.y.max = _bounds.max;
         }
       } else if (this.template[plotId].proto.options.y2.variable === null) {
-        console.log("Defining y2");
         this.template[plotId].proto.options.y2 = {
           variable: variable
         };
+        if (_info) {
+          this.template[plotId].proto.options.y.title = _info.title;
+          this.template[plotId].proto.options.y.units = _info.units;
+        }
         if (_bounds) {
           this.template[plotId].proto.options.y2.min = _bounds.min;
           this.template[plotId].proto.options.y2.max = _bounds.max;
         }
       }
-      this.getAppendData(plotId, dataParams);
-      return console.log("addVariable().. (data)", this.template[plotId].proto.data);
+      return this.getAppendData(plotId, dataParams);
     };
 
     Handler.prototype.zoom = function(transform) {
@@ -1720,6 +1593,88 @@
       } else if (direction === 'down') {
         return selected.next().insertBefore(selected);
       }
+    };
+
+    Handler.prototype.getVariableBounds = function(variable) {
+      var bounds;
+      bounds = {
+        battery_voltage: {
+          min: 8,
+          max: 16
+        },
+        net_solar: {
+          min: 0,
+          max: 800
+        },
+        relative_humidity: {
+          min: 0,
+          max: 100
+        },
+        snow_depth: {
+          min: 0,
+          max: 40
+        },
+        wind_direction: {
+          min: 0,
+          max: 360
+        },
+        precipitation: {
+          min: 0,
+          max: 0.7
+        },
+        temperature: {
+          min: 0,
+          max: 60
+        },
+        wind_speed: {
+          min: 0,
+          max: 60
+        }
+      };
+      return bounds[variable];
+    };
+
+    Handler.prototype.getVariableInfo = function(variable) {
+      var info;
+      info = {
+        battery_voltage: {
+          title: "Battery Voltage",
+          units: "V"
+        },
+        net_solar: {
+          title: "Solar Radiation",
+          units: "W/m2"
+        },
+        relative_humidity: {
+          title: "Relative Humidity",
+          units: "%"
+        },
+        barometric_pressure: {
+          title: "Barometric Pressure",
+          units: "atm"
+        },
+        snow_depth: {
+          title: "Snow Depth",
+          units: "\""
+        },
+        wind_direction: {
+          title: "Wind Direction",
+          units: "°"
+        },
+        precipitation: {
+          title: "Precipitation",
+          units: "\""
+        },
+        temperature: {
+          title: "Temperature",
+          units: "°F"
+        },
+        wind_speed: {
+          title: "Wind Speed",
+          units: "mph"
+        }
+      };
+      return info[variable];
     };
 
     Handler.prototype.getColor = function(shade, key) {

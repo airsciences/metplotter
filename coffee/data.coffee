@@ -21,9 +21,13 @@ window.Plotting.Data = class Data
       testResult = false
 
       for testRow in onKeys
-        if row[testRow] == joinRow[testRow]
-          _calculated++
-      
+        if row[testRow] instanceof Date
+          if row[testRow].getTime() == joinRow[testRow].getTime()
+            _calculated++
+        else
+          if row[testRow] == joinRow[testRow]
+            _calculated++
+
       if _calculated == _required
         testResult = true
       return testResult
@@ -43,14 +47,10 @@ window.Plotting.Data = class Data
       _secondary = $.extend(true, [], data)
         
     for key, row of _primary
-      # console.log("Running Row 1 of _primary (key, row)", key, row)
       for _key, _row of _secondary
         _test = @test(row, _row, onKeys)
-        # console.log("Running Row 2 of _secondary (key, row, test)",
-        #   _key, _row, _test)
         _len = result.push($.extend(true, {}, row))
         if _test
-          # row matches.
           for _subKey, _value of _row
             if _subKey not in onKeys
               result[_len - 1][_subKey + "_2"] = _value

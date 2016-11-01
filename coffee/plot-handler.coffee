@@ -68,7 +68,6 @@ window.Plotting.Handler = class Handler
     @getTemplatePlotData()
     @append()
     @listen()
-    @listenViewport()
 
   listen: ->
     # Listen to Plot States & Update Data & Visible if Needed
@@ -83,22 +82,6 @@ window.Plotting.Handler = class Handler
 
     setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
 
-  listenViewport: ->
-    # Listen to Plot States & Update Data & Visible if Needed
-    for key, plot of @template
-      state = plot.proto.getState()
-      # Min-Side Events
-      if state.request.visible.min
-        # console.log("Listen[#{key}]: Request Visible Min Update")
-        plot.proto.setVisibleData()
-      # Max-Side Events
-      if state.request.visible.max
-        # console.log("Listen[#{key}]: Request Visible Max Update")
-        plot.proto.setVisibleData()
-
-    setTimeout(Plotting.Handler.prototype.listenViewport.bind(@),
-      @options.refreshViewport)
-  
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
@@ -119,19 +102,10 @@ window.Plotting.Handler = class Handler
     preError = "#{@preError}.getStationParamData()"
     target = "#{location.protocol}//dev.nwac.us/api/v5/measurement"
     _ = @
-    _is_array = @template[plotId].dataParams instanceof Array
-    if _is_array
-      args = @template[plotId].dataParams[key]
-    else
-      args = @template[plotId].dataParams
+    args = @template[plotId].dataParams
 
     callback = (data) ->
-      if _is_array
-        if parseInt(key) == 0
-          _.template[plotId].data = []
-        _.template[plotId].data[key] = data.responseJSON
-      else
-        _.template[plotId].data = data.responseJSON
+      _.template[plotId].data = data.responseJSON
     
     @syncronousapi.get target, args, callback
     
@@ -190,7 +164,6 @@ window.Plotting.Handler = class Handler
         plot.data = null
       
       title = @getTitle(plot)
-      console.log "#{preError} (plot, data)", plot, data
       instance = new window.Plotting.LinePlot data, plot.options
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
@@ -200,33 +173,7 @@ window.Plotting.Handler = class Handler
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options
 
-  getVariableBounds: (variable) ->
-    bounds =
-      battery_voltage:
-        min: 8
-        max: 16
-      net_solar:
-        min: 0
-        max: 800
-      relative_humidity:
-        min: 0
-        max: 100
-      snow_depth:
-        min: 0
-        max: 40
-      wind_direction:
-        min: 0
-        max: 360
-      precipitation:
-        min: 0
-        max: 0.7
-      temperature:
-        min: 0
-        max: 60
-      wind_speed:
-        min: 0
-        max: 60
-     return bounds[variable]
+
 
   getPrependData: (plotId, dataParams, key) ->
     # Request a station's dataset (param specific)
@@ -236,37 +183,11 @@ window.Plotting.Handler = class Handler
     _is_array = dataParams instanceof Array
     args = dataParams
     
-    if _is_array
-      console.log("#{preError} (_is_array, args)", _is_array, args)
-      append = ->
-        console.log("Appending data set (_.template[plotId].data)",
-          _.template[plotId].data)
-        _.template[plotId].proto.appendMergeData(_.template[plotId].data)
-        _.template[plotId].proto.setVisibleData()
-        _.template[plotId].data = [null, null]
-      
-      callback1 = (data) ->
-        console.log("Callback1 (data)", data)
-        _.template[plotId].data[0] = data.responseJSON.results
-        if (_.template[plotId].data[0] != null and
-            _.template[plotId].data[1] != null)
-          append()
+    callback = (data) ->
+      _.template[plotId].proto.appendData(data.responseJSON.results)
+      _.template[plotId].proto.update()
     
-      callback2 = (data) ->
-        console.log("Callback2 (data)", data)
-        _.template[plotId].data[1] = data.responseJSON.results
-        if (_.template[plotId].data[0] != null and
-            _.template[plotId].data[1] != null)
-          append()
-    
-      @api.get(target, args[0], callback1)
-      @api.get(target, args[1], callback2)
-    else
-      callback = (data) ->
-        _.template[plotId].proto.appendData(data.responseJSON.results)
-        _.template[plotId].proto.setVisibleData()
-    
-      @api.get(target, args, callback)
+    @api.get(target, args, callback)
       
   getAppendData: (plotId, dataParams) ->
     # Request a station's dataset (param specific)
@@ -277,7 +198,7 @@ window.Plotting.Handler = class Handler
 
     callback = (data) ->
       _.template[plotId].proto.appendData(data.responseJSON.results)
-      _.template[plotId].proto.setVisibleData()
+      _.template[plotId].proto.update()
         
     @api.get target, args, callback
 
@@ -329,35 +250,37 @@ window.Plotting.Handler = class Handler
     @getPrependData(key, dataParams)
 
   addVariable: (plotId, variable) ->
-    
+    # Add a variable to the plot.
     state = @template[plotId].proto.getState()
     
     _bounds = @getVariableBounds(variable)
+    _info = @getVariableInfo(variable)
     _max_datetime = state.range.data.max.getTime()
     
     dataParams = @template[plotId].proto.options.dataParams
     dataParams.max_datetime = @format(new Date(_max_datetime))
-    dataParams.limit = @template[plotId].proto.data.full.length
+    dataParams.limit = state.length.data
     
     if @template[plotId].proto.options.y.variable == null
-      console.log("Defining y")
       @template[plotId].proto.options.y =
         variable: variable
+      if _info
+        @template[plotId].proto.options.y.title = _info.title
+        @template[plotId].proto.options.y.units = _info.units
       if _bounds
         @template[plotId].proto.options.y.min = _bounds.min
         @template[plotId].proto.options.y.max = _bounds.max
     else if  @template[plotId].proto.options.y2.variable == null
-      console.log("Defining y2")
       @template[plotId].proto.options.y2 =
         variable: variable
+      if _info
+        @template[plotId].proto.options.y.title = _info.title
+        @template[plotId].proto.options.y.units = _info.units
       if _bounds
         @template[plotId].proto.options.y2.min = _bounds.min
         @template[plotId].proto.options.y2.max = _bounds.max
 
     @getAppendData(plotId, dataParams)
-    
-    console.log("addVariable().. (data)",
-      @template[plotId].proto.data)
       
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
@@ -406,7 +329,7 @@ window.Plotting.Handler = class Handler
     else if @template[plotId].type is "parameter"
       @controls.appendStationMap(plotId, '#'+selector, 1)
       @controls.appendStationDropdown(plotId, '#'+selector, 1)
-    
+
   remove: (plotId) ->
     # Remove a plotId
     $(@template[plotId].proto.options.target).fadeOut(500, ->
@@ -420,7 +343,66 @@ window.Plotting.Handler = class Handler
       selected.prev().insertAfter(selected)
     else if direction is 'down'
       selected.next().insertBefore(selected)
-    
+
+  getVariableBounds: (variable) ->
+    bounds =
+      battery_voltage:
+        min: 8
+        max: 16
+      net_solar:
+        min: 0
+        max: 800
+      relative_humidity:
+        min: 0
+        max: 100
+      snow_depth:
+        min: 0
+        max: 40
+      wind_direction:
+        min: 0
+        max: 360
+      precipitation:
+        min: 0
+        max: 0.7
+      temperature:
+        min: 0
+        max: 60
+      wind_speed:
+        min: 0
+        max: 60
+     return bounds[variable]
+
+  getVariableInfo: (variable) ->
+    info =
+      battery_voltage:
+        title: "Battery Voltage"
+        units: "V"
+      net_solar:
+        title: "Solar Radiation"
+        units: "W/m2"
+      relative_humidity:
+        title: "Relative Humidity"
+        units: "%"
+      barometric_pressure:
+        title: "Barometric Pressure"
+        units: "atm"
+      snow_depth:
+        title: "Snow Depth"
+        units: "\""
+      wind_direction:
+        title: "Wind Direction"
+        units: "°"
+      precipitation:
+        title: "Precipitation"
+        units: "\""
+      temperature:
+        title: "Temperature"
+        units: "°F"
+      wind_speed:
+        title: "Wind Speed"
+        units: "mph"
+    return info[variable]
+        
   getColor: (shade, key) ->
     # Return the Color from the ordered list.
     return @options.colors[shade][key]

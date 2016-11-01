@@ -100,7 +100,7 @@ window.Plotting.Controls = class Controls
     callback = (data) ->
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\"
-          class=\"dropdown-toggle\" role=\"button\"
+          class=\"parameter-dropdown dropdown-toggle\" role=\"button\"
           data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
         <ul id=\"param-dropdown-#{plotId}\"
@@ -108,18 +108,24 @@ window.Plotting.Controls = class Controls
           aria-labelledby=\"#{uuid}\">"
            
       for parameter in data.responseJSON
-        _prepend = "<i class=\"icon-circle\"
-          style=\"\"></i>"
-        _add = parameter.parameter
         if parameter.parameter instanceof Array
           _add = parameter.parameter[0]
+          _id = _add.replace("_", "-")
+          id = "#{_id}-plot-#{plotId}"
           if current.variable in parameter.parameter
-            _prepend = "<i class=\"icon-circle\"
+            _prepend = "<i id=\"#{id}\" class=\"parameter-#{parameter.parameter}
+              icon-circle\"
               style=\"color: #{current.color}\"></i>"
-        else if current.variable == parameter.parameter
-          _prepend = "<i class=\"icon-circle\"
-            style=\"color: #{current.color}\"></i>"
-        
+        else
+          _add = parameter.parameter
+          _id = _add.replace("_", "-")
+          id = "#{_id}-plot-#{plotId}"
+          if current.variable == parameter.parameter
+            _prepend = "<i id=\"#{id}\" class=\"icon-circle\"
+              style=\"color: #{current.color}\"></i>"
+          else
+            _prepend = "<i id=\"#{id}\" class=\"icon-circle\" style=\"\"></i>"
+    
         html = "#{html}
             <li><a style=\"cursor: pointer\"
               onclick=\"plotter.addVariable(#{plotId},
@@ -137,6 +143,21 @@ window.Plotting.Controls = class Controls
         
     @api.get(target, args, callback)
 
+  updateParameterDropdown: (plotId) ->
+    _options = plotter.template[plotId].proto.options
+    if _options.y.variable != null
+      _id = _options.y.variable.replace('_', '-')
+      id = "#{_id}-plot-#{plotId}"
+      console.log("Update-Dropdown y", id)
+      $(_options.target).find("\##{id}")
+        .css("color", _options.line1Color)
+    if _options.y2.variable != null
+      _id = _options.y2.variable.replace('_', '-')
+      id = "#{_id}-plot-#{plotId}"
+      console.log("Update-Dropdown y2", id)
+      $(_options.target).find("\##{id}")
+        .css("color", _options.line2Color)
+  
   appendStationMap: (plotId, appendTarget, parameter) ->
     # Append a google maps popover.
     _ = @
