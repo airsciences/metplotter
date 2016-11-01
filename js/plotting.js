@@ -264,7 +264,7 @@
 
     Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
       var _, args, callback, target;
-      target = "http://localhost:5000/stations/" + parameter;
+      target = "stations/" + parameter;
       _ = this;
       args = {};
       callback = function(data) {
@@ -309,7 +309,7 @@
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
       var args, callback, target, uuid;
-      target = "http://localhost:5000/parameters/" + dataLoggerId;
+      target = "parameters/" + dataLoggerId;
       args = {};
       uuid = this.uuid();
       callback = function(data) {

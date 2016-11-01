@@ -21,7 +21,7 @@ window.Plotting.Controls = class Controls
 
   appendStationDropdown: (plotId, appendTarget, parameter) ->
     # Append Station Dropdown.
-    target = "http://localhost:5000/stations/#{parameter}"
+    target = "stations/#{parameter}"
     _ = @
     args = {}
     
@@ -93,7 +93,7 @@ window.Plotting.Controls = class Controls
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.
-    target = "http://localhost:5000/parameters/#{dataLoggerId}"
+    target = "parameters/#{dataLoggerId}"
     args = {}
     uuid = @uuid()
     
