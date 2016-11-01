@@ -1510,7 +1510,8 @@
           this.template[plotId].proto.options.y2.max = _bounds.max;
         }
       }
-      return this.getAppendData(plotId, dataParams);
+      this.getAppendData(plotId, dataParams);
+      return this.controls.updateParameterDropdown(plotId);
     };
 
     Handler.prototype.zoom = function(transform) {

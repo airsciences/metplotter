@@ -281,6 +281,7 @@ window.Plotting.Handler = class Handler
         @template[plotId].proto.options.y2.max = _bounds.max
 
     @getAppendData(plotId, dataParams)
+    @controls.updateParameterDropdown(plotId)
       
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
