@@ -269,13 +269,14 @@
       args = {};
       uuid = this.uuid();
       callback = function(data) {
-        var _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, len, len1, len2, r_color, ref, ref1, ref2, region, station;
+        var _dots, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, len, len1, len2, r_color, ref, ref1, ref2, region, station;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\">";
         ref = data.responseJSON;
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
           a_color = "";
           r_color = "";
+          _dots = "";
           _region_selected = 0;
           ref1 = region.stations;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
@@ -283,13 +284,14 @@
             _row_current = _.isCurrent(current, 'dataLoggerId', _station.dataloggerid);
             if (_row_current) {
               _region_selected++;
+              _dots = _dots + " <i class=\"icon-circle\" style=\"color: " + _row_current.color + "\"></i>";
             }
           }
           if (_region_selected > 0) {
             r_color = "style=\"background-color: rgb(248,248,248)\"";
             a_color = "style=\"font-weight: 700\"";
           }
-          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.region + "</a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
+          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.region + " " + _dots + "</a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
           ref2 = region.stations;
           for (k = 0, len2 = ref2.length; k < len2; k++) {
             station = ref2[k];
@@ -308,7 +310,7 @@
         html = html + " </ul> </li>";
         $(appendTarget).prepend(html);
         $('#' + uuid).dropdown();
-        $(".subheader").unbind().on('click', function(event) {
+        return $(".subheader").unbind().on('click', function(event) {
           var next;
           event.preventDefault();
           event.stopPropagation();
@@ -320,17 +322,6 @@
             $(this).find("i").removeClass("icon-caret-down").addClass("icon-caret-up");
             return next.slideDown();
           }
-        });
-        return $(".station").unbind().on('click', function(event) {
-          if ($(this).hasClass("selected")) {
-            $(this).removeClass("selected");
-            if ($(this).siblings().filter(":not(.selected)").length === $(this).siblings().length) {
-              $(this).parent().prev().css("background-color", "rgb(235,235,235)");
-            }
-          } else {
-            $(this).addClass("selected").parent().prev().css("background-color", "rgb(210,210,210)");
-          }
-          return event.stopPropagation();
         });
       };
       return this.api.get(target, args, callback);
@@ -887,6 +878,13 @@
       }).y(function(d) {
         return _.definition.y(d.y2);
       });
+      this.definition.line3 = d3.line().defined(function(d) {
+        return !isNaN(d.y3) && d.y3 !== null;
+      }).x(function(d) {
+        return _.definition.x(d.x);
+      }).y(function(d) {
+        return _.definition.y(d.y3);
+      });
       this.definition.area = d3.area().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
@@ -896,14 +894,23 @@
       }).y1(function(d) {
         return _.definition.y(d.yMax);
       });
-      return this.definition.area2 = d3.area().defined(function(d) {
-        return !isNaN(d.y) && d.y !== null;
+      this.definition.area2 = d3.area().defined(function(d) {
+        return !isNaN(d.y2) && d.y2 !== null;
       }).x(function(d) {
         return _.definition.x(d.x);
       }).y0(function(d) {
         return _.definition.y(d.y2Min);
       }).y1(function(d) {
         return _.definition.y(d.y2Max);
+      });
+      return this.definition.area3 = d3.area().defined(function(d) {
+        return !isNaN(d.y3) && d.y3 !== null;
+      }).x(function(d) {
+        return _.definition.x(d.x);
+      }).y0(function(d) {
+        return _.definition.y(d.y3Min);
+      }).y1(function(d) {
+        return _.definition.y(d.y3Max);
       });
     };
 
@@ -974,9 +981,13 @@
         }), d3.min(data, function(d) {
           return d.y2;
         }), d3.min(data, function(d) {
+          return d.y2;
+        }), d3.min(data, function(d) {
           return d.yMin;
         }), d3.min(data, function(d) {
           return d.y2Min;
+        }), d3.min(data, function(d) {
+          return d.y3Min;
         })
       ]);
       this.definition.y.max = d3.max([
@@ -985,9 +996,13 @@
         }), d3.max(data, function(d) {
           return d.y2;
         }), d3.max(data, function(d) {
+          return d.y3;
+        }), d3.max(data, function(d) {
           return d.yMax;
         }), d3.max(data, function(d) {
           return d.y2Max;
+        }), d3.max(data, function(d) {
+          return d.y3Max;
         })
       ]);
       if (this.definition.y.min === this.definition.y.max) {
@@ -1001,7 +1016,7 @@
     LinePlot.prototype.preAppend = function() {};
 
     LinePlot.prototype.append = function() {
-      var _, _y2_title, _y_offset, _y_title, _y_vert, preError;
+      var _, _y2_title, _y3_title, _y_offset, _y_title, _y_vert, preError;
       preError = this.preError + "append()";
       _ = this;
       this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
@@ -1024,8 +1039,8 @@
       if (this.options.y2.title) {
         _y2_title = _y2_title + " " + this.options.y2.title;
       }
-      if (this.options.y2.units) {
-        _y2_title = _y2_title + " " + this.options.y2.units;
+      if (this.options.y3.units) {
+        _y3_title = _y3_title + " " + this.options.y3.units;
       }
       if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
         this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.y.color).style("opacity", 0.15).style("stroke", function() {
@@ -1037,8 +1052,14 @@
           return d3.rgb(_.options.y2.color).darker(1);
         });
       }
+      if (this.options.y3Band.minVariable !== null && this.options.y3Band.maxVariable !== null) {
+        this.lineband3 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area3).attr("class", "line-plot-area3").style("fill", this.options.y3.color).style("opacity", 0.25).style("stroke", function() {
+          return d3.rgb(_.options.y3.color).darker(1);
+        });
+      }
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.y.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.y2.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line3).attr("class", "line-plot-path3").style("stroke", this.options.y3.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       if (this.options.y.maxBarValue !== null) {
         this.svg.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(32)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
       }
@@ -1049,6 +1070,8 @@
       this.focusText = this.svg.append("text").attr("id", "focus-text-1").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y.color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-2").attr("class", "focus-circle").attr("fill", this.options.y2.color).attr("transform", "translate(-10, -10)").style("display", "none");
       this.focusText2 = this.svg.append("text").attr("id", "focus-text-2").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y2.color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+      this.focusCircle3 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-3").attr("class", "focus-circle").attr("fill", this.options.y3.color).attr("transform", "translate(-10, -10)").style("display", "none");
+      this.focusText3 = this.svg.append("text").attr("id", "focus-text-3").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y3.color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget();
       return this.appendZoomTarget();
@@ -1060,15 +1083,19 @@
       _ = this;
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
+      this.svg.select(".line-plot-area3").datum(this.data).attr("d", this.definition.area3);
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
       this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
+      this.svg.select(".line-plot-path3").datum(this.data).attr("d", this.definition.line3);
       this.overlay.datum(this.data);
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
+      this.svg.select(".line-plot-area3").datum(this.data).attr("d", this.definition.area3);
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
       this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
+      this.svg.select(".line-plot-path3").datum(this.data).attr("d", this.definition.line3);
       return this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
     };
 
@@ -1143,12 +1170,30 @@
         return _.definition.y(d.y2);
       });
       this.svg.select(".line-plot-path2").attr("d", this.definition.line2);
+      this.definition.area3 = d3.area().defined(function(d) {
+        return !isNaN(d.y3Max) && d.y3Max !== null;
+      }).x(function(d) {
+        return _transform.applyX(_.definition.x(d.x));
+      }).y0(function(d) {
+        return _.definition.y(d.y3Min);
+      }).y1(function(d) {
+        return _.definition.y(d.y3Max);
+      });
+      this.svg.select(".line-plot-area3").attr("d", this.definition.area3);
+      this.definition.line3 = d3.line().defined(function(d) {
+        return !isNaN(d.y3) && d.y3 !== null;
+      }).x(function(d) {
+        return _transform.applyX(_.definition.x(d.x));
+      }).y(function(d) {
+        return _.definition.y(d.y3);
+      });
+      this.svg.select(".line-plot-path3").attr("d", this.definition.line3);
       this.appendCrosshairTarget(_transform);
       return _transform;
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _datum, _dims, _mouseTarget, cx, d, dx, dy, dy2, i, preError, x0, ypos;
+      var _, _datum, _dims, _mouseTarget, cx, d, dx, dy, dy2, dy3, i, preError, x0, ypos;
       preError = this.preError + ".setCrosshair(mouse)";
       _ = this;
       _dims = this.definition.dimensions;
@@ -1176,6 +1221,10 @@
         dy2 = this.definition.y(d.y2);
         this.focusCircle2.attr("transform", "translate(0, 0)");
       }
+      if (this.options.y3.variable !== null) {
+        dy3 = this.definition.y(d.y3);
+        this.focusCircle3.attr("transform", "translate(0, 0)");
+      }
       cx = dx - _dims.leftPadding;
       this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
       this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
@@ -1187,7 +1236,11 @@
         this.focusCircle2.attr("cx", dx).attr("cy", dy2);
         this.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(2) + " " + this.options.y2.units);
       }
-      if (this.options.y.variable !== null && this.options.y2.variable !== null) {
+      if (this.options.y3.variable !== null) {
+        this.focusCircle3.attr("cx", dx).attr("cy", dy3);
+        this.focusText3.attr("x", dx + _dims.leftPadding / 10).attr("y", dy3 - _dims.topPadding / 10).text(d.y3.toFixed(2) + " " + this.options.y3.units);
+      }
+      if (this.options.y.variable !== null && this.options.y2.variable !== null && this.options.y3.variable !== null) {
         ypos = [];
         this.svg.selectAll('.focus-text').attr("transform", function(d, i) {
           var row;
@@ -1228,7 +1281,11 @@
       }
       if (this.options.y2.variable !== null) {
         this.focusCircle2.style("display", null);
-        return this.focusText2.style("display", null);
+        this.focusText2.style("display", null);
+      }
+      if (this.options.y3.variable !== null) {
+        this.focusCircle3.style("display", null);
+        return this.focusText3.style("display", null);
       }
     };
 
@@ -1241,7 +1298,11 @@
       }
       if (this.options.y2.variable !== null) {
         this.focusCircle2.style("display", "none");
-        return this.focusText2.style("display", "none");
+        this.focusText2.style("display", "none");
+      }
+      if (this.options.y3.variable !== null) {
+        this.focusCircle3.style("display", "none");
+        return this.focusText3.style("display", "none");
       }
     };
 
