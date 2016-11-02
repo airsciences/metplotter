@@ -38,12 +38,15 @@ window.Plotting.Controls = class Controls
       for region in data.responseJSON
         a_color = ""
         r_color = ""
+        _dots = ""
         _region_selected = 0
         for _station in region.stations
           _row_current = _.isCurrent(current, 'dataLoggerId',
             _station.dataloggerid)
           if _row_current
             _region_selected++
+            _dots = "#{_dots} <i class=\"icon-circle\"
+              style=\"color: #{_row_current.color}\"></i>"
         if _region_selected > 0
           r_color = "style=\"background-color: rgb(248,248,248)\""
           a_color = "style=\"font-weight: 700\""
@@ -51,7 +54,7 @@ window.Plotting.Controls = class Controls
             <li class=\"subheader\" #{r_color}>
               <a #{a_color} href=\"#\"><i class=\"icon-caret-down\"
                 style=\"margin-right: 6px\"></i>
-               #{region.region}</a>
+               #{region.region} #{_dots}</a>
             </li>
             <ul class=\"list-group-item sublist\"
               style=\"display: none;\">"
@@ -96,26 +99,6 @@ window.Plotting.Controls = class Controls
           $(this).find("i").removeClass("icon-caret-down")
             .addClass("icon-caret-up")
           next.slideDown()
-      )
-      
-      # Station Click Event.
-      $(".station").unbind().on('click', (event) ->
-        if $(this).hasClass("selected")
-          $(this).removeClass("selected")
-          if (
-            $(this).siblings().filter(":not(.selected)").length is
-            $(this).siblings().length
-          )
-            $(this).parent()
-              .prev()
-              .css("background-color","rgb(235,235,235)")
-        else
-          $(this).addClass("selected")
-            .parent()
-            .prev()
-            .css("background-color","rgb(210,210,210)")
-
-        event.stopPropagation()
       )
     
     @api.get(target, args, callback)

@@ -249,6 +249,13 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y2))
 
+    @definition.line3 = d3.line()
+      .defined((d)->
+        !isNaN(d.y3) and d.y3 isnt null
+      )
+      .x((d) -> _.definition.x(d.x))
+      .y((d) -> _.definition.y(d.y3))
+      
     @definition.area = d3.area()
       .defined((d)->
         !isNaN(d.y) and d.y isnt null
@@ -259,11 +266,19 @@ window.Plotting.LinePlot = class LinePlot
 
     @definition.area2 = d3.area()
       .defined((d)->
-        !isNaN(d.y) and d.y isnt null
+        !isNaN(d.y2) and d.y2 isnt null
       )
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.y2Min))
       .y1((d) -> _.definition.y(d.y2Max))
+
+    @definition.area3 = d3.area()
+      .defined((d)->
+        !isNaN(d.y3) and d.y3 isnt null
+      )
+      .x((d) -> _.definition.x(d.x))
+      .y0((d) -> _.definition.y(d.y3Min))
+      .y1((d) -> _.definition.y(d.y3Max))
 
   calculateChartDims: ->
     # Calculate Basic DOM & SVG Dimensions
@@ -336,15 +351,19 @@ window.Plotting.LinePlot = class LinePlot
     @definition.y.min = d3.min([
       d3.min(data, (d)-> d.y)
       d3.min(data, (d)-> d.y2)
+      d3.min(data, (d)-> d.y2)
       d3.min(data, (d)-> d.yMin)
       d3.min(data, (d)-> d.y2Min)
+      d3.min(data, (d)-> d.y3Min)
     ])
     
     @definition.y.max = d3.max([
       d3.max(data, (d)-> d.y)
       d3.max(data, (d)-> d.y2)
+      d3.max(data, (d)-> d.y3)
       d3.max(data, (d)-> d.yMax)
       d3.max(data, (d)-> d.y2Max)
+      d3.max(data, (d)-> d.y3Max)
     ])
 
     # Restore Viewability if Y-Min = Y-Max
@@ -442,8 +461,8 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y2.title
       _y2_title = "#{_y2_title} #{@options.y2.title}"
       
-    if @options.y2.units
-      _y2_title = "#{_y2_title} #{@options.y2.units}"
+    if @options.y3.units
+      _y3_title = "#{_y3_title} #{@options.y3.units}"
 
     # Append Bands
     if (
@@ -478,6 +497,22 @@ window.Plotting.LinePlot = class LinePlot
           return d3.rgb(_.options.y2.color).darker(1)
         )
 
+    if (
+      @options.y3Band.minVariable != null and
+      @options.y3Band.maxVariable != null
+    )
+      @lineband3 = @svg.append("g")
+        .attr("clip-path", "url(\##{@options.target}_clip)")
+        .append("path")
+        .datum(@data)
+        .attr("d", @definition.area3)
+        .attr("class", "line-plot-area3")
+        .style("fill", @options.y3.color)
+        .style("opacity", 0.25)
+        .style("stroke", () ->
+          return d3.rgb(_.options.y3.color).darker(1)
+        )
+
     # Append the Line Paths
     @svg.append("g")
       .attr("clip-path", "url(\##{@options.target}_clip)")
@@ -497,6 +532,17 @@ window.Plotting.LinePlot = class LinePlot
       .attr("d", @definition.line2)
       .attr("class", "line-plot-path2")
       .style("stroke", @options.y2.color)
+      .style("stroke-width",
+        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+      .style("fill", "none")
+
+    @svg.append("g")
+      .attr("clip-path", "url(\##{@options.target}_clip)")
+      .append("path")
+      .datum(@data)
+      .attr("d", @definition.line3)
+      .attr("class", "line-plot-path3")
+      .style("stroke", @options.y3.color)
       .style("stroke-width",
         Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
@@ -568,6 +614,25 @@ window.Plotting.LinePlot = class LinePlot
         2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
         2px 2px 0 rgb(255,255,255)")
 
+    @focusCircle3 = @svg.append("circle")
+      .attr("r", 4)
+      .attr("id", "focus-circle-3")
+      .attr("class", "focus-circle")
+      .attr("fill", @options.y3.color)
+      .attr("transform", "translate(-10, -10)")
+      .style("display", "none")
+
+    @focusText3 = @svg.append("text")
+      .attr("id", "focus-text-3")
+      .attr("class", "focus-text")
+      .attr("x", 9)
+      .attr("y", 7)
+      .style("display", "none")
+      .style("fill", @options.y3.color)
+      .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+        2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+        2px 2px 0 rgb(255,255,255)")
+
     # Append the Crosshair & Zoom Event Rectangle
     @overlay = @svg.append("rect")
       .attr("class", "plot-event-target")
@@ -588,6 +653,10 @@ window.Plotting.LinePlot = class LinePlot
     @svg.select(".line-plot-area2")
       .datum(@data)
       .attr("d", @definition.area2)
+      
+    @svg.select(".line-plot-area3")
+      .datum(@data)
+      .attr("d", @definition.area3)
 
     @svg.select(".line-plot-path")
       .datum(@data)
@@ -596,6 +665,10 @@ window.Plotting.LinePlot = class LinePlot
     @svg.select(".line-plot-path2")
       .datum(@data)
       .attr("d", @definition.line2)
+
+    @svg.select(".line-plot-path3")
+      .datum(@data)
+      .attr("d", @definition.line3)
 
     @overlay.datum(@data)
 
@@ -610,6 +683,10 @@ window.Plotting.LinePlot = class LinePlot
     @svg.select(".line-plot-area2")
       .datum(@data)
       .attr("d", @definition.area2)
+      
+    @svg.select(".line-plot-area3")
+      .datum(@data)
+      .attr("d", @definition.area3)
 
     # Redraw the Line Paths
     @svg.select(".line-plot-path")
@@ -619,6 +696,10 @@ window.Plotting.LinePlot = class LinePlot
     @svg.select(".line-plot-path2")
       .datum(@data)
       .attr("d", @definition.line2)
+
+    @svg.select(".line-plot-path3")
+      .datum(@data)
+      .attr("d", @definition.line3)
 
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
@@ -728,6 +809,29 @@ window.Plotting.LinePlot = class LinePlot
 
     @svg.select(".line-plot-path2")
       .attr("d", @definition.line2)
+
+    # Redefine & Redraw the Area3
+    @definition.area3 = d3.area()
+      .defined((d)->
+        !isNaN(d.y3Max) and d.y3Max isnt null
+      )
+      .x((d) -> _transform.applyX(_.definition.x(d.x)))
+      .y0((d) -> _.definition.y(d.y3Min))
+      .y1((d) -> _.definition.y(d.y3Max))
+     
+    @svg.select(".line-plot-area3")
+      .attr("d", @definition.area3)
+
+    # Redefine & Redraw the Line2 Path
+    @definition.line3 = d3.line()
+      .defined((d)->
+        !isNaN(d.y3) and d.y3 isnt null
+      )
+      .x((d) -> _transform.applyX(_.definition.x(d.x)))
+      .y((d) -> _.definition.y(d.y3))
+
+    @svg.select(".line-plot-path3")
+      .attr("d", @definition.line3)
       
     @appendCrosshairTarget(_transform)
     return _transform
@@ -762,6 +866,9 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y2.variable != null
       dy2 = @definition.y(d.y2)
       @focusCircle2.attr("transform", "translate(0, 0)")
+    if @options.y3.variable != null
+      dy3 = @definition.y(d.y3)
+      @focusCircle3.attr("transform", "translate(0, 0)")
 
     cx = dx - _dims.leftPadding
     @crosshairs.select(".crosshair-x")
@@ -798,8 +905,22 @@ window.Plotting.LinePlot = class LinePlot
         .attr("y", dy2 - _dims.topPadding / 10)
         .text(d.y2.toFixed(2) + " " + @options.y2.units)
 
+    if @options.y3.variable != null
+      @focusCircle3
+        .attr("cx", dx)
+        .attr("cy", dy3)
+
+      @focusText3
+        .attr("x", dx + _dims.leftPadding / 10)
+        .attr("y", dy3 - _dims.topPadding / 10)
+        .text(d.y3.toFixed(2) + " " + @options.y3.units)
+
     # Tooltip Overlap Prevention
-    if @options.y.variable != null and @options.y2.variable != null
+    if (
+      @options.y.variable != null and
+      @options.y2.variable != null and
+      @options.y3.variable != null
+    )
       ypos = []
       @svg.selectAll('.focus-text')
         .attr("transform", (d, i) ->
@@ -842,6 +963,10 @@ window.Plotting.LinePlot = class LinePlot
       @focusCircle2.style("display", null)
       @focusText2.style("display", null)
   
+    if @options.y3.variable != null
+      @focusCircle3.style("display", null)
+      @focusText3.style("display", null)
+  
   hideCrosshair: () ->
     # Hide the Crosshair
     @crosshairs.select(".crosshair-x")
@@ -857,6 +982,10 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y2.variable != null
       @focusCircle2.style("display", "none")
       @focusText2.style("display", "none")
+
+    if @options.y3.variable != null
+      @focusCircle3.style("display", "none")
+      @focusText3.style("display", "none")
 
   appendTitle: (title, subtitle) ->
     # Append a Plot Title
