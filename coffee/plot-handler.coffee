@@ -131,11 +131,11 @@ window.Plotting.Handler = class Handler
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
       plot.options.dataParams = plot.dataParams
-      plot.options.y.color = @getColor('dark', key)
+      plot.options.y.color = @getColor('light', key)
       if plot.options.y2
-        plot.options.y2.color = @getColor('light', key)
+        plot.options.y2.color = @getColor('light', (key+1))
       if plot.options.y3
-        plot.options.y3.color = @getColor('dark', (key+3))
+        plot.options.y3.color = @getColor('light', (key+2))
       _bounds = @getVariableBounds(plot.options.y.variable)
       if _bounds
         plot.options.y.min = _bounds.min

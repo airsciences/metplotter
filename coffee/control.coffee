@@ -36,18 +36,35 @@ window.Plotting.Controls = class Controls
           class=\"dropdown-menu dropdown-menu-right\">"
      
       for region in data.responseJSON
+        a_color = ""
+        r_color = ""
+        _region_selected = 0
+        for _station in region.stations
+          _row_current = _.isCurrent(current, 'dataLoggerId',
+            _station.dataloggerid)
+          if _row_current
+            _region_selected++
+        if _region_selected > 0
+          r_color = "style=\"background-color: rgb(248,248,248)\""
+          a_color = "style=\"font-weight: 700\""
         html = "#{html}
-            <li class=\"subheader\">
-              <a href=\"#\"><i class=\"icon-caret-down\"
+            <li class=\"subheader\" #{r_color}>
+              <a #{a_color} href=\"#\"><i class=\"icon-caret-down\"
                 style=\"margin-right: 6px\"></i>
                #{region.region}</a>
             </li>
             <ul class=\"list-group-item sublist\"
               style=\"display: none;\">"
         for station in region.stations
+          _row_current = _.isCurrent(current, 'dataLoggerId',
+            station.dataloggerid)
+          color = ""
+          if _row_current
+            console.log("Row Current", _row_current)
+            color = "style=\"color: #{_row_current.color}\""
           id = "data-logger-#{station.dataloggerid}-plot-#{plotId}"
           _prepend = "<i id=\"#{id}\" class=\"icon-circle\"
-            style=\"color: #{current.color}\"></i>"
+            #{color}></i>"
           html = "#{html}
             <li class=\"list-group-item station\"
               style=\"cursor: pointer; padding: 1px 5px;
@@ -67,6 +84,7 @@ window.Plotting.Controls = class Controls
       
       # Subheader Click Event.
       $(".subheader").unbind().on('click', (event) ->
+        event.preventDefault()
         event.stopPropagation()
         next = $(this).next()
         
@@ -84,7 +102,6 @@ window.Plotting.Controls = class Controls
       $(".station").unbind().on('click', (event) ->
         if $(this).hasClass("selected")
           $(this).removeClass("selected")
-            .css("background-color", "")
           if (
             $(this).siblings().filter(":not(.selected)").length is
             $(this).siblings().length
@@ -94,7 +111,6 @@ window.Plotting.Controls = class Controls
               .css("background-color","rgb(235,235,235)")
         else
           $(this).addClass("selected")
-            .css("background-color", plotter.options.colors.light[7])
             .parent()
             .prev()
             .css("background-color","rgb(210,210,210)")
@@ -109,6 +125,8 @@ window.Plotting.Controls = class Controls
     target = "http://localhost:5000/parameters/#{dataLoggerId}"
     args = {}
     uuid = @uuid()
+    
+    _current = []
     
     callback = (data) ->
       html = "<div class=\"dropdown\">
@@ -227,3 +245,9 @@ window.Plotting.Controls = class Controls
 
   uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
+    
+  isCurrent: (current, key, value) ->
+    for cKey, cValue of current
+      if cValue[key] == value
+        return cValue
+    return false

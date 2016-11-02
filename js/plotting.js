@@ -269,17 +269,38 @@
       args = {};
       uuid = this.uuid();
       callback = function(data) {
-        var _prepend, html, i, id, j, len, len1, ref, ref1, region, station;
+        var _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, len, len1, len2, r_color, ref, ref1, ref2, region, station;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\">";
         ref = data.responseJSON;
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
-          html = html + " <li class=\"subheader\"> <a href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.region + "</a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
+          a_color = "";
+          r_color = "";
+          _region_selected = 0;
           ref1 = region.stations;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
-            station = ref1[j];
+            _station = ref1[j];
+            _row_current = _.isCurrent(current, 'dataLoggerId', _station.dataloggerid);
+            if (_row_current) {
+              _region_selected++;
+            }
+          }
+          if (_region_selected > 0) {
+            r_color = "style=\"background-color: rgb(248,248,248)\"";
+            a_color = "style=\"font-weight: 700\"";
+          }
+          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.region + "</a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
+          ref2 = region.stations;
+          for (k = 0, len2 = ref2.length; k < len2; k++) {
+            station = ref2[k];
+            _row_current = _.isCurrent(current, 'dataLoggerId', station.dataloggerid);
+            color = "";
+            if (_row_current) {
+              console.log("Row Current", _row_current);
+              color = "style=\"color: " + _row_current.color + "\"";
+            }
             id = "data-logger-" + station.dataloggerid + "-plot-" + plotId;
-            _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" style=\"color: " + current.color + "\"></i>";
+            _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" " + color + "></i>";
             html = html + " <li class=\"list-group-item station\" style=\"cursor: pointer; padding: 1px 5px; list-style-type: none\">" + _prepend + " " + station.name + "</li>";
           }
           html = html + " </ul>";
@@ -289,6 +310,7 @@
         $('#' + uuid).dropdown();
         $(".subheader").unbind().on('click', function(event) {
           var next;
+          event.preventDefault();
           event.stopPropagation();
           next = $(this).next();
           if (next.is(":visible")) {
@@ -301,12 +323,12 @@
         });
         return $(".station").unbind().on('click', function(event) {
           if ($(this).hasClass("selected")) {
-            $(this).removeClass("selected").css("background-color", "");
+            $(this).removeClass("selected");
             if ($(this).siblings().filter(":not(.selected)").length === $(this).siblings().length) {
               $(this).parent().prev().css("background-color", "rgb(235,235,235)");
             }
           } else {
-            $(this).addClass("selected").css("background-color", plotter.options.colors.light[7]).parent().prev().css("background-color", "rgb(210,210,210)");
+            $(this).addClass("selected").parent().prev().css("background-color", "rgb(210,210,210)");
           }
           return event.stopPropagation();
         });
@@ -315,10 +337,11 @@
     };
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
-      var args, callback, target, uuid;
+      var _current, args, callback, target, uuid;
       target = "http://localhost:5000/parameters/" + dataLoggerId;
       args = {};
       uuid = this.uuid();
+      _current = [];
       callback = function(data) {
         var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
@@ -415,6 +438,17 @@
 
     Controls.prototype.uuid = function() {
       return (((1 + Math.random()) * 0x100000000) | 0).toString(16).substring(1);
+    };
+
+    Controls.prototype.isCurrent = function(current, key, value) {
+      var cKey, cValue;
+      for (cKey in current) {
+        cValue = current[cKey];
+        if (cValue[key] === value) {
+          return cValue;
+        }
+      }
+      return false;
     };
 
     return Controls;
@@ -1376,12 +1410,12 @@
         plot.options.uuid = this.uuid();
         plot.options.target = "\#" + target;
         plot.options.dataParams = plot.dataParams;
-        plot.options.y.color = this.getColor('dark', key);
+        plot.options.y.color = this.getColor('light', key);
         if (plot.options.y2) {
-          plot.options.y2.color = this.getColor('light', key);
+          plot.options.y2.color = this.getColor('light', key + 1);
         }
         if (plot.options.y3) {
-          plot.options.y3.color = this.getColor('dark', key + 3);
+          plot.options.y3.color = this.getColor('light', key + 2);
         }
         _bounds = this.getVariableBounds(plot.options.y.variable);
         if (_bounds) {
