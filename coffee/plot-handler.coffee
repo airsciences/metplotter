@@ -118,17 +118,6 @@ window.Plotting.Handler = class Handler
       else
         @getStationParamData key
   
-  getParameterDropdown: () ->
-    # Get a dropdown for each plot
-    preError = "#{@preError}.getStationParamData()"
-    target = "template/#{plotHandlerId}"
-    _ = @
-    args = @template[plotId].dataParams
-  
-  getStationDropdown: () ->
-    # Get a dropdown for each plot
-    preError = ""
-  
   append: () ->
     # Master append plots.
     preError = "#{@preError}.append()"
@@ -136,14 +125,17 @@ window.Plotting.Handler = class Handler
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
-      plot.type = "station"
-      #plot.type = "parameter"
+      #plot.type = "station"
+      plot.type = "parameter"
       plot.options.plotId = key
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
       plot.options.dataParams = plot.dataParams
-      plot.options.line1Color = @getColor('dark', key)
-      plot.options.line1Color = @getColor('light', key)
+      plot.options.y.color = @getColor('light', key)
+      if plot.options.y2
+        plot.options.y2.color = @getColor('light', (key+1))
+      if plot.options.y3
+        plot.options.y3.color = @getColor('light', (key+2))
       _bounds = @getVariableBounds(plot.options.y.variable)
       if _bounds
         plot.options.y.min = _bounds.min
@@ -324,12 +316,20 @@ window.Plotting.Handler = class Handler
       .find(".line-plot-controls").append(html)
     
     if @template[plotId].type is "station"
-      current = @template[plotId].proto.options.y
-      current.color = @template[plotId].proto.options.line1Color
+      current = [
+          @template[plotId].proto.options.y,
+          @template[plotId].proto.options.y2,
+          @template[plotId].proto.options.y3
+      ]
       @controls.appendParameterDropdown(plotId, '#'+selector, 1, current)
     else if @template[plotId].type is "parameter"
-      @controls.appendStationMap(plotId, '#'+selector, 1)
-      @controls.appendStationDropdown(plotId, '#'+selector, 1)
+      current = [
+          @template[plotId].proto.options.y,
+          @template[plotId].proto.options.y2,
+          @template[plotId].proto.options.y3
+      ]
+      @controls.appendStationMap(plotId, '#'+selector, 1, current)
+      @controls.appendStationDropdown(plotId, '#'+selector, 1, current)
 
   remove: (plotId) ->
     # Remove a plotId

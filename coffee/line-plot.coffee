@@ -23,20 +23,34 @@ window.Plotting.LinePlot = class LinePlot
         max: null
         ticks: 7
       y:
+        dataLoggerId: null
         variable: null
         ticks: 5
         min: null
         max: null
         maxBarValue: null
+        color: "rgb(41, 128, 185)"
       yBand:
         minVariable: null
         maxVariable: null
       y2:
+        dataLoggerId: null
         variable: null
         ticks: 5
         min: null
         max: null
+        color: "rgb(39, 174, 96)"
       y2Band:
+        minVariable: null
+        maxVariable: null
+      y3:
+        dataLoggerId: null
+        variable: null
+        ticks: 5
+        min: null
+        max: null
+        color: "rgb(142, 68, 173)"
+      y3Band:
         minVariable: null
         maxVariable: null
       zoom:
@@ -45,8 +59,6 @@ window.Plotting.LinePlot = class LinePlot
           max: 5
       aspectDivisor: 5
       transitionDuration: 500
-      line1Color: "rgb(41, 128, 185)"
-      line2Color: "rgb(39, 174, 96)"
       weight: 2
       axisColor: "rgb(0,0,0)"
       font:
@@ -108,6 +120,8 @@ window.Plotting.LinePlot = class LinePlot
         y: row[@options.y.variable]
       if @options.y2.variable != null
         result[key].y2 = row[@options.y2.variable]
+      if @options.y3.variable != null
+        result[key].y3 = row[@options.y3.variable]
       if (
         @options.yBand.minVariable != null and
         @options.yBand.maxVariable != null
@@ -120,6 +134,12 @@ window.Plotting.LinePlot = class LinePlot
       )
         result[key].y2Min = row[@options.y2Band.minVariable]
         result[key].y2Max = row[@options.y2Band.maxVariable]
+      if (
+        @options.y3Band.minVariable != null and
+        @options.y3Band.maxVariable != null
+      )
+        result[key].y3Min = row[@options.y3Band.minVariable]
+        result[key].y3Max = row[@options.y3Band.maxVariable]
     
     return result.sort(@sortDatetimeAsc)
 
@@ -436,10 +456,10 @@ window.Plotting.LinePlot = class LinePlot
         .datum(@data)
         .attr("d", @definition.area)
         .attr("class", "line-plot-area")
-        .style("fill", @options.line1Color)
+        .style("fill", @options.y.color)
         .style("opacity", 0.15)
         .style("stroke", () ->
-          return d3.color(_.options.line1Color).darker(1)
+          return d3.color(_.options.y.color).darker(1)
         )
 
     if (
@@ -452,10 +472,10 @@ window.Plotting.LinePlot = class LinePlot
         .datum(@data)
         .attr("d", @definition.area2)
         .attr("class", "line-plot-area2")
-        .style("fill", @options.line2Color)
+        .style("fill", @options.y2.color)
         .style("opacity", 0.25)
         .style("stroke", () ->
-          return d3.rgb(_.options.line2Color).darker(1)
+          return d3.rgb(_.options.y2.color).darker(1)
         )
 
     # Append the Line Paths
@@ -465,7 +485,7 @@ window.Plotting.LinePlot = class LinePlot
       .datum(@data)
       .attr("d", @definition.line)
       .attr("class", "line-plot-path")
-      .style("stroke", @options.line1Color)
+      .style("stroke", @options.y.color)
       .style("stroke-width",
           Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
@@ -476,7 +496,7 @@ window.Plotting.LinePlot = class LinePlot
       .datum(@data)
       .attr("d", @definition.line2)
       .attr("class", "line-plot-path2")
-      .style("stroke", @options.line2Color)
+      .style("stroke", @options.y2.color)
       .style("stroke-width",
         Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
@@ -514,7 +534,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("r", 4)
       .attr("id", "focus-circle-1")
       .attr("class", "focus-circle")
-      .attr("fill", @options.line1Color)
+      .attr("fill", @options.y.color)
       .attr("transform", "translate(-10, -10)")
       .style("display", "none")
 
@@ -524,7 +544,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("x", 9)
       .attr("y", 7)
       .style("display", "none")
-      .style("fill", @options.line1Color)
+      .style("fill", @options.y.color)
       .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
         2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
         2px 2px 0 rgb(255,255,255)")
@@ -533,7 +553,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("r", 4)
       .attr("id", "focus-circle-2")
       .attr("class", "focus-circle")
-      .attr("fill", @options.line2Color)
+      .attr("fill", @options.y2.color)
       .attr("transform", "translate(-10, -10)")
       .style("display", "none")
 
@@ -543,7 +563,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("x", 9)
       .attr("y", 7)
       .style("display", "none")
-      .style("fill", @options.line2Color)
+      .style("fill", @options.y2.color)
       .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
         2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
         2px 2px 0 rgb(255,255,255)")

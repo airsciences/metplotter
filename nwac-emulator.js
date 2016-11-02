@@ -83,6 +83,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
+                        "dataLoggerId": 43,
                         "variable": "temperature",
                         "title": "Temperature",
                         "units": "°F"
@@ -105,6 +106,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
+                        "dataLoggerId": 40,
                         "variable": "wind_speed_average",
                         "title": "Wind Speed",
                         "units": "m/s"
@@ -131,6 +133,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
+                        "dataLoggerId": 42,
                         "variable": "wind_direction",
                         "title": "Wind Direction",
                         "units": "°"
@@ -153,6 +156,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
+                        "dataLoggerId": 43,
                         "variable": "precipitation",
                         "title": "Precipitation",
                         "units": "In."
@@ -175,6 +179,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
+                        "dataLoggerId": 43,
                         "variable": "snowfall_24_hour",
                         "title": "24-Hour Snow Fall",
                         "units": "In."
@@ -197,6 +202,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
+                        "dataLoggerId": 43,
                         "variable": "snow_depth",
                         "title": "Total Snow Depth",
                         "units": "In."

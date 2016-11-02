@@ -262,44 +262,73 @@
       this.api = new window.Plotting.API(access.token);
     }
 
-    Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
-      var _, args, callback, target;
+    Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter, current) {
+      var _, args, callback, target, uuid;
       target = "stations/" + parameter;
       _ = this;
       args = {};
+      uuid = this.uuid();
       callback = function(data) {
-        var html, i, j, len, len1, ref, ref1, region, station;
-        html = "<li><i class=\"icon-list\" style=\"cursor: pointer\" onclick=\"plotter.dropdown.toggle('\#station-dropdown-" + plotId + "')\"> </i> <ul id=\"station-dropdown-" + plotId + "\" class=\"list-group\" style=\"display: none; position: absolute; box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">";
+        var _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, len, len1, len2, r_color, ref, ref1, ref2, region, station;
+        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\">";
         ref = data.responseJSON;
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
-          html = html + " <li class=\"list-group-item subheader\" style=\"cursor:pointer; background-color: rgb(235, 235, 235); border-top: 1px solid rgb(190, 190, 190); padding: 3px 10px;\">" + region.region + "</li> <ul class=\"list-group-item sublist\" style=\"display: none; padding: 1px\">";
+          a_color = "";
+          r_color = "";
+          _region_selected = 0;
           ref1 = region.stations;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
-            station = ref1[j];
-            html = html + " <li class=\"list-group-item station\" style=\"cursor:pointer;padding: 1px 5px; list-style-type: none\"> " + station.name + "</li>";
+            _station = ref1[j];
+            _row_current = _.isCurrent(current, 'dataLoggerId', _station.dataloggerid);
+            if (_row_current) {
+              _region_selected++;
+            }
+          }
+          if (_region_selected > 0) {
+            r_color = "style=\"background-color: rgb(248,248,248)\"";
+            a_color = "style=\"font-weight: 700\"";
+          }
+          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.region + "</a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
+          ref2 = region.stations;
+          for (k = 0, len2 = ref2.length; k < len2; k++) {
+            station = ref2[k];
+            _row_current = _.isCurrent(current, 'dataLoggerId', station.dataloggerid);
+            color = "";
+            if (_row_current) {
+              console.log("Row Current", _row_current);
+              color = "style=\"color: " + _row_current.color + "\"";
+            }
+            id = "data-logger-" + station.dataloggerid + "-plot-" + plotId;
+            _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" " + color + "></i>";
+            html = html + " <li class=\"list-group-item station\" style=\"cursor: pointer; padding: 1px 5px; list-style-type: none\">" + _prepend + " " + station.name + "</li>";
           }
           html = html + " </ul>";
         }
         html = html + " </ul> </li>";
         $(appendTarget).prepend(html);
-        $(".subheader").click(function(event) {
+        $('#' + uuid).dropdown();
+        $(".subheader").unbind().on('click', function(event) {
           var next;
+          event.preventDefault();
+          event.stopPropagation();
           next = $(this).next();
           if (next.is(":visible")) {
+            $(this).find("i").removeClass("icon-caret-up").addClass("icon-caret-down");
             return next.slideUp();
           } else {
+            $(this).find("i").removeClass("icon-caret-down").addClass("icon-caret-up");
             return next.slideDown();
           }
         });
-        return $(".station").click(function(event) {
+        return $(".station").unbind().on('click', function(event) {
           if ($(this).hasClass("selected")) {
-            $(this).removeClass("selected").css("background-color", "");
+            $(this).removeClass("selected");
             if ($(this).siblings().filter(":not(.selected)").length === $(this).siblings().length) {
               $(this).parent().prev().css("background-color", "rgb(235,235,235)");
             }
           } else {
-            $(this).addClass("selected").css("background-color", plotter.options.colors.light[7]).parent().prev().css("background-color", "rgb(210,210,210)");
+            $(this).addClass("selected").parent().prev().css("background-color", "rgb(210,210,210)");
           }
           return event.stopPropagation();
         });
@@ -308,10 +337,11 @@
     };
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
-      var args, callback, target, uuid;
+      var _current, args, callback, target, uuid;
       target = "parameters/" + dataLoggerId;
       args = {};
       uuid = this.uuid();
+      _current = [];
       callback = function(data) {
         var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
@@ -408,6 +438,17 @@
 
     Controls.prototype.uuid = function() {
       return (((1 + Math.random()) * 0x100000000) | 0).toString(16).substring(1);
+    };
+
+    Controls.prototype.isCurrent = function(current, key, value) {
+      var cKey, cValue;
+      for (cKey in current) {
+        cValue = current[cKey];
+        if (cValue[key] === value) {
+          return cValue;
+        }
+      }
+      return false;
     };
 
     return Controls;
@@ -604,23 +645,39 @@
           ticks: 7
         },
         y: {
+          dataLoggerId: null,
           variable: null,
           ticks: 5,
           min: null,
           max: null,
-          maxBarValue: null
+          maxBarValue: null,
+          color: "rgb(41, 128, 185)"
         },
         yBand: {
           minVariable: null,
           maxVariable: null
         },
         y2: {
+          dataLoggerId: null,
           variable: null,
           ticks: 5,
           min: null,
-          max: null
+          max: null,
+          color: "rgb(39, 174, 96)"
         },
         y2Band: {
+          minVariable: null,
+          maxVariable: null
+        },
+        y3: {
+          dataLoggerId: null,
+          variable: null,
+          ticks: 5,
+          min: null,
+          max: null,
+          color: "rgb(142, 68, 173)"
+        },
+        y3Band: {
           minVariable: null,
           maxVariable: null
         },
@@ -632,8 +689,6 @@
         },
         aspectDivisor: 5,
         transitionDuration: 500,
-        line1Color: "rgb(41, 128, 185)",
-        line2Color: "rgb(39, 174, 96)",
         weight: 2,
         axisColor: "rgb(0,0,0)",
         font: {
@@ -715,6 +770,9 @@
         if (this.options.y2.variable !== null) {
           result[key].y2 = row[this.options.y2.variable];
         }
+        if (this.options.y3.variable !== null) {
+          result[key].y3 = row[this.options.y3.variable];
+        }
         if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
           result[key].yMin = row[this.options.yBand.minVariable];
           result[key].yMax = row[this.options.yBand.maxVariable];
@@ -722,6 +780,10 @@
         if (this.options.y2Band.minVariable !== null && this.options.y2Band.maxVariable !== null) {
           result[key].y2Min = row[this.options.y2Band.minVariable];
           result[key].y2Max = row[this.options.y2Band.maxVariable];
+        }
+        if (this.options.y3Band.minVariable !== null && this.options.y3Band.maxVariable !== null) {
+          result[key].y3Min = row[this.options.y3Band.minVariable];
+          result[key].y3Max = row[this.options.y3Band.maxVariable];
         }
       }
       return result.sort(this.sortDatetimeAsc);
@@ -966,27 +1028,27 @@
         _y2_title = _y2_title + " " + this.options.y2.units;
       }
       if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
-        this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.line1Color).style("opacity", 0.15).style("stroke", function() {
-          return d3.color(_.options.line1Color).darker(1);
+        this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.y.color).style("opacity", 0.15).style("stroke", function() {
+          return d3.color(_.options.y.color).darker(1);
         });
       }
       if (this.options.y2Band.minVariable !== null && this.options.y2Band.maxVariable !== null) {
-        this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", this.options.line2Color).style("opacity", 0.25).style("stroke", function() {
-          return d3.rgb(_.options.line2Color).darker(1);
+        this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", this.options.y2.color).style("opacity", 0.25).style("stroke", function() {
+          return d3.rgb(_.options.y2.color).darker(1);
         });
       }
-      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.line1Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
-      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.line2Color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.y.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.y2.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       if (this.options.y.maxBarValue !== null) {
         this.svg.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(32)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
       }
       this.crosshairs = this.svg.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
-      this.focusCircle = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-1").attr("class", "focus-circle").attr("fill", this.options.line1Color).attr("transform", "translate(-10, -10)").style("display", "none");
-      this.focusText = this.svg.append("text").attr("id", "focus-text-1").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.line1Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
-      this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-2").attr("class", "focus-circle").attr("fill", this.options.line2Color).attr("transform", "translate(-10, -10)").style("display", "none");
-      this.focusText2 = this.svg.append("text").attr("id", "focus-text-2").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.line2Color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+      this.focusCircle = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-1").attr("class", "focus-circle").attr("fill", this.options.y.color).attr("transform", "translate(-10, -10)").style("display", "none");
+      this.focusText = this.svg.append("text").attr("id", "focus-text-1").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y.color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+      this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-2").attr("class", "focus-circle").attr("fill", this.options.y2.color).attr("transform", "translate(-10, -10)").style("display", "none");
+      this.focusText2 = this.svg.append("text").attr("id", "focus-text-2").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y2.color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget();
       return this.appendZoomTarget();
@@ -1334,19 +1396,6 @@
       return results;
     };
 
-    Handler.prototype.getParameterDropdown = function() {
-      var _, args, preError, target;
-      preError = this.preError + ".getStationParamData()";
-      target = "template/" + plotHandlerId;
-      _ = this;
-      return args = this.template[plotId].dataParams;
-    };
-
-    Handler.prototype.getStationDropdown = function() {
-      var preError;
-      return preError = "";
-    };
-
     Handler.prototype.append = function() {
       var _bounds, dKey, data, instance, key, plot, preError, ref, ref1, results, row, target, title;
       preError = this.preError + ".append()";
@@ -1356,13 +1405,18 @@
         plot = ref[key];
         target = this.utarget(this.options.target);
         $(this.options.target).append("<div id='" + target + "'></div>");
-        plot.type = "station";
+        plot.type = "parameter";
         plot.options.plotId = key;
         plot.options.uuid = this.uuid();
         plot.options.target = "\#" + target;
         plot.options.dataParams = plot.dataParams;
-        plot.options.line1Color = this.getColor('dark', key);
-        plot.options.line1Color = this.getColor('light', key);
+        plot.options.y.color = this.getColor('light', key);
+        if (plot.options.y2) {
+          plot.options.y2.color = this.getColor('light', key + 1);
+        }
+        if (plot.options.y3) {
+          plot.options.y3.color = this.getColor('light', key + 2);
+        }
         _bounds = this.getVariableBounds(plot.options.y.variable);
         if (_bounds) {
           plot.options.y.min = _bounds.min;
@@ -1569,12 +1623,12 @@
       html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
       $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
       if (this.template[plotId].type === "station") {
-        current = this.template[plotId].proto.options.y;
-        current.color = this.template[plotId].proto.options.line1Color;
+        current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
         return this.controls.appendParameterDropdown(plotId, '#' + selector, 1, current);
       } else if (this.template[plotId].type === "parameter") {
-        this.controls.appendStationMap(plotId, '#' + selector, 1);
-        return this.controls.appendStationDropdown(plotId, '#' + selector, 1);
+        current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
+        this.controls.appendStationMap(plotId, '#' + selector, 1, current);
+        return this.controls.appendStationDropdown(plotId, '#' + selector, 1, current);
       }
     };
 
