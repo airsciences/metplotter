@@ -19,35 +19,40 @@ window.Plotting.Controls = class Controls
     @maps = []
     @api = new window.Plotting.API access.token
 
-  appendStationDropdown: (plotId, appendTarget, parameter) ->
+  appendStationDropdown: (plotId, appendTarget, parameter, current) ->
     # Append Station Dropdown.
     target = "http://localhost:5000/stations/#{parameter}"
     _ = @
     args = {}
+    uuid = @uuid()
     
     callback = (data) ->
-      html = "<li><i class=\"icon-list\" style=\"cursor: pointer\"
-          onclick=\"plotter.dropdown.toggle('\#station-dropdown-#{plotId}')\">
-          </i>
+      html = "<div class=\"dropdown\">
+        <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
+            role=\"button\"
+            data-toggle=\"dropdown\" href=\"#\">
+          <i class=\"icon-list\"></i></a>
         <ul id=\"station-dropdown-#{plotId}\"
-          class=\"list-group\" style=\"display: none;
-          position: absolute;
-          box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.75);\">"
+          class=\"dropdown-menu dropdown-menu-right\">"
      
       for region in data.responseJSON
         html = "#{html}
-            <li class=\"list-group-item subheader\"
-              style=\"cursor:pointer;
-                background-color: rgb(235, 235, 235);
-              border-top: 1px solid rgb(190, 190, 190);
-              padding: 3px 10px;\">#{region.region}</li>
+            <li class=\"subheader\">
+              <a href=\"#\"><i class=\"icon-caret-down\"
+                style=\"margin-right: 6px\"></i>
+               #{region.region}</a>
+            </li>
             <ul class=\"list-group-item sublist\"
-              style=\"display: none; padding: 1px\">"
+              style=\"display: none;\">"
         for station in region.stations
+          id = "data-logger-#{station.dataloggerid}-plot-#{plotId}"
+          _prepend = "<i id=\"#{id}\" class=\"icon-circle\"
+            style=\"color: #{current.color}\"></i>"
           html = "#{html}
             <li class=\"list-group-item station\"
-              style=\"cursor:pointer;padding: 1px 5px; list-style-type: none\">
-              #{station.name}</li>"
+              style=\"cursor: pointer; padding: 1px 5px;
+              list-style-type: none\">#{_prepend}
+               #{station.name}</li>"
         
         html = "#{html}
           </ul>"
@@ -58,17 +63,25 @@ window.Plotting.Controls = class Controls
     
       $(appendTarget).prepend(html)
       
+      $('#'+uuid).dropdown()
+      
       # Subheader Click Event.
-      $(".subheader").click((event) ->
+      $(".subheader").unbind().on('click', (event) ->
+        event.stopPropagation()
         next = $(this).next()
+        
         if next.is(":visible")
+          $(this).find("i").removeClass("icon-caret-up")
+            .addClass("icon-caret-down")
           next.slideUp()
         else
+          $(this).find("i").removeClass("icon-caret-down")
+            .addClass("icon-caret-up")
           next.slideDown()
       )
       
       # Station Click Event.
-      $(".station").click((event) ->
+      $(".station").unbind().on('click', (event) ->
         if $(this).hasClass("selected")
           $(this).removeClass("selected")
             .css("background-color", "")
@@ -87,7 +100,7 @@ window.Plotting.Controls = class Controls
             .css("background-color","rgb(210,210,210)")
 
         event.stopPropagation()
-     )
+      )
     
     @api.get(target, args, callback)
 
