@@ -54,6 +54,7 @@ window.Plotting.Data = class Data
     # Join a new data set.
     preError = "#{@preError}.join(data, onKeys)"
     result = []
+    _offset = "_#{parseInt(@sourceCount+1)}"
     
     _protoKeys = Object.keys(@data[0])
     _dataKeys = Object.keys(data[0])
@@ -72,12 +73,11 @@ window.Plotting.Data = class Data
         if _test
           for _subKey, _value of _row
             if _subKey not in onKeys
-              result[_len - 1][_subKey + "_2"] = _value
+              result[_len - 1][_subKey + _offset] = _value
           _secondary.splice(_key, 1)
           break
 
     @sourceCount++
-    console.log("#{preError} data source count", @sourceCount)
     @data = @_clean(result)
     #@_tryError(@data, preError)
     return @data

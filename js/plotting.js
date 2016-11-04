@@ -507,9 +507,10 @@
     }
 
     Data.prototype.join = function(data, onKeys) {
-      var _dataKeys, _key, _len, _primary, _protoKeys, _row, _secondary, _subKey, _test, _value, key, preError, result, row;
+      var _dataKeys, _key, _len, _offset, _primary, _protoKeys, _row, _secondary, _subKey, _test, _value, key, preError, result, row;
       preError = this.preError + ".join(data, onKeys)";
       result = [];
+      _offset = "_" + (parseInt(this.sourceCount + 1));
       _protoKeys = Object.keys(this.data[0]);
       _dataKeys = Object.keys(data[0]);
       if (data.length > this.data.length) {
@@ -529,7 +530,7 @@
             for (_subKey in _row) {
               _value = _row[_subKey];
               if (indexOf.call(onKeys, _subKey) < 0) {
-                result[_len - 1][_subKey + "_2"] = _value;
+                result[_len - 1][_subKey + _offset] = _value;
               }
             }
             _secondary.splice(_key, 1);
@@ -538,7 +539,6 @@
         }
       }
       this.sourceCount++;
-      console.log(preError + " data source count", this.sourceCount);
       this.data = this._clean(result);
       return this.data;
     };
@@ -824,7 +824,11 @@
           }
         }
         if (this.options.y3.variable !== null) {
-          result[key].y3 = row[this.options.y3.variable];
+          if (this.options.y.variable === this.options.y3.variable || this.options.y2.variable === this.options.y3.variable) {
+            result[key].y3 = row[this.options.y3.variable + "_3"];
+          } else {
+            result[key].y3 = row[this.options.y3.variable];
+          }
         }
         if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
           result[key].yMin = row[this.options.yBand.minVariable];
@@ -1689,19 +1693,11 @@ Jacob Fielding
     };
 
     Handler.prototype.addVariable = function(plotId, variable) {
-      var _bounds, _info, _max_datetime, dataParams, pKey, params, ref, state;
+      var _bounds, _info, _max_datetime, params, paramsKey, ref, results, state, uuid;
       state = this.template[plotId].proto.getState();
       _bounds = this.getVariableBounds(variable);
       _info = this.getVariableInfo(variable);
       _max_datetime = state.range.data.max.getTime();
-      dataParams = [];
-      ref = plot.proto.options.dataParams;
-      for (pKey in ref) {
-        params = ref[pKey];
-        dataParams[pKey] = this.template[plotId].proto.options.dataParams;
-        dataParams[pKey].max_datetime = this.format(new Date(_max_datetime));
-        dataParams[pKey].limit = state.length.data;
-      }
       if (this.template[plotId].proto.options.y.variable === null) {
         this.template[plotId].proto.options.y = {
           variable: variable
@@ -1719,26 +1715,96 @@ Jacob Fielding
           variable: variable
         };
         if (_info) {
-          this.template[plotId].proto.options.y.title = _info.title;
-          this.template[plotId].proto.options.y.units = _info.units;
+          this.template[plotId].proto.options.y2.title = _info.title;
+          this.template[plotId].proto.options.y2.units = _info.units;
         }
         if (_bounds) {
           this.template[plotId].proto.options.y2.min = _bounds.min;
           this.template[plotId].proto.options.y2.max = _bounds.max;
         }
+      } else if (this.template[plotId].proto.options.y3.variable === null) {
+        this.template[plotId].proto.options.y3 = {
+          variable: variable
+        };
+        if (_info) {
+          this.template[plotId].proto.options.y3.title = _info.title;
+          this.template[plotId].proto.options.y3.units = _info.units;
+        }
+        if (_bounds) {
+          this.template[plotId].proto.options.y3.min = _bounds.min;
+          this.template[plotId].proto.options.y3.max = _bounds.max;
+        }
       }
-      return this.getAppendData(this.uuid(), plotId, dataParams);
+      uuid = this.uuid();
+      ref = this.template[plotId].proto.options.dataParams;
+      results = [];
+      for (paramsKey in ref) {
+        params = ref[paramsKey];
+        this.template[plotId].proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_max_datetime));
+        this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
+        results.push(this.getAppendData(uuid, plotId, paramsKey));
+      }
+      return results;
     };
 
-    Handler.prototype.addStation = function(plotId, dataloggerid) {
-      var _info, _len, _variable, dataParams, state;
+    Handler.prototype.addStation = function(plotId, dataLoggerId) {
+      var _bounds, _info, _len, _max_datetime, _params, _variable, params, paramsKey, ref, results, state, uuid;
       state = this.template[plotId].proto.getState();
       _variable = this.template[plotId].proto.options.y.variable;
+      _bounds = this.getVariableBounds(_variable);
       _info = this.getVariableInfo(_variable);
-      dataParams = $.extend(true, [], this.template[plotId].proto.options.dataParams);
-      _len = dataParams.push(this.template[plotId].proto.options.dataParams);
-      dataParams[_len - 1].data_logger = dataloggerid;
-      return console.log("addStation: (dataloggerid, _len, dataParams)", dataloggerid, _len, dataParams);
+      _max_datetime = state.range.data.max.getTime();
+      _params = $.extend(true, {}, this.template[plotId].proto.options.dataParams[0]);
+      _params.data_logger = dataLoggerId;
+      _len = this.template[plotId].proto.options.dataParams.push(_params);
+      console.log("addStation: (dataLoggerId, _len, dataParams)", dataLoggerId, _len, this.template[plotId].proto.options.dataParams);
+      if (this.template[plotId].proto.options.y.variable === null) {
+        this.template[plotId].proto.options.y = {
+          variable: _variable
+        };
+        if (_info) {
+          this.template[plotId].proto.options.y.title = _info.title;
+          this.template[plotId].proto.options.y.units = _info.units;
+        }
+        if (_bounds) {
+          this.template[plotId].proto.options.y.min = _bounds.min;
+          this.template[plotId].proto.options.y.max = _bounds.max;
+        }
+      } else if (this.template[plotId].proto.options.y2.variable === null) {
+        this.template[plotId].proto.options.y2 = {
+          variable: _variable
+        };
+        if (_info) {
+          this.template[plotId].proto.options.y2.title = _info.title;
+          this.template[plotId].proto.options.y2.units = _info.units;
+        }
+        if (_bounds) {
+          this.template[plotId].proto.options.y2.min = _bounds.min;
+          this.template[plotId].proto.options.y2.max = _bounds.max;
+        }
+      } else if (this.template[plotId].proto.options.y3.variable === null) {
+        this.template[plotId].proto.options.y3 = {
+          variable: _variable
+        };
+        if (_info) {
+          this.template[plotId].proto.options.y2.title = _info.title;
+          this.template[plotId].proto.options.y2.units = _info.units;
+        }
+        if (_bounds) {
+          this.template[plotId].proto.options.y3.min = _bounds.min;
+          this.template[plotId].proto.options.y3.max = _bounds.max;
+        }
+      }
+      uuid = this.uuid();
+      ref = this.template[plotId].proto.options.dataParams;
+      results = [];
+      for (paramsKey in ref) {
+        params = ref[paramsKey];
+        this.template[plotId].proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_max_datetime));
+        this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
+        results.push(this.getAppendData(uuid, plotId, paramsKey));
+      }
+      return results;
     };
 
     Handler.prototype.zoom = function(transform) {

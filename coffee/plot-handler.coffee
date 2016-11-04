@@ -260,13 +260,7 @@ window.Plotting.Handler = class Handler
     _bounds = @getVariableBounds(variable)
     _info = @getVariableInfo(variable)
     _max_datetime = state.range.data.max.getTime()
-    
-    dataParams = []
-    for pKey, params of plot.proto.options.dataParams
-      dataParams[pKey] = @template[plotId].proto.options.dataParams
-      dataParams[pKey].max_datetime = @format(new Date(_max_datetime))
-      dataParams[pKey].limit = state.length.data
-    
+
     if @template[plotId].proto.options.y.variable == null
       @template[plotId].proto.options.y =
         variable: variable
@@ -280,28 +274,80 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.y2 =
         variable: variable
       if _info
-        @template[plotId].proto.options.y.title = _info.title
-        @template[plotId].proto.options.y.units = _info.units
+        @template[plotId].proto.options.y2.title = _info.title
+        @template[plotId].proto.options.y2.units = _info.units
       if _bounds
         @template[plotId].proto.options.y2.min = _bounds.min
         @template[plotId].proto.options.y2.max = _bounds.max
+    else if  @template[plotId].proto.options.y3.variable == null
+      @template[plotId].proto.options.y3 =
+        variable: variable
+      if _info
+        @template[plotId].proto.options.y3.title = _info.title
+        @template[plotId].proto.options.y3.units = _info.units
+      if _bounds
+        @template[plotId].proto.options.y3.min = _bounds.min
+        @template[plotId].proto.options.y3.max = _bounds.max
 
-    @getAppendData(@uuid(), plotId, dataParams)
+    uuid = @uuid()
+    for paramsKey, params of @template[plotId].proto.options.dataParams
+      @template[plotId].proto.options.dataParams[paramsKey].max_datetime =
+        @format(new Date(_max_datetime))
+      @template[plotId].proto.options.dataParams[paramsKey].limit =
+        state.length.data
+      @getAppendData(uuid, plotId, paramsKey)
 
-  addStation: (plotId, dataloggerid) ->
+  addStation: (plotId, dataLoggerId) ->
     # Add another data logger to the plot.
     state = @template[plotId].proto.getState()
     _variable = @template[plotId].proto.options.y.variable
-    
+    _bounds = @getVariableBounds(_variable)
     _info = @getVariableInfo(_variable)
+    _max_datetime = state.range.data.max.getTime()
     
-    dataParams = $.extend(true, [], @template[plotId].proto.options.dataParams)
-    _len = dataParams.push(@template[plotId].proto.options.dataParams)
-    dataParams[_len-1].data_logger = dataloggerid
-    
-    console.log("addStation: (dataloggerid, _len, dataParams)",
-      dataloggerid, _len, dataParams)
+    _params = $.extend(true, {}, @template[plotId].proto.options.dataParams[0])
+    _params.data_logger = dataLoggerId
+    _len = @template[plotId].proto.options.dataParams.push(_params)
+
+    console.log("addStation: (dataLoggerId, _len, dataParams)",
+      dataLoggerId, _len, @template[plotId].proto.options.dataParams)
+
+    if @template[plotId].proto.options.y.variable == null
+      @template[plotId].proto.options.y =
+        variable: _variable
+      if _info
+        @template[plotId].proto.options.y.title = _info.title
+        @template[plotId].proto.options.y.units = _info.units
+      if _bounds
+        @template[plotId].proto.options.y.min = _bounds.min
+        @template[plotId].proto.options.y.max = _bounds.max
+    else if  @template[plotId].proto.options.y2.variable == null
+      @template[plotId].proto.options.y2 =
+        variable: _variable
+      if _info
+        @template[plotId].proto.options.y2.title = _info.title
+        @template[plotId].proto.options.y2.units = _info.units
+      if _bounds
+        @template[plotId].proto.options.y2.min = _bounds.min
+        @template[plotId].proto.options.y2.max = _bounds.max
+    else if  @template[plotId].proto.options.y3.variable == null
+      @template[plotId].proto.options.y3 =
+        variable: _variable
+      if _info
+        @template[plotId].proto.options.y2.title = _info.title
+        @template[plotId].proto.options.y2.units = _info.units
+      if _bounds
+        @template[plotId].proto.options.y3.min = _bounds.min
+        @template[plotId].proto.options.y3.max = _bounds.max
       
+    uuid = @uuid()
+    for paramsKey, params of @template[plotId].proto.options.dataParams
+      @template[plotId].proto.options.dataParams[paramsKey].max_datetime =
+        @format(new Date(_max_datetime))
+      @template[plotId].proto.options.dataParams[paramsKey].limit =
+        state.length.data
+      @getAppendData(uuid, plotId, paramsKey)
+
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
     for plot in @template

@@ -128,7 +128,13 @@ window.Plotting.LinePlot = class LinePlot
         else
           result[key].y2 = row[@options.y2.variable]
       if @options.y3.variable != null
-        result[key].y3 = row[@options.y3.variable]
+        if (
+          @options.y.variable == @options.y3.variable or
+          @options.y2.variable == @options.y3.variable
+        )
+          result[key].y3 = row[@options.y3.variable+"_3"]
+        else
+          result[key].y3 = row[@options.y3.variable]
       if (
         @options.yBand.minVariable != null and
         @options.yBand.maxVariable != null
