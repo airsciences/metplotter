@@ -1,5 +1,9 @@
 #
-#   NWAC Coffee Plots
+#   Northwest Avalanche Center (NWAC)
+#   Plotting Tools - D3 V.4 Line Plot (line-plot.coffee)
+#
+#   Air Sciences Inc. - 2016
+#   Jacob Fielding
 #
 
 window.Plotting ||= {}
@@ -89,7 +93,7 @@ window.Plotting.LinePlot = class LinePlot
     @sortDatetimeAsc = (a, b) -> a.x - b.x
 
     # Prepare the Data & Definition
-    @data = @processData(data.data)
+    @data = @processData(data)
     @getDefinition()
     
     # Initialize the State
@@ -141,13 +145,19 @@ window.Plotting.LinePlot = class LinePlot
         result[key].y3Min = row[@options.y3Band.minVariable]
         result[key].y3Max = row[@options.y3Band.maxVariable]
     
+    _result = new Plotting.Data(result)
+    result = _result._clean(_result.get())
+    
     return result.sort(@sortDatetimeAsc)
 
   appendData: (data) ->
     # Append the full data set.
+    
     _data = @processData(data)
     _full = new Plotting.Data(@data)
-    @data = _full.append(_data, ["x"])
+    #@data = _full.append(_data, ["x"])
+    _full.append(_data, ["x"])
+    @data = _full._clean(_full.get())
     @data = @data.sort(@sortDatetimeAsc)
     
     # Reset the Data Range
@@ -157,9 +167,14 @@ window.Plotting.LinePlot = class LinePlot
     
   setDataState: ->
     # Set Data Ranges
+    _len = @data.length-1
+    for i in [0.._len]
+      if @data[i] is undefined
+        console.log("data[i] is (i, row)", i, @data[i])
     @state.range.data =
       min: d3.min(@data, (d)-> d.x)
       max: d3.max(@data, (d)-> d.x)
+    
     # Set Data Length States
     @state.length.data = @data.length
 
@@ -372,8 +387,10 @@ window.Plotting.LinePlot = class LinePlot
       @definition.y.max = @definition.y.min * 1.2
      
     # Revert to Options
-    @definition.y.min = d3.min([@options.y.min, @definition.y.min])
-    @definition.y.max = d3.max([@options.y.max, @definition.y.max])
+    @definition.y.min = if @options.y.min is null then @definition.y.min
+    else @options.y.min
+    @definition.y.max = if @options.y.max is null then @definition.y.max
+    else @options.y.max
 
   preAppend: ->
 
@@ -869,6 +886,9 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y3.variable != null
       dy3 = @definition.y(d.y3)
       @focusCircle3.attr("transform", "translate(0, 0)")
+
+    if d is null or d is undefined
+      console.log("d is broken (d)", d)
 
     cx = dx - _dims.leftPadding
     @crosshairs.select(".crosshair-x")

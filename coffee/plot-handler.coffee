@@ -1,5 +1,17 @@
+###
+Northwest Avalanche Center (NWAC)
+Plotting Tools - (plotter.js) - v0.9
+
+Air Sciences Inc. - 2016
+Jacob Fielding
+###
+
 #
-#   NWAC Plotting & Authentication handler.
+#   Northwest Avalanche Center (NWAC)
+#   Plotting Tools - Plot Template & API Manager (plot-handler.coffee)
+#
+#   Air Sciences Inc. - 2016
+#   Jacob Fielding
 #
 
 window.Plotting ||= {}
@@ -11,8 +23,10 @@ window.Plotting.Handler = class Handler
     defaults =
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+      # Performance Variables:
       refresh: 500
       updateLength: 256
+      ##
       colors:
         light: [
           "rgb(53, 152, 219)",
@@ -82,6 +96,26 @@ window.Plotting.Handler = class Handler
 
     setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
 
+  listenTest: ->
+    key = 0
+    plot = @template[key]
+    state = plot.proto.getState()
+    if state.request.data.min
+      @prependData(key)
+    if state.request.data.max
+      @appendData(key)
+
+  listenTestLoop: ->
+    # Run the update loop
+    for key, plot of @template
+      state = plot.proto.getState()
+      # Min-Side Events
+      if state.request.data.min
+        @prependData(key)
+      # Max-Side Events
+      if state.request.data.max
+        @appendData(key)
+
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
@@ -95,28 +129,29 @@ window.Plotting.Handler = class Handler
         return
       _.template = data.responseJSON.templateData
     
-    @syncronousapi.get target, args, callback
+    @syncronousapi.get(target, args, callback)
 
-  getStationParamData: (plotId, key) ->
+  getStationParamData: (plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
     target = "#{location.protocol}//dev.nwac.us/api/v5/measurement"
     _ = @
-    args = @template[plotId].dataParams
+    args = @template[plotId].dataParams[paramsKey]
 
     callback = (data) ->
-      _.template[plotId].data = data.responseJSON
-    
-    @syncronousapi.get target, args, callback
+      if _.template[plotId].data is undefined
+        _.template[plotId].data = [data.responseJSON.results]
+      else
+        _.template[plotId].data.push(data.responseJSON.results)
+      console.log("#{preError} (template.data)", _.template[plotId].data)
+
+    @syncronousapi.get(target, args, callback)
     
   getTemplatePlotData: ->
     preError = "#{@preError}.getPlotData()"
     for key, plot of @template
-      if @template[key].dataParams instanceof Array
-        for subKey, params of @template[key].dataParams
-          @getStationParamData key, subKey
-      else
-        @getStationParamData key
+      for subKey, params of @template[key].dataParams
+        @getStationParamData(key, subKey)
   
   append: () ->
     # Master append plots.
@@ -143,20 +178,15 @@ window.Plotting.Handler = class Handler
       if plot.options.y.variable == 'temperature'
         plot.options.y.maxBarValue = 32
       
-      if plot.data instanceof Array
-        plot.options.merge = true
-        data =
-          data: []
-        for dKey, row of plot.data
-          data.data[dKey] = row.results
-        plot.data = [null, null]
-      else
-        data =
-          data: plot.data.results
-        plot.data = null
-      
+      # Join Multi-Station Data
+      _data = new window.Plotting.Data(plot.data[0])
+      _len = plot.data.length-1
+      if _len > 0
+        for i in [1.._len]
+          _data.join(plot.data[i], [plot.options.x.variable])
+            
       title = @getTitle(plot)
-      instance = new window.Plotting.LinePlot data, plot.options
+      instance = new window.Plotting.LinePlot(_data.get(), plot.options)
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
@@ -164,82 +194,60 @@ window.Plotting.Handler = class Handler
 
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options
-
-
-
-  getPrependData: (plotId, dataParams, key) ->
-    # Request a station's dataset (param specific)
-    preError = "#{@preError}.getPrependData(key, dataParams)"
-    target = "http://dev.nwac.us/api/v5/measurement"
-    _ = @
-    _is_array = dataParams instanceof Array
-    args = dataParams
-    
-    callback = (data) ->
-      _.template[plotId].proto.appendData(data.responseJSON.results)
-      _.template[plotId].proto.update()
-    
-    @api.get(target, args, callback)
       
-  getAppendData: (plotId, dataParams) ->
+  getAppendData: (plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getAppendData(key, dataParams)"
     target = "http://dev.nwac.us/api/v5/measurement"
     _ = @
-    args = dataParams
-
+    args = @template[plotId].proto.options.dataParams[paramsKey]
+    _length = @template[plotId].proto.options.dataParams.length
+    
     callback = (data) ->
-      _.template[plotId].proto.appendData(data.responseJSON.results)
-      _.template[plotId].proto.update()
+      plot = _.template[plotId]
+      if plot._data is undefined
+        plot._data = new window.Plotting.Data(data.responseJSON.results)
+      else
+        plot._data.join(data.responseJSON.results,
+          [plot.proto.options.x.variable])
+      if plot._data.getSourceCount() is _length
+        plot.proto.appendData(plot._data.get())
+        plot.proto.update()
+        delete plot._data
         
-    @api.get target, args, callback
+    @api.get(target, args, callback)
 
-  prependData: (key) ->
+  prependData: (plotId) ->
     # Move forward a certain offset of time records on all plots.
     preError = "#{@preError}.prependData()"
-    plot = @template[key]
+    plot = @template[plotId]
     state = plot.proto.getState()
-    
-    if plot.proto.options.dataParams instanceof Array
-      dataParams = []
-      for pKey, params of plot.proto.options.dataParams
-        dataParams[pKey] = params
-        dataParams[pKey].max_datetime = @format(state.range.data.min)
-        dataParams[pKey].limit = @options.updateLength
-    else
-      dataParams = plot.proto.options.dataParams
-      dataParams.max_datetime = @format(state.range.data.min)
-      dataParams.limit = @options.updateLength
 
-    @getPrependData(key, dataParams)
+    for paramsKey, params of plot.proto.options.dataParams
+      plot.proto.options.dataParams[paramsKey].max_datetime =
+        @format(state.range.data.min)
+      plot.proto.options.dataParams[paramsKey].limit = @options.updateLength
+      @getAppendData(plotId, paramsKey)
     
-  appendData: (key) ->
+  appendData: (plotId) ->
     # Move forward a certain offset of time records on all plots.
     preError = "#{@preError}.appendData()"
+    plot = @template[plotId]
+    state = plot.proto.getState()
     _now = new Date()
     
     # Get the Current Plot & Plot State
-    plot = @template[key]
-    state = plot.proto.getState()
-    
     if state.range.data.max >= _now
       return
     
     _max_datetime = state.range.data.max.getTime()
     _new_max_datetime = _max_datetime + (@options.updateLength * 3600000)
     
-    if plot.proto.options.dataParams instanceof Array
-      dataParams = []
-      for pKey, params of plot.proto.options.dataParams
-        dataParams[pKey] = plot.proto.options.dataParams[pKey]
-        dataParams[pKey].max_datetime = @format(new Date(_new_max_datetime))
-        dataParams[pKey].limit = @options.updateLength
-    else
-      dataParams = plot.proto.options.dataParams
-      dataParams.max_datetime = @format(new Date(_new_max_datetime))
-      dataParams.limit = @options.updateLength
-    
-    @getPrependData(key, dataParams)
+    for paramsKey, params of plot.proto.options.dataParams
+      plot.proto.options.dataParams[paramsKey].max_datetime =
+        @format(new Date(_new_max_datetime))
+      plot.proto.options.dataParams[paramsKey].limit = @options.updateLength
+      @getAppendData(plotId, paramsKey)
 
   addVariable: (plotId, variable) ->
     # Add a variable to the plot.
@@ -249,9 +257,11 @@ window.Plotting.Handler = class Handler
     _info = @getVariableInfo(variable)
     _max_datetime = state.range.data.max.getTime()
     
-    dataParams = @template[plotId].proto.options.dataParams
-    dataParams.max_datetime = @format(new Date(_max_datetime))
-    dataParams.limit = state.length.data
+    dataParams = []
+    for pKey, params of plot.proto.options.dataParams
+      dataParams[pKey] = @template[plotId].proto.options.dataParams
+      dataParams[pKey].max_datetime = @format(new Date(_max_datetime))
+      dataParams[pKey].limit = state.length.data
     
     if @template[plotId].proto.options.y.variable == null
       @template[plotId].proto.options.y =
@@ -273,7 +283,20 @@ window.Plotting.Handler = class Handler
         @template[plotId].proto.options.y2.max = _bounds.max
 
     @getAppendData(plotId, dataParams)
-    @controls.updateParameterDropdown(plotId)
+
+  addStation: (plotId, dataloggerid) ->
+    # Add another data logger to the plot.
+    state = @template[plotId].proto.getState()
+    _variable = @template[plotId].proto.options.y.variable
+    
+    _info = @getVariableInfo(_variable)
+    
+    dataParams = $.extend(true, [], @template[plotId].proto.options.dataParams)
+    _len = dataParams.push(@template[plotId].proto.options.dataParams)
+    dataParams[_len-1].data_logger = dataloggerid
+    
+    console.log("addStation: (dataloggerid, _len, dataParams)",
+      dataloggerid, _len, dataParams)
       
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
