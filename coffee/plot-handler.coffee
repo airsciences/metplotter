@@ -168,9 +168,9 @@ window.Plotting.Handler = class Handler
       plot.options.dataParams = plot.dataParams
       plot.options.y.color = @getColor('light', key)
       if plot.options.y2
-        plot.options.y2.color = @getColor('light', (key+1))
+        plot.options.y2.color = @getColor('light', parseInt(key+4%7))
       if plot.options.y3
-        plot.options.y3.color = @getColor('light', (key+2))
+        plot.options.y3.color = @getColor('light', parseInt(key+6%7))
       _bounds = @getVariableBounds(plot.options.y.variable)
       if _bounds
         plot.options.y.min = _bounds.min
@@ -195,7 +195,7 @@ window.Plotting.Handler = class Handler
   mergeTemplateOption: () ->
     # Merge the templated plot options with returned options
       
-  getAppendData: (plotId, paramsKey) ->
+  getAppendData: (call, plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getAppendData(key, dataParams)"
     target = "http://dev.nwac.us/api/v5/measurement"
@@ -206,14 +206,16 @@ window.Plotting.Handler = class Handler
     callback = (data) ->
       plot = _.template[plotId]
       if plot._data is undefined
-        plot._data = new window.Plotting.Data(data.responseJSON.results)
+        plot._data = []
+      if plot._data[call] is undefined
+        plot._data[call] = new window.Plotting.Data(data.responseJSON.results)
       else
-        plot._data.join(data.responseJSON.results,
+        plot._data[call].join(data.responseJSON.results,
           [plot.proto.options.x.variable])
-      if plot._data.getSourceCount() is _length
-        plot.proto.appendData(plot._data.get())
+      if plot._data[call].getSourceCount() is _length
+        plot.proto.appendData(plot._data[call].get())
         plot.proto.update()
-        delete plot._data
+        delete plot._data[call]
         
     @api.get(target, args, callback)
 
@@ -223,11 +225,12 @@ window.Plotting.Handler = class Handler
     plot = @template[plotId]
     state = plot.proto.getState()
 
+    call = @uuid()
     for paramsKey, params of plot.proto.options.dataParams
       plot.proto.options.dataParams[paramsKey].max_datetime =
         @format(state.range.data.min)
       plot.proto.options.dataParams[paramsKey].limit = @options.updateLength
-      @getAppendData(plotId, paramsKey)
+      @getAppendData(call, plotId, paramsKey)
     
   appendData: (plotId) ->
     # Move forward a certain offset of time records on all plots.
@@ -243,11 +246,12 @@ window.Plotting.Handler = class Handler
     _max_datetime = state.range.data.max.getTime()
     _new_max_datetime = _max_datetime + (@options.updateLength * 3600000)
     
+    call = @uuid()
     for paramsKey, params of plot.proto.options.dataParams
       plot.proto.options.dataParams[paramsKey].max_datetime =
         @format(new Date(_new_max_datetime))
       plot.proto.options.dataParams[paramsKey].limit = @options.updateLength
-      @getAppendData(plotId, paramsKey)
+      @getAppendData(call, plotId, paramsKey)
 
   addVariable: (plotId, variable) ->
     # Add a variable to the plot.
@@ -282,7 +286,7 @@ window.Plotting.Handler = class Handler
         @template[plotId].proto.options.y2.min = _bounds.min
         @template[plotId].proto.options.y2.max = _bounds.max
 
-    @getAppendData(plotId, dataParams)
+    @getAppendData(@uuid(), plotId, dataParams)
 
   addStation: (plotId, dataloggerid) ->
     # Add another data logger to the plot.

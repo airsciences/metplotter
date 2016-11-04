@@ -530,14 +530,15 @@
               _value = _row[_subKey];
               if (indexOf.call(onKeys, _subKey) < 0) {
                 result[_len - 1][_subKey + "_2"] = _value;
-                _secondary.splice(_key, 1);
-                break;
               }
             }
+            _secondary.splice(_key, 1);
+            break;
           }
         }
       }
       this.sourceCount++;
+      console.log(preError + " data source count", this.sourceCount);
       this.data = this._clean(result);
       return this.data;
     };
@@ -566,10 +567,10 @@
               _value = _row[_subKey];
               if (indexOf.call(onKeys, _subKey) < 0) {
                 result[_len - 1][_subKey] = _value;
-                _secondary.splice(_key, 1);
-                break;
               }
             }
+            _secondary.splice(_key, 1);
+            break;
           }
         }
       }
@@ -816,7 +817,11 @@
           y: row[this.options.y.variable]
         };
         if (this.options.y2.variable !== null) {
-          result[key].y2 = row[this.options.y2.variable];
+          if (this.options.y.variable === this.options.y2.variable) {
+            result[key].y2 = row[this.options.y2.variable + "_2"];
+          } else {
+            result[key].y2 = row[this.options.y2.variable];
+          }
         }
         if (this.options.y3.variable !== null) {
           result[key].y3 = row[this.options.y3.variable];
@@ -1585,10 +1590,10 @@ Jacob Fielding
         plot.options.dataParams = plot.dataParams;
         plot.options.y.color = this.getColor('light', key);
         if (plot.options.y2) {
-          plot.options.y2.color = this.getColor('light', key + 1);
+          plot.options.y2.color = this.getColor('light', parseInt(key + 4 % 7));
         }
         if (plot.options.y3) {
-          plot.options.y3.color = this.getColor('light', key + 2);
+          plot.options.y3.color = this.getColor('light', parseInt(key + 6 % 7));
         }
         _bounds = this.getVariableBounds(plot.options.y.variable);
         if (_bounds) {
@@ -1616,7 +1621,7 @@ Jacob Fielding
 
     Handler.prototype.mergeTemplateOption = function() {};
 
-    Handler.prototype.getAppendData = function(plotId, paramsKey) {
+    Handler.prototype.getAppendData = function(call, plotId, paramsKey) {
       var _, _length, args, callback, preError, target;
       preError = this.preError + ".getAppendData(key, dataParams)";
       target = "http://dev.nwac.us/api/v5/measurement";
@@ -1627,37 +1632,41 @@ Jacob Fielding
         var plot;
         plot = _.template[plotId];
         if (plot._data === void 0) {
-          plot._data = new window.Plotting.Data(data.responseJSON.results);
-        } else {
-          plot._data.join(data.responseJSON.results, [plot.proto.options.x.variable]);
+          plot._data = [];
         }
-        if (plot._data.getSourceCount() === _length) {
-          plot.proto.appendData(plot._data.get());
+        if (plot._data[call] === void 0) {
+          plot._data[call] = new window.Plotting.Data(data.responseJSON.results);
+        } else {
+          plot._data[call].join(data.responseJSON.results, [plot.proto.options.x.variable]);
+        }
+        if (plot._data[call].getSourceCount() === _length) {
+          plot.proto.appendData(plot._data[call].get());
           plot.proto.update();
-          return delete plot._data;
+          return delete plot._data[call];
         }
       };
       return this.api.get(target, args, callback);
     };
 
     Handler.prototype.prependData = function(plotId) {
-      var params, paramsKey, plot, preError, ref, results, state;
+      var call, params, paramsKey, plot, preError, ref, results, state;
       preError = this.preError + ".prependData()";
       plot = this.template[plotId];
       state = plot.proto.getState();
+      call = this.uuid();
       ref = plot.proto.options.dataParams;
       results = [];
       for (paramsKey in ref) {
         params = ref[paramsKey];
         plot.proto.options.dataParams[paramsKey].max_datetime = this.format(state.range.data.min);
         plot.proto.options.dataParams[paramsKey].limit = this.options.updateLength;
-        results.push(this.getAppendData(plotId, paramsKey));
+        results.push(this.getAppendData(call, plotId, paramsKey));
       }
       return results;
     };
 
     Handler.prototype.appendData = function(plotId) {
-      var _max_datetime, _new_max_datetime, _now, params, paramsKey, plot, preError, ref, results, state;
+      var _max_datetime, _new_max_datetime, _now, call, params, paramsKey, plot, preError, ref, results, state;
       preError = this.preError + ".appendData()";
       plot = this.template[plotId];
       state = plot.proto.getState();
@@ -1667,13 +1676,14 @@ Jacob Fielding
       }
       _max_datetime = state.range.data.max.getTime();
       _new_max_datetime = _max_datetime + (this.options.updateLength * 3600000);
+      call = this.uuid();
       ref = plot.proto.options.dataParams;
       results = [];
       for (paramsKey in ref) {
         params = ref[paramsKey];
         plot.proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_new_max_datetime));
         plot.proto.options.dataParams[paramsKey].limit = this.options.updateLength;
-        results.push(this.getAppendData(plotId, paramsKey));
+        results.push(this.getAppendData(call, plotId, paramsKey));
       }
       return results;
     };
@@ -1717,7 +1727,7 @@ Jacob Fielding
           this.template[plotId].proto.options.y2.max = _bounds.max;
         }
       }
-      return this.getAppendData(plotId, dataParams);
+      return this.getAppendData(this.uuid(), plotId, dataParams);
     };
 
     Handler.prototype.addStation = function(plotId, dataloggerid) {

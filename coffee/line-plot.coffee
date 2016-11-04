@@ -123,7 +123,10 @@ window.Plotting.LinePlot = class LinePlot
         x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
         y: row[@options.y.variable]
       if @options.y2.variable != null
-        result[key].y2 = row[@options.y2.variable]
+        if @options.y.variable == @options.y2.variable
+          result[key].y2 = row[@options.y2.variable+"_2"]
+        else
+          result[key].y2 = row[@options.y2.variable]
       if @options.y3.variable != null
         result[key].y3 = row[@options.y3.variable]
       if (

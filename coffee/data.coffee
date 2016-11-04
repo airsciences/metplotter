@@ -73,10 +73,11 @@ window.Plotting.Data = class Data
           for _subKey, _value of _row
             if _subKey not in onKeys
               result[_len - 1][_subKey + "_2"] = _value
-              _secondary.splice(_key, 1)
-              break
+          _secondary.splice(_key, 1)
+          break
 
     @sourceCount++
+    console.log("#{preError} data source count", @sourceCount)
     @data = @_clean(result)
     #@_tryError(@data, preError)
     return @data
@@ -105,8 +106,8 @@ window.Plotting.Data = class Data
           for _subKey, _value of _row
             if _subKey not in onKeys
               result[_len - 1][_subKey] = _value
-              _secondary.splice(_key, 1)
-              break
+          _secondary.splice(_key, 1)
+          break
 
     @data = @_clean(result)
     #@_tryError(@data, preError)
