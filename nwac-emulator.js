@@ -75,11 +75,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":4470
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -98,11 +98,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":5970
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 40,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -125,11 +125,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":4470
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 42,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -148,11 +148,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":4470
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -171,11 +171,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":4470
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -194,11 +194,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":4470
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -245,6 +245,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                         "variable": "temperature",
                         "title": "Temperature",
                         "units": "°F"
+                    },
+                    "y2": {
+                        "variable": "temperature",
+                        "title": "Temperature",
+                        "units": "°F"                        
                     }
                 }
             },
@@ -256,11 +261,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":5970
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 40,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -282,11 +287,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":4470
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -304,11 +309,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":4470
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {
@@ -326,11 +331,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "region":"West Slopes South",
                     "elevation":4470
                 },
-                "dataParams": {
+                "dataParams": [{
                     "data_logger": 43,
                     "max_datetime": "2016-02-28T00:00:00Z",
                     "limit": 504
-                },
+                }],
                 "options": {
                     "x": xVar,
                     "y": {

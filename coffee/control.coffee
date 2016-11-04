@@ -1,4 +1,10 @@
-
+#
+#   Northwest Avalanche Center (NWAC)
+#   Plotting Tools - Plot Controls (control.coffee)
+#
+#   Air Sciences Inc. - 2016
+#   Jacob Fielding
+#
 
 window.Plotting ||= {}
 
@@ -63,16 +69,16 @@ window.Plotting.Controls = class Controls
             station.dataloggerid)
           color = ""
           if _row_current
-            console.log("Row Current", _row_current)
             color = "style=\"color: #{_row_current.color}\""
           id = "data-logger-#{station.dataloggerid}-plot-#{plotId}"
           _prepend = "<i id=\"#{id}\" class=\"icon-circle\"
             #{color}></i>"
           html = "#{html}
-            <li class=\"list-group-item station\"
-              style=\"cursor: pointer; padding: 1px 5px;
-              list-style-type: none\">#{_prepend}
-               #{station.name}</li>"
+            <li class=\"station\"
+              style=\"padding: 1px 5px; cursor: pointer;
+              list-style-type: none\" onclick=\"plotter.addStation(#{plotId},
+                #{station.dataloggerid})\">
+               #{_prepend} #{station.name}</li>"
         
         html = "#{html}
           </ul>"
@@ -83,23 +89,9 @@ window.Plotting.Controls = class Controls
     
       $(appendTarget).prepend(html)
       
+      # Bind Dropdown & Submenu Click Event.
       $('#'+uuid).dropdown()
-      
-      # Subheader Click Event.
-      $(".subheader").unbind().on('click', (event) ->
-        event.preventDefault()
-        event.stopPropagation()
-        next = $(this).next()
-        
-        if next.is(":visible")
-          $(this).find("i").removeClass("icon-caret-up")
-            .addClass("icon-caret-down")
-          next.slideUp()
-        else
-          $(this).find("i").removeClass("icon-caret-down")
-            .addClass("icon-caret-up")
-          next.slideDown()
-      )
+      _.bindSubMenuEvent(".subheader")
     
     @api.get(target, args, callback)
 
@@ -234,3 +226,20 @@ window.Plotting.Controls = class Controls
       if cValue[key] == value
         return cValue
     return false
+
+  bindSubMenuEvent: (target) ->
+    # Bind the sub-menu dropdown click event.
+    $(target).unbind().on('click', (event) ->
+      event.preventDefault()
+      event.stopPropagation()
+      next = $(this).next()
+      
+      if next.is(":visible")
+        $(this).find("i").removeClass("icon-caret-up")
+          .addClass("icon-caret-down")
+        next.slideUp()
+      else
+        $(this).find("i").removeClass("icon-caret-down")
+          .addClass("icon-caret-up")
+        next.slideDown()
+    )

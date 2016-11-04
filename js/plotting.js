@@ -206,7 +206,8 @@
     };
 
     API.prototype.encodeArgs = function(type, json_args) {
-      var aCount, argStr, argument, error, error1;
+      var aCount, argStr, argument, error, error1, preError;
+      preError = this.preError + "encodeArgs(type, json_args)";
       argStr = "";
       aCount = 0;
       if (typeof json_args === 'string') {
@@ -298,31 +299,18 @@
             _row_current = _.isCurrent(current, 'dataLoggerId', station.dataloggerid);
             color = "";
             if (_row_current) {
-              console.log("Row Current", _row_current);
               color = "style=\"color: " + _row_current.color + "\"";
             }
             id = "data-logger-" + station.dataloggerid + "-plot-" + plotId;
             _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" " + color + "></i>";
-            html = html + " <li class=\"list-group-item station\" style=\"cursor: pointer; padding: 1px 5px; list-style-type: none\">" + _prepend + " " + station.name + "</li>";
+            html = html + " <li class=\"station\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"plotter.addStation(" + plotId + ", " + station.dataloggerid + ")\"> " + _prepend + " " + station.name + "</li>";
           }
           html = html + " </ul>";
         }
         html = html + " </ul> </li>";
         $(appendTarget).prepend(html);
         $('#' + uuid).dropdown();
-        return $(".subheader").unbind().on('click', function(event) {
-          var next;
-          event.preventDefault();
-          event.stopPropagation();
-          next = $(this).next();
-          if (next.is(":visible")) {
-            $(this).find("i").removeClass("icon-caret-up").addClass("icon-caret-down");
-            return next.slideUp();
-          } else {
-            $(this).find("i").removeClass("icon-caret-down").addClass("icon-caret-up");
-            return next.slideDown();
-          }
-        });
+        return _.bindSubMenuEvent(".subheader");
       };
       return this.api.get(target, args, callback);
     };
@@ -442,6 +430,22 @@
       return false;
     };
 
+    Controls.prototype.bindSubMenuEvent = function(target) {
+      return $(target).unbind().on('click', function(event) {
+        var next;
+        event.preventDefault();
+        event.stopPropagation();
+        next = $(this).next();
+        if (next.is(":visible")) {
+          $(this).find("i").removeClass("icon-caret-up").addClass("icon-caret-down");
+          return next.slideUp();
+        } else {
+          $(this).find("i").removeClass("icon-caret-down").addClass("icon-caret-up");
+          return next.slideDown();
+        }
+      });
+    };
+
     return Controls;
 
   })();
@@ -456,21 +460,35 @@
 
   window.Plotting.Data = Data = (function() {
     function Data(data) {
-      var preError;
-      this.preError = "Data.";
-      preError = this.preError + ".constructor(data)";
+      var _len, i, j, preError, ref;
+      this.preError = "Plotting.Data.";
+      preError = this.preError + ".constructor(...)";
       if (!(data instanceof Array)) {
         console.log(preError + " data not of type array.");
         return;
       }
       this.data = $.extend(true, [], data);
+      this.sourceCount = 1;
+      _len = this.data.length - 1;
+      for (i = j = 0, ref = _len; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+        if (this.data[i] === void 0) {
+          console.log(preError + " on construct, @data[i] is (i, row)", i, this.data[i]);
+        }
+      }
       this.test = function(row, joinRow, onKeys) {
-        var _calculated, _required, i, len, testResult, testRow;
+        var _calculated, _required, k, len, testResult, testRow;
+        preError = this.preError + "test(...):";
         _required = onKeys.length;
         _calculated = 0;
         testResult = false;
-        for (i = 0, len = onKeys.length; i < len; i++) {
-          testRow = onKeys[i];
+        for (k = 0, len = onKeys.length; k < len; k++) {
+          testRow = onKeys[k];
+          if (row[testRow] === void 0) {
+            throw new Error(preError + " key '" + testRow + "' not found in primary data set.");
+          }
+          if (joinRow[testRow] === void 0) {
+            throw new Error(preError + " key '" + testRow + "' not found in joining data set.");
+          }
           if (row[testRow] instanceof Date) {
             if (row[testRow].getTime() === joinRow[testRow].getTime()) {
               _calculated++;
@@ -489,7 +507,8 @@
     }
 
     Data.prototype.join = function(data, onKeys) {
-      var _dataKeys, _key, _len, _primary, _protoKeys, _row, _secondary, _subKey, _test, _value, key, result, row;
+      var _dataKeys, _key, _len, _primary, _protoKeys, _row, _secondary, _subKey, _test, _value, key, preError, result, row;
+      preError = this.preError + ".join(data, onKeys)";
       result = [];
       _protoKeys = Object.keys(this.data[0]);
       _dataKeys = Object.keys(data[0]);
@@ -502,26 +521,30 @@
       }
       for (key in _primary) {
         row = _primary[key];
+        _len = result.push($.extend(true, {}, row));
         for (_key in _secondary) {
           _row = _secondary[_key];
           _test = this.test(row, _row, onKeys);
-          _len = result.push($.extend(true, {}, row));
           if (_test) {
             for (_subKey in _row) {
               _value = _row[_subKey];
               if (indexOf.call(onKeys, _subKey) < 0) {
                 result[_len - 1][_subKey + "_2"] = _value;
+                _secondary.splice(_key, 1);
+                break;
               }
             }
           }
         }
       }
-      this.data = $.extend(true, [], data);
+      this.sourceCount++;
+      this.data = this._clean(result);
       return this.data;
     };
 
     Data.prototype.merge = function(data, onKeys) {
-      var _dataKeys, _key, _len, _primary, _protoKeys, _row, _secondary, _subKey, _test, _value, key, result, row;
+      var _dataKeys, _key, _len, _primary, _protoKeys, _row, _secondary, _subKey, _test, _value, key, preError, result, row;
+      preError = this.preError + ".merge(data, onKeys)";
       result = [];
       _protoKeys = Object.keys(this.data[0]);
       _dataKeys = Object.keys(data[0]);
@@ -534,26 +557,29 @@
       }
       for (key in _primary) {
         row = _primary[key];
+        _len = result.push($.extend(true, {}, row));
         for (_key in _secondary) {
           _row = _secondary[_key];
           _test = this.test(row, _row, onKeys);
-          _len = result.push($.extend(true, {}, row));
           if (_test) {
             for (_subKey in _row) {
               _value = _row[_subKey];
               if (indexOf.call(onKeys, _subKey) < 0) {
                 result[_len - 1][_subKey] = _value;
+                _secondary.splice(_key, 1);
+                break;
               }
             }
           }
         }
       }
-      this.data = $.extend(true, [], data);
+      this.data = this._clean(result);
       return this.data;
     };
 
     Data.prototype.append = function(data, onKeys) {
-      var _key, _primary, _row, _secondary, _subKey, _test, _total, _value, key, row;
+      var _key, _primary, _row, _secondary, _subKey, _test, _value, key, preError, result, row;
+      preError = this.preError + ".append(data, onKeys)";
       _primary = $.extend(true, [], this.data);
       _secondary = $.extend(true, [], data);
       for (key in _primary) {
@@ -568,22 +594,53 @@
                 _primary[key][_subKey] = _value;
               }
             }
-            delete _secondary[_key];
+            _secondary.splice(_key, 1);
           }
         }
       }
-      _total = _primary.concat(_secondary);
-      this.data = $.extend(true, [], _total);
+      result = _primary.concat(_secondary);
+      this.data = this._clean(result);
       return this.data;
     };
 
     Data.prototype.sub = function(start, end) {
-      this.data = $.extend(true, [], this.data.slice(start, end));
+      this.data = this._clean($.extend(true, [], this.data.slice(start, end)));
       return this.data;
     };
 
     Data.prototype.get = function() {
       return $.extend(true, [], this.data);
+    };
+
+    Data.prototype.getSourceCount = function() {
+      return this.sourceCount;
+    };
+
+    Data.prototype._clean = function(data) {
+      var _data, _len, i, j, ref;
+      _data = $.extend(true, [], data);
+      _len = _data.length - 1;
+      for (i = j = 0, ref = _len; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+        if (_data[i] === void 0) {
+          _data.splice(i, 1);
+        }
+      }
+      return $.extend(true, [], _data);
+    };
+
+    Data.prototype._tryError = function(data, preError) {
+      var _len, i, j, ref, results;
+      _len = data.length - 1;
+      results = [];
+      for (i = j = 0, ref = _len; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+        if (data[i] === void 0) {
+          console.log("@data[i] is (i, row)", i, row);
+          throw new Error(preError + " undefined row");
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
     };
 
     return Data;
@@ -723,7 +780,7 @@
       this.sortDatetimeAsc = function(a, b) {
         return a.x - b.x;
       };
-      this.data = this.processData(data.data);
+      this.data = this.processData(data);
       this.getDefinition();
       this.state = {
         range: {
@@ -750,7 +807,7 @@
     }
 
     LinePlot.prototype.processData = function(data) {
-      var key, result, row;
+      var _result, key, result, row;
       result = [];
       for (key in data) {
         row = data[key];
@@ -777,6 +834,8 @@
           result[key].y3Max = row[this.options.y3Band.maxVariable];
         }
       }
+      _result = new Plotting.Data(result);
+      result = _result._clean(_result.get());
       return result.sort(this.sortDatetimeAsc);
     };
 
@@ -784,7 +843,8 @@
       var _data, _full;
       _data = this.processData(data);
       _full = new Plotting.Data(this.data);
-      this.data = _full.append(_data, ["x"]);
+      _full.append(_data, ["x"]);
+      this.data = _full._clean(_full.get());
       this.data = this.data.sort(this.sortDatetimeAsc);
       this.setDataState();
       this.setIntervalState();
@@ -792,6 +852,13 @@
     };
 
     LinePlot.prototype.setDataState = function() {
+      var _len, i, j, ref;
+      _len = this.data.length - 1;
+      for (i = j = 0, ref = _len; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+        if (this.data[i] === void 0) {
+          console.log("data[i] is (i, row)", i, this.data[i]);
+        }
+      }
       this.state.range.data = {
         min: d3.min(this.data, function(d) {
           return d.x;
@@ -1009,8 +1076,8 @@
         this.definition.y.min = this.definition.y.min * 0.8;
         this.definition.y.max = this.definition.y.min * 1.2;
       }
-      this.definition.y.min = d3.min([this.options.y.min, this.definition.y.min]);
-      return this.definition.y.max = d3.max([this.options.y.max, this.definition.y.max]);
+      this.definition.y.min = this.options.y.min === null ? this.definition.y.min : this.options.y.min;
+      return this.definition.y.max = this.options.y.max === null ? this.definition.y.max : this.options.y.max;
     };
 
     LinePlot.prototype.preAppend = function() {};
@@ -1225,6 +1292,9 @@
         dy3 = this.definition.y(d.y3);
         this.focusCircle3.attr("transform", "translate(0, 0)");
       }
+      if (d === null || d === void 0) {
+        console.log("d is broken (d)", d);
+      }
       cx = dx - _dims.leftPadding;
       this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
       this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
@@ -1333,6 +1403,15 @@
 
 }).call(this);
 
+
+/*
+Northwest Avalanche Center (NWAC)
+Plotting Tools - (plotter.js) - v0.9
+
+Air Sciences Inc. - 2016
+Jacob Fielding
+ */
+
 (function() {
   var Handler;
 
@@ -1404,6 +1483,38 @@
       return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
     };
 
+    Handler.prototype.listenTest = function() {
+      var key, plot, state;
+      key = 0;
+      plot = this.template[key];
+      state = plot.proto.getState();
+      if (state.request.data.min) {
+        this.prependData(key);
+      }
+      if (state.request.data.max) {
+        return this.appendData(key);
+      }
+    };
+
+    Handler.prototype.listenTestLoop = function() {
+      var key, plot, ref, results, state;
+      ref = this.template;
+      results = [];
+      for (key in ref) {
+        plot = ref[key];
+        state = plot.proto.getState();
+        if (state.request.data.min) {
+          this.prependData(key);
+        }
+        if (state.request.data.max) {
+          results.push(this.appendData(key));
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
+    };
+
     Handler.prototype.getTemplate = function(template_uri) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getTemplate(...)";
@@ -1420,14 +1531,19 @@
       return this.syncronousapi.get(target, args, callback);
     };
 
-    Handler.prototype.getStationParamData = function(plotId, key) {
+    Handler.prototype.getStationParamData = function(plotId, paramsKey) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData()";
       target = location.protocol + "//dev.nwac.us/api/v5/measurement";
       _ = this;
-      args = this.template[plotId].dataParams;
+      args = this.template[plotId].dataParams[paramsKey];
       callback = function(data) {
-        return _.template[plotId].data = data.responseJSON;
+        if (_.template[plotId].data === void 0) {
+          _.template[plotId].data = [data.responseJSON.results];
+        } else {
+          _.template[plotId].data.push(data.responseJSON.results);
+        }
+        return console.log(preError + " (template.data)", _.template[plotId].data);
       };
       return this.syncronousapi.get(target, args, callback);
     };
@@ -1439,26 +1555,22 @@
       results = [];
       for (key in ref) {
         plot = ref[key];
-        if (this.template[key].dataParams instanceof Array) {
-          results.push((function() {
-            var ref1, results1;
-            ref1 = this.template[key].dataParams;
-            results1 = [];
-            for (subKey in ref1) {
-              params = ref1[subKey];
-              results1.push(this.getStationParamData(key, subKey));
-            }
-            return results1;
-          }).call(this));
-        } else {
-          results.push(this.getStationParamData(key));
-        }
+        results.push((function() {
+          var ref1, results1;
+          ref1 = this.template[key].dataParams;
+          results1 = [];
+          for (subKey in ref1) {
+            params = ref1[subKey];
+            results1.push(this.getStationParamData(key, subKey));
+          }
+          return results1;
+        }).call(this));
       }
       return results;
     };
 
     Handler.prototype.append = function() {
-      var _bounds, dKey, data, instance, key, plot, preError, ref, ref1, results, row, target, title;
+      var _bounds, _data, _len, i, instance, j, key, plot, preError, ref, ref1, results, target, title;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
@@ -1486,25 +1598,15 @@
         if (plot.options.y.variable === 'temperature') {
           plot.options.y.maxBarValue = 32;
         }
-        if (plot.data instanceof Array) {
-          plot.options.merge = true;
-          data = {
-            data: []
-          };
-          ref1 = plot.data;
-          for (dKey in ref1) {
-            row = ref1[dKey];
-            data.data[dKey] = row.results;
+        _data = new window.Plotting.Data(plot.data[0]);
+        _len = plot.data.length - 1;
+        if (_len > 0) {
+          for (i = j = 1, ref1 = _len; 1 <= ref1 ? j <= ref1 : j >= ref1; i = 1 <= ref1 ? ++j : --j) {
+            _data.join(plot.data[i], [plot.options.x.variable]);
           }
-          plot.data = [null, null];
-        } else {
-          data = {
-            data: plot.data.results
-          };
-          plot.data = null;
         }
         title = this.getTitle(plot);
-        instance = new window.Plotting.LinePlot(data, plot.options);
+        instance = new window.Plotting.LinePlot(_data.get(), plot.options);
         instance.append();
         this.template[key].proto = instance;
         results.push(this.appendControls(key));
@@ -1514,92 +1616,82 @@
 
     Handler.prototype.mergeTemplateOption = function() {};
 
-    Handler.prototype.getPrependData = function(plotId, dataParams, key) {
-      var _, _is_array, args, callback, preError, target;
-      preError = this.preError + ".getPrependData(key, dataParams)";
-      target = "http://dev.nwac.us/api/v5/measurement";
-      _ = this;
-      _is_array = dataParams instanceof Array;
-      args = dataParams;
-      callback = function(data) {
-        _.template[plotId].proto.appendData(data.responseJSON.results);
-        return _.template[plotId].proto.update();
-      };
-      return this.api.get(target, args, callback);
-    };
-
-    Handler.prototype.getAppendData = function(plotId, dataParams) {
-      var _, args, callback, preError, target;
+    Handler.prototype.getAppendData = function(plotId, paramsKey) {
+      var _, _length, args, callback, preError, target;
       preError = this.preError + ".getAppendData(key, dataParams)";
       target = "http://dev.nwac.us/api/v5/measurement";
       _ = this;
-      args = dataParams;
+      args = this.template[plotId].proto.options.dataParams[paramsKey];
+      _length = this.template[plotId].proto.options.dataParams.length;
       callback = function(data) {
-        _.template[plotId].proto.appendData(data.responseJSON.results);
-        return _.template[plotId].proto.update();
+        var plot;
+        plot = _.template[plotId];
+        if (plot._data === void 0) {
+          plot._data = new window.Plotting.Data(data.responseJSON.results);
+        } else {
+          plot._data.join(data.responseJSON.results, [plot.proto.options.x.variable]);
+        }
+        if (plot._data.getSourceCount() === _length) {
+          plot.proto.appendData(plot._data.get());
+          plot.proto.update();
+          return delete plot._data;
+        }
       };
       return this.api.get(target, args, callback);
     };
 
-    Handler.prototype.prependData = function(key) {
-      var dataParams, pKey, params, plot, preError, ref, state;
+    Handler.prototype.prependData = function(plotId) {
+      var params, paramsKey, plot, preError, ref, results, state;
       preError = this.preError + ".prependData()";
-      plot = this.template[key];
+      plot = this.template[plotId];
       state = plot.proto.getState();
-      if (plot.proto.options.dataParams instanceof Array) {
-        dataParams = [];
-        ref = plot.proto.options.dataParams;
-        for (pKey in ref) {
-          params = ref[pKey];
-          dataParams[pKey] = params;
-          dataParams[pKey].max_datetime = this.format(state.range.data.min);
-          dataParams[pKey].limit = this.options.updateLength;
-        }
-      } else {
-        dataParams = plot.proto.options.dataParams;
-        dataParams.max_datetime = this.format(state.range.data.min);
-        dataParams.limit = this.options.updateLength;
+      ref = plot.proto.options.dataParams;
+      results = [];
+      for (paramsKey in ref) {
+        params = ref[paramsKey];
+        plot.proto.options.dataParams[paramsKey].max_datetime = this.format(state.range.data.min);
+        plot.proto.options.dataParams[paramsKey].limit = this.options.updateLength;
+        results.push(this.getAppendData(plotId, paramsKey));
       }
-      return this.getPrependData(key, dataParams);
+      return results;
     };
 
-    Handler.prototype.appendData = function(key) {
-      var _max_datetime, _new_max_datetime, _now, dataParams, pKey, params, plot, preError, ref, state;
+    Handler.prototype.appendData = function(plotId) {
+      var _max_datetime, _new_max_datetime, _now, params, paramsKey, plot, preError, ref, results, state;
       preError = this.preError + ".appendData()";
-      _now = new Date();
-      plot = this.template[key];
+      plot = this.template[plotId];
       state = plot.proto.getState();
+      _now = new Date();
       if (state.range.data.max >= _now) {
         return;
       }
       _max_datetime = state.range.data.max.getTime();
       _new_max_datetime = _max_datetime + (this.options.updateLength * 3600000);
-      if (plot.proto.options.dataParams instanceof Array) {
-        dataParams = [];
-        ref = plot.proto.options.dataParams;
-        for (pKey in ref) {
-          params = ref[pKey];
-          dataParams[pKey] = plot.proto.options.dataParams[pKey];
-          dataParams[pKey].max_datetime = this.format(new Date(_new_max_datetime));
-          dataParams[pKey].limit = this.options.updateLength;
-        }
-      } else {
-        dataParams = plot.proto.options.dataParams;
-        dataParams.max_datetime = this.format(new Date(_new_max_datetime));
-        dataParams.limit = this.options.updateLength;
+      ref = plot.proto.options.dataParams;
+      results = [];
+      for (paramsKey in ref) {
+        params = ref[paramsKey];
+        plot.proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_new_max_datetime));
+        plot.proto.options.dataParams[paramsKey].limit = this.options.updateLength;
+        results.push(this.getAppendData(plotId, paramsKey));
       }
-      return this.getPrependData(key, dataParams);
+      return results;
     };
 
     Handler.prototype.addVariable = function(plotId, variable) {
-      var _bounds, _info, _max_datetime, dataParams, state;
+      var _bounds, _info, _max_datetime, dataParams, pKey, params, ref, state;
       state = this.template[plotId].proto.getState();
       _bounds = this.getVariableBounds(variable);
       _info = this.getVariableInfo(variable);
       _max_datetime = state.range.data.max.getTime();
-      dataParams = this.template[plotId].proto.options.dataParams;
-      dataParams.max_datetime = this.format(new Date(_max_datetime));
-      dataParams.limit = state.length.data;
+      dataParams = [];
+      ref = plot.proto.options.dataParams;
+      for (pKey in ref) {
+        params = ref[pKey];
+        dataParams[pKey] = this.template[plotId].proto.options.dataParams;
+        dataParams[pKey].max_datetime = this.format(new Date(_max_datetime));
+        dataParams[pKey].limit = state.length.data;
+      }
       if (this.template[plotId].proto.options.y.variable === null) {
         this.template[plotId].proto.options.y = {
           variable: variable
@@ -1628,45 +1720,56 @@
       return this.getAppendData(plotId, dataParams);
     };
 
+    Handler.prototype.addStation = function(plotId, dataloggerid) {
+      var _info, _len, _variable, dataParams, state;
+      state = this.template[plotId].proto.getState();
+      _variable = this.template[plotId].proto.options.y.variable;
+      _info = this.getVariableInfo(_variable);
+      dataParams = $.extend(true, [], this.template[plotId].proto.options.dataParams);
+      _len = dataParams.push(this.template[plotId].proto.options.dataParams);
+      dataParams[_len - 1].data_logger = dataloggerid;
+      return console.log("addStation: (dataloggerid, _len, dataParams)", dataloggerid, _len, dataParams);
+    };
+
     Handler.prototype.zoom = function(transform) {
-      var i, len, plot, ref, results;
+      var j, len, plot, ref, results;
       ref = this.template;
       results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        plot = ref[i];
+      for (j = 0, len = ref.length; j < len; j++) {
+        plot = ref[j];
         results.push(plot.proto.setZoomTransform(transform));
       }
       return results;
     };
 
     Handler.prototype.crosshair = function(transform, mouse) {
-      var i, len, plot, ref, results;
+      var j, len, plot, ref, results;
       ref = this.template;
       results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        plot = ref[i];
+      for (j = 0, len = ref.length; j < len; j++) {
+        plot = ref[j];
         results.push(plot.proto.setCrosshair(transform, mouse));
       }
       return results;
     };
 
     Handler.prototype.showCrosshairs = function() {
-      var i, len, plot, ref, results;
+      var j, len, plot, ref, results;
       ref = this.template;
       results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        plot = ref[i];
+      for (j = 0, len = ref.length; j < len; j++) {
+        plot = ref[j];
         results.push(plot.proto.showCrosshair());
       }
       return results;
     };
 
     Handler.prototype.hideCrosshairs = function() {
-      var i, len, plot, ref, results;
+      var j, len, plot, ref, results;
       ref = this.template;
       results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        plot = ref[i];
+      for (j = 0, len = ref.length; j < len; j++) {
+        plot = ref[j];
         results.push(plot.proto.hideCrosshair());
       }
       return results;

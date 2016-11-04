@@ -1,5 +1,9 @@
 #
-#   NWAC Plotting API XMLHTTPRequest.
+#   Northwest Avalanche Center (NWAC)
+#   Plotting Tools - API XHR (GET/PUT/POST/DELETE) (api.coffee)
+#
+#   Air Sciences Inc. - 2016
+#   Jacob Fielding
 #
 
 window.Plotting ||= {}
@@ -207,15 +211,16 @@ window.Plotting.API = class API
 
   encodeArgs: (type, json_args) ->
     # Encode an arguments set from JSON for a PUT/POST/GET Method
+    preError = "#{@preError}encodeArgs(type, json_args)"
     argStr = ""
     aCount = 0
 
     # Parse to JSON if string provided
     if typeof json_args == 'string'
       try
-        json_args = JSON.parse json_args
+        json_args = JSON.parse(json_args)
       catch error
-        console.log preError + 'catch(error).', error
+        console.log(preError + 'catch(error).', error)
     
     # Prepare for the XHR method action
     if type == 'POST' || type == 'PUT'
