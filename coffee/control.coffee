@@ -44,7 +44,7 @@ window.Plotting.Controls = class Controls
       for region in data.responseJSON
         a_color = ""
         r_color = ""
-        _dots = ""
+        _dots = "<span class=\"station-dots\">"
         _region_selected = 0
         for _station in region.stations
           _row_current = _.isCurrent(current, 'dataLoggerId',
@@ -60,7 +60,7 @@ window.Plotting.Controls = class Controls
             <li class=\"subheader\" #{r_color}>
               <a #{a_color} href=\"#\"><i class=\"icon-caret-down\"
                 style=\"margin-right: 6px\"></i>
-               #{region.region} #{_dots}</a>
+               #{region.region} #{_dots}</span></a>
             </li>
             <ul class=\"list-group-item sublist\"
               style=\"display: none;\">"
@@ -94,6 +94,47 @@ window.Plotting.Controls = class Controls
       _.bindSubMenuEvent(".subheader")
     
     @api.get(target, args, callback)
+
+  updateStationDropdown: (plotId) ->
+    _options = plotter.template[plotId].proto.options
+    _append = ""
+    if _options.y.dataLoggerId != null
+      _id = _options.y.dataLoggerId
+      _append = " <i class=\"icon-circle\"
+        style=\"color: #{_options.y.color}\"></i>"
+      id = "data-logger-#{_id}-plot-#{plotId}"
+      $(_options.target).find("\##{id}")
+        .css("color", _options.y.color)
+        .attr("onclic", "removeStation(#{plotId}, #{_options.y.dataLoggerId})")
+        .parent().parent().prev()
+        .css("background-color", "rgb(248,248,248)")
+        .children(":first").children(".station-dots")
+        .empty()
+        .append(_append)
+    if _options.y2.variable != null
+      _id = _options.y2.dataLoggerId
+      _append = " <i class=\"icon-circle\"
+        style=\"color: #{_options.y2.color}\"></i>"
+      id = "data-logger-#{_id}-plot-#{plotId}"
+      $(_options.target).find("\##{id}")
+        .css("color", _options.y2.color)
+        .attr("onclic", "removeStation(#{plotId}, #{_options.y2.dataLoggerId})")
+        .parent().parent().prev()
+        .css("background-color", "rgb(248,248,248)")
+        .children(":first")
+        .append(_append)
+    if _options.y3.variable != null
+      _id = _options.y3.dataLoggerId
+      _append = " <i class=\"icon-circle\"
+        style=\"color: #{_options.y3.color}\"></i>"
+      id = "data-logger-#{_id}-plot-#{plotId}"
+      $(_options.target).find("\##{id}")
+        .css("color", _options.y3.color)
+        .attr("onclic", "removeStation(#{plotId}, #{_options.y3.dataLoggerId})")
+        .parent().parent().prev()
+        .css("background-color", "rgb(248,248,248)")
+        .children(":first")
+        .append(_append)
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.
@@ -156,28 +197,34 @@ window.Plotting.Controls = class Controls
       id = "#{_id}-plot-#{plotId}"
       console.log("Update-Dropdown y", id)
       $(_options.target).find("\##{id}")
-        .css("color", _options.line1Color)
+        .css("color", _options.y.color)
     if _options.y2.variable != null
       _id = _options.y2.variable.replace('_', '-')
       id = "#{_id}-plot-#{plotId}"
       console.log("Update-Dropdown y2", id)
       $(_options.target).find("\##{id}")
-        .css("color", _options.line2Color)
+        .css("color", _options.y2.color)
+    if _options.y3.variable != null
+      _id = _options.y3.variable.replace('_', '-')
+      id = "#{_id}-plot-#{plotId}"
+      console.log("Update-Dropdown y3", id)
+      $(_options.target).find("\##{id}")
+        .css("color", _options.y3.color)
   
   appendStationMap: (plotId, appendTarget, parameter) ->
     # Append a google maps popover.
     _ = @
     uuid = @uuid()
     dom_uuid = "map-control-" + uuid
-    html = "<li>
+    html = "<li data-toggle=\"popover\" data-placement=\"left\">
           <i class=\"icon-map-marker\" style=\"cursor: pointer\"
           onclick=\"plotter.controls.toggleMap('#{uuid}')\"></i>
         </li>
-        <div class=\"popover\">
+        <div class=\"popover\" style=\"max-width: 356px\">
           <div class=\"arrow\"></div>
           <div class=\"popover-content\">
-            <div id=\"#{dom_uuid}\" style=\"width: 512px;
-              height: 512px;\"></div>
+            <div id=\"#{dom_uuid}\" style=\"width: 312px;
+              height:  312px;\"></div>
           </div>
         </div>"
     $(appendTarget).prepend(html)

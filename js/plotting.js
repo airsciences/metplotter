@@ -277,7 +277,7 @@
           region = ref[i];
           a_color = "";
           r_color = "";
-          _dots = "";
+          _dots = "<span class=\"station-dots\">";
           _region_selected = 0;
           ref1 = region.stations;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
@@ -292,7 +292,7 @@
             r_color = "style=\"background-color: rgb(248,248,248)\"";
             a_color = "style=\"font-weight: 700\"";
           }
-          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.region + " " + _dots + "</a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
+          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.region + " " + _dots + "</span></a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
           ref2 = region.stations;
           for (k = 0, len2 = ref2.length; k < len2; k++) {
             station = ref2[k];
@@ -313,6 +313,30 @@
         return _.bindSubMenuEvent(".subheader");
       };
       return this.api.get(target, args, callback);
+    };
+
+    Controls.prototype.updateStationDropdown = function(plotId) {
+      var _append, _id, _options, id;
+      _options = plotter.template[plotId].proto.options;
+      _append = "";
+      if (_options.y.dataLoggerId !== null) {
+        _id = _options.y.dataLoggerId;
+        _append = " <i class=\"icon-circle\" style=\"color: " + _options.y.color + "\"></i>";
+        id = "data-logger-" + _id + "-plot-" + plotId;
+        $(_options.target).find("\#" + id).css("color", _options.y.color).attr("onclic", "removeStation(" + plotId + ", " + _options.y.dataLoggerId + ")").parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").children(".station-dots").empty().append(_append);
+      }
+      if (_options.y2.variable !== null) {
+        _id = _options.y2.dataLoggerId;
+        _append = " <i class=\"icon-circle\" style=\"color: " + _options.y2.color + "\"></i>";
+        id = "data-logger-" + _id + "-plot-" + plotId;
+        $(_options.target).find("\#" + id).css("color", _options.y2.color).attr("onclic", "removeStation(" + plotId + ", " + _options.y2.dataLoggerId + ")").parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").append(_append);
+      }
+      if (_options.y3.variable !== null) {
+        _id = _options.y3.dataLoggerId;
+        _append = " <i class=\"icon-circle\" style=\"color: " + _options.y3.color + "\"></i>";
+        id = "data-logger-" + _id + "-plot-" + plotId;
+        return $(_options.target).find("\#" + id).css("color", _options.y3.color).attr("onclic", "removeStation(" + plotId + ", " + _options.y3.dataLoggerId + ")").parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").append(_append);
+      }
     };
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
@@ -360,13 +384,19 @@
         _id = _options.y.variable.replace('_', '-');
         id = _id + "-plot-" + plotId;
         console.log("Update-Dropdown y", id);
-        $(_options.target).find("\#" + id).css("color", _options.line1Color);
+        $(_options.target).find("\#" + id).css("color", _options.y.color);
       }
       if (_options.y2.variable !== null) {
         _id = _options.y2.variable.replace('_', '-');
         id = _id + "-plot-" + plotId;
         console.log("Update-Dropdown y2", id);
-        return $(_options.target).find("\#" + id).css("color", _options.line2Color);
+        $(_options.target).find("\#" + id).css("color", _options.y2.color);
+      }
+      if (_options.y3.variable !== null) {
+        _id = _options.y3.variable.replace('_', '-');
+        id = _id + "-plot-" + plotId;
+        console.log("Update-Dropdown y3", id);
+        return $(_options.target).find("\#" + id).css("color", _options.y3.color);
       }
     };
 
@@ -375,7 +405,7 @@
       _ = this;
       uuid = this.uuid();
       dom_uuid = "map-control-" + uuid;
-      html = "<li> <i class=\"icon-map-marker\" style=\"cursor: pointer\" onclick=\"plotter.controls.toggleMap('" + uuid + "')\"></i> </li> <div class=\"popover\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 512px; height: 512px;\"></div> </div> </div>";
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i class=\"icon-map-marker\" style=\"cursor: pointer\" onclick=\"plotter.controls.toggleMap('" + uuid + "')\"></i> </li> <div class=\"popover\" style=\"max-width: 356px\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height:  312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
       this.maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
         center: new google.maps.LatLng(47.6062, -122.3321),
@@ -760,6 +790,9 @@
       }
       if (options.y2) {
         options.y2 = Object.mergeDefaults(options.y2, defaults.y2);
+      }
+      if (options.y3) {
+        options.y3 = Object.mergeDefaults(options.y3, defaults.y3);
       }
       this.options = Object.mergeDefaults(options, defaults);
       this.device = 'full';
@@ -1291,15 +1324,21 @@
       dx = transform ? transform.applyX(this.definition.x(d.x)) : this.definition.x(d.x);
       if (this.options.y.variable !== null) {
         dy = this.definition.y(d.y);
-        this.focusCircle.attr("transform", "translate(0, 0)");
+        if (!isNaN(dy)) {
+          this.focusCircle.attr("transform", "translate(0, 0)");
+        }
       }
       if (this.options.y2.variable !== null) {
         dy2 = this.definition.y(d.y2);
-        this.focusCircle2.attr("transform", "translate(0, 0)");
+        if (!isNaN(dy2)) {
+          this.focusCircle2.attr("transform", "translate(0, 0)");
+        }
       }
       if (this.options.y3.variable !== null) {
         dy3 = this.definition.y(d.y3);
-        this.focusCircle3.attr("transform", "translate(0, 0)");
+        if (!isNaN(dy3)) {
+          this.focusCircle3.attr("transform", "translate(0, 0)");
+        }
       }
       if (d === null || d === void 0) {
         console.log("d is broken (d)", d);
@@ -1307,15 +1346,15 @@
       cx = dx - _dims.leftPadding;
       this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
       this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-      if (this.options.y.variable !== null) {
+      if (this.options.y.variable !== null && !isNaN(dy)) {
         this.focusCircle.attr("cx", dx).attr("cy", dy);
         this.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(2) + " " + this.options.y.units);
       }
-      if (this.options.y2.variable !== null) {
+      if (this.options.y2.variable !== null && !isNaN(dy2)) {
         this.focusCircle2.attr("cx", dx).attr("cy", dy2);
         this.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(2) + " " + this.options.y2.units);
       }
-      if (this.options.y3.variable !== null) {
+      if (this.options.y3.variable !== null && !isNaN(dy3)) {
         this.focusCircle3.attr("cx", dx).attr("cy", dy3);
         this.focusText3.attr("x", dx + _dims.leftPadding / 10).attr("y", dy3 - _dims.topPadding / 10).text(d.y3.toFixed(2) + " " + this.options.y3.units);
       }
@@ -1418,7 +1457,6 @@ Northwest Avalanche Center (NWAC)
 Plotting Tools - (plotter.js) - v0.9
 
 Air Sciences Inc. - 2016
-Jacob Fielding
  */
 
 (function() {
@@ -1579,7 +1617,7 @@ Jacob Fielding
     };
 
     Handler.prototype.append = function() {
-      var _bounds, _data, _len, i, instance, j, key, plot, preError, ref, ref1, results, target, title;
+      var __data, _bounds, _len, i, instance, j, key, plot, preError, ref, ref1, results, target, title;
       preError = this.preError + ".append()";
       ref = this.template;
       results = [];
@@ -1588,17 +1626,19 @@ Jacob Fielding
         target = this.utarget(this.options.target);
         $(this.options.target).append("<div id='" + target + "'></div>");
         plot.type = "parameter";
+        if (plot.options.y2 === void 0) {
+          plot.options.y2 = {};
+        }
+        if (plot.options.y3 === void 0) {
+          plot.options.y3 = {};
+        }
         plot.options.plotId = key;
         plot.options.uuid = this.uuid();
         plot.options.target = "\#" + target;
         plot.options.dataParams = plot.dataParams;
         plot.options.y.color = this.getColor('light', key);
-        if (plot.options.y2) {
-          plot.options.y2.color = this.getColor('light', parseInt(key + 4 % 7));
-        }
-        if (plot.options.y3) {
-          plot.options.y3.color = this.getColor('light', parseInt(key + 6 % 7));
-        }
+        plot.options.y2.color = this.getColor('light', parseInt(key + 4 % 7));
+        plot.options.y3.color = this.getColor('light', parseInt(key + 6 % 7));
         _bounds = this.getVariableBounds(plot.options.y.variable);
         if (_bounds) {
           plot.options.y.min = _bounds.min;
@@ -1607,15 +1647,15 @@ Jacob Fielding
         if (plot.options.y.variable === 'temperature') {
           plot.options.y.maxBarValue = 32;
         }
-        _data = new window.Plotting.Data(plot.data[0]);
+        __data = new window.Plotting.Data(plot.data[0]);
         _len = plot.data.length - 1;
         if (_len > 0) {
           for (i = j = 1, ref1 = _len; 1 <= ref1 ? j <= ref1 : j >= ref1; i = 1 <= ref1 ? ++j : --j) {
-            _data.join(plot.data[i], [plot.options.x.variable]);
+            __data.join(plot.data[i], [plot.options.x.variable]);
           }
         }
         title = this.getTitle(plot);
-        instance = new window.Plotting.LinePlot(_data.get(), plot.options);
+        instance = new window.Plotting.LinePlot(__data.get(), plot.options);
         instance.append();
         this.template[key].proto = instance;
         results.push(this.appendControls(key));
@@ -1635,18 +1675,18 @@ Jacob Fielding
       callback = function(data) {
         var plot;
         plot = _.template[plotId];
-        if (plot._data === void 0) {
-          plot._data = [];
+        if (plot.__data === void 0) {
+          plot.__data = [];
         }
-        if (plot._data[call] === void 0) {
-          plot._data[call] = new window.Plotting.Data(data.responseJSON.results);
+        if (plot.__data[call] === void 0) {
+          plot.__data[call] = new window.Plotting.Data(data.responseJSON.results);
         } else {
-          plot._data[call].join(data.responseJSON.results, [plot.proto.options.x.variable]);
+          plot.__data[call].join(data.responseJSON.results, [plot.proto.options.x.variable]);
         }
-        if (plot._data[call].getSourceCount() === _length) {
-          plot.proto.appendData(plot._data[call].get());
+        if (plot.__data[call].getSourceCount() === _length) {
+          plot.proto.appendData(plot.__data[call].get());
           plot.proto.update();
-          return delete plot._data[call];
+          return delete plot.__data[call];
         }
       };
       return this.api.get(target, args, callback);
@@ -1748,7 +1788,7 @@ Jacob Fielding
     };
 
     Handler.prototype.addStation = function(plotId, dataLoggerId) {
-      var _bounds, _info, _len, _max_datetime, _params, _variable, params, paramsKey, ref, results, state, uuid;
+      var _bounds, _info, _len, _max_datetime, _params, _variable, params, paramsKey, ref, state, uuid;
       state = this.template[plotId].proto.getState();
       _variable = this.template[plotId].proto.options.y.variable;
       _bounds = this.getVariableBounds(_variable);
@@ -1760,7 +1800,9 @@ Jacob Fielding
       console.log("addStation: (dataLoggerId, _len, dataParams)", dataLoggerId, _len, this.template[plotId].proto.options.dataParams);
       if (this.template[plotId].proto.options.y.variable === null) {
         this.template[plotId].proto.options.y = {
-          variable: _variable
+          dataLoggerId: dataLoggerId,
+          variable: _variable,
+          color: this.getColor('light', parseInt(plotId))
         };
         if (_info) {
           this.template[plotId].proto.options.y.title = _info.title;
@@ -1772,7 +1814,9 @@ Jacob Fielding
         }
       } else if (this.template[plotId].proto.options.y2.variable === null) {
         this.template[plotId].proto.options.y2 = {
-          variable: _variable
+          dataLoggerId: dataLoggerId,
+          variable: _variable,
+          color: this.getColor('light', parseInt(plotId + 4 % 7))
         };
         if (_info) {
           this.template[plotId].proto.options.y2.title = _info.title;
@@ -1784,7 +1828,9 @@ Jacob Fielding
         }
       } else if (this.template[plotId].proto.options.y3.variable === null) {
         this.template[plotId].proto.options.y3 = {
-          variable: _variable
+          dataLoggerId: dataLoggerId,
+          variable: _variable,
+          color: this.getColor('light', parseInt(plotId + 6 % 7))
         };
         if (_info) {
           this.template[plotId].proto.options.y2.title = _info.title;
@@ -1797,14 +1843,13 @@ Jacob Fielding
       }
       uuid = this.uuid();
       ref = this.template[plotId].proto.options.dataParams;
-      results = [];
       for (paramsKey in ref) {
         params = ref[paramsKey];
         this.template[plotId].proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_max_datetime));
         this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
-        results.push(this.getAppendData(uuid, plotId, paramsKey));
+        this.getAppendData(uuid, plotId, paramsKey);
       }
-      return results;
+      return this.controls.updateStationDropdown(plotId);
     };
 
     Handler.prototype.zoom = function(transform) {
@@ -1879,14 +1924,27 @@ Jacob Fielding
     };
 
     Handler.prototype.move = function(plotId, direction) {
-      var selected;
+      var _pageOrder, _tradeKey, selected;
+      _pageOrder = this.template[plotId].pageOrder;
       selected = $(this.template[plotId].proto.options.target);
       if (direction === 'up') {
-        return selected.prev().insertAfter(selected);
+        if (_pageOrder > 1) {
+          _tradeKey = this.indexOfValue(this.template, "pageOrder", _pageOrder - 1);
+          this.template[plotId].pageOrder--;
+          this.template[_tradeKey].pageOrder++;
+          return selected.prev().insertAfter(selected);
+        }
       } else if (direction === 'down') {
-        return selected.next().insertBefore(selected);
+        if (_pageOrder < this.template.length) {
+          _tradeKey = this.indexOfValue(this.template, "pageOrder", _pageOrder + 1);
+          this.template[plotId].pageOrder++;
+          this.template[_tradeKey].pageOrder--;
+          return selected.next().insertBefore(selected);
+        }
       }
     };
+
+    Handler.prototype.add = function() {};
 
     Handler.prototype.getVariableBounds = function(variable) {
       var bounds;
@@ -1985,6 +2043,17 @@ Jacob Fielding
         result.subtitle = "";
       }
       return result;
+    };
+
+    Handler.prototype.indexOfValue = function(array, key, value) {
+      var i, index, j, ref;
+      index = -1;
+      for (i = j = 0, ref = array.length - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+        if (array[i][key] === value) {
+          index = i;
+        }
+      }
+      return index;
     };
 
     Handler.prototype.uuid = function() {

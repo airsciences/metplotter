@@ -79,6 +79,8 @@ window.Plotting.LinePlot = class LinePlot
       options.y = Object.mergeDefaults(options.y, defaults.y)
     if options.y2
       options.y2 = Object.mergeDefaults(options.y2, defaults.y2)
+    if options.y3
+      options.y3 = Object.mergeDefaults(options.y3, defaults.y3)
     @options = Object.mergeDefaults options, defaults
     @device = 'full'
     
@@ -888,13 +890,16 @@ window.Plotting.LinePlot = class LinePlot
       @definition.x(d.x)
     if @options.y.variable != null
       dy = @definition.y(d.y)
-      @focusCircle.attr("transform", "translate(0, 0)")
+      if !isNaN(dy)
+        @focusCircle.attr("transform", "translate(0, 0)")
     if @options.y2.variable != null
       dy2 = @definition.y(d.y2)
-      @focusCircle2.attr("transform", "translate(0, 0)")
+      if !isNaN(dy2)
+        @focusCircle2.attr("transform", "translate(0, 0)")
     if @options.y3.variable != null
       dy3 = @definition.y(d.y3)
-      @focusCircle3.attr("transform", "translate(0, 0)")
+      if !isNaN(dy3)
+        @focusCircle3.attr("transform", "translate(0, 0)")
 
     if d is null or d is undefined
       console.log("d is broken (d)", d)
@@ -914,7 +919,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("height", _dims.innerHeight)
       .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-    if @options.y.variable != null
+    if @options.y.variable != null and !isNaN(dy)
       @focusCircle
         .attr("cx", dx)
         .attr("cy", dy)
@@ -924,7 +929,7 @@ window.Plotting.LinePlot = class LinePlot
         .attr("y", dy - _dims.topPadding / 10)
         .text(d.y.toFixed(2) + " " + @options.y.units)
 
-    if @options.y2.variable != null
+    if @options.y2.variable != null and !isNaN(dy2)
       @focusCircle2
         .attr("cx", dx)
         .attr("cy", dy2)
@@ -934,7 +939,7 @@ window.Plotting.LinePlot = class LinePlot
         .attr("y", dy2 - _dims.topPadding / 10)
         .text(d.y2.toFixed(2) + " " + @options.y2.units)
 
-    if @options.y3.variable != null
+    if @options.y3.variable != null and !isNaN(dy3)
       @focusCircle3
         .attr("cx", dx)
         .attr("cy", dy3)

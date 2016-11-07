@@ -3,7 +3,6 @@ Northwest Avalanche Center (NWAC)
 Plotting Tools - (plotter.js) - v0.9
 
 Air Sciences Inc. - 2016
-Jacob Fielding
 ###
 
 #
@@ -162,16 +161,21 @@ window.Plotting.Handler = class Handler
       $(@options.target).append("<div id='#{target}'></div>")
       #plot.type = "station"
       plot.type = "parameter"
+      if plot.options.y2 is undefined
+        plot.options.y2 = {}
+      if plot.options.y3 is undefined
+        plot.options.y3 = {}
       plot.options.plotId = key
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
       plot.options.dataParams = plot.dataParams
+      
       plot.options.y.color = @getColor('light', key)
-      if plot.options.y2
-        plot.options.y2.color = @getColor('light', parseInt(key+4%7))
-      if plot.options.y3
-        plot.options.y3.color = @getColor('light', parseInt(key+6%7))
+      plot.options.y2.color = @getColor('light', parseInt(key+4%7))
+      plot.options.y3.color = @getColor('light', parseInt(key+6%7))
+      
       _bounds = @getVariableBounds(plot.options.y.variable)
+      
       if _bounds
         plot.options.y.min = _bounds.min
         plot.options.y.max = _bounds.max
@@ -179,14 +183,14 @@ window.Plotting.Handler = class Handler
         plot.options.y.maxBarValue = 32
       
       # Join Multi-Station Data
-      _data = new window.Plotting.Data(plot.data[0])
+      __data = new window.Plotting.Data(plot.data[0])
       _len = plot.data.length-1
       if _len > 0
         for i in [1.._len]
-          _data.join(plot.data[i], [plot.options.x.variable])
+          __data.join(plot.data[i], [plot.options.x.variable])
             
       title = @getTitle(plot)
-      instance = new window.Plotting.LinePlot(_data.get(), plot.options)
+      instance = new window.Plotting.LinePlot(__data.get(), plot.options)
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
@@ -205,17 +209,17 @@ window.Plotting.Handler = class Handler
     
     callback = (data) ->
       plot = _.template[plotId]
-      if plot._data is undefined
-        plot._data = []
-      if plot._data[call] is undefined
-        plot._data[call] = new window.Plotting.Data(data.responseJSON.results)
+      if plot.__data is undefined
+        plot.__data = []
+      if plot.__data[call] is undefined
+        plot.__data[call] = new window.Plotting.Data(data.responseJSON.results)
       else
-        plot._data[call].join(data.responseJSON.results,
+        plot.__data[call].join(data.responseJSON.results,
           [plot.proto.options.x.variable])
-      if plot._data[call].getSourceCount() is _length
-        plot.proto.appendData(plot._data[call].get())
+      if plot.__data[call].getSourceCount() is _length
+        plot.proto.appendData(plot.__data[call].get())
         plot.proto.update()
-        delete plot._data[call]
+        delete plot.__data[call]
         
     @api.get(target, args, callback)
 
@@ -314,7 +318,9 @@ window.Plotting.Handler = class Handler
 
     if @template[plotId].proto.options.y.variable == null
       @template[plotId].proto.options.y =
+        dataLoggerId: dataLoggerId
         variable: _variable
+        color: @getColor('light', parseInt(plotId))
       if _info
         @template[plotId].proto.options.y.title = _info.title
         @template[plotId].proto.options.y.units = _info.units
@@ -323,7 +329,9 @@ window.Plotting.Handler = class Handler
         @template[plotId].proto.options.y.max = _bounds.max
     else if  @template[plotId].proto.options.y2.variable == null
       @template[plotId].proto.options.y2 =
+        dataLoggerId: dataLoggerId
         variable: _variable
+        color: @getColor('light', parseInt(plotId+4%7))
       if _info
         @template[plotId].proto.options.y2.title = _info.title
         @template[plotId].proto.options.y2.units = _info.units
@@ -332,7 +340,9 @@ window.Plotting.Handler = class Handler
         @template[plotId].proto.options.y2.max = _bounds.max
     else if  @template[plotId].proto.options.y3.variable == null
       @template[plotId].proto.options.y3 =
+        dataLoggerId: dataLoggerId
         variable: _variable
+        color: @getColor('light', parseInt(plotId+6%7))
       if _info
         @template[plotId].proto.options.y2.title = _info.title
         @template[plotId].proto.options.y2.units = _info.units
@@ -347,6 +357,7 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.dataParams[paramsKey].limit =
         state.length.data
       @getAppendData(uuid, plotId, paramsKey)
+    @controls.updateStationDropdown(plotId)
 
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
@@ -412,11 +423,23 @@ window.Plotting.Handler = class Handler
 
   move: (plotId, direction) ->
     # Move the plotId.
+    _pageOrder = @template[plotId].pageOrder
     selected = $(@template[plotId].proto.options.target)
     if direction is 'up'
-      selected.prev().insertAfter(selected)
+      if _pageOrder > 1
+        _tradeKey = @indexOfValue(@template, "pageOrder", _pageOrder-1)
+        @template[plotId].pageOrder--
+        @template[_tradeKey].pageOrder++
+        selected.prev().insertAfter(selected)
     else if direction is 'down'
-      selected.next().insertBefore(selected)
+      if _pageOrder < @template.length
+        _tradeKey = @indexOfValue(@template, "pageOrder", _pageOrder+1)
+        @template[plotId].pageOrder++
+        @template[_tradeKey].pageOrder--
+        selected.next().insertBefore(selected)
+
+  add: () ->
+    # Add a new plot.
 
   getVariableBounds: (variable) ->
     bounds =
@@ -495,6 +518,14 @@ window.Plotting.Handler = class Handler
       result.subtitle = ""
     return result
 
+  indexOfValue: (array, key, value) ->
+    # Return the index of an assoc-object key->value
+    index = -1
+    for i in [0..(array.length-1)]
+      if array[i][key] == value
+        index = i
+    return index
+            
   uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
     
