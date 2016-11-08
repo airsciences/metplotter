@@ -563,6 +563,16 @@
       });
     };
 
+    Controls.prototype.selectInitParameter = function() {
+      var html;
+      return html = "<ul> </ul>";
+    };
+
+    Controls.prototype.selectInitStation = function() {
+      var html;
+      return html = "";
+    };
+
     return Controls;
 
   })();
@@ -797,6 +807,7 @@
       var _domainMean, _domainScale, defaults;
       this.preError = "LinePlot.";
       this.plotter = plotter;
+      this.initialized = false;
       defaults = {
         plotId: null,
         uuid: '',
@@ -1245,6 +1256,10 @@
 
     LinePlot.prototype.append = function() {
       var _, _y2_title, _y3_title, _y_offset, _y_title, _y_vert, preError;
+      this.initialized = true;
+      if (!this.initialized) {
+        return;
+      }
       preError = this.preError + "append()";
       _ = this;
       this.preAppend();
@@ -1324,6 +1339,9 @@
 
     LinePlot.prototype.appendCrosshairTarget = function(transform) {
       var _, preError;
+      if (!this.initialized) {
+        return;
+      }
       preError = this.preError + "appendCrosshairTarget()";
       _ = this;
       return this.overlay.datum(this.data).attr("class", "overlay").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
@@ -1339,6 +1357,9 @@
 
     LinePlot.prototype.appendZoomTarget = function() {
       var _, preError;
+      if (!this.initialized) {
+        return;
+      }
       preError = this.preError + "appendZoomTarget()";
       _ = this;
       return this.overlay.attr("class", "zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move").call(this.definition.zoom, d3.zoomIdentity);
@@ -1346,6 +1367,9 @@
 
     LinePlot.prototype.setZoomTransform = function(transform) {
       var _, _rescaleX, _transform, preError;
+      if (!this.initialized) {
+        return;
+      }
       preError = this.preError + ".setZoomTransform(transform)";
       _ = this;
       _transform = transform ? transform : d3.event.transform;
@@ -1417,6 +1441,9 @@
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
       var _, _datum, _dims, _mouseTarget, cx, d, dx, dy, dy2, dy3, i, preError, x0, ypos;
+      if (!this.initialized) {
+        return;
+      }
       preError = this.preError + ".setCrosshair(mouse)";
       _ = this;
       _dims = this.definition.dimensions;
@@ -1505,6 +1532,10 @@
     };
 
     LinePlot.prototype.showCrosshair = function() {
+      console.log("Plot (plotId, initialized)", this.options.plotId, this.initialized);
+      if (!this.initialized) {
+        return;
+      }
       this.crosshairs.select(".crosshair-x").style("display", null);
       this.crosshairs.select(".crosshair-x-under").style("display", null);
       if (this.options.y.variable !== null) {
@@ -1522,6 +1553,9 @@
     };
 
     LinePlot.prototype.hideCrosshair = function() {
+      if (!this.initialized) {
+        return;
+      }
       this.crosshairs.select(".crosshair-x").style("display", "none");
       this.crosshairs.select(".crosshair-x-under").style("display", "none");
       if (this.options.y.variable !== null) {
@@ -1633,12 +1667,14 @@ Air Sciences Inc. - 2016
       ref = this.template;
       for (key in ref) {
         plot = ref[key];
-        state = plot.proto.getState();
-        if (state.request.data.min) {
-          this.prependData(key);
-        }
-        if (state.request.data.max) {
-          this.appendData(key);
+        if (plot.proto.initialized) {
+          state = plot.proto.getState();
+          if (state.request.data.min) {
+            this.prependData(key);
+          }
+          if (state.request.data.max) {
+            this.appendData(key);
+          }
         }
       }
       return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
@@ -2090,6 +2126,7 @@ Air Sciences Inc. - 2016
       console.log("Instance ready for preAppend (instance)", instance);
       instance.preAppend();
       this.template[_key].proto = instance;
+      this.template[_key].proto.options.plotId = _key;
       return this.appendControls(_key);
     };
 

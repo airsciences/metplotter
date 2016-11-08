@@ -12,6 +12,7 @@ window.Plotting.LinePlot = class LinePlot
   constructor: (plotter, data, options) ->
     @preError = "LinePlot."
     @plotter = plotter
+    @initialized = false
 
     # Default Configuration
     defaults =
@@ -499,8 +500,10 @@ window.Plotting.LinePlot = class LinePlot
       .call(@definition.yAxis)
       .attr("transform", "translate(#{@definition.dimensions.leftPadding}, 0)")
 
-
   append: ->
+    @initialized = true
+    if !@initialized
+      return
     preError = "#{@preError}append()"
     _ = @
 
@@ -778,6 +781,8 @@ window.Plotting.LinePlot = class LinePlot
           
   appendCrosshairTarget: (transform) ->
     # Move Crosshairs and Focus Circle Based on Mouse Location
+    if !@initialized
+      return
     preError = "#{@preError}appendCrosshairTarget()"
     _ = @
     
@@ -799,6 +804,8 @@ window.Plotting.LinePlot = class LinePlot
       )
       
   appendZoomTarget: ->
+    if !@initialized
+      return
     preError = "#{@preError}appendZoomTarget()"
     _ = @
     
@@ -817,6 +824,8 @@ window.Plotting.LinePlot = class LinePlot
       
   setZoomTransform: (transform) ->
     # Set the current zoom transform state.
+    if !@initialized
+      return
     preError = "#{@preError}.setZoomTransform(transform)"
     _ = @
     _transform = if transform then transform else d3.event.transform
@@ -909,6 +918,8 @@ window.Plotting.LinePlot = class LinePlot
 
   setCrosshair: (transform, mouse) ->
     # Set the Crosshair position
+    if !@initialized
+      return
     preError = "#{@preError}.setCrosshair(mouse)"
     _ = @
     _dims = @definition.dimensions
@@ -1026,6 +1037,9 @@ window.Plotting.LinePlot = class LinePlot
     
   showCrosshair: ->
     # Show the Crosshair
+    console.log("Plot (plotId, initialized)", @options.plotId, @initialized)
+    if !@initialized
+      return
     @crosshairs.select(".crosshair-x")
       .style("display", null)
       
@@ -1046,16 +1060,18 @@ window.Plotting.LinePlot = class LinePlot
   
   hideCrosshair: () ->
     # Hide the Crosshair
+    if !@initialized
+      return
     @crosshairs.select(".crosshair-x")
       .style("display", "none")
-    
+  
     @crosshairs.select(".crosshair-x-under")
       .style("display", "none")
-    
+  
     if @options.y.variable != null
       @focusCircle.style("display", "none")
       @focusText.style("display", "none")
-    
+  
     if @options.y2.variable != null
       @focusCircle2.style("display", "none")
       @focusText2.style("display", "none")

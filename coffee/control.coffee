@@ -401,3 +401,12 @@ window.Plotting.Controls = class Controls
           .addClass("icon-caret-up")
         next.slideDown()
     )
+    
+  selectInitParameter: () ->
+    html = "<ul>
+        
+      </ul>"
+
+
+  selectInitStation: () ->
+    html = ""

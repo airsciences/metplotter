@@ -85,13 +85,14 @@ window.Plotting.Handler = class Handler
   listen: ->
     # Listen to Plot States & Update Data & Visible if Needed
     for key, plot of @template
-      state = plot.proto.getState()
-      # Min-Side Events
-      if state.request.data.min
-        @prependData(key)
-      # Max-Side Events
-      if state.request.data.max
-        @appendData(key)
+      if plot.proto.initialized
+        state = plot.proto.getState()
+        # Min-Side Events
+        if state.request.data.min
+          @prependData(key)
+        # Max-Side Events
+        if state.request.data.max
+          @appendData(key)
 
     setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
 
@@ -466,6 +467,7 @@ window.Plotting.Handler = class Handler
     console.log("Instance ready for preAppend (instance)", instance)
     instance.preAppend()
     @template[_key].proto = instance
+    @template[_key].proto.options.plotId = _key
     @appendControls(_key)
     
   getVariableBounds: (variable) ->
