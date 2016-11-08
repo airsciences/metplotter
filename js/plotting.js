@@ -246,9 +246,10 @@
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.Controls = Controls = (function() {
-    function Controls(access, options) {
+    function Controls(plotter, access, options) {
       var accessToken, defaults;
       this.preError = "Plotting.Dropdown";
+      this.plotter = plotter;
       defaults = {
         target: null
       };
@@ -319,7 +320,7 @@
 
     Controls.prototype.updateStationDropdown = function(plotId) {
       var _append, _id, _options, id;
-      _options = plotter.template[plotId].proto.options;
+      _options = this.plotter.template[plotId].proto.options;
       _append = "";
       if (_options.y.dataLoggerId !== null) {
         _id = _options.y.dataLoggerId;
@@ -383,7 +384,7 @@
 
     Controls.prototype.updateParameterDropdown = function(plotId) {
       var _id, _options, id;
-      _options = plotter.template[plotId].proto.options;
+      _options = this.plotter.template[plotId].proto.options;
       if (_options.y.variable !== null) {
         _id = _options.y.variable.replace('_', '-');
         id = _id + "-plot-" + plotId;
@@ -467,7 +468,7 @@
             return infowindow.close();
           });
           marker.addListener('click', function() {
-            return plotter.addStation(plotId, this.dataloggerid);
+            return _.plotter.addStation(plotId, this.dataloggerid);
           });
           _len = this.markers[uuid].push(marker);
           this.markers[uuid][_len - 1].setMap(this.maps[uuid]);
@@ -485,30 +486,50 @@
       var _center, _offset, _zoom;
       _offset = $("\#map-control-" + mapUuid).parent().parent().prev().offset();
       $("\#map-control-" + mapUuid).parent().parent().toggle().css("left", _offset.left - 356).css("top", _offset.top);
-      _center = plotter.controls.maps[mapUuid].getCenter();
-      _zoom = plotter.controls.maps[mapUuid].getZoom();
-      google.maps.event.trigger(plotter.controls.maps[mapUuid], 'resize');
-      plotter.controls.maps[mapUuid].setCenter(_center);
-      return plotter.controls.maps[mapUuid].setZoom(_zoom);
+      _center = this.plotter.controls.maps[mapUuid].getCenter();
+      _zoom = this.plotter.controls.maps[mapUuid].getZoom();
+      google.maps.event.trigger(this.plotter.controls.maps[mapUuid], 'resize');
+      this.plotter.controls.maps[mapUuid].setCenter(_center);
+      return this.plotter.controls.maps[mapUuid].setZoom(_zoom);
     };
 
     Controls.prototype.toggle = function(selector) {
       return $(selector).toggle();
     };
 
-    Controls.prototype.move = function(plotId, direction) {
-      var html;
-      return html = "<i style=\"cursor: pointer;\" class=\"icon-arrow-" + direction + "\" onclick=\"plotter.move(" + plotId + ", '" + direction + "')\"></i>";
+    Controls.prototype.move = function(plotId, appendTarget, direction) {
+      var _, html;
+      _ = this;
+      html = "<i id=\"move-" + plotId + "-" + direction + "\" style=\"cursor: pointer;\" class=\"icon-arrow-" + direction + "\"></i>";
+      $(appendTarget).append(html);
+      return $("#move-" + plotId + "-" + direction).on('click', function() {
+        return _.plotter.move(plotId, direction);
+      });
     };
 
-    Controls.prototype.remove = function(plotId) {
-      var html;
-      return html = "<i style=\"cursor: pointer;\" class=\"icon-remove\" onclick=\"plotter.remove(" + plotId + ")\"></i>";
+    Controls.prototype.remove = function(plotId, appendTarget) {
+      var _, html;
+      _ = this;
+      html = "<i id=\"remove-" + plotId + "\" style=\"cursor: pointer;\" class=\"icon-remove\"></i>";
+      $(appendTarget).append(html);
+      return $("#remove-" + plotId).on('click', function() {
+        return _.plotter.remove(plotId);
+      });
     };
 
-    Controls.prototype["new"] = function() {
-      var html;
-      return html = "<i style=\"cursor: pointer;\" class=\"icon-plus\" onclick=\"plotter.add()\"></i>";
+    Controls.prototype["new"] = function(appendTarget) {
+      var _, html, uuid;
+      _ = this;
+      uuid = this.uuid();
+      html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"new-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul> </li> </div>";
+      $(appendTarget).append(html);
+      $("#new-" + uuid).dropdown();
+      $("#new-" + uuid + "-parameter").on('click', function() {
+        return _.plotter.add("parameter");
+      });
+      return $("#new-" + uuid + "-station").on('click', function() {
+        return _.plotter.add("station");
+      });
     };
 
     Controls.prototype.uuid = function() {
@@ -772,9 +793,10 @@
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.LinePlot = LinePlot = (function() {
-    function LinePlot(data, options) {
-      var defaults;
+    function LinePlot(plotter, data, options) {
+      var _domainMean, _domainScale, defaults;
       this.preError = "LinePlot.";
+      this.plotter = plotter;
       defaults = {
         plotId: null,
         uuid: '',
@@ -842,7 +864,7 @@
         },
         crosshairX: {
           weight: 1,
-          color: "rgb(149, 165, 166)"
+          color: "rgb(149,165,166)"
         },
         requestInterval: {
           data: 336
@@ -882,10 +904,16 @@
       };
       this.data = this.processData(data);
       this.getDefinition();
+      _domainScale = null;
+      _domainMean = null;
+      if (data.length > 0) {
+        _domainScale = this.getDomainScale(this.definition.x);
+        _domainMean = this.getDomainMean(this.definition.x);
+      }
       this.state = {
         range: {
           data: null,
-          scale: this.getDomainScale(this.definition.x)
+          scale: _domainScale
         },
         length: {
           data: null
@@ -898,12 +926,14 @@
           data: null
         },
         mean: {
-          scale: this.getDomainMean(this.definition.x)
+          scale: _domainMean
         }
       };
-      this.setDataState();
-      this.setIntervalState();
-      this.setDataRequirement();
+      if (data.length > 0) {
+        this.setDataState();
+        this.setIntervalState();
+        this.setDataRequirement();
+      }
     }
 
     LinePlot.prototype.processData = function(data) {
@@ -1037,7 +1067,7 @@
       this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
         var transform;
         transform = _.setZoomTransform();
-        return plotter.zoom(transform);
+        return _.plotter.zoom(transform);
       });
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
@@ -1188,18 +1218,36 @@
       return this.definition.y.max = this.options.y.max === null ? this.definition.y.max : this.options.y.max;
     };
 
-    LinePlot.prototype.preAppend = function() {};
+    LinePlot.prototype.preAppend = function() {
+      var _, _offset, add_text, preError, sub_text;
+      preError = this.preError + "preAppend()";
+      _ = this;
+      this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
+      this.ctls = d3.select(this.options.target).append("div").attr("class", "line-plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
+      if (this.data.length === 0) {
+        if (this.options.type === "station") {
+          add_text = "Select the Plot's Station";
+          sub_text = "Station type plots allow comparison of different variables from the same station.";
+        } else if (this.options.type === "parameter") {
+          add_text = "Select the Plot's Parameter";
+          sub_text = "Parameter type plots allow comparison of a single paramater at multiple stations";
+        }
+        _offset = $(this.options.target).offset();
+        this.temp = this.outer.append("div").style("position", "absolute").style("top", (parseInt(_offset.top + this.definition.dimensions.innerHeight / 2 - 18)) + "px").style("left", (parseInt(_offset.left + this.definition.dimensions.margin.left)) + "px").style("width", this.definition.dimensions.innerWidth + "px").style("text-align", "center");
+        this.temp.append("a").text(add_text).attr("onclick", "buildNewPlot(" + this.options.plotId + ")");
+        this.temp.append("p").text(sub_text).style("color", "#ggg").style("font-size", "12px");
+      }
+      this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+    };
 
     LinePlot.prototype.append = function() {
       var _, _y2_title, _y3_title, _y_offset, _y_title, _y_vert, preError;
       preError = this.preError + "append()";
       _ = this;
-      this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
-      this.ctls = d3.select(this.options.target).append("div").attr("class", "line-plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
-      this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
-      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
-      this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      this.preAppend();
       _y_title = "" + this.options.y.title;
       if (this.options.y.units) {
         _y_title = _y_title + " " + this.options.y.units;
@@ -1279,13 +1327,13 @@
       preError = this.preError + "appendCrosshairTarget()";
       _ = this;
       return this.overlay.datum(this.data).attr("class", "overlay").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
-        return plotter.showCrosshairs();
+        return _.plotter.showCrosshairs();
       }).on("mouseout", function() {
-        return plotter.hideCrosshairs();
+        return _.plotter.hideCrosshairs();
       }).on("mousemove", function() {
         var mouse;
         mouse = _.setCrosshair(transform);
-        return plotter.crosshair(transform, mouse);
+        return _.plotter.crosshair(transform, mouse);
       });
     };
 
@@ -1555,7 +1603,7 @@ Air Sciences Inc. - 2016
       access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API(access.token);
       this.syncronousapi = new window.Plotting.API(access.token, false);
-      this.controls = new window.Plotting.Controls(access);
+      this.controls = new window.Plotting.Controls(this, access);
       this.parseDate = d3.timeParse(this.options.dateFormat);
       this.format = d3.utcFormat(this.options.dateFormat);
       this.getNow = function() {
@@ -1720,7 +1768,7 @@ Air Sciences Inc. - 2016
           }
         }
         title = this.getTitle(plot);
-        instance = new window.Plotting.LinePlot(__data.get(), plot.options);
+        instance = new window.Plotting.LinePlot(this, __data.get(), plot.options);
         instance.append();
         this.template[key].proto = instance;
         results.push(this.appendControls(key));
@@ -1977,15 +2025,15 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.appendControls = function(plotId) {
-      var _down_control, _li_style, _new_control, _remove_control, _up_control, current, html, selector;
+      var _li_style, current, html, selector;
       selector = "plot-controls-" + plotId;
       _li_style = "";
-      _new_control = this.controls["new"]();
-      _remove_control = this.controls.remove(plotId);
-      _up_control = this.controls.move(plotId, 'up');
-      _down_control = this.controls.move(plotId, 'down');
-      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> <li>" + _up_control + "</li> <li>" + _remove_control + "</li> <li>" + _new_control + "</li> <li>" + _down_control + "</i></li> </ul>";
+      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> </ul>";
       $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
+      this.controls.move(plotId, '#' + selector, 'up');
+      this.controls["new"]('#' + selector, 'down');
+      this.controls.remove(plotId, '#' + selector);
+      this.controls.move(plotId, '#' + selector, 'down');
       if (this.template[plotId].type === "station") {
         current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
         return this.controls.appendParameterDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.dataloggerid, current);
@@ -2023,7 +2071,27 @@ Air Sciences Inc. - 2016
       }
     };
 
-    Handler.prototype.add = function() {};
+    Handler.prototype.add = function(type) {
+      var _key, _plot, _target, html, instance;
+      console.log("Adding (type)", type, this.template);
+      _target = this.utarget(this.options.target);
+      _plot = {
+        plotOrder: this.template.length,
+        type: type,
+        options: {
+          type: type,
+          target: '#' + _target
+        }
+      };
+      html = "<div id=\"" + _target + "\"></div>";
+      $(this.options.target).append(html);
+      _key = this.template.push(_plot) - 1;
+      instance = new window.Plotting.LinePlot(this, [], _plot.options);
+      console.log("Instance ready for preAppend (instance)", instance);
+      instance.preAppend();
+      this.template[_key].proto = instance;
+      return this.appendControls(_key);
+    };
 
     Handler.prototype.getVariableBounds = function(variable) {
       var bounds;

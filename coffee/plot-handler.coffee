@@ -61,7 +61,7 @@ window.Plotting.Handler = class Handler
       
     @api = new window.Plotting.API(access.token)
     @syncronousapi = new window.Plotting.API(access.token, false)
-    @controls = new window.Plotting.Controls(access)
+    @controls = new window.Plotting.Controls(@, access)
     @parseDate = d3.timeParse(@options.dateFormat)
 
     @format = d3.utcFormat(@options.dateFormat)
@@ -169,7 +169,6 @@ window.Plotting.Handler = class Handler
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
       
-      
       plot.options.y.color = @getColor('light', key)
       plot.options.y2.color = @getColor('light', parseInt(key+4%7))
       plot.options.y3.color = @getColor('light', parseInt(key+6%7))
@@ -190,7 +189,7 @@ window.Plotting.Handler = class Handler
           __data.join(plot.data[i], [plot.options.x.variable])
             
       title = @getTitle(plot)
-      instance = new window.Plotting.LinePlot(__data.get(), plot.options)
+      instance = new window.Plotting.LinePlot(@, __data.get(), plot.options)
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
@@ -394,21 +393,18 @@ window.Plotting.Handler = class Handler
     # Append the Control Set to the Plot
     selector = "plot-controls-#{plotId}"
     _li_style = ""
-    _new_control = @controls.new()
-    _remove_control = @controls.remove(plotId)
-    _up_control = @controls.move(plotId, 'up')
-    _down_control = @controls.move(plotId, 'down')
     
     html = "<ul id=\"#{selector}\" class=\"unstyled\"
         style=\"list-style-type: none; padding-left: 6px;\">
-        <li>#{_up_control}</li>
-        <li>#{_remove_control}</li>
-        <li>#{_new_control}</li>
-        <li>#{_down_control}</i></li>
       </ul>"
     
     $(@template[plotId].proto.options.target)
       .find(".line-plot-controls").append(html)
+    
+    @controls.move(plotId, '#'+selector, 'up')
+    @controls.new('#'+selector, 'down')
+    @controls.remove(plotId, '#'+selector)
+    @controls.move(plotId, '#'+selector, 'down')
     
     if @template[plotId].type is "station"
       current = [
@@ -450,9 +446,28 @@ window.Plotting.Handler = class Handler
         @template[_tradeKey].pageOrder--
         selected.next().insertBefore(selected)
 
-  add: () ->
+  add: (type) ->
     # Add a new plot.
+    console.log("Adding (type)", type, @template)
+    _target = @utarget(@options.target)
+    _plot =
+      plotOrder: @template.length
+      type: type
+      options:
+        type: type
+        target: '#' + _target
 
+    html = "<div id=\"#{_target}\"></div>"
+    $(@options.target).append(html)
+    
+    _key = @template.push(_plot)-1
+    
+    instance = new window.Plotting.LinePlot(@, [], _plot.options)
+    console.log("Instance ready for preAppend (instance)", instance)
+    instance.preAppend()
+    @template[_key].proto = instance
+    @appendControls(_key)
+    
   getVariableBounds: (variable) ->
     bounds =
       battery_voltage:

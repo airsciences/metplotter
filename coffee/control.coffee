@@ -9,8 +9,9 @@
 window.Plotting ||= {}
 
 window.Plotting.Controls = class Controls
-  constructor: (access, options) ->
+  constructor: (plotter, access, options) ->
     @preError = "Plotting.Dropdown"
+    @plotter = plotter
     
     defaults =
       target: null
@@ -99,7 +100,7 @@ window.Plotting.Controls = class Controls
     @api.get(target, args, callback)
 
   updateStationDropdown: (plotId) ->
-    _options = plotter.template[plotId].proto.options
+    _options = @plotter.template[plotId].proto.options
     _append = ""
     if _options.y.dataLoggerId != null
       _id = _options.y.dataLoggerId
@@ -200,7 +201,7 @@ window.Plotting.Controls = class Controls
     @api.get(target, args, callback)
 
   updateParameterDropdown: (plotId) ->
-    _options = plotter.template[plotId].proto.options
+    _options = @plotter.template[plotId].proto.options
     if _options.y.variable != null
       _id = _options.y.variable.replace('_', '-')
       id = "#{_id}-plot-#{plotId}"
@@ -297,7 +298,7 @@ window.Plotting.Controls = class Controls
         )
         
         marker.addListener('click', ->
-          plotter.addStation(plotId, @dataloggerid)
+          _.plotter.addStation(plotId, @dataloggerid)
         )
         
         _len = @markers[uuid].push(marker)
@@ -316,28 +317,64 @@ window.Plotting.Controls = class Controls
     $("\#map-control-#{mapUuid}").parent().parent().toggle()
       .css("left", _offset.left - 356)
       .css("top", _offset.top)
-    _center = plotter.controls.maps[mapUuid].getCenter()
-    _zoom = plotter.controls.maps[mapUuid].getZoom()
-    google.maps.event.trigger(plotter.controls.maps[mapUuid], 'resize')
-    plotter.controls.maps[mapUuid].setCenter(_center)
-    plotter.controls.maps[mapUuid].setZoom(_zoom)
+    _center = @plotter.controls.maps[mapUuid].getCenter()
+    _zoom = @plotter.controls.maps[mapUuid].getZoom()
+    google.maps.event.trigger(@plotter.controls.maps[mapUuid], 'resize')
+    @plotter.controls.maps[mapUuid].setCenter(_center)
+    @plotter.controls.maps[mapUuid].setZoom(_zoom)
     
   toggle: (selector) ->
     # Toggle the plotId's station down.
     $(selector).toggle()
 
-  move: (plotId, direction) ->
-    # Return the Move Control.
-    html = "<i style=\"cursor: pointer;\" class=\"icon-arrow-#{direction}\"
-      onclick=\"plotter.move(#{plotId}, '#{direction}')\"></i>"
+  move: (plotId, appendTarget, direction) ->
+    _ = @
+    html = "<i id=\"move-#{plotId}-#{direction}\" style=\"cursor: pointer;\"
+      class=\"icon-arrow-#{direction}\"></i>"
+    $(appendTarget).append(html)
+    $("#move-#{plotId}-#{direction}").on('click', ->
+      _.plotter.move(plotId, direction)
+    )
     
-  remove: (plotId) ->
-    html = "<i style=\"cursor: pointer;\" class=\"icon-remove\"
-      onclick=\"plotter.remove(#{plotId})\"></i>"
+  remove: (plotId, appendTarget) ->
+    _ = @
+    html = "<i id=\"remove-#{plotId}\" style=\"cursor: pointer;\"
+      class=\"icon-remove\"></i>"
+    $(appendTarget).append(html)
+    $("#remove-#{plotId}").on('click', ->
+      _.plotter.remove(plotId)
+    )
 
-  new: () ->
-    html = "<i style=\"cursor: pointer;\" class=\"icon-plus\"
-      onclick=\"plotter.add()\"></i>"
+  new: (appendTarget) ->
+    _ = @
+    uuid = @uuid()
+
+    html = "<div class=\"dropdown\">
+        <li><a id=\"new-#{uuid}\" class=\"new-dropdown dropdown-toggle\"
+          role=\"button\" data-toggle=\"dropdown\" href=\"#\">
+          <i class=\"icon-plus\"></i></a>
+        <ul id=\"new-#{uuid}-dropdown\"
+          class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
+          aria-labelledby=\"new-#{uuid}\">
+          <li><a id=\"new-#{uuid}-parameter\"
+            style=\"cursor: pointer\">Add Parameter Plot</a></li>
+          <li><a id=\"new-#{uuid}-station\"
+            style=\"cursor: pointer\">Add Station Plot</a></li>
+        </ul>
+        </li>
+        </div>"
+    
+    # Append & Bind Dropdown
+    $(appendTarget).append(html)
+    $("#new-#{uuid}").dropdown()
+    
+    # Bind Click Events
+    $("#new-#{uuid}-parameter").on('click', ->
+      _.plotter.add("parameter")
+    )
+    $("#new-#{uuid}-station").on('click', ->
+      _.plotter.add("station")
+    )
 
   uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)

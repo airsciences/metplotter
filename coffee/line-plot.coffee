@@ -9,8 +9,9 @@
 window.Plotting ||= {}
 
 window.Plotting.LinePlot = class LinePlot
-  constructor: (data, options) ->
+  constructor: (plotter, data, options) ->
     @preError = "LinePlot."
+    @plotter = plotter
 
     # Default Configuration
     defaults =
@@ -70,7 +71,7 @@ window.Plotting.LinePlot = class LinePlot
         size: 12
       crosshairX:
         weight: 1
-        color: "rgb(149, 165, 166)"
+        color: "rgb(149,165,166)"
       requestInterval:
         data: 336
     if options.x
@@ -99,10 +100,16 @@ window.Plotting.LinePlot = class LinePlot
     @getDefinition()
     
     # Initialize the State
+    _domainScale = null
+    _domainMean = null
+    if data.length > 0
+      _domainScale = @getDomainScale(@definition.x)
+      _domainMean = @getDomainMean(@definition.x)
+    
     @state =
       range:
         data: null
-        scale: @getDomainScale(@definition.x)
+        scale: _domainScale
       length:
         data: null
       interval:
@@ -111,10 +118,12 @@ window.Plotting.LinePlot = class LinePlot
       request:
         data: null
       mean:
-        scale: @getDomainMean(@definition.x)
-    @setDataState()
-    @setIntervalState()
-    @setDataRequirement()
+        scale: _domainMean
+    
+    if data.length > 0
+      @setDataState()
+      @setIntervalState()
+      @setDataRequirement()
 
   processData: (data) ->
     # Process a data set.
@@ -258,7 +267,7 @@ window.Plotting.LinePlot = class LinePlot
       .translateExtent(_extent)
       .on("zoom", () ->
         transform = _.setZoomTransform()
-        plotter.zoom(transform)
+        _.plotter.zoom(transform)
       )
 
     @definition.line = d3.line()
@@ -404,12 +413,10 @@ window.Plotting.LinePlot = class LinePlot
     else @options.y.max
 
   preAppend: ->
-
-  append: ->
-    preError = "#{@preError}append()"
+    preError = "#{@preError}preAppend()"
     _ = @
-
-    # Create the Controls Div
+    
+    # Create the SVG Div
     @outer = d3.select(@options.target).append("div")
       .attr("class", "line-plot-body")
       .style("width", "#{@definition.dimensions.width}px")
@@ -423,6 +430,34 @@ window.Plotting.LinePlot = class LinePlot
       .style("height", "#{@definition.dimensions.height}px")
       .style("display", "inline-block")
       .style("vertical-align", "top")
+
+    if @data.length == 0
+      if @options.type is "station"
+        add_text = "Select the Plot's Station"
+        sub_text = "Station type plots allow comparison of different variab\
+          les from the same station."
+      else if @options.type is "parameter"
+        add_text = "Select the Plot's Parameter"
+        sub_text = "Parameter type plots allow comparison of a single parama\
+          ter at multiple stations"
+      _offset = $(@options.target).offset()
+      @temp = @outer.append("div")
+        .style("position", "absolute")
+        .style("top",
+          "#{parseInt(_offset.top+@definition.dimensions.innerHeight/2-18)}px")
+        .style("left",
+          "#{parseInt(_offset.left+@definition.dimensions.margin.left)}px")
+        .style("width", "#{@definition.dimensions.innerWidth}px")
+        .style("text-align", "center")
+        
+      @temp.append("a")
+        .text(add_text)
+        .attr("onclick", "buildNewPlot(#{@options.plotId})")
+        
+      @temp.append("p")
+        .text(sub_text)
+        .style("color", "#ggg")
+        .style("font-size", "12px")
 
     # Create the SVG
     @svg = @outer.append("svg")
@@ -463,6 +498,14 @@ window.Plotting.LinePlot = class LinePlot
       .style("font-weight", @options.font.weight)
       .call(@definition.yAxis)
       .attr("transform", "translate(#{@definition.dimensions.leftPadding}, 0)")
+
+
+  append: ->
+    preError = "#{@preError}append()"
+    _ = @
+
+    # Append the Axis, etc.
+    @preAppend()
      
     # Append Axis Label
     _y_title = "#{@options.y.title}"
@@ -748,11 +791,11 @@ window.Plotting.LinePlot = class LinePlot
       )
       .style("fill", "none")
       .style("pointer-events", "all")
-      .on("mouseover", () -> plotter.showCrosshairs())
-      .on("mouseout", () -> plotter.hideCrosshairs())
+      .on("mouseover", () -> _.plotter.showCrosshairs())
+      .on("mouseout", () -> _.plotter.hideCrosshairs())
       .on("mousemove", () ->
         mouse = _.setCrosshair(transform)
-        plotter.crosshair(transform, mouse)
+        _.plotter.crosshair(transform, mouse)
       )
       
   appendZoomTarget: ->
