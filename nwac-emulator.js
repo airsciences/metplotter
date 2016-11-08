@@ -214,7 +214,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
         result = {"templateData": [
             {
                 "pageOrder": 1,
-                "type": "station",
+                "type": "parameter",
                 "station": [
                     {
                         "station":"White Pass Base",
@@ -242,13 +242,11 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
-                        "dataLoggerId": 43,
                         "variable": "temperature",
                         "title": "Temperature",
                         "units": "°F"
                     },
                     "y2": {
-                        "dataLoggerId": 42,
                         "variable": "temperature",
                         "title": "Temperature",
                         "units": "°F"                        
@@ -257,7 +255,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
             },
             {
                 "pageOrder": 2,
-                "type": "station",
+                "type": "parameter",
                 "station": {
                     "station":"White Pass Pigtail",
                     "region":"West Slopes South",
@@ -271,7 +269,6 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
-                        "dataLoggerId": 40,
                         "variable": "wind_speed_average",
                         "title": "Wind Speed",
                         "units": "m/s"
@@ -284,7 +281,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
             },
             {
                 "pageOrder": 3,
-                "type": "station",
+                "type": "parameter",
                 "station": {
                     "station":"White Pass Base",
                     "region":"West Slopes South",
@@ -298,7 +295,6 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
-                        "dataLoggerId": 43,
                         "variable": "precipitation",
                         "title": "Precipitation",
                         "units": "In."
@@ -307,7 +303,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
             },
             {
                 "pageOrder": 4,
-                "type": "station",
+                "type": "parameter",
                 "station": {
                     "station":"White Pass Base",
                     "region":"West Slopes South",
@@ -321,7 +317,6 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
-                        "dataLoggerId": 43,
                         "variable": "snowfall_24_hour",
                         "title": "24-Hour Snow Fall",
                         "units": "In."
@@ -330,7 +325,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
             },
             {
                 "pageOrder": 5,
-                "type": "station",
+                "type": "parameter",
                 "station": {
                     "station":"White Pass Base",
                     "region":"West Slopes South",
@@ -344,7 +339,6 @@ app.get('/template/:plotTemplateId', function(req, res) {
                 "options": {
                     "x": xVar,
                     "y": {
-                        "dataLoggerId": 43,
                         "variable": "snow_depth",
                         "title": "Total Snow Depth",
                         "units": "In."
@@ -964,44 +958,6 @@ app.get('/stations/:parameter', function (req, res) {
                         }
                     ]
                 }
-            ];
-    }
-    
-    res.json(result);
-});
-
-app.get('/parameters/:dataLoggerId', function (req, res) {
-    console.log("API-Stations", req.params);
-    var data_logger_id = parseInt(req.params.dataLoggerId);
-    var result;
-    
-    switch (data_logger_id) {
-        case 1:
-            result = [
-                {"title": "Battery Voltage (V)", "parameter": "battery_voltage"},
-                {"title": "Windspeed (mph)", "parameter": ["wind_speed_average","wind_speed_maximum","wind_speed_minimum"]},
-                {"title": "Precipitation (In.)", "parameter": "precipitation"},
-                {"title": "Temperature (F)", "parameter": "temperature"},
-                {"title": "Relative Humidity (%)", "parameter": "relative_humidity"}
-            ];
-            break;
-        case 43:
-        result = [
-                {"title": "Precipitation (In.)", "parameter": "precipitation"},
-                {"title": "Temperature (°F)", "parameter": "temperature"},
-                {"title": "Relative Humidity (%)", "parameter": "relative_humidity"}
-            ];
-            break;
-        default:
-            /** Return All Parameters */
-            result = [
-                {"title": "Barometric Pressure", "parameter": "barometric_pressure"},
-                {"title": "Battery Voltage (V)", "parameter": "battery_voltage"},
-                {"title": "Equipment Temperature (°F)", "parameter": "equipment_temperature"},
-                {"title": "Windspeed (mph)", "parameter": ["wind_speed_average","wind_speed_maximum","wind_speed_minimum"]},
-                {"title": "Precipitation (In.)", "parameter": "precipitation"},
-                {"title": "Temperature (°F)", "parameter": "temperature"},
-                {"title": "Relative Humidity (%)", "parameter": "relative_humidity"}
             ];
     }
     

@@ -265,24 +265,25 @@
 
     Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter, current) {
       var _, args, callback, target, uuid;
-      target = "stations/" + parameter;
+      target = location.protocol + "//dev.nwac.us/api/v5/dataloggerregion?sensor_name=" + parameter;
       _ = this;
       args = {};
       uuid = this.uuid();
       callback = function(data) {
         var _dots, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, len, len1, len2, r_color, ref, ref1, ref2, region, station;
+        console.log("Parameter Station Dropdown", data);
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\">";
-        ref = data.responseJSON;
+        ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
           a_color = "";
           r_color = "";
           _dots = "<span class=\"station-dots\">";
           _region_selected = 0;
-          ref1 = region.stations;
+          ref1 = region.dataloggers;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
             _station = ref1[j];
-            _row_current = _.isCurrent(current, 'dataLoggerId', _station.dataloggerid);
+            _row_current = _.isCurrent(current, 'dataLoggerId', _station.id);
             if (_row_current) {
               _region_selected++;
               _dots = _dots + " <i class=\"icon-circle\" style=\"color: " + _row_current.color + "\"></i>";
@@ -292,18 +293,19 @@
             r_color = "style=\"background-color: rgb(248,248,248)\"";
             a_color = "style=\"font-weight: 700\"";
           }
-          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.region + " " + _dots + "</span></a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
-          ref2 = region.stations;
+          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.name + " " + _dots + "</span></a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
+          ref2 = region.dataloggers;
           for (k = 0, len2 = ref2.length; k < len2; k++) {
             station = ref2[k];
-            _row_current = _.isCurrent(current, 'dataLoggerId', station.dataloggerid);
+            console.log("Dataloggers (current, station)", current, station);
+            _row_current = _.isCurrent(current, 'dataLoggerId', station.id);
             color = "";
             if (_row_current) {
               color = "style=\"color: " + _row_current.color + "\"";
             }
-            id = "data-logger-" + station.dataloggerid + "-plot-" + plotId;
+            id = "data-logger-" + station.id + "-plot-" + plotId;
             _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" " + color + "></i>";
-            html = html + " <li class=\"station\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"plotter.addStation(" + plotId + ", " + station.dataloggerid + ")\"> " + _prepend + " " + station.name + "</li>";
+            html = html + " <li class=\"station\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"plotter.addStation(" + plotId + ", " + station.id + ")\"> " + _prepend + " " + station.datalogger_name + "</li>";
           }
           html = html + " </ul>";
         }
@@ -341,34 +343,36 @@
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
       var _current, args, callback, target, uuid;
-      target = "parameters/" + dataLoggerId;
+      target = location.protocol + "//dev.nwac.us/api/v5/sensortype?sensors__data_logger=" + dataLoggerId;
       args = {};
       uuid = this.uuid();
       _current = [];
       callback = function(data) {
         var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
-        ref = data.responseJSON;
+        ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
           parameter = ref[i];
-          if (parameter.parameter instanceof Array) {
-            _add = parameter.parameter[0];
+          if (parameter.field_name === "wind_speed_minimum" || parameter.field_name === "wind_speed_maximum") {
+
+          } else if (parameter.field_name === "wind_speed_average") {
+            _add = parameter.field_name;
             _id = _add.replace("_", "-");
             id = _id + "-plot-" + plotId;
-            if (ref1 = current.variable, indexOf.call(parameter.parameter, ref1) >= 0) {
+            if (ref1 = current.variable, indexOf.call(parameter.field_name, ref1) >= 0) {
               _prepend = "<i id=\"" + id + "\" class=\"parameter-" + parameter.parameter + " icon-circle\" style=\"color: " + current.color + "\"></i>";
             }
           } else {
-            _add = parameter.parameter;
+            _add = parameter.field_name;
             _id = _add.replace("_", "-");
             id = _id + "-plot-" + plotId;
-            if (current.variable === parameter.parameter) {
+            if (current.variable === parameter.field_name) {
               _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" style=\"color: " + current.color + "\"></i>";
             } else {
               _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" style=\"\"></i>";
             }
           }
-          html = html + " <li><a style=\"cursor: pointer\" onclick=\"plotter.addVariable(" + plotId + ", '" + _add + "')\">" + _prepend + " " + parameter.title + "</a></li>";
+          html = html + " <li><a style=\"cursor: pointer\" onclick=\"plotter.addVariable(" + plotId + ", '" + _add + "')\">" + _prepend + " " + parameter.sensortype_name + "</a></li>";
         }
         html = html + " </ul> </li> </div>";
         $(appendTarget).prepend(html);
@@ -1489,7 +1493,7 @@ Air Sciences Inc. - 2016
       access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API(access.token);
       this.syncronousapi = new window.Plotting.API(access.token, false);
-      this.controls = new window.Plotting.Controls;
+      this.controls = new window.Plotting.Controls(access);
       this.parseDate = d3.timeParse(this.options.dateFormat);
       this.format = d3.utcFormat(this.options.dateFormat);
       this.getNow = function() {
@@ -1625,7 +1629,6 @@ Air Sciences Inc. - 2016
         plot = ref[key];
         target = this.utarget(this.options.target);
         $(this.options.target).append("<div id='" + target + "'></div>");
-        plot.type = "parameter";
         if (plot.options.y2 === void 0) {
           plot.options.y2 = {};
         }
@@ -1908,11 +1911,11 @@ Air Sciences Inc. - 2016
       $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
       if (this.template[plotId].type === "station") {
         current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
-        return this.controls.appendParameterDropdown(plotId, '#' + selector, 1, current);
+        return this.controls.appendParameterDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.dataloggerid, current);
       } else if (this.template[plotId].type === "parameter") {
         current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
-        this.controls.appendStationMap(plotId, '#' + selector, 1, current);
-        return this.controls.appendStationDropdown(plotId, '#' + selector, 1, current);
+        this.controls.appendStationMap(plotId, '#' + selector, this.template[plotId].proto.options.y.variable, current);
+        return this.controls.appendStationDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.variable, current);
       }
     };
 

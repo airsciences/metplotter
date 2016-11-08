@@ -27,12 +27,14 @@ window.Plotting.Controls = class Controls
 
   appendStationDropdown: (plotId, appendTarget, parameter, current) ->
     # Append Station Dropdown.
-    target = "stations/#{parameter}"
+    target = "#{location.protocol}//dev.nwac.us/api/v5/dataloggerregion?\
+      sensor_name=#{parameter}"
     _ = @
     args = {}
     uuid = @uuid()
     
     callback = (data) ->
+      console.log("Parameter Station Dropdown", data)
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
             role=\"button\"
@@ -41,14 +43,13 @@ window.Plotting.Controls = class Controls
         <ul id=\"station-dropdown-#{plotId}\"
           class=\"dropdown-menu dropdown-menu-right\">"
      
-      for region in data.responseJSON
+      for region in data.responseJSON.results
         a_color = ""
         r_color = ""
         _dots = "<span class=\"station-dots\">"
         _region_selected = 0
-        for _station in region.stations
-          _row_current = _.isCurrent(current, 'dataLoggerId',
-            _station.dataloggerid)
+        for _station in region.dataloggers
+          _row_current = _.isCurrent(current, 'dataLoggerId', _station.id)
           if _row_current
             _region_selected++
             _dots = "#{_dots} <i class=\"icon-circle\"
@@ -60,25 +61,25 @@ window.Plotting.Controls = class Controls
             <li class=\"subheader\" #{r_color}>
               <a #{a_color} href=\"#\"><i class=\"icon-caret-down\"
                 style=\"margin-right: 6px\"></i>
-               #{region.region} #{_dots}</span></a>
+               #{region.name} #{_dots}</span></a>
             </li>
             <ul class=\"list-group-item sublist\"
               style=\"display: none;\">"
-        for station in region.stations
-          _row_current = _.isCurrent(current, 'dataLoggerId',
-            station.dataloggerid)
+        for station in region.dataloggers
+          console.log("Dataloggers (current, station)", current, station)
+          _row_current = _.isCurrent(current, 'dataLoggerId', station.id)
           color = ""
           if _row_current
             color = "style=\"color: #{_row_current.color}\""
-          id = "data-logger-#{station.dataloggerid}-plot-#{plotId}"
+          id = "data-logger-#{station.id}-plot-#{plotId}"
           _prepend = "<i id=\"#{id}\" class=\"icon-circle\"
             #{color}></i>"
           html = "#{html}
             <li class=\"station\"
               style=\"padding: 1px 5px; cursor: pointer;
               list-style-type: none\" onclick=\"plotter.addStation(#{plotId},
-                #{station.dataloggerid})\">
-               #{_prepend} #{station.name}</li>"
+                #{station.id})\">
+               #{_prepend} #{station.datalogger_name}</li>"
         
         html = "#{html}
           </ul>"
@@ -138,7 +139,8 @@ window.Plotting.Controls = class Controls
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.
-    target = "parameters/#{dataLoggerId}"
+    target = "#{location.protocol}//dev.nwac.us/api/v5/\
+      sensortype?sensors__data_logger=#{dataLoggerId}"
     args = {}
     uuid = @uuid()
     
@@ -154,20 +156,25 @@ window.Plotting.Controls = class Controls
           class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
           aria-labelledby=\"#{uuid}\">"
            
-      for parameter in data.responseJSON
-        if parameter.parameter instanceof Array
-          _add = parameter.parameter[0]
+      for parameter in data.responseJSON.results
+        if (
+          parameter.field_name is "wind_speed_minimum" or
+          parameter.field_name is "wind_speed_maximum"
+        )
+          # No Action
+        else if parameter.field_name is "wind_speed_average"
+          _add = parameter.field_name
           _id = _add.replace("_", "-")
           id = "#{_id}-plot-#{plotId}"
-          if current.variable in parameter.parameter
+          if current.variable in parameter.field_name
             _prepend = "<i id=\"#{id}\" class=\"parameter-#{parameter.parameter}
               icon-circle\"
               style=\"color: #{current.color}\"></i>"
         else
-          _add = parameter.parameter
+          _add = parameter.field_name
           _id = _add.replace("_", "-")
           id = "#{_id}-plot-#{plotId}"
-          if current.variable == parameter.parameter
+          if current.variable == parameter.field_name
             _prepend = "<i id=\"#{id}\" class=\"icon-circle\"
               style=\"color: #{current.color}\"></i>"
           else
@@ -177,7 +184,7 @@ window.Plotting.Controls = class Controls
             <li><a style=\"cursor: pointer\"
               onclick=\"plotter.addVariable(#{plotId},
               '#{_add}')\">#{_prepend}
-             #{parameter.title}</a></li>"
+             #{parameter.sensortype_name}</a></li>"
       
       html = "#{html}
             </ul>

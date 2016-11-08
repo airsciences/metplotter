@@ -59,9 +59,9 @@ window.Plotting.Handler = class Handler
       expired: true
     access = Object.mergeDefaults access, accessToken
       
-    @api = new window.Plotting.API access.token
-    @syncronousapi = new window.Plotting.API access.token, false
-    @controls = new window.Plotting.Controls
+    @api = new window.Plotting.API(access.token)
+    @syncronousapi = new window.Plotting.API(access.token, false)
+    @controls = new window.Plotting.Controls(access)
     @parseDate = d3.timeParse(@options.dateFormat)
 
     @format = d3.utcFormat(@options.dateFormat)
@@ -159,8 +159,6 @@ window.Plotting.Handler = class Handler
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
-      #plot.type = "station"
-      plot.type = "parameter"
       if plot.options.y2 is undefined
         plot.options.y2 = {}
       if plot.options.y3 is undefined
@@ -405,15 +403,18 @@ window.Plotting.Handler = class Handler
           @template[plotId].proto.options.y2,
           @template[plotId].proto.options.y3
       ]
-      @controls.appendParameterDropdown(plotId, '#'+selector, 1, current)
+      @controls.appendParameterDropdown(plotId, '#'+selector,
+        @template[plotId].proto.options.y.dataloggerid, current)
     else if @template[plotId].type is "parameter"
       current = [
           @template[plotId].proto.options.y,
           @template[plotId].proto.options.y2,
           @template[plotId].proto.options.y3
       ]
-      @controls.appendStationMap(plotId, '#'+selector, 1, current)
-      @controls.appendStationDropdown(plotId, '#'+selector, 1, current)
+      @controls.appendStationMap(plotId, '#'+selector,
+        @template[plotId].proto.options.y.variable, current)
+      @controls.appendStationDropdown(plotId, '#'+selector,
+        @template[plotId].proto.options.y.variable, current)
 
   remove: (plotId) ->
     # Remove a plotId
