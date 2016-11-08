@@ -260,6 +260,7 @@
       };
       access = Object.mergeDefaults(access, accessToken);
       this.maps = [];
+      this.markers = [];
       this.api = new window.Plotting.API(access.token);
     }
 
@@ -271,7 +272,6 @@
       uuid = this.uuid();
       callback = function(data) {
         var _dots, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, len, len1, len2, r_color, ref, ref1, ref2, region, station;
-        console.log("Parameter Station Dropdown", data);
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\">";
         ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
@@ -297,7 +297,6 @@
           ref2 = region.dataloggers;
           for (k = 0, len2 = ref2.length; k < len2; k++) {
             station = ref2[k];
-            console.log("Dataloggers (current, station)", current, station);
             _row_current = _.isCurrent(current, 'dataLoggerId', station.id);
             color = "";
             if (_row_current) {
@@ -312,7 +311,8 @@
         html = html + " </ul> </li>";
         $(appendTarget).prepend(html);
         $('#' + uuid).dropdown();
-        return _.bindSubMenuEvent(".subheader");
+        _.bindSubMenuEvent(".subheader");
+        return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
       return this.api.get(target, args, callback);
     };
@@ -404,15 +404,16 @@
       }
     };
 
-    Controls.prototype.appendStationMap = function(plotId, appendTarget, parameter) {
-      var _, dom_uuid, html, uuid;
+    Controls.prototype.appendStationMap = function(plotId, appendTarget, results, current) {
+      var _, _bound_points, _bounds, _len, _point, _row_current, color, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station, uuid;
       _ = this;
       uuid = this.uuid();
       dom_uuid = "map-control-" + uuid;
-      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i class=\"icon-map-marker\" style=\"cursor: pointer\" onclick=\"plotter.controls.toggleMap('" + uuid + "')\"></i> </li> <div class=\"popover\" style=\"max-width: 356px\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height:  312px;\"></div> </div> </div>";
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i class=\"icon-map-marker\" style=\"cursor: pointer\" onclick=\"plotter.controls.toggleMap('" + uuid + "')\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
+      this.markers[uuid] = [];
       this.maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
-        center: new google.maps.LatLng(47.6062, -122.3321),
+        center: new google.maps.LatLng(46.980, -121.980),
         zoom: 6,
         mapTypeId: 'terrain',
         zoomControl: true,
@@ -422,12 +423,73 @@
         rotateControl: false,
         fullscreenControl: false
       });
-      return console.log("Controls.maps (@maps)", this.maps);
+      infowindow = new google.maps.InfoWindow({
+        content: ""
+      });
+      _bounds = new google.maps.LatLngBounds();
+      _bound_points = [];
+      for (i = 0, len = results.length; i < len; i++) {
+        region = results[i];
+        ref = region.dataloggers;
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          station = ref[j];
+          color = "rgb(200,200,200)";
+          scale = 5;
+          opacity = 0.5;
+          _row_current = _.isCurrent(current, 'dataLoggerId', station.id);
+          if (_row_current) {
+            color = _row_current.color;
+            scale = 7;
+            opacity = 0.8;
+            _bound_points.push(new google.maps.LatLng(station.lat, station.lon));
+          }
+          marker = new google.maps.Marker({
+            position: {
+              lat: station.lat,
+              lng: station.lon
+            },
+            tooltip: station.datalogger_name + " - " + station.elevation + " ft",
+            dataloggerid: station.id,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: scale,
+              strokeWeight: 2,
+              fillOpacity: opacity,
+              fillColor: color
+            },
+            selected: false
+          });
+          marker.addListener('mouseover', function() {
+            infowindow.setContent(this.tooltip);
+            return infowindow.open(_.maps[uuid], this);
+          });
+          marker.addListener('mouseout', function() {
+            return infowindow.close();
+          });
+          marker.addListener('click', function() {
+            return plotter.addStation(plotId, this.dataloggerid);
+          });
+          _len = this.markers[uuid].push(marker);
+          this.markers[uuid][_len - 1].setMap(this.maps[uuid]);
+        }
+      }
+      for (k = 0, len2 = _bound_points.length; k < len2; k++) {
+        _point = _bound_points[k];
+        _bounds.extend(_point);
+      }
+      this.maps[uuid].fitBounds(_bounds);
+      return this.maps[uuid].setZoom(12);
     };
 
     Controls.prototype.toggleMap = function(mapUuid) {
-      $("\#map-control-" + mapUuid).parent().parent().toggle();
-      return google.maps.event.trigger(plotter.controls.maps[mapUuid], 'resize');
+      var _center, _offset, _zoom;
+      _offset = $("\#map-control-" + mapUuid).parent().parent().prev().offset();
+      $("\#map-control-" + mapUuid).parent().parent().toggle().css("left", _offset.left - 356).css("top", _offset.top);
+      _center = plotter.controls.maps[mapUuid].getCenter();
+      _zoom = plotter.controls.maps[mapUuid].getZoom();
+      google.maps.event.trigger(plotter.controls.maps[mapUuid], 'resize');
+      plotter.controls.maps[mapUuid].setCenter(_center);
+      return plotter.controls.maps[mapUuid].setZoom(_zoom);
     };
 
     Controls.prototype.toggle = function(selector) {
@@ -1629,6 +1691,7 @@ Air Sciences Inc. - 2016
         plot = ref[key];
         target = this.utarget(this.options.target);
         $(this.options.target).append("<div id='" + target + "'></div>");
+        this.mergeTemplateOption(key);
         if (plot.options.y2 === void 0) {
           plot.options.y2 = {};
         }
@@ -1638,7 +1701,6 @@ Air Sciences Inc. - 2016
         plot.options.plotId = key;
         plot.options.uuid = this.uuid();
         plot.options.target = "\#" + target;
-        plot.options.dataParams = plot.dataParams;
         plot.options.y.color = this.getColor('light', key);
         plot.options.y2.color = this.getColor('light', parseInt(key + 4 % 7));
         plot.options.y3.color = this.getColor('light', parseInt(key + 6 % 7));
@@ -1666,7 +1728,22 @@ Air Sciences Inc. - 2016
       return results;
     };
 
-    Handler.prototype.mergeTemplateOption = function() {};
+    Handler.prototype.mergeTemplateOption = function(plotId) {
+      var _params, plot;
+      plot = this.template[plotId];
+      plot.options.dataParams = plot.dataParams;
+      console.log("Merge Template Options (options)", plot.options);
+      _params = plot.options.dataParams.length;
+      if (_params > 0) {
+        plot.options.y.dataLoggerId = plot.options.dataParams[0].data_logger;
+      }
+      if (_params > 1) {
+        plot.options.y2.dataLoggerId = plot.options.dataParams[1].data_logger;
+      }
+      if (_params > 2) {
+        return plot.options.y2.dataLoggerId = plot.options.dataParams[2].data_logger;
+      }
+    };
 
     Handler.prototype.getAppendData = function(call, plotId, paramsKey) {
       var _, _length, args, callback, preError, target;
@@ -1914,7 +1991,6 @@ Air Sciences Inc. - 2016
         return this.controls.appendParameterDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.dataloggerid, current);
       } else if (this.template[plotId].type === "parameter") {
         current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
-        this.controls.appendStationMap(plotId, '#' + selector, this.template[plotId].proto.options.y.variable, current);
         return this.controls.appendStationDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.variable, current);
       }
     };

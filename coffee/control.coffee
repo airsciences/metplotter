@@ -23,6 +23,7 @@ window.Plotting.Controls = class Controls
     access = Object.mergeDefaults access, accessToken
     
     @maps = []
+    @markers = []
     @api = new window.Plotting.API access.token
 
   appendStationDropdown: (plotId, appendTarget, parameter, current) ->
@@ -34,7 +35,6 @@ window.Plotting.Controls = class Controls
     uuid = @uuid()
     
     callback = (data) ->
-      console.log("Parameter Station Dropdown", data)
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
             role=\"button\"
@@ -66,7 +66,6 @@ window.Plotting.Controls = class Controls
             <ul class=\"list-group-item sublist\"
               style=\"display: none;\">"
         for station in region.dataloggers
-          console.log("Dataloggers (current, station)", current, station)
           _row_current = _.isCurrent(current, 'dataLoggerId', station.id)
           color = ""
           if _row_current
@@ -93,6 +92,9 @@ window.Plotting.Controls = class Controls
       # Bind Dropdown & Submenu Click Event.
       $('#'+uuid).dropdown()
       _.bindSubMenuEvent(".subheader")
+      
+      _.appendStationMap(plotId, appendTarget, data.responseJSON.results,
+        current)
     
     @api.get(target, args, callback)
 
@@ -218,7 +220,7 @@ window.Plotting.Controls = class Controls
       $(_options.target).find("\##{id}")
         .css("color", _options.y3.color)
   
-  appendStationMap: (plotId, appendTarget, parameter) ->
+  appendStationMap: (plotId, appendTarget, results, current) ->
     # Append a google maps popover.
     _ = @
     uuid = @uuid()
@@ -227,17 +229,18 @@ window.Plotting.Controls = class Controls
           <i class=\"icon-map-marker\" style=\"cursor: pointer\"
           onclick=\"plotter.controls.toggleMap('#{uuid}')\"></i>
         </li>
-        <div class=\"popover\" style=\"max-width: 356px\">
+        <div class=\"popover\" style=\"max-width: 356px;\">
           <div class=\"arrow\"></div>
           <div class=\"popover-content\">
             <div id=\"#{dom_uuid}\" style=\"width: 312px;
-              height:  312px;\"></div>
+              height: 312px;\"></div>
           </div>
         </div>"
     $(appendTarget).prepend(html)
     
+    @markers[uuid] = []
     @maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
-      center: new google.maps.LatLng(47.6062, -122.3321),
+      center: new google.maps.LatLng(46.980, -121.980),
       zoom: 6,
       mapTypeId: 'terrain',
       zoomControl: true,
@@ -248,12 +251,76 @@ window.Plotting.Controls = class Controls
       fullscreenControl: false
     })
     
-    console.log("Controls.maps (@maps)", @maps)
+    infowindow = new google.maps.InfoWindow({
+      content: ""
+    })
+    
+    _bounds = new google.maps.LatLngBounds()
+    _bound_points = []
+    
+    for region in results
+      for station in region.dataloggers
+        # Append Marker
+        color = "rgb(200,200,200)"
+        scale = 5
+        opacity = 0.5
+        _row_current = _.isCurrent(current, 'dataLoggerId', station.id)
+
+        if _row_current
+          color = _row_current.color
+          scale = 7
+          opacity = 0.8
+          _bound_points.push(new google.maps.LatLng(station.lat, station.lon))
+        marker = new google.maps.Marker({
+          position: {
+            lat: station.lat,
+            lng: station.lon
+          },
+          tooltip: "#{station.datalogger_name} - #{station.elevation} ft",
+          dataloggerid: station.id,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: scale,
+            strokeWeight: 2,
+            fillOpacity: opacity,
+            fillColor: color
+          },
+          selected: false
+        })
+        marker.addListener('mouseover', ->
+          infowindow.setContent(@tooltip)
+          infowindow.open(_.maps[uuid], this)
+        )
+        
+        marker.addListener('mouseout', ->
+          infowindow.close()
+        )
+        
+        marker.addListener('click', ->
+          plotter.addStation(plotId, @dataloggerid)
+        )
+        
+        _len = @markers[uuid].push(marker)
+        @markers[uuid][_len-1].setMap(@maps[uuid])
+    
+    # Fit to Bounds
+    for _point in _bound_points
+      _bounds.extend(_point)
+    
+    @maps[uuid].fitBounds(_bounds)
+    @maps[uuid].setZoom(12)
 
   toggleMap: (mapUuid) ->
     # toggle the map div.
+    _offset = $("\#map-control-#{mapUuid}").parent().parent().prev().offset()
     $("\#map-control-#{mapUuid}").parent().parent().toggle()
+      .css("left", _offset.left - 356)
+      .css("top", _offset.top)
+    _center = plotter.controls.maps[mapUuid].getCenter()
+    _zoom = plotter.controls.maps[mapUuid].getZoom()
     google.maps.event.trigger(plotter.controls.maps[mapUuid], 'resize')
+    plotter.controls.maps[mapUuid].setCenter(_center)
+    plotter.controls.maps[mapUuid].setZoom(_zoom)
     
   toggle: (selector) ->
     # Toggle the plotId's station down.

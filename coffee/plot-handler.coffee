@@ -159,6 +159,8 @@ window.Plotting.Handler = class Handler
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
+      @mergeTemplateOption(key)
+      
       if plot.options.y2 is undefined
         plot.options.y2 = {}
       if plot.options.y3 is undefined
@@ -166,7 +168,7 @@ window.Plotting.Handler = class Handler
       plot.options.plotId = key
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
-      plot.options.dataParams = plot.dataParams
+      
       
       plot.options.y.color = @getColor('light', key)
       plot.options.y2.color = @getColor('light', parseInt(key+4%7))
@@ -194,8 +196,19 @@ window.Plotting.Handler = class Handler
       @template[key].proto = instance
       @appendControls(key)
 
-  mergeTemplateOption: () ->
+  mergeTemplateOption: (plotId) ->
     # Merge the templated plot options with returned options
+    plot = @template[plotId]
+    plot.options.dataParams = plot.dataParams
+    console.log("Merge Template Options (options)", plot.options)
+    _params = plot.options.dataParams.length
+    # Define Data Loggers
+    if _params > 0
+      plot.options.y.dataLoggerId = plot.options.dataParams[0].data_logger
+    if _params > 1
+      plot.options.y2.dataLoggerId = plot.options.dataParams[1].data_logger
+    if _params > 2
+      plot.options.y2.dataLoggerId = plot.options.dataParams[2].data_logger
       
   getAppendData: (call, plotId, paramsKey) ->
     # Request a station's dataset (param specific)
@@ -411,8 +424,6 @@ window.Plotting.Handler = class Handler
           @template[plotId].proto.options.y2,
           @template[plotId].proto.options.y3
       ]
-      @controls.appendStationMap(plotId, '#'+selector,
-        @template[plotId].proto.options.y.variable, current)
       @controls.appendStationDropdown(plotId, '#'+selector,
         @template[plotId].proto.options.y.variable, current)
 
