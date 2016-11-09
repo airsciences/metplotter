@@ -23,6 +23,10 @@ window.Plotting.Controls = class Controls
       expired: true
     access = Object.mergeDefaults access, accessToken
     
+    # Settings
+    @
+    @
+    
     @maps = []
     @markers = []
     @api = new window.Plotting.API access.token
@@ -225,10 +229,10 @@ window.Plotting.Controls = class Controls
     # Append a google maps popover.
     _ = @
     uuid = @uuid()
-    dom_uuid = "map-control-" + uuid
+    dom_uuid = "map-control-" + plotId
     html = "<li data-toggle=\"popover\" data-placement=\"left\">
-          <i class=\"icon-map-marker\" style=\"cursor: pointer\"
-          onclick=\"plotter.controls.toggleMap('#{uuid}')\"></i>
+          <i id=\"map-#{plotId}\" class=\"icon-map-marker\"
+          style=\"cursor: pointer\"></i>
         </li>
         <div class=\"popover\" style=\"max-width: 356px;\">
           <div class=\"arrow\"></div>
@@ -238,6 +242,9 @@ window.Plotting.Controls = class Controls
           </div>
         </div>"
     $(appendTarget).prepend(html)
+    $("#map-#{plotId}").on('click', ->
+      _.plotter.controls.toggleMap(uuid)
+    )
     
     @markers[uuid] = []
     @maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
@@ -311,10 +318,15 @@ window.Plotting.Controls = class Controls
     @maps[uuid].fitBounds(_bounds)
     @maps[uuid].setZoom(12)
 
-  toggleMap: (mapUuid) ->
+  removeStationMap: (plotId) ->
+    # remove staton map
+    $("#map-control-#{plotId}").empty()
+    
+
+  toggleMap: (plotId) ->
     # toggle the map div.
-    _offset = $("\#map-control-#{mapUuid}").parent().parent().prev().offset()
-    $("\#map-control-#{mapUuid}").parent().parent().toggle()
+    _offset = $("#map-control-#{plotId}").parent().parent().prev().offset()
+    $("#map-control-#{plotId}").parent().parent().toggle()
       .css("left", _offset.left - 356)
       .css("top", _offset.top)
     _center = @plotter.controls.maps[mapUuid].getCenter()
@@ -349,32 +361,32 @@ window.Plotting.Controls = class Controls
     _ = @
     uuid = @uuid()
 
+    _ul = "<ul id=\"new-#{uuid}-dropdown\"
+        class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
+        aria-labelledby=\"new-#{uuid}\">
+        <li><a id=\"new-#{uuid}-parameter\"
+          style=\"cursor: pointer\">Add Parameter Plot</a></li>
+        <li><a id=\"new-#{uuid}-station\"
+          style=\"cursor: pointer\">Add Station Plot</a></li>
+      </ul>"
+
     html = "<div class=\"dropdown\">
-        <li><a id=\"new-#{uuid}\" class=\"new-dropdown dropdown-toggle\"
-          role=\"button\" data-toggle=\"dropdown\" href=\"#\">
-          <i class=\"icon-plus\"></i></a>
-        <ul id=\"new-#{uuid}-dropdown\"
-          class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
-          aria-labelledby=\"new-#{uuid}\">
-          <li><a id=\"new-#{uuid}-parameter\"
-            style=\"cursor: pointer\">Add Parameter Plot</a></li>
-          <li><a id=\"new-#{uuid}-station\"
-            style=\"cursor: pointer\">Add Station Plot</a></li>
-        </ul>
-        </li>
+        <li><a id=\"new-#{uuid}\" role=\"button\" href=\"#\">
+            <i class=\"icon-plus\"></i>
+          </a></li>
         </div>"
     
     # Append & Bind Dropdown
     $(appendTarget).append(html)
-    $("#new-#{uuid}").dropdown()
+    #$("#new-#{uuid}").dropdown()
     
     # Bind Click Events
-    $("#new-#{uuid}-parameter").on('click', ->
+    $("#new-#{uuid}").on('click', ->
       _.plotter.add("parameter")
     )
-    $("#new-#{uuid}-station").on('click', ->
-      _.plotter.add("station")
-    )
+    # $("#new-#{uuid}-station").on('click', ->
+    #   _.plotter.add("station")
+    # )
 
   uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)

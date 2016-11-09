@@ -260,6 +260,8 @@
         expired: true
       };
       access = Object.mergeDefaults(access, accessToken);
+      this;
+      this;
       this.maps = [];
       this.markers = [];
       this.api = new window.Plotting.API(access.token);
@@ -409,9 +411,12 @@
       var _, _bound_points, _bounds, _len, _point, _row_current, color, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station, uuid;
       _ = this;
       uuid = this.uuid();
-      dom_uuid = "map-control-" + uuid;
-      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i class=\"icon-map-marker\" style=\"cursor: pointer\" onclick=\"plotter.controls.toggleMap('" + uuid + "')\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
+      dom_uuid = "map-control-" + plotId;
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
+      $("#map-" + plotId).on('click', function() {
+        return _.plotter.controls.toggleMap(uuid);
+      });
       this.markers[uuid] = [];
       this.maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
         center: new google.maps.LatLng(46.980, -121.980),
@@ -482,10 +487,14 @@
       return this.maps[uuid].setZoom(12);
     };
 
-    Controls.prototype.toggleMap = function(mapUuid) {
+    Controls.prototype.removeStationMap = function(plotId) {
+      return $("#map-control-" + plotId).empty();
+    };
+
+    Controls.prototype.toggleMap = function(plotId) {
       var _center, _offset, _zoom;
-      _offset = $("\#map-control-" + mapUuid).parent().parent().prev().offset();
-      $("\#map-control-" + mapUuid).parent().parent().toggle().css("left", _offset.left - 356).css("top", _offset.top);
+      _offset = $("#map-control-" + plotId).parent().parent().prev().offset();
+      $("#map-control-" + plotId).parent().parent().toggle().css("left", _offset.left - 356).css("top", _offset.top);
       _center = this.plotter.controls.maps[mapUuid].getCenter();
       _zoom = this.plotter.controls.maps[mapUuid].getZoom();
       google.maps.event.trigger(this.plotter.controls.maps[mapUuid], 'resize');
@@ -518,17 +527,14 @@
     };
 
     Controls.prototype["new"] = function(appendTarget) {
-      var _, html, uuid;
+      var _, _ul, html, uuid;
       _ = this;
       uuid = this.uuid();
-      html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"new-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul> </li> </div>";
+      _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
+      html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i> </a></li> </div>";
       $(appendTarget).append(html);
-      $("#new-" + uuid).dropdown();
-      $("#new-" + uuid + "-parameter").on('click', function() {
+      return $("#new-" + uuid).on('click', function() {
         return _.plotter.add("parameter");
-      });
-      return $("#new-" + uuid + "-station").on('click', function() {
-        return _.plotter.add("station");
       });
     };
 
