@@ -274,7 +274,7 @@
       args = {};
       uuid = this.uuid();
       callback = function(data) {
-        var _dots, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, len, len1, len2, r_color, ref, ref1, ref2, region, station;
+        var _dots, _id, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\">";
         ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
@@ -307,12 +307,29 @@
             }
             id = "data-logger-" + station.id + "-plot-" + plotId;
             _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" " + color + "></i>";
-            html = html + " <li class=\"station\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"plotter.addStation(" + plotId + ", " + station.id + ")\"> " + _prepend + " " + station.datalogger_name + "</li>";
+            _id = "add-station-" + plotId + "-" + station.id;
+            html = html + " <li class=\"station\" id=\"" + _id + "\" data-station-id=\"" + station.id + "\" data-plot-id=\"" + plotId + "\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"\"> " + _prepend + " " + station.datalogger_name + " | " + station.elevation + " ft</li>";
           }
           html = html + " </ul>";
         }
         html = html + " </ul> </li>";
         $(appendTarget).prepend(html);
+        ref3 = data.responseJSON.results;
+        for (l = 0, len3 = ref3.length; l < len3; l++) {
+          region = ref3[l];
+          ref4 = region.dataloggers;
+          for (m = 0, len4 = ref4.length; m < len4; m++) {
+            station = ref4[m];
+            _id = "add-station-" + plotId + "-" + station.id;
+            $("#" + _id).on("click", function(event) {
+              var _plotId, _stationId;
+              event.stopPropagation();
+              _plotId = $(this).attr("data-plot-id");
+              _stationId = $(this).attr("data-station-id");
+              return _.plotter.addStation(_plotId, _stationId);
+            });
+          }
+        }
         $('#' + uuid).dropdown();
         _.bindSubMenuEvent(".subheader");
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
@@ -823,7 +840,7 @@
         merge: false,
         x: {
           variable: null,
-          format: "%Y-%m-%d %H:%M:%S",
+          format: "%Y-%m-%dT%H:%M:%SZ",
           min: null,
           max: null,
           ticks: 7
@@ -901,6 +918,48 @@
       }
       this.options = Object.mergeDefaults(options, defaults);
       this.device = 'full';
+      this.links = [
+        {
+          "variable": "battery_voltage",
+          "title": "Battery Voltage"
+        }, {
+          "variable": "temperature",
+          "title": "Temperature"
+        }, {
+          "variable": "relative_humidity",
+          "title": "Relative Humidity"
+        }, {
+          "variable": "precitation",
+          "title": "Precipitation"
+        }, {
+          "variable": "snow_depth",
+          "title": "Snow Depth"
+        }, {
+          "variable": "wind_direction",
+          "title": "Wind Direction"
+        }, {
+          "variable": "wind_speed_average",
+          "title": "Wind Speed"
+        }, {
+          "variable": "net_solar",
+          "title": "Net Solar"
+        }, {
+          "variable": "solar_pyranometer",
+          "title": "Solar Pyranometer"
+        }, {
+          "variable": "equip_temperature",
+          "title": "Equipment Temperature"
+        }, {
+          "variable": "barometric_pressure",
+          "title": "Barometric Pressure"
+        }, {
+          "variable": "snowfall_24_hour",
+          "title": "24-Hr Snowfall"
+        }, {
+          "variable": "intermittent_snow",
+          "title": "Intermittent Snow"
+        }
+      ];
       this.log = function() {
         var log;
         log = 1 <= arguments.length ? slice.call(arguments, 0) : [];
@@ -994,6 +1053,25 @@
       return result.sort(this.sortDatetimeAsc);
     };
 
+    LinePlot.prototype.setData = function(data) {
+      var _domainMean, _domainScale;
+      this.data = this.processData(data);
+      this.getDefinition();
+      _domainScale = null;
+      _domainMean = null;
+      if (data.length > 0) {
+        _domainScale = this.getDomainScale(this.definition.x);
+        _domainMean = this.getDomainMean(this.definition.x);
+      }
+      this.state.range.scale = _domainScale;
+      this.state.mean.scale = _domainMean;
+      if (data.length > 0) {
+        this.setDataState();
+        this.setIntervalState();
+        return this.setDataRequirement();
+      }
+    };
+
     LinePlot.prototype.appendData = function(data) {
       var _data, _full;
       _data = this.processData(data);
@@ -1001,9 +1079,11 @@
       _full.append(_data, ["x"]);
       this.data = _full._clean(_full.get());
       this.data = this.data.sort(this.sortDatetimeAsc);
-      this.setDataState();
-      this.setIntervalState();
-      return this.setDataRequirement();
+      if (this.initialized) {
+        this.setDataState();
+        this.setIntervalState();
+        return this.setDataRequirement();
+      }
     };
 
     LinePlot.prototype.setDataState = function() {
@@ -1250,8 +1330,14 @@
           sub_text = "Parameter type plots allow comparison of a single paramater at multiple stations";
         }
         _offset = $(this.options.target).offset();
-        this.temp = this.outer.append("div").style("position", "absolute").style("top", (parseInt(_offset.top + this.definition.dimensions.innerHeight / 2 - 18)) + "px").style("left", (parseInt(_offset.left + this.definition.dimensions.margin.left)) + "px").style("width", this.definition.dimensions.innerWidth + "px").style("text-align", "center");
-        this.temp.append("a").text(add_text).attr("onclick", "buildNewPlot(" + this.options.plotId + ")");
+        this.temp = this.outer.append("div").attr("class", "new-temp-" + this.options.plotId).style("position", "absolute").style("top", (parseInt(_offset.top + this.definition.dimensions.innerHeight / 2 - 18)) + "px").style("left", (parseInt(_offset.left + this.definition.dimensions.margin.left)) + "px").style("width", this.definition.dimensions.innerWidth + "px").style("text-align", "center");
+        this.dropdown = this.temp.append("div").attr("class", "dropdown");
+        this.dropdown.append("a").text(add_text).attr("class", "dropdown-toggle").attr("data-toggle", "dropdown");
+        this.dropdown.append("ul").attr("class", "dropdown-menu").selectAll("li").data(_.links).enter().append("li").append("a").text(function(d) {
+          return d.title;
+        }).on("click", function(d) {
+          return _.plotter.initVariable(_.options.plotId, d.variable, d.title);
+        });
         this.temp.append("p").text(sub_text).style("color", "#ggg").style("font-size", "12px");
       }
       this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
@@ -1268,13 +1354,12 @@
       }
       preError = this.preError + "append()";
       _ = this;
-      this.preAppend();
       _y_title = "" + this.options.y.title;
       if (this.options.y.units) {
         _y_title = _y_title + " " + this.options.y.units;
       }
       _y_vert = -95;
-      _y_offset = -46;
+      _y_offset = -52;
       if (this.device === 'small') {
         _y_vert = -50;
         _y_offset = -30;
@@ -1328,9 +1413,9 @@
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-area3").datum(this.data).attr("d", this.definition.area3);
-      this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
-      this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
-      this.svg.select(".line-plot-path3").datum(this.data).attr("d", this.definition.line3);
+      this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line).style("stroke", this.options.y.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2).style("stroke", this.options.y2.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      this.svg.select(".line-plot-path3").datum(this.data).attr("d", this.definition.line3).style("stroke", this.options.y3.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.overlay.datum(this.data);
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
@@ -1341,6 +1426,10 @@
       this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2);
       this.svg.select(".line-plot-path3").datum(this.data).attr("d", this.definition.line3);
       return this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
+    };
+
+    LinePlot.prototype.removeTemp = function() {
+      return this.temp.remove();
     };
 
     LinePlot.prototype.appendCrosshairTarget = function(transform) {
@@ -1538,23 +1627,22 @@
     };
 
     LinePlot.prototype.showCrosshair = function() {
-      console.log("Plot (plotId, initialized)", this.options.plotId, this.initialized);
       if (!this.initialized) {
         return;
       }
       this.crosshairs.select(".crosshair-x").style("display", null);
       this.crosshairs.select(".crosshair-x-under").style("display", null);
       if (this.options.y.variable !== null) {
-        this.focusCircle.style("display", null);
-        this.focusText.style("display", null);
+        this.focusCircle.style("display", null).attr("fill", this.options.y.color);
+        this.focusText.style("display", null).style("color", this.options.y.color).style("fill", this.options.y.color);
       }
       if (this.options.y2.variable !== null) {
-        this.focusCircle2.style("display", null);
-        this.focusText2.style("display", null);
+        this.focusCircle2.style("display", null).attr("fill", this.options.y2.color);
+        this.focusText2.style("display", null).style("color", this.options.y2.color).style("fill", this.options.y2.color);
       }
       if (this.options.y3.variable !== null) {
-        this.focusCircle3.style("display", null);
-        return this.focusText3.style("display", null);
+        this.focusCircle3.style("display", null).attr("fill", this.options.y3.color);
+        return this.focusText3.style("display", null).style("color", this.options.y3.color).style("fill", this.options.y3.color);
       }
     };
 
@@ -1734,6 +1822,22 @@ Air Sciences Inc. - 2016
       return this.syncronousapi.get(target, args, callback);
     };
 
+    Handler.prototype.putTemplate = function() {
+      var _, args, callback, preError, target;
+      preError = this.preError + ".putTemplate()";
+      target = "template/" + this.options.plotHandlerId;
+      args = null;
+      _ = this;
+      callback = function(data) {
+        if (data.responseJSON === null || data.responseJSON.error) {
+          console.log(preError + ".callback(...) error detected (data)", data);
+          return;
+        }
+        return _.template = data.responseJSON.templateData;
+      };
+      return this.api.put(target, args, callback);
+    };
+
     Handler.prototype.getStationParamData = function(plotId, paramsKey) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData()";
@@ -1811,6 +1915,7 @@ Air Sciences Inc. - 2016
         }
         title = this.getTitle(plot);
         instance = new window.Plotting.LinePlot(this, __data.get(), plot.options);
+        instance.preAppend();
         instance.append();
         this.template[key].proto = instance;
         results.push(this.appendControls(key));
@@ -1854,8 +1959,13 @@ Air Sciences Inc. - 2016
           plot.__data[call].join(data.responseJSON.results, [plot.proto.options.x.variable]);
         }
         if (plot.__data[call].getSourceCount() === _length) {
-          plot.proto.appendData(plot.__data[call].get());
-          plot.proto.update();
+          if (plot.proto.initialized) {
+            plot.proto.appendData(plot.__data[call].get());
+            plot.proto.update();
+          } else {
+            plot.proto.setData(plot.__data[call].get());
+            plot.proto.append();
+          }
           return delete plot.__data[call];
         }
       };
@@ -1903,48 +2013,10 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.addVariable = function(plotId, variable) {
-      var _bounds, _info, _max_datetime, params, paramsKey, ref, results, state, uuid;
+      var _max_datetime, params, paramsKey, ref, results, state, uuid;
       state = this.template[plotId].proto.getState();
-      _bounds = this.getVariableBounds(variable);
-      _info = this.getVariableInfo(variable);
       _max_datetime = state.range.data.max.getTime();
-      if (this.template[plotId].proto.options.y.variable === null) {
-        this.template[plotId].proto.options.y = {
-          variable: variable
-        };
-        if (_info) {
-          this.template[plotId].proto.options.y.title = _info.title;
-          this.template[plotId].proto.options.y.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y.min = _bounds.min;
-          this.template[plotId].proto.options.y.max = _bounds.max;
-        }
-      } else if (this.template[plotId].proto.options.y2.variable === null) {
-        this.template[plotId].proto.options.y2 = {
-          variable: variable
-        };
-        if (_info) {
-          this.template[plotId].proto.options.y2.title = _info.title;
-          this.template[plotId].proto.options.y2.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y2.min = _bounds.min;
-          this.template[plotId].proto.options.y2.max = _bounds.max;
-        }
-      } else if (this.template[plotId].proto.options.y3.variable === null) {
-        this.template[plotId].proto.options.y3 = {
-          variable: variable
-        };
-        if (_info) {
-          this.template[plotId].proto.options.y3.title = _info.title;
-          this.template[plotId].proto.options.y3.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y3.min = _bounds.min;
-          this.template[plotId].proto.options.y3.max = _bounds.max;
-        }
-      }
+      this.setNewOptions(plotId, variable);
       uuid = this.uuid();
       ref = this.template[plotId].proto.options.dataParams;
       results = [];
@@ -1958,59 +2030,18 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.addStation = function(plotId, dataLoggerId) {
-      var _bounds, _info, _len, _max_datetime, _params, _variable, params, paramsKey, ref, state, uuid;
+      var _len, _max_datetime, _params, _variable, params, paramsKey, ref, state, uuid;
+      if (!this.template[plotId].proto.initialized) {
+        return this.appendNew(plotId, dataLoggerId);
+      }
+      console.log("addStation(plotId, dataLoggerId)", plotId, dataLoggerId);
       state = this.template[plotId].proto.getState();
       _variable = this.template[plotId].proto.options.y.variable;
-      _bounds = this.getVariableBounds(_variable);
-      _info = this.getVariableInfo(_variable);
       _max_datetime = state.range.data.max.getTime();
       _params = $.extend(true, {}, this.template[plotId].proto.options.dataParams[0]);
       _params.data_logger = dataLoggerId;
       _len = this.template[plotId].proto.options.dataParams.push(_params);
-      console.log("addStation: (dataLoggerId, _len, dataParams)", dataLoggerId, _len, this.template[plotId].proto.options.dataParams);
-      if (this.template[plotId].proto.options.y.variable === null) {
-        this.template[plotId].proto.options.y = {
-          dataLoggerId: dataLoggerId,
-          variable: _variable,
-          color: this.getColor('light', parseInt(plotId))
-        };
-        if (_info) {
-          this.template[plotId].proto.options.y.title = _info.title;
-          this.template[plotId].proto.options.y.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y.min = _bounds.min;
-          this.template[plotId].proto.options.y.max = _bounds.max;
-        }
-      } else if (this.template[plotId].proto.options.y2.variable === null) {
-        this.template[plotId].proto.options.y2 = {
-          dataLoggerId: dataLoggerId,
-          variable: _variable,
-          color: this.getColor('light', parseInt(plotId + 4 % 7))
-        };
-        if (_info) {
-          this.template[plotId].proto.options.y2.title = _info.title;
-          this.template[plotId].proto.options.y2.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y2.min = _bounds.min;
-          this.template[plotId].proto.options.y2.max = _bounds.max;
-        }
-      } else if (this.template[plotId].proto.options.y3.variable === null) {
-        this.template[plotId].proto.options.y3 = {
-          dataLoggerId: dataLoggerId,
-          variable: _variable,
-          color: this.getColor('light', parseInt(plotId + 6 % 7))
-        };
-        if (_info) {
-          this.template[plotId].proto.options.y2.title = _info.title;
-          this.template[plotId].proto.options.y2.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y3.min = _bounds.min;
-          this.template[plotId].proto.options.y3.max = _bounds.max;
-        }
-      }
+      this.setNewOptions(plotId, _variable, dataLoggerId);
       uuid = this.uuid();
       ref = this.template[plotId].proto.options.dataParams;
       for (paramsKey in ref) {
@@ -2114,26 +2145,103 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.add = function(type) {
-      var _key, _plot, _target, html, instance;
+      var _key, _options, _plot, _target, html, instance;
+      if (this.template[this.template.length - 1].proto.initialized === false) {
+        return;
+      }
       console.log("Adding (type)", type, this.template);
       _target = this.utarget(this.options.target);
       _plot = {
         plotOrder: this.template.length,
+        type: type
+      };
+      _options = {
+        target: '#' + _target,
         type: type,
-        options: {
-          type: type,
-          target: '#' + _target
+        x: {
+          variable: "datetime"
         }
       };
       html = "<div id=\"" + _target + "\"></div>";
       $(this.options.target).append(html);
       _key = this.template.push(_plot) - 1;
-      instance = new window.Plotting.LinePlot(this, [], _plot.options);
-      console.log("Instance ready for preAppend (instance)", instance);
+      instance = new window.Plotting.LinePlot(this, [], _options);
+      console.log("Instance ready for preAppend (_key, instance)", _key, instance);
       instance.preAppend();
       this.template[_key].proto = instance;
       this.template[_key].proto.options.plotId = _key;
-      return this.appendControls(_key);
+      if (this.template[_key].proto.initialized) {
+        return this.appendControls(_key);
+      }
+    };
+
+    Handler.prototype.initVariable = function(plotId, variable, title) {
+      this.template[plotId].dataParams = [this.template[plotId - 1].dataParams[0]];
+      this.template[plotId].dataParams[0].data_logger = null;
+      this.template[plotId].proto.options.y.variable = variable;
+      this.template[plotId].proto.options.y.title = title;
+      this.appendControls(plotId);
+      return this.template[plotId].proto.removeTemp();
+    };
+
+    Handler.prototype.appendNew = function(plotId, dataLoggerId) {
+      var _plot;
+      _plot = this.template[plotId];
+      console.log("Append new (plot)", _plot);
+      _plot.dataParams[0].data_logger = dataLoggerId;
+      _plot.proto.options.dataParams = _plot.dataParams;
+      _plot.proto.options.y.dataloggerid = dataLoggerId;
+      return this.getAppendData(this.uuid(), plotId, 0);
+    };
+
+    Handler.prototype.setNewOptions = function(plotId, variable, dataLoggerId) {
+      var _bounds, _info;
+      _bounds = this.getVariableBounds(variable);
+      _info = this.getVariableInfo(variable);
+      if (this.template[plotId].proto.options.y.variable === null) {
+        this.template[plotId].proto.options.y = {
+          dataLoggerId: dataLoggerId,
+          variable: variable,
+          color: this.getColor('light', parseInt(plotId))
+        };
+        if (_info) {
+          this.template[plotId].proto.options.y.title = _info.title;
+          this.template[plotId].proto.options.y.units = _info.units;
+        }
+        if (_bounds) {
+          this.template[plotId].proto.options.y.min = _bounds.min;
+          return this.template[plotId].proto.options.y.max = _bounds.max;
+        }
+      } else if (this.template[plotId].proto.options.y2.variable === null) {
+        console.log("Get Color: (plotId, int, color)", plotId, parseInt(plotId) + 4 % 7, this.getColor('light', parseInt(plotId) + 4 % 7));
+        this.template[plotId].proto.options.y2 = {
+          dataLoggerId: dataLoggerId,
+          variable: variable,
+          color: this.getColor('light', parseInt(plotId) + 4 % 7)
+        };
+        if (_info) {
+          this.template[plotId].proto.options.y2.title = _info.title;
+          this.template[plotId].proto.options.y2.units = _info.units;
+        }
+        if (_bounds) {
+          this.template[plotId].proto.options.y2.min = _bounds.min;
+          return this.template[plotId].proto.options.y2.max = _bounds.max;
+        }
+      } else if (this.template[plotId].proto.options.y3.variable === null) {
+        this.template[plotId].proto.options.y3 = {
+          dataLoggerId: dataLoggerId,
+          variable: variable,
+          color: this.getColor('light', parseInt(plotId) + 6 % 7)
+        };
+        if (_info) {
+          this.template[plotId].proto.options.y2.title = _info.title;
+          this.template[plotId].proto.options.y2.units = _info.units;
+        }
+        if (_bounds) {
+          this.template[plotId].proto.options.y3.min = _bounds.min;
+          return this.template[plotId].proto.options.y3.max = _bounds.max;
+        }
+      }
     };
 
     Handler.prototype.getVariableBounds = function(variable) {

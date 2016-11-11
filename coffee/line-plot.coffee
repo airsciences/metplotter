@@ -24,7 +24,7 @@ window.Plotting.LinePlot = class LinePlot
       merge: false
       x:
         variable: null
-        format: "%Y-%m-%d %H:%M:%S"
+        format: "%Y-%m-%dT%H:%M:%SZ"
         min: null
         max: null
         ticks: 7
@@ -85,6 +85,22 @@ window.Plotting.LinePlot = class LinePlot
       options.y3 = Object.mergeDefaults(options.y3, defaults.y3)
     @options = Object.mergeDefaults options, defaults
     @device = 'full'
+    
+    @links = [
+      {"variable": "battery_voltage", "title": "Battery Voltage"},
+      {"variable": "temperature", "title": "Temperature"},
+      {"variable": "relative_humidity", "title": "Relative Humidity"},
+      {"variable": "precitation", "title": "Precipitation"},
+      {"variable": "snow_depth", "title": "Snow Depth"},
+      {"variable": "wind_direction", "title": "Wind Direction"},
+      {"variable": "wind_speed_average", "title": "Wind Speed"},
+      {"variable": "net_solar", "title": "Net Solar"},
+      {"variable": "solar_pyranometer", "title": "Solar Pyranometer"},
+      {"variable": "equip_temperature", "title": "Equipment Temperature"},
+      {"variable": "barometric_pressure", "title": "Barometric Pressure"},
+      {"variable": "snowfall_24_hour", "title": "24-Hr Snowfall"},
+      {"variable": "intermittent_snow", "title": "Intermittent Snow"}
+    ]
     
     # Wrapped Logging Functions
     @log = (log...) ->
@@ -171,20 +187,39 @@ window.Plotting.LinePlot = class LinePlot
     
     return result.sort(@sortDatetimeAsc)
 
+  setData: (data) ->
+    # Set the initial data.
+    @data = @processData(data)
+    @getDefinition()
+    
+    # Initialize the State
+    _domainScale = null
+    _domainMean = null
+    if data.length > 0
+      _domainScale = @getDomainScale(@definition.x)
+      _domainMean = @getDomainMean(@definition.x)
+    
+    @state.range.scale = _domainScale
+    @state.mean.scale = _domainMean
+    
+    if data.length > 0
+      @setDataState()
+      @setIntervalState()
+      @setDataRequirement()
+
   appendData: (data) ->
     # Append the full data set.
-    
     _data = @processData(data)
     _full = new Plotting.Data(@data)
-    #@data = _full.append(_data, ["x"])
     _full.append(_data, ["x"])
     @data = _full._clean(_full.get())
     @data = @data.sort(@sortDatetimeAsc)
     
     # Reset the Data Range
-    @setDataState()
-    @setIntervalState()
-    @setDataRequirement()
+    if @initialized
+      @setDataState()
+      @setIntervalState()
+      @setDataRequirement()
     
   setDataState: ->
     # Set Data Ranges
@@ -443,6 +478,7 @@ window.Plotting.LinePlot = class LinePlot
           ter at multiple stations"
       _offset = $(@options.target).offset()
       @temp = @outer.append("div")
+        .attr("class", "new-temp-#{@options.plotId}")
         .style("position", "absolute")
         .style("top",
           "#{parseInt(_offset.top+@definition.dimensions.innerHeight/2-18)}px")
@@ -450,10 +486,25 @@ window.Plotting.LinePlot = class LinePlot
           "#{parseInt(_offset.left+@definition.dimensions.margin.left)}px")
         .style("width", "#{@definition.dimensions.innerWidth}px")
         .style("text-align", "center")
+      
+      @dropdown = @temp.append("div")
+        .attr("class", "dropdown")
         
-      @temp.append("a")
+      @dropdown.append("a")
         .text(add_text)
-        .attr("onclick", "buildNewPlot(#{@options.plotId})")
+        .attr("class", "dropdown-toggle")
+        .attr("data-toggle", "dropdown")
+        
+      @dropdown.append("ul")
+        .attr("class", "dropdown-menu")
+        .selectAll("li")
+        .data(_.links)
+        .enter().append("li")
+        .append("a")
+        .text((d) -> return d.title)
+        .on("click", (d) ->
+          _.plotter.initVariable(_.options.plotId, d.variable, d.title)
+        )
         
       @temp.append("p")
         .text(sub_text)
@@ -506,21 +557,19 @@ window.Plotting.LinePlot = class LinePlot
       return
     preError = "#{@preError}append()"
     _ = @
-
-    # Append the Axis, etc.
-    @preAppend()
-     
+        
     # Append Axis Label
     _y_title = "#{@options.y.title}"
     if @options.y.units
       _y_title = "#{_y_title} #{@options.y.units}"
     
     _y_vert = -95
-    _y_offset = -46
+    _y_offset = -52
     if @device == 'small'
       _y_vert = -50
       _y_offset = -30
       
+    # Y-Axis Title
     @svg.select(".line-plot-axis-y")
       .append("text")
       .text(_y_title)
@@ -735,14 +784,26 @@ window.Plotting.LinePlot = class LinePlot
     @svg.select(".line-plot-path")
       .datum(@data)
       .attr("d", @definition.line)
+      .style("stroke", @options.y.color)
+      .style("stroke-width",
+        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+      .style("fill", "none")
 
     @svg.select(".line-plot-path2")
       .datum(@data)
       .attr("d", @definition.line2)
+      .style("stroke", @options.y2.color)
+      .style("stroke-width",
+        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+      .style("fill", "none")
 
     @svg.select(".line-plot-path3")
       .datum(@data)
       .attr("d", @definition.line3)
+      .style("stroke", @options.y3.color)
+      .style("stroke-width",
+        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+      .style("fill", "none")
 
     @overlay.datum(@data)
 
@@ -778,6 +839,9 @@ window.Plotting.LinePlot = class LinePlot
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
       .call(@definition.yAxis)
+         
+  removeTemp: ->
+    @temp.remove()
           
   appendCrosshairTarget: (transform) ->
     # Move Crosshairs and Focus Circle Based on Mouse Location
@@ -1037,7 +1101,6 @@ window.Plotting.LinePlot = class LinePlot
     
   showCrosshair: ->
     # Show the Crosshair
-    console.log("Plot (plotId, initialized)", @options.plotId, @initialized)
     if !@initialized
       return
     @crosshairs.select(".crosshair-x")
@@ -1048,15 +1111,24 @@ window.Plotting.LinePlot = class LinePlot
     
     if @options.y.variable != null
       @focusCircle.style("display", null)
+        .attr("fill", @options.y.color)
       @focusText.style("display", null)
+        .style("color", @options.y.color)
+        .style("fill", @options.y.color)
       
     if @options.y2.variable != null
       @focusCircle2.style("display", null)
+        .attr("fill", @options.y2.color)
       @focusText2.style("display", null)
+        .style("color", @options.y2.color)
+        .style("fill", @options.y2.color)
   
     if @options.y3.variable != null
       @focusCircle3.style("display", null)
+        .attr("fill", @options.y3.color)
       @focusText3.style("display", null)
+        .style("color", @options.y3.color)
+        .style("fill", @options.y3.color)
   
   hideCrosshair: () ->
     # Hide the Crosshair

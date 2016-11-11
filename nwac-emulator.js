@@ -69,7 +69,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
         result = {"templateData": [
             {
                 "pageOrder": 1,
-                "type": "station",
+                "type": "parameter",
                 "station": {
                     "station":"White Pass Base & Upper",
                     "region":"West Slopes South",
@@ -92,7 +92,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
             },
             {
                 "pageOrder": 2,
-                "type": "station",
+                "type": "parameter",
                 "station": {
                     "station":"White Pass Pigtail",
                     "region":"West Slopes South",
@@ -119,7 +119,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
             },
             {
                 "pageOrder": 3,
-                "type": "station",
+                "type": "parameter",
                 "station": {
                     "station":"White Pass Base & Upper",
                     "region":"West Slopes South",

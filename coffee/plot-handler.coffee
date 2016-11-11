@@ -131,6 +131,21 @@ window.Plotting.Handler = class Handler
     
     @syncronousapi.get(target, args, callback)
 
+  putTemplate: ->
+    # Request the Template
+    preError = "#{@preError}.putTemplate()"
+    target = "template/#{@options.plotHandlerId}"
+    args = null
+    _ = @
+    
+    callback = (data) ->
+      if data.responseJSON == null || data.responseJSON.error
+        console.log "#{preError}.callback(...) error detected (data)", data
+        return
+      _.template = data.responseJSON.templateData
+    
+    @api.put(target, args, callback)
+    
   getStationParamData: (plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
@@ -191,6 +206,7 @@ window.Plotting.Handler = class Handler
             
       title = @getTitle(plot)
       instance = new window.Plotting.LinePlot(@, __data.get(), plot.options)
+      instance.preAppend()
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
@@ -228,8 +244,17 @@ window.Plotting.Handler = class Handler
         plot.__data[call].join(data.responseJSON.results,
           [plot.proto.options.x.variable])
       if plot.__data[call].getSourceCount() is _length
-        plot.proto.appendData(plot.__data[call].get())
-        plot.proto.update()
+        if plot.proto.initialized
+          # console.log("Plot is appending data (data, plot.data,
+          #      plot.options)",
+          #   plot.__data[call].get(), plot.proto.data, plot.proto.options)
+          plot.proto.appendData(plot.__data[call].get())
+          #console.log("Plot data is appended (plot.data, plot.options)",
+          #  plot.proto.data, plot.proto.options)
+          plot.proto.update()
+        else
+          plot.proto.setData(plot.__data[call].get())
+          plot.proto.append()
         delete plot.__data[call]
         
     @api.get(target, args, callback)
@@ -271,38 +296,9 @@ window.Plotting.Handler = class Handler
   addVariable: (plotId, variable) ->
     # Add a variable to the plot.
     state = @template[plotId].proto.getState()
-    
-    _bounds = @getVariableBounds(variable)
-    _info = @getVariableInfo(variable)
     _max_datetime = state.range.data.max.getTime()
 
-    if @template[plotId].proto.options.y.variable == null
-      @template[plotId].proto.options.y =
-        variable: variable
-      if _info
-        @template[plotId].proto.options.y.title = _info.title
-        @template[plotId].proto.options.y.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y.min = _bounds.min
-        @template[plotId].proto.options.y.max = _bounds.max
-    else if  @template[plotId].proto.options.y2.variable == null
-      @template[plotId].proto.options.y2 =
-        variable: variable
-      if _info
-        @template[plotId].proto.options.y2.title = _info.title
-        @template[plotId].proto.options.y2.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y2.min = _bounds.min
-        @template[plotId].proto.options.y2.max = _bounds.max
-    else if  @template[plotId].proto.options.y3.variable == null
-      @template[plotId].proto.options.y3 =
-        variable: variable
-      if _info
-        @template[plotId].proto.options.y3.title = _info.title
-        @template[plotId].proto.options.y3.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y3.min = _bounds.min
-        @template[plotId].proto.options.y3.max = _bounds.max
+    @setNewOptions(plotId, variable)
 
     uuid = @uuid()
     for paramsKey, params of @template[plotId].proto.options.dataParams
@@ -314,53 +310,21 @@ window.Plotting.Handler = class Handler
 
   addStation: (plotId, dataLoggerId) ->
     # Add another data logger to the plot.
+    if !@template[plotId].proto.initialized
+      return @appendNew(plotId, dataLoggerId)
+    
+    console.log("addStation(plotId, dataLoggerId)", plotId, dataLoggerId)
+    
     state = @template[plotId].proto.getState()
     _variable = @template[plotId].proto.options.y.variable
-    _bounds = @getVariableBounds(_variable)
-    _info = @getVariableInfo(_variable)
     _max_datetime = state.range.data.max.getTime()
     
     _params = $.extend(true, {}, @template[plotId].proto.options.dataParams[0])
     _params.data_logger = dataLoggerId
     _len = @template[plotId].proto.options.dataParams.push(_params)
 
-    console.log("addStation: (dataLoggerId, _len, dataParams)",
-      dataLoggerId, _len, @template[plotId].proto.options.dataParams)
-
-    if @template[plotId].proto.options.y.variable == null
-      @template[plotId].proto.options.y =
-        dataLoggerId: dataLoggerId
-        variable: _variable
-        color: @getColor('light', parseInt(plotId))
-      if _info
-        @template[plotId].proto.options.y.title = _info.title
-        @template[plotId].proto.options.y.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y.min = _bounds.min
-        @template[plotId].proto.options.y.max = _bounds.max
-    else if  @template[plotId].proto.options.y2.variable == null
-      @template[plotId].proto.options.y2 =
-        dataLoggerId: dataLoggerId
-        variable: _variable
-        color: @getColor('light', parseInt(plotId+4%7))
-      if _info
-        @template[plotId].proto.options.y2.title = _info.title
-        @template[plotId].proto.options.y2.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y2.min = _bounds.min
-        @template[plotId].proto.options.y2.max = _bounds.max
-    else if  @template[plotId].proto.options.y3.variable == null
-      @template[plotId].proto.options.y3 =
-        dataLoggerId: dataLoggerId
-        variable: _variable
-        color: @getColor('light', parseInt(plotId+6%7))
-      if _info
-        @template[plotId].proto.options.y2.title = _info.title
-        @template[plotId].proto.options.y2.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y3.min = _bounds.min
-        @template[plotId].proto.options.y3.max = _bounds.max
-      
+    @setNewOptions(plotId, _variable, dataLoggerId)
+    
     uuid = @uuid()
     for paramsKey, params of @template[plotId].proto.options.dataParams
       @template[plotId].proto.options.dataParams[paramsKey].max_datetime =
@@ -449,26 +413,93 @@ window.Plotting.Handler = class Handler
 
   add: (type) ->
     # Add a new plot.
+    if @template[@template.length-1].proto.initialized is false
+      return
     console.log("Adding (type)", type, @template)
     _target = @utarget(@options.target)
     _plot =
       plotOrder: @template.length
       type: type
-      options:
-        type: type
-        target: '#' + _target
+      
+    _options =
+      target: '#' + _target
+      type: type
+      x:
+        variable: "datetime"
 
     html = "<div id=\"#{_target}\"></div>"
     $(@options.target).append(html)
     
     _key = @template.push(_plot)-1
     
-    instance = new window.Plotting.LinePlot(@, [], _plot.options)
-    console.log("Instance ready for preAppend (instance)", instance)
+    instance = new window.Plotting.LinePlot(@, [], _options)
+    console.log("Instance ready for preAppend (_key, instance)", _key, instance)
     instance.preAppend()
     @template[_key].proto = instance
     @template[_key].proto.options.plotId = _key
-    @appendControls(_key)
+    if @template[_key].proto.initialized
+      @appendControls(_key)
+
+  initVariable: (plotId, variable, title) ->
+    # Initialize the Variable on a new Plot
+    @template[plotId].dataParams = [
+      @template[plotId-1].dataParams[0]
+    ]
+    @template[plotId].dataParams[0].data_logger = null
+    @template[plotId].proto.options.y.variable = variable
+    @template[plotId].proto.options.y.title = title
+    @appendControls(plotId)
+    @template[plotId].proto.removeTemp()
+    
+  appendNew: (plotId, dataLoggerId) ->
+    # Build the new plot.
+    _plot = @template[plotId]
+    console.log("Append new (plot)", _plot)
+    _plot.dataParams[0].data_logger = dataLoggerId
+    _plot.proto.options.dataParams = _plot.dataParams
+    _plot.proto.options.y.dataloggerid = dataLoggerId
+    @getAppendData(@uuid(), plotId, 0)
+    
+  setNewOptions: (plotId, variable, dataLoggerId) ->
+    # Set the new Options Key
+    _bounds = @getVariableBounds(variable)
+    _info = @getVariableInfo(variable)
+    
+    if @template[plotId].proto.options.y.variable == null
+      @template[plotId].proto.options.y =
+        dataLoggerId: dataLoggerId
+        variable: variable
+        color: @getColor('light', parseInt(plotId))
+      if _info
+        @template[plotId].proto.options.y.title = _info.title
+        @template[plotId].proto.options.y.units = _info.units
+      if _bounds
+        @template[plotId].proto.options.y.min = _bounds.min
+        @template[plotId].proto.options.y.max = _bounds.max
+    else if  @template[plotId].proto.options.y2.variable == null
+      console.log("Get Color: (plotId, int, color)", plotId,
+        (parseInt(plotId)+4%7), @getColor('light', (parseInt(plotId)+4%7)))
+      @template[plotId].proto.options.y2 =
+        dataLoggerId: dataLoggerId
+        variable: variable
+        color: @getColor('light', (parseInt(plotId)+4%7))
+      if _info
+        @template[plotId].proto.options.y2.title = _info.title
+        @template[plotId].proto.options.y2.units = _info.units
+      if _bounds
+        @template[plotId].proto.options.y2.min = _bounds.min
+        @template[plotId].proto.options.y2.max = _bounds.max
+    else if  @template[plotId].proto.options.y3.variable == null
+      @template[plotId].proto.options.y3 =
+        dataLoggerId: dataLoggerId
+        variable: variable
+        color: @getColor('light', (parseInt(plotId)+6%7))
+      if _info
+        @template[plotId].proto.options.y2.title = _info.title
+        @template[plotId].proto.options.y2.units = _info.units
+      if _bounds
+        @template[plotId].proto.options.y3.min = _bounds.min
+        @template[plotId].proto.options.y3.max = _bounds.max
     
   getVariableBounds: (variable) ->
     bounds =

@@ -78,12 +78,14 @@ window.Plotting.Controls = class Controls
           id = "data-logger-#{station.id}-plot-#{plotId}"
           _prepend = "<i id=\"#{id}\" class=\"icon-circle\"
             #{color}></i>"
+          _id = "add-station-#{plotId}-#{station.id}"
           html = "#{html}
-            <li class=\"station\"
+            <li class=\"station\" id=\"#{_id}\"
+              data-station-id=\"#{station.id}\" data-plot-id=\"#{plotId}\"
               style=\"padding: 1px 5px; cursor: pointer;
-              list-style-type: none\" onclick=\"plotter.addStation(#{plotId},
-                #{station.id})\">
-               #{_prepend} #{station.datalogger_name}</li>"
+              list-style-type: none\" onclick=\"\">
+               #{_prepend} #{station.datalogger_name} |
+               #{station.elevation} ft</li>"
         
         html = "#{html}
           </ul>"
@@ -93,6 +95,17 @@ window.Plotting.Controls = class Controls
         </li>"
     
       $(appendTarget).prepend(html)
+      
+      # Bind Onclick Events
+      for region in data.responseJSON.results
+        for station in region.dataloggers
+          _id = "add-station-#{plotId}-#{station.id}"
+          $("#"+_id).on("click", (event) ->
+            event.stopPropagation()
+            _plotId = $(this).attr("data-plot-id")
+            _stationId = $(this).attr("data-station-id")
+            _.plotter.addStation(_plotId, _stationId)
+          )
       
       # Bind Dropdown & Submenu Click Event.
       $('#'+uuid).dropdown()
