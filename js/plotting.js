@@ -260,8 +260,6 @@
         expired: true
       };
       access = Object.mergeDefaults(access, accessToken);
-      this;
-      this;
       this.maps = [];
       this.markers = [];
       this.api = new window.Plotting.API(access.token);
@@ -338,26 +336,49 @@
     };
 
     Controls.prototype.updateStationDropdown = function(plotId) {
-      var _append, _id, _options, id;
+      var _, _append, _id, _options, id;
+      _ = this;
       _options = this.plotter.template[plotId].proto.options;
       _append = "";
       if (_options.y.dataLoggerId !== null) {
         _id = _options.y.dataLoggerId;
         _append = " <i class=\"icon-circle\" style=\"color: " + _options.y.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        $(_options.target).find("\#" + id).css("color", _options.y.color).attr("onclic", "removeStation(" + plotId + ", " + _options.y.dataLoggerId + ")").parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").children(".station-dots").empty().append(_append);
+        $(_options.target).find("#" + id).css("color", _options.y.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").children(".station-dots").empty().append(_append);
+        $("#add-station-" + plotId + "-" + _id).on("click", function(event) {
+          var _plotId, _stationId;
+          event.stopPropagation();
+          console.log("this", $(this));
+          _plotId = $(this).attr("data-plot-id");
+          _stationId = $(this).attr("data-station-id");
+          return _.plotter.removeStation(_plotId, _stationId);
+        });
       }
       if (_options.y2.variable !== null) {
         _id = _options.y2.dataLoggerId;
         _append = " <i class=\"icon-circle\" style=\"color: " + _options.y2.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        $(_options.target).find("\#" + id).css("color", _options.y2.color).attr("onclic", "removeStation(" + plotId + ", " + _options.y2.dataLoggerId + ")").parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").append(_append);
+        $(_options.target).find("\#" + id).css("color", _options.y2.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").append(_append);
+        $("#add-station-" + plotId + "-" + _id).on("click", function(event) {
+          var _plotId, _stationId;
+          event.stopPropagation();
+          _plotId = $(this).attr("data-plot-id");
+          _stationId = $(this).attr("data-station-id");
+          return _.plotter.removeStation(_plotId, _stationId);
+        });
       }
       if (_options.y3.variable !== null) {
         _id = _options.y3.dataLoggerId;
         _append = " <i class=\"icon-circle\" style=\"color: " + _options.y3.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        return $(_options.target).find("\#" + id).css("color", _options.y3.color).attr("onclic", "removeStation(" + plotId + ", " + _options.y3.dataLoggerId + ")").parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").append(_append);
+        $(_options.target).find("\#" + id).css("color", _options.y3.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").append(_append);
+        return $("#add-station-" + plotId + "-" + _id).on("click", function(event) {
+          var _plotId, _stationId;
+          event.stopPropagation();
+          _plotId = $(this).attr("data-plot-id");
+          _stationId = $(this).attr("data-station-id");
+          return _.plotter.removeStation(_plotId, _stationId);
+        });
       }
     };
 
@@ -584,16 +605,6 @@
           return next.slideDown();
         }
       });
-    };
-
-    Controls.prototype.selectInitParameter = function() {
-      var html;
-      return html = "<ul> </ul>";
-    };
-
-    Controls.prototype.selectInitStation = function() {
-      var html;
-      return html = "";
     };
 
     return Controls;
@@ -1711,6 +1722,7 @@ Air Sciences Inc. - 2016
       var accessToken, defaults;
       this.preError = "Plotting.Handler";
       defaults = {
+        templateId: null,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
@@ -1826,14 +1838,17 @@ Air Sciences Inc. - 2016
       var _, args, callback, preError, target;
       preError = this.preError + ".putTemplate()";
       target = "template/" + this.options.plotHandlerId;
-      args = null;
+      args = {
+        templateId: this.options.templateId,
+        templateData: this.template
+      };
       _ = this;
       callback = function(data) {
         if (data.responseJSON === null || data.responseJSON.error) {
           console.log(preError + ".callback(...) error detected (data)", data);
           return;
         }
-        return _.template = data.responseJSON.templateData;
+        return console.log(preError + ".callback() success saving template.");
       };
       return this.api.put(target, args, callback);
     };
@@ -1877,10 +1892,10 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.append = function() {
-      var __data, _bounds, _len, i, instance, j, key, plot, preError, ref, ref1, results, target, title;
+      var _, __data, _bounds, _len, i, instance, j, key, plot, preError, ref, ref1, target, title;
       preError = this.preError + ".append()";
+      _ = this;
       ref = this.template;
-      results = [];
       for (key in ref) {
         plot = ref[key];
         target = this.utarget(this.options.target);
@@ -1918,9 +1933,12 @@ Air Sciences Inc. - 2016
         instance.preAppend();
         instance.append();
         this.template[key].proto = instance;
-        results.push(this.appendControls(key));
+        this.appendControls(key);
       }
-      return results;
+      $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + target + "\">Save Template</a></small>");
+      return $("#save-" + target).on("click", function(event) {
+        return _.putTemplate();
+      });
     };
 
     Handler.prototype.mergeTemplateOption = function(plotId) {
@@ -2051,6 +2069,10 @@ Air Sciences Inc. - 2016
         this.getAppendData(uuid, plotId, paramsKey);
       }
       return this.controls.updateStationDropdown(plotId);
+    };
+
+    Handler.prototype.removeStation = function(plotId, dataLoggerId) {
+      return console.log("Remove Station (plotId, dataLoggerId)", plotId, dataLoggerId);
     };
 
     Handler.prototype.zoom = function(transform) {
@@ -2213,7 +2235,6 @@ Air Sciences Inc. - 2016
           return this.template[plotId].proto.options.y.max = _bounds.max;
         }
       } else if (this.template[plotId].proto.options.y2.variable === null) {
-        console.log("Get Color: (plotId, int, color)", plotId, parseInt(plotId) + 4 % 7, this.getColor('light', parseInt(plotId) + 4 % 7));
         this.template[plotId].proto.options.y2 = {
           dataLoggerId: dataLoggerId,
           variable: variable,

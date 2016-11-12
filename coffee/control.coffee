@@ -24,8 +24,6 @@ window.Plotting.Controls = class Controls
     access = Object.mergeDefaults access, accessToken
     
     # Settings
-    @
-    @
     
     @maps = []
     @markers = []
@@ -117,21 +115,29 @@ window.Plotting.Controls = class Controls
     @api.get(target, args, callback)
 
   updateStationDropdown: (plotId) ->
+    _ = @
     _options = @plotter.template[plotId].proto.options
     _append = ""
+    
     if _options.y.dataLoggerId != null
       _id = _options.y.dataLoggerId
       _append = " <i class=\"icon-circle\"
         style=\"color: #{_options.y.color}\"></i>"
       id = "data-logger-#{_id}-plot-#{plotId}"
-      $(_options.target).find("\##{id}")
+      $(_options.target).find("##{id}")
         .css("color", _options.y.color)
-        .attr("onclic", "removeStation(#{plotId}, #{_options.y.dataLoggerId})")
         .parent().parent().prev()
         .css("background-color", "rgb(248,248,248)")
         .children(":first").children(".station-dots")
         .empty()
         .append(_append)
+      $("#add-station-#{plotId}-#{_id}").on("click", (event) ->
+        event.stopPropagation()
+        console.log("this", $(this))
+        _plotId = $(this).attr("data-plot-id")
+        _stationId = $(this).attr("data-station-id")
+        _.plotter.removeStation(_plotId, _stationId)
+      )
     if _options.y2.variable != null
       _id = _options.y2.dataLoggerId
       _append = " <i class=\"icon-circle\"
@@ -139,11 +145,16 @@ window.Plotting.Controls = class Controls
       id = "data-logger-#{_id}-plot-#{plotId}"
       $(_options.target).find("\##{id}")
         .css("color", _options.y2.color)
-        .attr("onclic", "removeStation(#{plotId}, #{_options.y2.dataLoggerId})")
         .parent().parent().prev()
         .css("background-color", "rgb(248,248,248)")
         .children(":first")
         .append(_append)
+      $("#add-station-#{plotId}-#{_id}").on("click", (event) ->
+        event.stopPropagation()
+        _plotId = $(this).attr("data-plot-id")
+        _stationId = $(this).attr("data-station-id")
+        _.plotter.removeStation(_plotId, _stationId)
+      )
     if _options.y3.variable != null
       _id = _options.y3.dataLoggerId
       _append = " <i class=\"icon-circle\"
@@ -151,11 +162,16 @@ window.Plotting.Controls = class Controls
       id = "data-logger-#{_id}-plot-#{plotId}"
       $(_options.target).find("\##{id}")
         .css("color", _options.y3.color)
-        .attr("onclic", "removeStation(#{plotId}, #{_options.y3.dataLoggerId})")
         .parent().parent().prev()
         .css("background-color", "rgb(248,248,248)")
         .children(":first")
         .append(_append)
+      $("#add-station-#{plotId}-#{_id}").on("click", (event) ->
+        event.stopPropagation()
+        _plotId = $(this).attr("data-plot-id")
+        _stationId = $(this).attr("data-station-id")
+        _.plotter.removeStation(_plotId, _stationId)
+      )
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.
@@ -334,7 +350,6 @@ window.Plotting.Controls = class Controls
   removeStationMap: (plotId) ->
     # remove staton map
     $("#map-control-#{plotId}").empty()
-    
 
   toggleMap: (plotId) ->
     # toggle the map div.
@@ -427,11 +442,3 @@ window.Plotting.Controls = class Controls
         next.slideDown()
     )
     
-  selectInitParameter: () ->
-    html = "<ul>
-        
-      </ul>"
-
-
-  selectInitStation: () ->
-    html = ""

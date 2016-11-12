@@ -20,6 +20,7 @@ window.Plotting.Handler = class Handler
     @preError = "Plotting.Handler"
     
     defaults =
+      templateId: null
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       # Performance Variables:
@@ -135,14 +136,16 @@ window.Plotting.Handler = class Handler
     # Request the Template
     preError = "#{@preError}.putTemplate()"
     target = "template/#{@options.plotHandlerId}"
-    args = null
+    args =
+      templateId: @options.templateId
+      templateData: @template
     _ = @
     
     callback = (data) ->
       if data.responseJSON == null || data.responseJSON.error
         console.log "#{preError}.callback(...) error detected (data)", data
         return
-      _.template = data.responseJSON.templateData
+      console.log("#{preError}.callback() success saving template.")
     
     @api.put(target, args, callback)
     
@@ -171,10 +174,12 @@ window.Plotting.Handler = class Handler
   append: () ->
     # Master append plots.
     preError = "#{@preError}.append()"
+    _ = @
     
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
+
       @mergeTemplateOption(key)
       
       if plot.options.y2 is undefined
@@ -211,6 +216,13 @@ window.Plotting.Handler = class Handler
       #instance.appendTitle(title.title, title.subtitle)
       @template[key].proto = instance
       @appendControls(key)
+
+    $(@options.target).append(
+      "<small><a style=\"cusor:pointer\"
+        id=\"save-#{target}\">Save Template</a></small>")
+    $("#save-#{target}").on("click", (event) ->
+      _.putTemplate()
+    )
 
   mergeTemplateOption: (plotId) ->
     # Merge the templated plot options with returned options
@@ -334,6 +346,10 @@ window.Plotting.Handler = class Handler
       @getAppendData(uuid, plotId, paramsKey)
     @controls.updateStationDropdown(plotId)
 
+  removeStation: (plotId, dataLoggerId) ->
+    # Remove the station from the plot & data.
+    console.log("Remove Station (plotId, dataLoggerId)", plotId, dataLoggerId)
+
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
     for plot in @template
@@ -373,17 +389,17 @@ window.Plotting.Handler = class Handler
     
     if @template[plotId].type is "station"
       current = [
-          @template[plotId].proto.options.y,
-          @template[plotId].proto.options.y2,
-          @template[plotId].proto.options.y3
+        @template[plotId].proto.options.y,
+        @template[plotId].proto.options.y2,
+        @template[plotId].proto.options.y3
       ]
       @controls.appendParameterDropdown(plotId, '#'+selector,
         @template[plotId].proto.options.y.dataloggerid, current)
     else if @template[plotId].type is "parameter"
       current = [
-          @template[plotId].proto.options.y,
-          @template[plotId].proto.options.y2,
-          @template[plotId].proto.options.y3
+        @template[plotId].proto.options.y,
+        @template[plotId].proto.options.y2,
+        @template[plotId].proto.options.y3
       ]
       @controls.appendStationDropdown(plotId, '#'+selector,
         @template[plotId].proto.options.y.variable, current)
@@ -477,8 +493,6 @@ window.Plotting.Handler = class Handler
         @template[plotId].proto.options.y.min = _bounds.min
         @template[plotId].proto.options.y.max = _bounds.max
     else if  @template[plotId].proto.options.y2.variable == null
-      console.log("Get Color: (plotId, int, color)", plotId,
-        (parseInt(plotId)+4%7), @getColor('light', (parseInt(plotId)+4%7)))
       @template[plotId].proto.options.y2 =
         dataLoggerId: dataLoggerId
         variable: variable
