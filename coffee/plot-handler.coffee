@@ -228,7 +228,7 @@ window.Plotting.Handler = class Handler
     # Merge the templated plot options with returned options
     plot = @template[plotId]
     plot.options.dataParams = plot.dataParams
-    console.log("Merge Template Options (options)", plot.options)
+    # console.log("Merge Template Options (options)", plot.options)
     _params = plot.options.dataParams.length
     # Define Data Loggers
     if _params > 0

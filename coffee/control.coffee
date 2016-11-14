@@ -27,6 +27,7 @@ window.Plotting.Controls = class Controls
     
     @maps = []
     @markers = []
+    @listeners = []
     @api = new window.Plotting.API access.token
 
   appendStationDropdown: (plotId, appendTarget, parameter, current) ->
@@ -241,19 +242,16 @@ window.Plotting.Controls = class Controls
     if _options.y.variable != null
       _id = _options.y.variable.replace('_', '-')
       id = "#{_id}-plot-#{plotId}"
-      console.log("Update-Dropdown y", id)
       $(_options.target).find("\##{id}")
         .css("color", _options.y.color)
     if _options.y2.variable != null
       _id = _options.y2.variable.replace('_', '-')
       id = "#{_id}-plot-#{plotId}"
-      console.log("Update-Dropdown y2", id)
       $(_options.target).find("\##{id}")
         .css("color", _options.y2.color)
     if _options.y3.variable != null
       _id = _options.y3.variable.replace('_', '-')
       id = "#{_id}-plot-#{plotId}"
-      console.log("Update-Dropdown y3", id)
       $(_options.target).find("\##{id}")
         .css("color", _options.y3.color)
   
@@ -306,6 +304,7 @@ window.Plotting.Controls = class Controls
         color = "rgb(200,200,200)"
         scale = 5
         opacity = 0.5
+        _row_id = "map-plot-#{plotId}-station-#{station.id}"
         _row_current = _.isCurrent(current, 'dataLoggerId', station.id)
 
         if _row_current
@@ -313,12 +312,13 @@ window.Plotting.Controls = class Controls
           scale = 7
           opacity = 0.8
           _bound_points.push(new google.maps.LatLng(station.lat, station.lon))
+        
         marker = new google.maps.Marker({
           position: {
             lat: station.lat,
             lng: station.lon
           },
-          id: "map-plot-#{plotId}-station-#{station.id}",
+          id: _row_id,
           tooltip: "#{station.datalogger_name} - #{station.elevation} ft",
           dataloggerid: station.id,
           icon: {
@@ -339,12 +339,13 @@ window.Plotting.Controls = class Controls
           infowindow.close()
         )
         
-        marker.addListener('click', ->
+        @listeners[_row_id] = marker.addListener('click', ->
+          console.log("Marker clicked", this)
           _.plotter.addStation(plotId, @dataloggerid)
         )
         
-        _len = @markers[plotId].push(marker)
-        @markers[plotId][_len-1].setMap(@maps[plotId])
+        _len = @markers[_row_id] = marker
+        @markers[_row_id].setMap(@maps[plotId])
     
     # Fit to Bounds
     for _point in _bound_points
@@ -353,9 +354,72 @@ window.Plotting.Controls = class Controls
     @maps[plotId].fitBounds(_bounds)
     @maps[plotId].setZoom(12)
 
-  removeStationMap: (plotId) ->
-    # remove staton map
-    $("#map-control-#{plotId}").empty()
+  resetStationMap: (plotId) ->
+    # Reset the Station Map
+    _= @
+    console.log("Reset Map (@markers)", @markers)
+    
+    for _key, _marker of @markers
+      console.log("Reset Map (row, marker)", _key, _marker)
+      _data_logger_id = null
+      #_dataLoggerId = _marker.get("dataloggerid")
+      _marker.setIcon({
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 5,
+        strokeWeight: 2,
+        fillOpacity: 0.5,
+        fillColor: "rgb(200,200,200)"
+      })
+      _markers.set("selected", false)
+      
+      _.listeners[_key].remove()
+      _marker.addListener('click', ->
+        _.plotter.addStation(plotId, _dataLoggerId)
+      )
+
+  updateStationMap: (plotId) ->
+    # Update the station map markers.
+    _ = @
+    
+    @resetStationMap(plotId)
+    
+    updateMarker = (plotId, dataLoggerId, rowId, color) ->
+      _.markers[rowId].setIcon({
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 7,
+        strokeWeight: 2,
+        fillOpacity: 0.8,
+        fillColor: color
+      })
+      _.markers[rowId].set("selected", true)
+      
+      _.listeners[rowId].remove()
+      _.markers[rowId].addListener('click', ->
+        _.plotter.removeStation(plotId, dataLoggerId)
+      )
+        
+    _options = @plotter.template[plotId].proto.options
+    if _options.y.variable != null
+      _id = _options.y.variable.replace('_', '-')
+      _row_id = "map-plot-#{plotId}-station-#{_options.y.dataLoggerId}"
+      _data_logger_id = _options.y.dataLoggerId
+      _color = _options.y.color
+      updateMarker(plotId, _data_logger_id, _row_id, _color)
+    if _options.y2.variable != null
+      _id = _options.y2.variable.replace('_', '-')
+      _row_id = "map-plot-#{plotId}-station-#{_options.y2.dataLoggerId}"
+      _data_logger_id = _options.y2.dataLoggerId
+      _color = _options.y2.color
+      updateMarker(plotId, _data_logger_id, _row_id, _color)
+    if _options.y3.variable != null
+      _id = _options.y3.variable.replace('_', '-')
+      _row_id = "map-plot-#{plotId}-station-#{_options.y3.dataLoggerId}"
+      _data_logger_id = _options.y3.dataLoggerId
+      _color = _options.y3.color
+      updateMarker(plotId, _data_logger_id, _row_id, _color)
+    
+    console.log("Updating markers row (marker, color)",
+      @markers[_row_id], _color)
 
   toggleMap: (plotId) ->
     # toggle the map div.

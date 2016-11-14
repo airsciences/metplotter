@@ -262,6 +262,7 @@
       access = Object.mergeDefaults(access, accessToken);
       this.maps = [];
       this.markers = [];
+      this.listeners = [];
       this.api = new window.Plotting.API(access.token);
     }
 
@@ -428,25 +429,22 @@
       if (_options.y.variable !== null) {
         _id = _options.y.variable.replace('_', '-');
         id = _id + "-plot-" + plotId;
-        console.log("Update-Dropdown y", id);
         $(_options.target).find("\#" + id).css("color", _options.y.color);
       }
       if (_options.y2.variable !== null) {
         _id = _options.y2.variable.replace('_', '-');
         id = _id + "-plot-" + plotId;
-        console.log("Update-Dropdown y2", id);
         $(_options.target).find("\#" + id).css("color", _options.y2.color);
       }
       if (_options.y3.variable !== null) {
         _id = _options.y3.variable.replace('_', '-');
         id = _id + "-plot-" + plotId;
-        console.log("Update-Dropdown y3", id);
         return $(_options.target).find("\#" + id).css("color", _options.y3.color);
       }
     };
 
     Controls.prototype.appendStationMap = function(plotId, appendTarget, results, current) {
-      var _, _bound_points, _bounds, _len, _point, _row_current, color, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station, uuid;
+      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, color, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station, uuid;
       _ = this;
       uuid = this.uuid();
       dom_uuid = "map-control-" + plotId;
@@ -482,6 +480,7 @@
           color = "rgb(200,200,200)";
           scale = 5;
           opacity = 0.5;
+          _row_id = "map-plot-" + plotId + "-station-" + station.id;
           _row_current = _.isCurrent(current, 'dataLoggerId', station.id);
           if (_row_current) {
             color = _row_current.color;
@@ -494,7 +493,7 @@
               lat: station.lat,
               lng: station.lon
             },
-            id: "map-plot-" + plotId + "-station-" + station.id,
+            id: _row_id,
             tooltip: station.datalogger_name + " - " + station.elevation + " ft",
             dataloggerid: station.id,
             icon: {
@@ -513,11 +512,12 @@
           marker.addListener('mouseout', function() {
             return infowindow.close();
           });
-          marker.addListener('click', function() {
+          this.listeners[_row_id] = marker.addListener('click', function() {
+            console.log("Marker clicked", this);
             return _.plotter.addStation(plotId, this.dataloggerid);
           });
-          _len = this.markers[plotId].push(marker);
-          this.markers[plotId][_len - 1].setMap(this.maps[plotId]);
+          _len = this.markers[_row_id] = marker;
+          this.markers[_row_id].setMap(this.maps[plotId]);
         }
       }
       for (k = 0, len2 = _bound_points.length; k < len2; k++) {
@@ -528,8 +528,73 @@
       return this.maps[plotId].setZoom(12);
     };
 
-    Controls.prototype.removeStationMap = function(plotId) {
-      return $("#map-control-" + plotId).empty();
+    Controls.prototype.resetStationMap = function(plotId) {
+      var _, _data_logger_id, _key, _marker, ref, results1;
+      _ = this;
+      console.log("Reset Map (@markers)", this.markers);
+      ref = this.markers;
+      results1 = [];
+      for (_key in ref) {
+        _marker = ref[_key];
+        console.log("Reset Map (row, marker)", _key, _marker);
+        _data_logger_id = null;
+        _marker.setIcon({
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 5,
+          strokeWeight: 2,
+          fillOpacity: 0.5,
+          fillColor: "rgb(200,200,200)"
+        });
+        _markers.set("selected", false);
+        _.listeners[_key].remove();
+        results1.push(_marker.addListener('click', function() {
+          return _.plotter.addStation(plotId, _dataLoggerId);
+        }));
+      }
+      return results1;
+    };
+
+    Controls.prototype.updateStationMap = function(plotId) {
+      var _, _color, _data_logger_id, _id, _options, _row_id, updateMarker;
+      _ = this;
+      this.resetStationMap(plotId);
+      updateMarker = function(plotId, dataLoggerId, rowId, color) {
+        _.markers[rowId].setIcon({
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          strokeWeight: 2,
+          fillOpacity: 0.8,
+          fillColor: color
+        });
+        _.markers[rowId].set("selected", true);
+        _.listeners[rowId].remove();
+        return _.markers[rowId].addListener('click', function() {
+          return _.plotter.removeStation(plotId, dataLoggerId);
+        });
+      };
+      _options = this.plotter.template[plotId].proto.options;
+      if (_options.y.variable !== null) {
+        _id = _options.y.variable.replace('_', '-');
+        _row_id = "map-plot-" + plotId + "-station-" + _options.y.dataLoggerId;
+        _data_logger_id = _options.y.dataLoggerId;
+        _color = _options.y.color;
+        updateMarker(plotId, _data_logger_id, _row_id, _color);
+      }
+      if (_options.y2.variable !== null) {
+        _id = _options.y2.variable.replace('_', '-');
+        _row_id = "map-plot-" + plotId + "-station-" + _options.y2.dataLoggerId;
+        _data_logger_id = _options.y2.dataLoggerId;
+        _color = _options.y2.color;
+        updateMarker(plotId, _data_logger_id, _row_id, _color);
+      }
+      if (_options.y3.variable !== null) {
+        _id = _options.y3.variable.replace('_', '-');
+        _row_id = "map-plot-" + plotId + "-station-" + _options.y3.dataLoggerId;
+        _data_logger_id = _options.y3.dataLoggerId;
+        _color = _options.y3.color;
+        updateMarker(plotId, _data_logger_id, _row_id, _color);
+      }
+      return console.log("Updating markers row (marker, color)", this.markers[_row_id], _color);
     };
 
     Controls.prototype.toggleMap = function(plotId) {
@@ -1968,7 +2033,6 @@ Air Sciences Inc. - 2016
       var _params, plot;
       plot = this.template[plotId];
       plot.options.dataParams = plot.dataParams;
-      console.log("Merge Template Options (options)", plot.options);
       _params = plot.options.dataParams.length;
       if (_params > 0) {
         plot.options.y.dataLoggerId = plot.options.dataParams[0].data_logger;
