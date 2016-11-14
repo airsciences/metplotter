@@ -348,7 +348,38 @@ window.Plotting.Handler = class Handler
 
   removeStation: (plotId, dataLoggerId) ->
     # Remove the station from the plot & data.
+    _key = null
+    
     console.log("Remove Station (plotId, dataLoggerId)", plotId, dataLoggerId)
+    
+    _template = @template[plotId]
+    _plot = @template[plotId].proto
+    _paramKey = @indexOfValue(_template.dataParams, "data_logger", dataLoggerId)
+    
+    if _plot.options.y.dataLoggerId is dataLoggerId
+      _key = "y"
+    else if _plot.options.y2.dataLoggerId is dataLoggerId
+      _key = "y2"
+    else if _plot.options.y3.dataLoggerId is dataLoggerId
+      _key = "y3"
+     
+    if _paramKey > -1
+      _template.dataParams.splice(_paramKey, 1)
+      _plot.options[_key] = null
+      _plot.appendData()
+      if _key is "y"
+        _plot.options.y = Object.mergeDefaults(_plot.options.y,
+          _plot.defaults.y)
+      if _key is "y2"
+        _plot.options.y2 = Object.mergeDefaults(_plot.options.y2,
+          _plot.defaults.y2)
+      if _key is "y3"
+        _plot.options.y3 = Object.mergeDefaults(_plot.options.y3,
+          _plot.defaults.y3)
+      _plot.getDefinition()
+      _plot.removeData(_key)
+      _plot.update()
+    @controls.updateStationDropdown(plotId)
 
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
@@ -596,7 +627,7 @@ window.Plotting.Handler = class Handler
     # Return the index of an assoc-object key->value
     index = -1
     for i in [0..(array.length-1)]
-      if array[i][key] == value
+      if array[i][key] is value
         index = i
     return index
             

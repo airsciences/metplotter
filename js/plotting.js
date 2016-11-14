@@ -344,8 +344,8 @@
         _id = _options.y.dataLoggerId;
         _append = " <i class=\"icon-circle\" style=\"color: " + _options.y.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        $(_options.target).find("#" + id).css("color", _options.y.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").children(".station-dots").empty().append(_append);
-        $("#add-station-" + plotId + "-" + _id).on("click", function(event) {
+        $(_options.target).find("#" + id).css("color", _options.y.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").children(".station-dots").empty().append(_append);
+        $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
           var _plotId, _stationId;
           event.stopPropagation();
           console.log("this", $(this));
@@ -358,8 +358,8 @@
         _id = _options.y2.dataLoggerId;
         _append = " <i class=\"icon-circle\" style=\"color: " + _options.y2.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        $(_options.target).find("\#" + id).css("color", _options.y2.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").append(_append);
-        $("#add-station-" + plotId + "-" + _id).on("click", function(event) {
+        $(_options.target).find("\#" + id).css("color", _options.y2.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").append(_append);
+        $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
           var _plotId, _stationId;
           event.stopPropagation();
           _plotId = $(this).attr("data-plot-id");
@@ -371,8 +371,8 @@
         _id = _options.y3.dataLoggerId;
         _append = " <i class=\"icon-circle\" style=\"color: " + _options.y3.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        $(_options.target).find("\#" + id).css("color", _options.y3.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").children(":first").append(_append);
-        return $("#add-station-" + plotId + "-" + _id).on("click", function(event) {
+        $(_options.target).find("\#" + id).css("color", _options.y3.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").append(_append);
+        return $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
           var _plotId, _stationId;
           event.stopPropagation();
           _plotId = $(this).attr("data-plot-id");
@@ -838,11 +838,11 @@
 
   window.Plotting.LinePlot = LinePlot = (function() {
     function LinePlot(plotter, data, options) {
-      var _domainMean, _domainScale, defaults;
+      var _domainMean, _domainScale;
       this.preError = "LinePlot.";
       this.plotter = plotter;
       this.initialized = false;
-      defaults = {
+      this.defaults = {
         plotId: null,
         uuid: '',
         debug: true,
@@ -916,18 +916,18 @@
         }
       };
       if (options.x) {
-        options.x = Object.mergeDefaults(options.x, defaults.x);
+        options.x = Object.mergeDefaults(options.x, this.defaults.x);
       }
       if (options.y) {
-        options.y = Object.mergeDefaults(options.y, defaults.y);
+        options.y = Object.mergeDefaults(options.y, this.defaults.y);
       }
       if (options.y2) {
-        options.y2 = Object.mergeDefaults(options.y2, defaults.y2);
+        options.y2 = Object.mergeDefaults(options.y2, this.defaults.y2);
       }
       if (options.y3) {
-        options.y3 = Object.mergeDefaults(options.y3, defaults.y3);
+        options.y3 = Object.mergeDefaults(options.y3, this.defaults.y3);
       }
-      this.options = Object.mergeDefaults(options, defaults);
+      this.options = Object.mergeDefaults(options, this.defaults);
       this.device = 'full';
       this.links = [
         {
@@ -1089,6 +1089,26 @@
       _full = new Plotting.Data(this.data);
       _full.append(_data, ["x"]);
       this.data = _full._clean(_full.get());
+      this.data = this.data.sort(this.sortDatetimeAsc);
+      if (this.initialized) {
+        this.setDataState();
+        this.setIntervalState();
+        return this.setDataRequirement();
+      }
+    };
+
+    LinePlot.prototype.removeData = function(key) {
+      var _full, _key, _row, ref, result;
+      result = [];
+      ref = this.data;
+      for (_key in ref) {
+        _row = ref[_key];
+        console.log("Removing (_key, _row)", _key, _row, key);
+        delete _row[key];
+        result[_key] = _row;
+      }
+      _full = new Plotting.Data(result);
+      this.data = _full.get();
       this.data = this.data.sort(this.sortDatetimeAsc);
       if (this.initialized) {
         this.setDataState();
@@ -1421,6 +1441,7 @@
       var _, preError;
       preError = this.preError + "update()";
       _ = this;
+      console.log("Update (@data)", this.data);
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-area3").datum(this.data).attr("d", this.definition.area3);
@@ -2072,7 +2093,37 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.removeStation = function(plotId, dataLoggerId) {
-      return console.log("Remove Station (plotId, dataLoggerId)", plotId, dataLoggerId);
+      var _key, _paramKey, _plot, _template;
+      _key = null;
+      console.log("Remove Station (plotId, dataLoggerId)", plotId, dataLoggerId);
+      _template = this.template[plotId];
+      _plot = this.template[plotId].proto;
+      _paramKey = this.indexOfValue(_template.dataParams, "data_logger", dataLoggerId);
+      if (_plot.options.y.dataLoggerId === dataLoggerId) {
+        _key = "y";
+      } else if (_plot.options.y2.dataLoggerId === dataLoggerId) {
+        _key = "y2";
+      } else if (_plot.options.y3.dataLoggerId === dataLoggerId) {
+        _key = "y3";
+      }
+      if (_paramKey > -1) {
+        _template.dataParams.splice(_paramKey, 1);
+        _plot.options[_key] = null;
+        _plot.appendData();
+        if (_key === "y") {
+          _plot.options.y = Object.mergeDefaults(_plot.options.y, _plot.defaults.y);
+        }
+        if (_key === "y2") {
+          _plot.options.y2 = Object.mergeDefaults(_plot.options.y2, _plot.defaults.y2);
+        }
+        if (_key === "y3") {
+          _plot.options.y3 = Object.mergeDefaults(_plot.options.y3, _plot.defaults.y3);
+        }
+        _plot.getDefinition();
+        _plot.removeData(_key);
+        _plot.update();
+      }
+      return this.controls.updateStationDropdown(plotId);
     };
 
     Handler.prototype.zoom = function(transform) {

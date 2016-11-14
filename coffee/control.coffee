@@ -128,10 +128,11 @@ window.Plotting.Controls = class Controls
         .css("color", _options.y.color)
         .parent().parent().prev()
         .css("background-color", "rgb(248,248,248)")
+        .css("font-weight", 700)
         .children(":first").children(".station-dots")
         .empty()
         .append(_append)
-      $("#add-station-#{plotId}-#{_id}").on("click", (event) ->
+      $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
         event.stopPropagation()
         console.log("this", $(this))
         _plotId = $(this).attr("data-plot-id")
@@ -147,9 +148,10 @@ window.Plotting.Controls = class Controls
         .css("color", _options.y2.color)
         .parent().parent().prev()
         .css("background-color", "rgb(248,248,248)")
+        .css("font-weight", 700)
         .children(":first")
         .append(_append)
-      $("#add-station-#{plotId}-#{_id}").on("click", (event) ->
+      $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
         event.stopPropagation()
         _plotId = $(this).attr("data-plot-id")
         _stationId = $(this).attr("data-station-id")
@@ -164,9 +166,10 @@ window.Plotting.Controls = class Controls
         .css("color", _options.y3.color)
         .parent().parent().prev()
         .css("background-color", "rgb(248,248,248)")
+        .css("font-weight", 700)
         .children(":first")
         .append(_append)
-      $("#add-station-#{plotId}-#{_id}").on("click", (event) ->
+      $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
         event.stopPropagation()
         _plotId = $(this).attr("data-plot-id")
         _stationId = $(this).attr("data-station-id")

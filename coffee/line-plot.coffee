@@ -15,7 +15,7 @@ window.Plotting.LinePlot = class LinePlot
     @initialized = false
 
     # Default Configuration
-    defaults =
+    @defaults =
       plotId: null
       uuid: ''
       debug: true
@@ -76,14 +76,14 @@ window.Plotting.LinePlot = class LinePlot
       requestInterval:
         data: 336
     if options.x
-      options.x = Object.mergeDefaults(options.x, defaults.x)
+      options.x = Object.mergeDefaults(options.x, @defaults.x)
     if options.y
-      options.y = Object.mergeDefaults(options.y, defaults.y)
+      options.y = Object.mergeDefaults(options.y, @defaults.y)
     if options.y2
-      options.y2 = Object.mergeDefaults(options.y2, defaults.y2)
+      options.y2 = Object.mergeDefaults(options.y2, @defaults.y2)
     if options.y3
-      options.y3 = Object.mergeDefaults(options.y3, defaults.y3)
-    @options = Object.mergeDefaults options, defaults
+      options.y3 = Object.mergeDefaults(options.y3, @defaults.y3)
+    @options = Object.mergeDefaults options, @defaults
     @device = 'full'
     
     @links = [
@@ -216,6 +216,22 @@ window.Plotting.LinePlot = class LinePlot
     @data = @data.sort(@sortDatetimeAsc)
     
     # Reset the Data Range
+    if @initialized
+      @setDataState()
+      @setIntervalState()
+      @setDataRequirement()
+
+  removeData: (key) ->
+    # Removing sub key from data.
+    result = []
+    for _key, _row of @data
+      console.log("Removing (_key, _row)", _key, _row, key)
+      delete _row[key]
+      result[_key] = _row
+    _full = new Plotting.Data(result)
+    @data = _full.get()
+    @data = @data.sort(@sortDatetimeAsc)
+    
     if @initialized
       @setDataState()
       @setIntervalState()
@@ -767,6 +783,8 @@ window.Plotting.LinePlot = class LinePlot
   update: ->
     preError = "#{@preError}update()"
     _ = @
+
+    console.log("Update (@data)", @data)
 
     # Pre-Append Data For Smooth transform
     @svg.select(".line-plot-area")

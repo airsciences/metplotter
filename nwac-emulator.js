@@ -109,7 +109,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                         "dataLoggerId": 40,
                         "variable": "wind_speed_average",
                         "title": "Wind Speed",
-                        "units": "m/s"
+                        "units": "mph"
                     },
                     "yBand": {
                         "minVariable": "wind_speed_minimum",
@@ -202,7 +202,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y": {
                         "variable": "wind_speed_average",
                         "title": "Wind Speed",
-                        "units": "m/s"
+                        "units": "mph"
                     },
                     "yBand": {
                         "minVariable": "wind_speed_minimum",
