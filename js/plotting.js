@@ -261,8 +261,8 @@
       };
       access = Object.mergeDefaults(access, accessToken);
       this.maps = [];
-      this.markers = [];
-      this.listeners = [];
+      this.markers = {};
+      this.listeners = {};
       this.api = new window.Plotting.API(access.token);
     }
 
@@ -453,7 +453,6 @@
       $("#map-" + plotId).on('click', function() {
         return _.plotter.controls.toggleMap(plotId);
       });
-      this.markers[plotId] = [];
       this.maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
         center: new google.maps.LatLng(46.980, -121.980),
         zoom: 6,
@@ -529,15 +528,13 @@
     };
 
     Controls.prototype.resetStationMap = function(plotId) {
-      var _, _data_logger_id, _key, _marker, ref, results1;
+      var _, _dataLoggerId, _key, _marker, ref, results1;
       _ = this;
-      console.log("Reset Map (@markers)", this.markers);
       ref = this.markers;
       results1 = [];
       for (_key in ref) {
         _marker = ref[_key];
-        console.log("Reset Map (row, marker)", _key, _marker);
-        _data_logger_id = null;
+        _dataLoggerId = _marker.get("dataloggerid");
         _marker.setIcon({
           path: google.maps.SymbolPath.CIRCLE,
           scale: 5,
@@ -545,7 +542,7 @@
           fillOpacity: 0.5,
           fillColor: "rgb(200,200,200)"
         });
-        _markers.set("selected", false);
+        _marker.set("selected", false);
         _.listeners[_key].remove();
         results1.push(_marker.addListener('click', function() {
           return _.plotter.addStation(plotId, _dataLoggerId);
@@ -1171,7 +1168,6 @@
       ref = this.data;
       for (_key in ref) {
         _row = ref[_key];
-        console.log("Removing (_key, _row)", _key, _row, key);
         delete _row[key];
         result[_key] = _row;
       }

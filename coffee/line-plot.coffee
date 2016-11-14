@@ -225,7 +225,6 @@ window.Plotting.LinePlot = class LinePlot
     # Removing sub key from data.
     result = []
     for _key, _row of @data
-      console.log("Removing (_key, _row)", _key, _row, key)
       delete _row[key]
       result[_key] = _row
     _full = new Plotting.Data(result)

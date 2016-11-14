@@ -26,8 +26,8 @@ window.Plotting.Controls = class Controls
     # Settings
     
     @maps = []
-    @markers = []
-    @listeners = []
+    @markers = {}
+    @listeners = {}
     @api = new window.Plotting.API access.token
 
   appendStationDropdown: (plotId, appendTarget, parameter, current) ->
@@ -276,7 +276,6 @@ window.Plotting.Controls = class Controls
       _.plotter.controls.toggleMap(plotId)
     )
     
-    @markers[plotId] = []
     @maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
       center: new google.maps.LatLng(46.980, -121.980),
       zoom: 6,
@@ -357,12 +356,9 @@ window.Plotting.Controls = class Controls
   resetStationMap: (plotId) ->
     # Reset the Station Map
     _= @
-    console.log("Reset Map (@markers)", @markers)
     
     for _key, _marker of @markers
-      console.log("Reset Map (row, marker)", _key, _marker)
-      _data_logger_id = null
-      #_dataLoggerId = _marker.get("dataloggerid")
+      _dataLoggerId = _marker.get("dataloggerid")
       _marker.setIcon({
         path: google.maps.SymbolPath.CIRCLE,
         scale: 5,
@@ -370,7 +366,7 @@ window.Plotting.Controls = class Controls
         fillOpacity: 0.5,
         fillColor: "rgb(200,200,200)"
       })
-      _markers.set("selected", false)
+      _marker.set("selected", false)
       
       _.listeners[_key].remove()
       _marker.addListener('click', ->
