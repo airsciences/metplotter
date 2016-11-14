@@ -275,13 +275,14 @@ window.Plotting.Controls = class Controls
         </div>"
     $(appendTarget).prepend(html)
     $("#map-#{plotId}").on('click', ->
-      _.plotter.controls.toggleMap(uuid)
+      _.plotter.controls.toggleMap(plotId)
     )
     
-    @markers[uuid] = []
-    @maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
+    @markers[plotId] = []
+    @maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
       center: new google.maps.LatLng(46.980, -121.980),
       zoom: 6,
+      maxZoom: 12,
       mapTypeId: 'terrain',
       zoomControl: true,
       mapTypeControl: false,
@@ -292,7 +293,8 @@ window.Plotting.Controls = class Controls
     })
     
     infowindow = new google.maps.InfoWindow({
-      content: ""
+      content: "",
+      disableAutoPan: true
     })
     
     _bounds = new google.maps.LatLngBounds()
@@ -316,6 +318,7 @@ window.Plotting.Controls = class Controls
             lat: station.lat,
             lng: station.lon
           },
+          id: "map-plot-#{plotId}-station-#{station.id}",
           tooltip: "#{station.datalogger_name} - #{station.elevation} ft",
           dataloggerid: station.id,
           icon: {
@@ -329,7 +332,7 @@ window.Plotting.Controls = class Controls
         })
         marker.addListener('mouseover', ->
           infowindow.setContent(@tooltip)
-          infowindow.open(_.maps[uuid], this)
+          infowindow.open(_.maps[plotId], this)
         )
         
         marker.addListener('mouseout', ->
@@ -340,15 +343,15 @@ window.Plotting.Controls = class Controls
           _.plotter.addStation(plotId, @dataloggerid)
         )
         
-        _len = @markers[uuid].push(marker)
-        @markers[uuid][_len-1].setMap(@maps[uuid])
+        _len = @markers[plotId].push(marker)
+        @markers[plotId][_len-1].setMap(@maps[plotId])
     
     # Fit to Bounds
     for _point in _bound_points
       _bounds.extend(_point)
     
-    @maps[uuid].fitBounds(_bounds)
-    @maps[uuid].setZoom(12)
+    @maps[plotId].fitBounds(_bounds)
+    @maps[plotId].setZoom(12)
 
   removeStationMap: (plotId) ->
     # remove staton map
@@ -356,15 +359,17 @@ window.Plotting.Controls = class Controls
 
   toggleMap: (plotId) ->
     # toggle the map div.
+    _center = @plotter.controls.maps[plotId].getCenter()
+    _zoom = @plotter.controls.maps[plotId].getZoom()
+    
     _offset = $("#map-control-#{plotId}").parent().parent().prev().offset()
     $("#map-control-#{plotId}").parent().parent().toggle()
       .css("left", _offset.left - 356)
       .css("top", _offset.top)
-    _center = @plotter.controls.maps[mapUuid].getCenter()
-    _zoom = @plotter.controls.maps[mapUuid].getZoom()
-    google.maps.event.trigger(@plotter.controls.maps[mapUuid], 'resize')
-    @plotter.controls.maps[mapUuid].setCenter(_center)
-    @plotter.controls.maps[mapUuid].setZoom(_zoom)
+    
+    google.maps.event.trigger(@plotter.controls.maps[plotId], 'resize')
+    @plotter.controls.maps[plotId].setCenter(_center)
+    @plotter.controls.maps[plotId].setZoom(_zoom)
     
   toggle: (selector) ->
     # Toggle the plotId's station down.

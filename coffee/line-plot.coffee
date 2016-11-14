@@ -784,8 +784,6 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}update()"
     _ = @
 
-    console.log("Update (@data)", @data)
-
     # Pre-Append Data For Smooth transform
     @svg.select(".line-plot-area")
       .datum(@data)

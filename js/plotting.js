@@ -453,12 +453,13 @@
       html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
       $("#map-" + plotId).on('click', function() {
-        return _.plotter.controls.toggleMap(uuid);
+        return _.plotter.controls.toggleMap(plotId);
       });
-      this.markers[uuid] = [];
-      this.maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
+      this.markers[plotId] = [];
+      this.maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
         center: new google.maps.LatLng(46.980, -121.980),
         zoom: 6,
+        maxZoom: 12,
         mapTypeId: 'terrain',
         zoomControl: true,
         mapTypeControl: false,
@@ -468,7 +469,8 @@
         fullscreenControl: false
       });
       infowindow = new google.maps.InfoWindow({
-        content: ""
+        content: "",
+        disableAutoPan: true
       });
       _bounds = new google.maps.LatLngBounds();
       _bound_points = [];
@@ -492,6 +494,7 @@
               lat: station.lat,
               lng: station.lon
             },
+            id: "map-plot-" + plotId + "-station-" + station.id,
             tooltip: station.datalogger_name + " - " + station.elevation + " ft",
             dataloggerid: station.id,
             icon: {
@@ -505,7 +508,7 @@
           });
           marker.addListener('mouseover', function() {
             infowindow.setContent(this.tooltip);
-            return infowindow.open(_.maps[uuid], this);
+            return infowindow.open(_.maps[plotId], this);
           });
           marker.addListener('mouseout', function() {
             return infowindow.close();
@@ -513,16 +516,16 @@
           marker.addListener('click', function() {
             return _.plotter.addStation(plotId, this.dataloggerid);
           });
-          _len = this.markers[uuid].push(marker);
-          this.markers[uuid][_len - 1].setMap(this.maps[uuid]);
+          _len = this.markers[plotId].push(marker);
+          this.markers[plotId][_len - 1].setMap(this.maps[plotId]);
         }
       }
       for (k = 0, len2 = _bound_points.length; k < len2; k++) {
         _point = _bound_points[k];
         _bounds.extend(_point);
       }
-      this.maps[uuid].fitBounds(_bounds);
-      return this.maps[uuid].setZoom(12);
+      this.maps[plotId].fitBounds(_bounds);
+      return this.maps[plotId].setZoom(12);
     };
 
     Controls.prototype.removeStationMap = function(plotId) {
@@ -531,13 +534,13 @@
 
     Controls.prototype.toggleMap = function(plotId) {
       var _center, _offset, _zoom;
+      _center = this.plotter.controls.maps[plotId].getCenter();
+      _zoom = this.plotter.controls.maps[plotId].getZoom();
       _offset = $("#map-control-" + plotId).parent().parent().prev().offset();
       $("#map-control-" + plotId).parent().parent().toggle().css("left", _offset.left - 356).css("top", _offset.top);
-      _center = this.plotter.controls.maps[mapUuid].getCenter();
-      _zoom = this.plotter.controls.maps[mapUuid].getZoom();
-      google.maps.event.trigger(this.plotter.controls.maps[mapUuid], 'resize');
-      this.plotter.controls.maps[mapUuid].setCenter(_center);
-      return this.plotter.controls.maps[mapUuid].setZoom(_zoom);
+      google.maps.event.trigger(this.plotter.controls.maps[plotId], 'resize');
+      this.plotter.controls.maps[plotId].setCenter(_center);
+      return this.plotter.controls.maps[plotId].setZoom(_zoom);
     };
 
     Controls.prototype.toggle = function(selector) {
@@ -1441,7 +1444,6 @@
       var _, preError;
       preError = this.preError + "update()";
       _ = this;
-      console.log("Update (@data)", this.data);
       this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
       this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
       this.svg.select(".line-plot-area3").datum(this.data).attr("d", this.definition.area3);
