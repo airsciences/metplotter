@@ -33,9 +33,11 @@ html(lang='en')
           "target": "#d3-plot-target",
           "plotHandlerId": #{plotTemplateId}
       };
+      
       var access = {
           "token": "#{token.token}",
-          "expires": "#{token.expires}"
+          "expires": "#{token.expires}",
+          "admin": false
       };
 
       var plotter214 = new Plotting.Handler(access, options);

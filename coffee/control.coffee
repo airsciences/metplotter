@@ -24,7 +24,6 @@ window.Plotting.Controls = class Controls
     access = Object.mergeDefaults access, accessToken
     
     # Settings
-    
     @maps = []
     @markers = {}
     @listeners = {}

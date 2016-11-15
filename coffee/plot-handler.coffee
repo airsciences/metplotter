@@ -21,6 +21,7 @@ window.Plotting.Handler = class Handler
     
     defaults =
       templateId: null
+      href: location.href
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       # Performance Variables:
@@ -53,11 +54,15 @@ window.Plotting.Handler = class Handler
     @options = Object.mergeDefaults options, defaults
     @now = new Date()
     
+    if @options.href is "http://localhost:5000/"
+      @options.href = "http://dev.nwac.us/"
+    
     @endpoint = null
     accessToken =
       token: null
       expires: null
       expired: true
+      admin: false
     access = Object.mergeDefaults access, accessToken
       
     @api = new window.Plotting.API(access.token)
@@ -69,6 +74,9 @@ window.Plotting.Handler = class Handler
 
     @getNow = ->
       return @format(@now)
+
+    @isAdmin = ->
+      return access.admin
 
     @hasAccess = ->
       # Calculate if the token has expired.
@@ -120,22 +128,48 @@ window.Plotting.Handler = class Handler
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
-    target = "template/#{@options.plotHandlerId}"
+    target = "#{@options.href}api/v5/plothandler/#{@options.plotHandlerId}"
     args = null
     _ = @
     
     callback = (data) ->
       if data.responseJSON == null || data.responseJSON.error
-        # console.log "#{preError}.callback(...) error detected (data)", data
+        console.log "#{preError}.callback(...) error detected (data)", data
         return
-      _.template = data.responseJSON.templateData
+      try
+        _parsed = JSON.parse(data.responseJSON.template_data)
+        _.template = _parsed.templateData
+      catch error
+        console.log("#{preError}.callback(...) JSON.parse error", error)
+      _.parseDates(_.template)
     
     @syncronousapi.get(target, args, callback)
 
+  parseDates: (template) ->
+    _ = @
+    
+    parse = (datetime) ->
+      if datetime.includes("now")
+        newDatetime = new Date()
+        if datetime.includes("(")
+          _offset = parseInt(datetime.replace("(", "")
+            .replace(")", "").replace("now", ""))
+          newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000))
+        datetime = @format(newDatetime)
+      return datetime
+    
+    for row in template
+      for sub in row.dataParams
+        sub.max_datetime = parse(sub.max_datetime)
+      row.options.x.min = parse(row.options.x.min)
+      row.options.x.max = parse(row.options.x.max)
+
   putTemplate: ->
     # Request the Template
+    if @isAdmin() is false
+      return
     preError = "#{@preError}.putTemplate()"
-    target = "template/#{@options.plotHandlerId}"
+    target = "#{@options.href}api/v5/plothandler/"
     args =
       templateId: @options.templateId
       templateData: @template
@@ -143,7 +177,7 @@ window.Plotting.Handler = class Handler
     
     callback = (data) ->
       if data.responseJSON == null || data.responseJSON.error
-        # console.log "#{preError}.callback(...) error detected (data)", data
+        console.log "#{preError}.callback(...) error detected (data)", data
         return
       console.log("#{preError}.callback() success saving template.")
     
@@ -152,7 +186,7 @@ window.Plotting.Handler = class Handler
   getStationParamData: (plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
-    target = "#{location.protocol}//dev.nwac.us/api/v5/measurement"
+    target = "#{@options.href}api/v5/measurement"
     _ = @
     args = @template[plotId].dataParams[paramsKey]
 
@@ -217,12 +251,13 @@ window.Plotting.Handler = class Handler
       @template[key].proto = instance
       @appendControls(key)
 
-    $(@options.target).append(
-      "<small><a style=\"cusor:pointer\"
-        id=\"save-#{target}\">Save Template</a></small>")
-    $("#save-#{target}").on("click", (event) ->
-      _.putTemplate()
-    )
+    if @isAdmin()
+      $(@options.target).append(
+        "<small><a style=\"cusor:pointer\"
+          id=\"save-#{target}\">Save Template</a></small>")
+      $("#save-#{target}").on("click", (event) ->
+        _.putTemplate()
+      )
 
   mergeTemplateOption: (plotId) ->
     # Merge the templated plot options with returned options
@@ -241,7 +276,7 @@ window.Plotting.Handler = class Handler
   getAppendData: (call, plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getAppendData(key, dataParams)"
-    target = "http://dev.nwac.us/api/v5/measurement"
+    target = "#{@options.href}api/v5/measurement"
     _ = @
     args = @template[plotId].proto.options.dataParams[paramsKey]
     _length = @template[plotId].proto.options.dataParams.length

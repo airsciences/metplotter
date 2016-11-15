@@ -1826,6 +1826,7 @@ Air Sciences Inc. - 2016
       this.preError = "Plotting.Handler";
       defaults = {
         templateId: null,
+        href: location.href,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
@@ -1837,11 +1838,15 @@ Air Sciences Inc. - 2016
       };
       this.options = Object.mergeDefaults(options, defaults);
       this.now = new Date();
+      if (this.options.href === "http://localhost:5000/") {
+        this.options.href = "http://dev.nwac.us/";
+      }
       this.endpoint = null;
       accessToken = {
         token: null,
         expires: null,
-        expired: true
+        expired: true,
+        admin: false
       };
       access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API(access.token);
@@ -1851,6 +1856,9 @@ Air Sciences Inc. - 2016
       this.format = d3.utcFormat(this.options.dateFormat);
       this.getNow = function() {
         return this.format(this.now);
+      };
+      this.isAdmin = function() {
+        return access.admin;
       };
       this.hasAccess = function() {
         if (this.parseDate(access.expires) > new Date) {
@@ -1924,22 +1932,63 @@ Air Sciences Inc. - 2016
     Handler.prototype.getTemplate = function(template_uri) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getTemplate(...)";
-      target = "template/" + this.options.plotHandlerId;
+      target = this.options.href + "api/v5/plothandler/" + this.options.plotHandlerId;
       args = null;
       _ = this;
       callback = function(data) {
+        var _parsed, error, error1;
         if (data.responseJSON === null || data.responseJSON.error) {
+          console.log(preError + ".callback(...) error detected (data)", data);
           return;
         }
-        return _.template = data.responseJSON.templateData;
+        try {
+          _parsed = JSON.parse(data.responseJSON.template_data);
+          _.template = _parsed.templateData;
+        } catch (error1) {
+          error = error1;
+          console.log(preError + ".callback(...) JSON.parse error", error);
+        }
+        return _.parseDates(_.template);
       };
       return this.syncronousapi.get(target, args, callback);
     };
 
+    Handler.prototype.parseDates = function(template) {
+      var _, j, k, len, len1, parse, ref, results, row, sub;
+      _ = this;
+      parse = function(datetime) {
+        var _offset, newDatetime;
+        if (datetime.includes("now")) {
+          newDatetime = new Date();
+          if (datetime.includes("(")) {
+            _offset = parseInt(datetime.replace("(", "").replace(")", "").replace("now", ""));
+            newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000));
+          }
+          datetime = this.format(newDatetime);
+        }
+        return datetime;
+      };
+      results = [];
+      for (j = 0, len = template.length; j < len; j++) {
+        row = template[j];
+        ref = row.dataParams;
+        for (k = 0, len1 = ref.length; k < len1; k++) {
+          sub = ref[k];
+          sub.max_datetime = parse(sub.max_datetime);
+        }
+        row.options.x.min = parse(row.options.x.min);
+        results.push(row.options.x.max = parse(row.options.x.max));
+      }
+      return results;
+    };
+
     Handler.prototype.putTemplate = function() {
       var _, args, callback, preError, target;
+      if (this.isAdmin() === false) {
+        return;
+      }
       preError = this.preError + ".putTemplate()";
-      target = "template/" + this.options.plotHandlerId;
+      target = this.options.href + "api/v5/plothandler/";
       args = {
         templateId: this.options.templateId,
         templateData: this.template
@@ -1947,6 +1996,7 @@ Air Sciences Inc. - 2016
       _ = this;
       callback = function(data) {
         if (data.responseJSON === null || data.responseJSON.error) {
+          console.log(preError + ".callback(...) error detected (data)", data);
           return;
         }
         return console.log(preError + ".callback() success saving template.");
@@ -1957,7 +2007,7 @@ Air Sciences Inc. - 2016
     Handler.prototype.getStationParamData = function(plotId, paramsKey) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData()";
-      target = location.protocol + "//dev.nwac.us/api/v5/measurement";
+      target = this.options.href + "api/v5/measurement";
       _ = this;
       args = this.template[plotId].dataParams[paramsKey];
       callback = function(data) {
@@ -2035,10 +2085,12 @@ Air Sciences Inc. - 2016
         this.template[key].proto = instance;
         this.appendControls(key);
       }
-      $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + target + "\">Save Template</a></small>");
-      return $("#save-" + target).on("click", function(event) {
-        return _.putTemplate();
-      });
+      if (this.isAdmin()) {
+        $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + target + "\">Save Template</a></small>");
+        return $("#save-" + target).on("click", function(event) {
+          return _.putTemplate();
+        });
+      }
     };
 
     Handler.prototype.mergeTemplateOption = function(plotId) {
@@ -2060,7 +2112,7 @@ Air Sciences Inc. - 2016
     Handler.prototype.getAppendData = function(call, plotId, paramsKey) {
       var _, _length, args, callback, preError, target;
       preError = this.preError + ".getAppendData(key, dataParams)";
-      target = "http://dev.nwac.us/api/v5/measurement";
+      target = this.options.href + "api/v5/measurement";
       _ = this;
       args = this.template[plotId].proto.options.dataParams[paramsKey];
       _length = this.template[plotId].proto.options.dataParams.length;
