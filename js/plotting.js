@@ -274,7 +274,7 @@
       uuid = this.uuid();
       callback = function(data) {
         var _dots, _id, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
-        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\">";
+        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
         ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
@@ -391,7 +391,7 @@
       _current = [];
       callback = function(data) {
         var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
-        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
         ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
           parameter = ref[i];
@@ -654,7 +654,7 @@
       var _, _ul, html, uuid;
       _ = this;
       uuid = this.uuid();
-      _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu dropdown-menu-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
+      _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
       html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i> </a></li> </div>";
       $(appendTarget).append(html);
       return $("#new-" + uuid).on('click', function() {
@@ -1340,7 +1340,7 @@
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
-          bottom: Math.round(height * 0.08),
+          bottom: Math.round(height * 0.12),
           left: Math.round(Math.pow(width, 0.6))
         };
       } else if (width > 600) {
@@ -1350,7 +1350,7 @@
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
-          bottom: Math.round(height * 0.12),
+          bottom: Math.round(height * 0.14),
           left: Math.round(Math.pow(width, 0.6))
         };
       } else {
@@ -1828,7 +1828,7 @@ Air Sciences Inc. - 2016
       this.preError = "Plotting.Handler";
       defaults = {
         templateId: null,
-        href: location.href,
+        href: location.origin,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
@@ -1840,8 +1840,8 @@ Air Sciences Inc. - 2016
       };
       this.options = Object.mergeDefaults(options, defaults);
       this.now = new Date();
-      if (this.options.href === "http://localhost:5000/") {
-        this.options.href = "http://dev.nwac.us/";
+      if (this.options.href === "http://localhost:5000") {
+        this.options.href = "http://dev.nwac.us";
       }
       this.endpoint = null;
       accessToken = {
@@ -1934,7 +1934,7 @@ Air Sciences Inc. - 2016
     Handler.prototype.getTemplate = function(template_uri) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getTemplate(...)";
-      target = this.options.href + "api/v5/plothandler/" + this.options.plotHandlerId;
+      target = this.options.href + "/api/v5/plothandler/" + this.options.plotHandlerId;
       args = null;
       _ = this;
       callback = function(data) {
@@ -1990,10 +1990,12 @@ Air Sciences Inc. - 2016
         return;
       }
       preError = this.preError + ".putTemplate()";
-      target = this.options.href + "api/v5/plothandler/";
+      target = this.options.href + "/api/v5/plothandler/";
       args = {
-        templateId: this.options.templateId,
-        templateData: this.template
+        id: this.options.templateId,
+        template_data: {
+          templateData: this.template
+        }
       };
       _ = this;
       callback = function(data) {
@@ -2009,7 +2011,7 @@ Air Sciences Inc. - 2016
     Handler.prototype.getStationParamData = function(plotId, paramsKey) {
       var _, args, callback, preError, target;
       preError = this.preError + ".getStationParamData()";
-      target = this.options.href + "api/v5/measurement";
+      target = this.options.href + "/api/v5/measurement";
       _ = this;
       args = this.template[plotId].dataParams[paramsKey];
       callback = function(data) {
@@ -2114,7 +2116,7 @@ Air Sciences Inc. - 2016
     Handler.prototype.getAppendData = function(call, plotId, paramsKey) {
       var _, _length, args, callback, preError, target;
       preError = this.preError + ".getAppendData(key, dataParams)";
-      target = this.options.href + "api/v5/measurement";
+      target = this.options.href + "/api/v5/measurement";
       _ = this;
       args = this.template[plotId].proto.options.dataParams[paramsKey];
       _length = this.template[plotId].proto.options.dataParams.length;

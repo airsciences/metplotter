@@ -44,7 +44,7 @@ window.Plotting.Controls = class Controls
             data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
         <ul id=\"station-dropdown-#{plotId}\"
-          class=\"dropdown-menu dropdown-menu-right\">"
+          class=\"dropdown-menu pull-right\">"
      
       for region in data.responseJSON.results
         a_color = ""
@@ -192,7 +192,7 @@ window.Plotting.Controls = class Controls
           data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
         <ul id=\"param-dropdown-#{plotId}\"
-          class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
+          class=\"dropdown-menu pull-right\" role=\"menu\"
           aria-labelledby=\"#{uuid}\">"
            
       for parameter in data.responseJSON.results
@@ -474,7 +474,7 @@ window.Plotting.Controls = class Controls
     uuid = @uuid()
 
     _ul = "<ul id=\"new-#{uuid}-dropdown\"
-        class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
+        class=\"dropdown-menu pull-right\" role=\"menu\"
         aria-labelledby=\"new-#{uuid}\">
         <li><a id=\"new-#{uuid}-parameter\"
           style=\"cursor: pointer\">Add Parameter Plot</a></li>

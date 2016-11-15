@@ -374,7 +374,7 @@ window.Plotting.LinePlot = class LinePlot
       margin =
         top: Math.round(height * 0.04)
         right: Math.round(Math.pow(width, 0.3))
-        bottom: Math.round(height * 0.08)
+        bottom: Math.round(height * 0.12)
         left: Math.round(Math.pow(width, 0.6))
     else if width > 600
       @device = 'mid'
@@ -383,7 +383,7 @@ window.Plotting.LinePlot = class LinePlot
       margin =
         top: Math.round(height * 0.04)
         right: Math.round(Math.pow(width, 0.3))
-        bottom: Math.round(height * 0.12)
+        bottom: Math.round(height * 0.14)
         left: Math.round(Math.pow(width, 0.6))
     else
       @device = 'small'

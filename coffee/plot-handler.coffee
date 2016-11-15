@@ -21,7 +21,7 @@ window.Plotting.Handler = class Handler
     
     defaults =
       templateId: null
-      href: location.href
+      href: location.origin
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       # Performance Variables:
@@ -54,8 +54,8 @@ window.Plotting.Handler = class Handler
     @options = Object.mergeDefaults options, defaults
     @now = new Date()
     
-    if @options.href is "http://localhost:5000/"
-      @options.href = "http://dev.nwac.us/"
+    if @options.href is "http://localhost:5000"
+      @options.href = "http://dev.nwac.us"
     
     @endpoint = null
     accessToken =
@@ -128,7 +128,7 @@ window.Plotting.Handler = class Handler
   getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
-    target = "#{@options.href}api/v5/plothandler/#{@options.plotHandlerId}"
+    target = "#{@options.href}/api/v5/plothandler/#{@options.plotHandlerId}"
     args = null
     _ = @
     
@@ -169,10 +169,11 @@ window.Plotting.Handler = class Handler
     if @isAdmin() is false
       return
     preError = "#{@preError}.putTemplate()"
-    target = "#{@options.href}api/v5/plothandler/"
+    target = "#{@options.href}/api/v5/plothandler/"
     args =
-      templateId: @options.templateId
-      templateData: @template
+      id: @options.templateId
+      template_data:
+        templateData: @template
     _ = @
     
     callback = (data) ->
@@ -186,7 +187,7 @@ window.Plotting.Handler = class Handler
   getStationParamData: (plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
-    target = "#{@options.href}api/v5/measurement"
+    target = "#{@options.href}/api/v5/measurement"
     _ = @
     args = @template[plotId].dataParams[paramsKey]
 
@@ -276,7 +277,7 @@ window.Plotting.Handler = class Handler
   getAppendData: (call, plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getAppendData(key, dataParams)"
-    target = "#{@options.href}api/v5/measurement"
+    target = "#{@options.href}/api/v5/measurement"
     _ = @
     args = @template[plotId].proto.options.dataParams[paramsKey]
     _length = @template[plotId].proto.options.dataParams.length
