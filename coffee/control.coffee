@@ -432,13 +432,16 @@ window.Plotting.Controls = class Controls
 
   toggleMap: (plotId) ->
     # toggle the map div.
+    __nwac_left = 128
+    __nwac_top = 256
+    
     _center = @plotter.controls.maps[plotId].getCenter()
     _zoom = @plotter.controls.maps[plotId].getZoom()
     
     _offset = $("#map-control-#{plotId}").parent().parent().prev().offset()
     $("#map-control-#{plotId}").parent().parent().toggle()
-      .css("left", _offset.left - 356)
-      .css("top", _offset.top)
+      .css("left", _offset.left - 356 - __nwac_left)
+      .css("top", _offset.top - __nwac_top)
     
     google.maps.event.trigger(@plotter.controls.maps[plotId], 'resize')
     @plotter.controls.maps[plotId].setCenter(_center)

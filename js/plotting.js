@@ -614,11 +614,13 @@
     };
 
     Controls.prototype.toggleMap = function(plotId) {
-      var _center, _offset, _zoom;
+      var __nwac_left, __nwac_top, _center, _offset, _zoom;
+      __nwac_left = 128;
+      __nwac_top = 256;
       _center = this.plotter.controls.maps[plotId].getCenter();
       _zoom = this.plotter.controls.maps[plotId].getZoom();
       _offset = $("#map-control-" + plotId).parent().parent().prev().offset();
-      $("#map-control-" + plotId).parent().parent().toggle().css("left", _offset.left - 356).css("top", _offset.top);
+      $("#map-control-" + plotId).parent().parent().toggle().css("left", _offset.left - 356 - __nwac_left).css("top", _offset.top - __nwac_top);
       google.maps.event.trigger(this.plotter.controls.maps[plotId], 'resize');
       this.plotter.controls.maps[plotId].setCenter(_center);
       return this.plotter.controls.maps[plotId].setZoom(_zoom);
