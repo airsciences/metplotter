@@ -351,14 +351,13 @@ window.Plotting.Controls = class Controls
       _bounds.extend(_point)
     
     @maps[plotId].fitBounds(_bounds)
-    @maps[plotId].setZoom(12)
+    #@maps[plotId].setZoom(12)
 
   resetStationMap: (plotId) ->
     # Reset the Station Map
     _= @
     
     for _key, _marker of @markers
-      _dataLoggerId = _marker.get("dataloggerid")
       _marker.setIcon({
         path: google.maps.SymbolPath.CIRCLE,
         scale: 5,
@@ -369,7 +368,8 @@ window.Plotting.Controls = class Controls
       _marker.set("selected", false)
       
       _.listeners[_key].remove()
-      _marker.addListener('click', ->
+      _.listeners[_key] = _marker.addListener('click', ->
+        _dataLoggerId = this.get("dataloggerid")
         _.plotter.addStation(plotId, _dataLoggerId)
       )
 
@@ -379,7 +379,7 @@ window.Plotting.Controls = class Controls
     
     @resetStationMap(plotId)
     
-    updateMarker = (plotId, dataLoggerId, rowId, color) ->
+    updateMarker = (plotId, rowId, color) ->
       _.markers[rowId].setIcon({
         path: google.maps.SymbolPath.CIRCLE,
         scale: 7,
@@ -390,32 +390,46 @@ window.Plotting.Controls = class Controls
       _.markers[rowId].set("selected", true)
       
       _.listeners[rowId].remove()
-      _.markers[rowId].addListener('click', ->
-        _.plotter.removeStation(plotId, dataLoggerId)
+      _.listeners[rowId] = _.markers[rowId].addListener('click', ->
+        _dataLoggerId = this.get("dataloggerid")
+        _.plotter.removeStation(plotId, _dataLoggerId)
       )
         
     _options = @plotter.template[plotId].proto.options
     if _options.y.variable != null
       _id = _options.y.variable.replace('_', '-')
       _row_id = "map-plot-#{plotId}-station-#{_options.y.dataLoggerId}"
-      _data_logger_id = _options.y.dataLoggerId
       _color = _options.y.color
-      updateMarker(plotId, _data_logger_id, _row_id, _color)
+      updateMarker(plotId, _row_id, _color)
     if _options.y2.variable != null
       _id = _options.y2.variable.replace('_', '-')
       _row_id = "map-plot-#{plotId}-station-#{_options.y2.dataLoggerId}"
-      _data_logger_id = _options.y2.dataLoggerId
       _color = _options.y2.color
-      updateMarker(plotId, _data_logger_id, _row_id, _color)
+      updateMarker(plotId, _row_id, _color)
     if _options.y3.variable != null
       _id = _options.y3.variable.replace('_', '-')
       _row_id = "map-plot-#{plotId}-station-#{_options.y3.dataLoggerId}"
-      _data_logger_id = _options.y3.dataLoggerId
       _color = _options.y3.color
-      updateMarker(plotId, _data_logger_id, _row_id, _color)
+      updateMarker(plotId, _row_id, _color)
+      
+    @boundOnSelected(plotId)
+
+  boundOnSelected: (plotId) ->
+    # Reset the Station Map
+    _ = @
+    _bounds = new google.maps.LatLngBounds()
+    _bound_points = []
     
-    console.log("Updating markers row (marker, color)",
-      @markers[_row_id], _color)
+    for _key, _marker of @markers
+      _selected = _marker.get("selected")
+      if _selected is true
+        _bound_points.push(_marker.getPosition())
+    
+    # Fit to Bounds
+    for _point in _bound_points
+      _bounds.extend(_point)
+    
+    @maps[plotId].fitBounds(_bounds)
 
   toggleMap: (plotId) ->
     # toggle the map div.

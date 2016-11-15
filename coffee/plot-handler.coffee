@@ -126,7 +126,7 @@ window.Plotting.Handler = class Handler
     
     callback = (data) ->
       if data.responseJSON == null || data.responseJSON.error
-        console.log "#{preError}.callback(...) error detected (data)", data
+        # console.log "#{preError}.callback(...) error detected (data)", data
         return
       _.template = data.responseJSON.templateData
     
@@ -143,7 +143,7 @@ window.Plotting.Handler = class Handler
     
     callback = (data) ->
       if data.responseJSON == null || data.responseJSON.error
-        console.log "#{preError}.callback(...) error detected (data)", data
+        # console.log "#{preError}.callback(...) error detected (data)", data
         return
       console.log("#{preError}.callback() success saving template.")
     
@@ -161,7 +161,7 @@ window.Plotting.Handler = class Handler
         _.template[plotId].data = [data.responseJSON.results]
       else
         _.template[plotId].data.push(data.responseJSON.results)
-      console.log("#{preError} (template.data)", _.template[plotId].data)
+      # console.log("#{preError} (template.data)", _.template[plotId].data)
 
     @syncronousapi.get(target, args, callback)
     
@@ -324,8 +324,14 @@ window.Plotting.Handler = class Handler
     # Add another data logger to the plot.
     if !@template[plotId].proto.initialized
       return @appendNew(plotId, dataLoggerId)
-    
-    console.log("addStation(plotId, dataLoggerId)", plotId, dataLoggerId)
+      
+    if (
+      @template[plotId].proto.options.y.dataLoggerId and
+      @template[plotId].proto.options.y2.dataLoggerId and
+      @template[plotId].proto.options.y3.dataLoggerId
+    )
+      console.log("Maximum of 3 Plot selected.")
+      return null
     
     state = @template[plotId].proto.getState()
     _variable = @template[plotId].proto.options.y.variable
@@ -345,13 +351,12 @@ window.Plotting.Handler = class Handler
         state.length.data
       @getAppendData(uuid, plotId, paramsKey)
     @controls.updateStationDropdown(plotId)
+    @controls.updateStationMap(plotId)
 
   removeStation: (plotId, dataLoggerId) ->
     # Remove the station from the plot & data.
     _key = null
-    
-    console.log("Remove Station (plotId, dataLoggerId)", plotId, dataLoggerId)
-    
+        
     _template = @template[plotId]
     _plot = @template[plotId].proto
     _paramKey = @indexOfValue(_template.dataParams, "data_logger", dataLoggerId)
@@ -380,6 +385,7 @@ window.Plotting.Handler = class Handler
       _plot.removeData(_key)
       _plot.update()
     @controls.updateStationDropdown(plotId)
+    @controls.updateStationMap(plotId)
 
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
@@ -462,7 +468,7 @@ window.Plotting.Handler = class Handler
     # Add a new plot.
     if @template[@template.length-1].proto.initialized is false
       return
-    console.log("Adding (type)", type, @template)
+      
     _target = @utarget(@options.target)
     _plot =
       plotOrder: @template.length
@@ -480,7 +486,6 @@ window.Plotting.Handler = class Handler
     _key = @template.push(_plot)-1
     
     instance = new window.Plotting.LinePlot(@, [], _options)
-    console.log("Instance ready for preAppend (_key, instance)", _key, instance)
     instance.preAppend()
     @template[_key].proto = instance
     @template[_key].proto.options.plotId = _key
@@ -501,7 +506,7 @@ window.Plotting.Handler = class Handler
   appendNew: (plotId, dataLoggerId) ->
     # Build the new plot.
     _plot = @template[plotId]
-    console.log("Append new (plot)", _plot)
+    
     _plot.dataParams[0].data_logger = dataLoggerId
     _plot.proto.options.dataParams = _plot.dataParams
     _plot.proto.options.y.dataloggerid = dataLoggerId

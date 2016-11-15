@@ -523,18 +523,16 @@
         _point = _bound_points[k];
         _bounds.extend(_point);
       }
-      this.maps[plotId].fitBounds(_bounds);
-      return this.maps[plotId].setZoom(12);
+      return this.maps[plotId].fitBounds(_bounds);
     };
 
     Controls.prototype.resetStationMap = function(plotId) {
-      var _, _dataLoggerId, _key, _marker, ref, results1;
+      var _, _key, _marker, ref, results1;
       _ = this;
       ref = this.markers;
       results1 = [];
       for (_key in ref) {
         _marker = ref[_key];
-        _dataLoggerId = _marker.get("dataloggerid");
         _marker.setIcon({
           path: google.maps.SymbolPath.CIRCLE,
           scale: 5,
@@ -544,7 +542,9 @@
         });
         _marker.set("selected", false);
         _.listeners[_key].remove();
-        results1.push(_marker.addListener('click', function() {
+        results1.push(_.listeners[_key] = _marker.addListener('click', function() {
+          var _dataLoggerId;
+          _dataLoggerId = this.get("dataloggerid");
           return _.plotter.addStation(plotId, _dataLoggerId);
         }));
       }
@@ -552,10 +552,10 @@
     };
 
     Controls.prototype.updateStationMap = function(plotId) {
-      var _, _color, _data_logger_id, _id, _options, _row_id, updateMarker;
+      var _, _color, _id, _options, _row_id, updateMarker;
       _ = this;
       this.resetStationMap(plotId);
-      updateMarker = function(plotId, dataLoggerId, rowId, color) {
+      updateMarker = function(plotId, rowId, color) {
         _.markers[rowId].setIcon({
           path: google.maps.SymbolPath.CIRCLE,
           scale: 7,
@@ -565,33 +565,52 @@
         });
         _.markers[rowId].set("selected", true);
         _.listeners[rowId].remove();
-        return _.markers[rowId].addListener('click', function() {
-          return _.plotter.removeStation(plotId, dataLoggerId);
+        return _.listeners[rowId] = _.markers[rowId].addListener('click', function() {
+          var _dataLoggerId;
+          _dataLoggerId = this.get("dataloggerid");
+          return _.plotter.removeStation(plotId, _dataLoggerId);
         });
       };
       _options = this.plotter.template[plotId].proto.options;
       if (_options.y.variable !== null) {
         _id = _options.y.variable.replace('_', '-');
         _row_id = "map-plot-" + plotId + "-station-" + _options.y.dataLoggerId;
-        _data_logger_id = _options.y.dataLoggerId;
         _color = _options.y.color;
-        updateMarker(plotId, _data_logger_id, _row_id, _color);
+        updateMarker(plotId, _row_id, _color);
       }
       if (_options.y2.variable !== null) {
         _id = _options.y2.variable.replace('_', '-');
         _row_id = "map-plot-" + plotId + "-station-" + _options.y2.dataLoggerId;
-        _data_logger_id = _options.y2.dataLoggerId;
         _color = _options.y2.color;
-        updateMarker(plotId, _data_logger_id, _row_id, _color);
+        updateMarker(plotId, _row_id, _color);
       }
       if (_options.y3.variable !== null) {
         _id = _options.y3.variable.replace('_', '-');
         _row_id = "map-plot-" + plotId + "-station-" + _options.y3.dataLoggerId;
-        _data_logger_id = _options.y3.dataLoggerId;
         _color = _options.y3.color;
-        updateMarker(plotId, _data_logger_id, _row_id, _color);
+        updateMarker(plotId, _row_id, _color);
       }
-      return console.log("Updating markers row (marker, color)", this.markers[_row_id], _color);
+      return this.boundOnSelected(plotId);
+    };
+
+    Controls.prototype.boundOnSelected = function(plotId) {
+      var _, _bound_points, _bounds, _key, _marker, _point, _selected, i, len, ref;
+      _ = this;
+      _bounds = new google.maps.LatLngBounds();
+      _bound_points = [];
+      ref = this.markers;
+      for (_key in ref) {
+        _marker = ref[_key];
+        _selected = _marker.get("selected");
+        if (_selected === true) {
+          _bound_points.push(_marker.getPosition());
+        }
+      }
+      for (i = 0, len = _bound_points.length; i < len; i++) {
+        _point = _bound_points[i];
+        _bounds.extend(_point);
+      }
+      return this.maps[plotId].fitBounds(_bounds);
     };
 
     Controls.prototype.toggleMap = function(plotId) {
@@ -1910,7 +1929,6 @@ Air Sciences Inc. - 2016
       _ = this;
       callback = function(data) {
         if (data.responseJSON === null || data.responseJSON.error) {
-          console.log(preError + ".callback(...) error detected (data)", data);
           return;
         }
         return _.template = data.responseJSON.templateData;
@@ -1929,7 +1947,6 @@ Air Sciences Inc. - 2016
       _ = this;
       callback = function(data) {
         if (data.responseJSON === null || data.responseJSON.error) {
-          console.log(preError + ".callback(...) error detected (data)", data);
           return;
         }
         return console.log(preError + ".callback() success saving template.");
@@ -1945,11 +1962,10 @@ Air Sciences Inc. - 2016
       args = this.template[plotId].dataParams[paramsKey];
       callback = function(data) {
         if (_.template[plotId].data === void 0) {
-          _.template[plotId].data = [data.responseJSON.results];
+          return _.template[plotId].data = [data.responseJSON.results];
         } else {
-          _.template[plotId].data.push(data.responseJSON.results);
+          return _.template[plotId].data.push(data.responseJSON.results);
         }
-        return console.log(preError + " (template.data)", _.template[plotId].data);
       };
       return this.syncronousapi.get(target, args, callback);
     };
@@ -2135,7 +2151,10 @@ Air Sciences Inc. - 2016
       if (!this.template[plotId].proto.initialized) {
         return this.appendNew(plotId, dataLoggerId);
       }
-      console.log("addStation(plotId, dataLoggerId)", plotId, dataLoggerId);
+      if (this.template[plotId].proto.options.y.dataLoggerId && this.template[plotId].proto.options.y2.dataLoggerId && this.template[plotId].proto.options.y3.dataLoggerId) {
+        console.log("Maximum of 3 Plot selected.");
+        return null;
+      }
       state = this.template[plotId].proto.getState();
       _variable = this.template[plotId].proto.options.y.variable;
       _max_datetime = state.range.data.max.getTime();
@@ -2151,13 +2170,13 @@ Air Sciences Inc. - 2016
         this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
         this.getAppendData(uuid, plotId, paramsKey);
       }
-      return this.controls.updateStationDropdown(plotId);
+      this.controls.updateStationDropdown(plotId);
+      return this.controls.updateStationMap(plotId);
     };
 
     Handler.prototype.removeStation = function(plotId, dataLoggerId) {
       var _key, _paramKey, _plot, _template;
       _key = null;
-      console.log("Remove Station (plotId, dataLoggerId)", plotId, dataLoggerId);
       _template = this.template[plotId];
       _plot = this.template[plotId].proto;
       _paramKey = this.indexOfValue(_template.dataParams, "data_logger", dataLoggerId);
@@ -2185,7 +2204,8 @@ Air Sciences Inc. - 2016
         _plot.removeData(_key);
         _plot.update();
       }
-      return this.controls.updateStationDropdown(plotId);
+      this.controls.updateStationDropdown(plotId);
+      return this.controls.updateStationMap(plotId);
     };
 
     Handler.prototype.zoom = function(transform) {
@@ -2284,7 +2304,6 @@ Air Sciences Inc. - 2016
       if (this.template[this.template.length - 1].proto.initialized === false) {
         return;
       }
-      console.log("Adding (type)", type, this.template);
       _target = this.utarget(this.options.target);
       _plot = {
         plotOrder: this.template.length,
@@ -2301,7 +2320,6 @@ Air Sciences Inc. - 2016
       $(this.options.target).append(html);
       _key = this.template.push(_plot) - 1;
       instance = new window.Plotting.LinePlot(this, [], _options);
-      console.log("Instance ready for preAppend (_key, instance)", _key, instance);
       instance.preAppend();
       this.template[_key].proto = instance;
       this.template[_key].proto.options.plotId = _key;
@@ -2322,7 +2340,6 @@ Air Sciences Inc. - 2016
     Handler.prototype.appendNew = function(plotId, dataLoggerId) {
       var _plot;
       _plot = this.template[plotId];
-      console.log("Append new (plot)", _plot);
       _plot.dataParams[0].data_logger = dataLoggerId;
       _plot.proto.options.dataParams = _plot.dataParams;
       _plot.proto.options.y.dataloggerid = dataLoggerId;
