@@ -261,6 +261,7 @@
       };
       access = Object.mergeDefaults(access, accessToken);
       this.maps = [];
+      this.stations = {};
       this.markers = {};
       this.listeners = {};
       this.api = new window.Plotting.API(access.token);
@@ -275,6 +276,7 @@
       callback = function(data) {
         var _dots, _id, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
+        _.stations[plotId] = data.responseJSON.results;
         ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
@@ -320,7 +322,7 @@
           for (m = 0, len4 = ref4.length; m < len4; m++) {
             station = ref4[m];
             _id = "add-station-" + plotId + "-" + station.id;
-            $("#" + _id).on("click", function(event) {
+            $("#" + _id).off("click").on("click", function(event) {
               var _plotId, _stationId;
               event.stopPropagation();
               _plotId = $(this).attr("data-plot-id");
@@ -336,49 +338,95 @@
       return this.api.get(target, args, callback);
     };
 
+    Controls.prototype.resetStationDropdown = function(plotId) {
+      var _, _id, i, len, ref, region, results1, station;
+      _ = this;
+      ref = this.stations[plotId];
+      results1 = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        region = ref[i];
+        results1.push((function() {
+          var j, len1, ref1, results2;
+          ref1 = region.dataloggers;
+          results2 = [];
+          for (j = 0, len1 = ref1.length; j < len1; j++) {
+            station = ref1[j];
+            _id = "add-station-" + plotId + "-" + station.id;
+            console.log("Reset Station (color)", $("#" + _id).find("i.icon-circle").css("color"));
+            $("#" + _id).find("i.icon-circle").css("color", "");
+            results2.push($("#" + _id).off("click").on("click", function(event) {
+              var _plotId, _stationId;
+              event.stopPropagation();
+              _plotId = $(this).attr("data-plot-id");
+              _stationId = $(this).attr("data-station-id");
+              return _.plotter.addStation(_plotId, _stationId);
+            }));
+          }
+          return results2;
+        })());
+      }
+      return results1;
+    };
+
     Controls.prototype.updateStationDropdown = function(plotId) {
-      var _, _append, _id, _options, id;
+      var _, _append, _cid, _id, _options, id;
       _ = this;
       _options = this.plotter.template[plotId].proto.options;
       _append = "";
+      this.resetStationDropdown(plotId);
       if (_options.y.dataLoggerId !== null) {
         _id = _options.y.dataLoggerId;
-        _append = " <i class=\"icon-circle\" style=\"color: " + _options.y.color + "\"></i>";
+        _cid = "circle-plot" + plotId + "-station" + _id;
+        _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _options.y.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        $(_options.target).find("#" + id).css("color", _options.y.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").children(".station-dots").empty().append(_append);
+        if ($("#" + _cid).length === 0) {
+          $(_options.target).find("#" + id).css("color", _options.y.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").children(".station-dots").empty().append(_append);
+        }
         $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
-          var _plotId, _stationId;
+          var _cir, _plotId, _stationId;
           event.stopPropagation();
           console.log("this", $(this));
           _plotId = $(this).attr("data-plot-id");
           _stationId = $(this).attr("data-station-id");
-          return _.plotter.removeStation(_plotId, _stationId);
+          _.plotter.removeStation(_plotId, _stationId);
+          _cir = "circle-plot" + _plotId + "-station" + _stationId;
+          return $("#" + _cir).remove();
         });
       }
       if (_options.y2.variable !== null) {
         _id = _options.y2.dataLoggerId;
-        _append = " <i class=\"icon-circle\" style=\"color: " + _options.y2.color + "\"></i>";
+        _cid = "circle-plot" + plotId + "-station" + _id;
+        _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _options.y2.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        $(_options.target).find("\#" + id).css("color", _options.y2.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").append(_append);
+        if ($("#" + _cid).length === 0) {
+          $(_options.target).find("\#" + id).css("color", _options.y2.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").append(_append);
+        }
         $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
-          var _plotId, _stationId;
+          var _cir, _plotId, _stationId;
           event.stopPropagation();
           _plotId = $(this).attr("data-plot-id");
           _stationId = $(this).attr("data-station-id");
-          return _.plotter.removeStation(_plotId, _stationId);
+          _.plotter.removeStation(_plotId, _stationId);
+          _cir = "circle-plot" + _plotId + "-station" + _stationId;
+          return $("#" + _cir).remove();
         });
       }
       if (_options.y3.variable !== null) {
         _id = _options.y3.dataLoggerId;
-        _append = " <i class=\"icon-circle\" style=\"color: " + _options.y3.color + "\"></i>";
+        _cid = "circle-plot" + plotId + "-station" + _id;
+        _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _options.y3.color + "\"></i>";
         id = "data-logger-" + _id + "-plot-" + plotId;
-        $(_options.target).find("\#" + id).css("color", _options.y3.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").append(_append);
+        if ($("#" + _cid).length === 0) {
+          $(_options.target).find("\#" + id).css("color", _options.y3.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").append(_append);
+        }
         return $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
-          var _plotId, _stationId;
+          var _cir, _plotId, _stationId;
           event.stopPropagation();
           _plotId = $(this).attr("data-plot-id");
           _stationId = $(this).attr("data-station-id");
-          return _.plotter.removeStation(_plotId, _stationId);
+          _.plotter.removeStation(_plotId, _stationId);
+          _cir = "circle-plot" + _plotId + "-station" + _stationId;
+          return $("#" + _cir).remove();
         });
       }
     };

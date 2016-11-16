@@ -25,6 +25,7 @@ window.Plotting.Controls = class Controls
     
     # Settings
     @maps = []
+    @stations = {}
     @markers = {}
     @listeners = {}
     @api = new window.Plotting.API access.token
@@ -46,6 +47,7 @@ window.Plotting.Controls = class Controls
         <ul id=\"station-dropdown-#{plotId}\"
           class=\"dropdown-menu pull-right\">"
      
+      _.stations[plotId] = data.responseJSON.results
       for region in data.responseJSON.results
         a_color = ""
         r_color = ""
@@ -98,7 +100,7 @@ window.Plotting.Controls = class Controls
       for region in data.responseJSON.results
         for station in region.dataloggers
           _id = "add-station-#{plotId}-#{station.id}"
-          $("#"+_id).on("click", (event) ->
+          $("#"+_id).off("click").on("click", (event) ->
             event.stopPropagation()
             _plotId = $(this).attr("data-plot-id")
             _stationId = $(this).attr("data-station-id")
@@ -114,66 +116,96 @@ window.Plotting.Controls = class Controls
     
     @api.get(target, args, callback)
 
+  resetStationDropdown: (plotId) ->
+    _ = @
+    
+    for region in @stations[plotId]
+      for station in region.dataloggers
+        _id = "add-station-#{plotId}-#{station.id}"
+        console.log("Reset Station (color)",
+          $("#"+_id).find("i.icon-circle").css("color"))
+        $("#"+_id).find("i.icon-circle").css("color", "")
+        $("#"+_id).off("click").on("click", (event) ->
+          event.stopPropagation()
+          _plotId = $(this).attr("data-plot-id")
+          _stationId = $(this).attr("data-station-id")
+          _.plotter.addStation(_plotId, _stationId)
+        )
+
   updateStationDropdown: (plotId) ->
     _ = @
     _options = @plotter.template[plotId].proto.options
     _append = ""
     
+    @resetStationDropdown(plotId)
+    
     if _options.y.dataLoggerId != null
       _id = _options.y.dataLoggerId
-      _append = " <i class=\"icon-circle\"
+      _cid= "circle-plot#{plotId}-station#{_id}"
+      _append = " <i class=\"icon-circle\" id=\"#{_cid}\"
         style=\"color: #{_options.y.color}\"></i>"
       id = "data-logger-#{_id}-plot-#{plotId}"
-      $(_options.target).find("##{id}")
-        .css("color", _options.y.color)
-        .parent().parent().prev()
-        .css("background-color", "rgb(248,248,248)")
-        .css("font-weight", 700)
-        .children(":first").children(".station-dots")
-        .empty()
-        .append(_append)
+      if $("#" + _cid).length is 0
+        $(_options.target).find("##{id}")
+          .css("color", _options.y.color)
+          .parent().parent().prev()
+          .css("background-color", "rgb(248,248,248)")
+          .css("font-weight", 700)
+          .children(":first").children(".station-dots")
+          .empty()
+          .append(_append)
       $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
         event.stopPropagation()
         console.log("this", $(this))
         _plotId = $(this).attr("data-plot-id")
         _stationId = $(this).attr("data-station-id")
         _.plotter.removeStation(_plotId, _stationId)
+        _cir = "circle-plot#{_plotId}-station#{_stationId}"
+        $("#"+_cir).remove()
       )
     if _options.y2.variable != null
       _id = _options.y2.dataLoggerId
-      _append = " <i class=\"icon-circle\"
+      _cid= "circle-plot#{plotId}-station#{_id}"
+      _append = " <i class=\"icon-circle\" id=\"#{_cid}\"
         style=\"color: #{_options.y2.color}\"></i>"
       id = "data-logger-#{_id}-plot-#{plotId}"
-      $(_options.target).find("\##{id}")
-        .css("color", _options.y2.color)
-        .parent().parent().prev()
-        .css("background-color", "rgb(248,248,248)")
-        .css("font-weight", 700)
-        .children(":first")
-        .append(_append)
+      if $("#" + _cid).length is 0
+        $(_options.target).find("\##{id}")
+          .css("color", _options.y2.color)
+          .parent().parent().prev()
+          .css("background-color", "rgb(248,248,248)")
+          .css("font-weight", 700)
+          .children(":first")
+          .append(_append)
       $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
         event.stopPropagation()
         _plotId = $(this).attr("data-plot-id")
         _stationId = $(this).attr("data-station-id")
         _.plotter.removeStation(_plotId, _stationId)
+        _cir = "circle-plot#{_plotId}-station#{_stationId}"
+        $("#"+_cir).remove()
       )
     if _options.y3.variable != null
       _id = _options.y3.dataLoggerId
-      _append = " <i class=\"icon-circle\"
+      _cid= "circle-plot#{plotId}-station#{_id}"
+      _append = " <i class=\"icon-circle\" id=\"#{_cid}\"
         style=\"color: #{_options.y3.color}\"></i>"
       id = "data-logger-#{_id}-plot-#{plotId}"
-      $(_options.target).find("\##{id}")
-        .css("color", _options.y3.color)
-        .parent().parent().prev()
-        .css("background-color", "rgb(248,248,248)")
-        .css("font-weight", 700)
-        .children(":first")
-        .append(_append)
+      if $("#" + _cid).length is 0
+        $(_options.target).find("\##{id}")
+          .css("color", _options.y3.color)
+          .parent().parent().prev()
+          .css("background-color", "rgb(248,248,248)")
+          .css("font-weight", 700)
+          .children(":first")
+          .append(_append)
       $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
         event.stopPropagation()
         _plotId = $(this).attr("data-plot-id")
         _stationId = $(this).attr("data-station-id")
         _.plotter.removeStation(_plotId, _stationId)
+        _cir = "circle-plot#{_plotId}-station#{_stationId}"
+        $("#"+_cir).remove()
       )
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
