@@ -469,6 +469,8 @@
         content: "",
         disableAutoPan: true
       });
+      this.markers[plotId] = [];
+      this.listeners[plotId] = [];
       _bounds = new google.maps.LatLngBounds();
       _bound_points = [];
       for (i = 0, len = results.length; i < len; i++) {
@@ -511,12 +513,12 @@
           marker.addListener('mouseout', function() {
             return infowindow.close();
           });
-          this.listeners[_row_id] = marker.addListener('click', function() {
+          this.listeners[plotId][_row_id] = marker.addListener('click', function() {
             console.log("Marker clicked", this);
             return _.plotter.addStation(plotId, this.dataloggerid);
           });
-          _len = this.markers[_row_id] = marker;
-          this.markers[_row_id].setMap(this.maps[plotId]);
+          _len = this.markers[plotId][_row_id] = marker;
+          this.markers[plotId][_row_id].setMap(this.maps[plotId]);
         }
       }
       for (k = 0, len2 = _bound_points.length; k < len2; k++) {
@@ -529,7 +531,7 @@
     Controls.prototype.resetStationMap = function(plotId) {
       var _, _key, _marker, ref, results1;
       _ = this;
-      ref = this.markers;
+      ref = this.markers[plotId];
       results1 = [];
       for (_key in ref) {
         _marker = ref[_key];
@@ -541,8 +543,8 @@
           fillColor: "rgb(200,200,200)"
         });
         _marker.set("selected", false);
-        _.listeners[_key].remove();
-        results1.push(_.listeners[_key] = _marker.addListener('click', function() {
+        _.listeners[plotId][_key].remove();
+        results1.push(_.listeners[plotId][_key] = _marker.addListener('click', function() {
           var _dataLoggerId;
           _dataLoggerId = this.get("dataloggerid");
           return _.plotter.addStation(plotId, _dataLoggerId);
@@ -556,16 +558,16 @@
       _ = this;
       this.resetStationMap(plotId);
       updateMarker = function(plotId, rowId, color) {
-        _.markers[rowId].setIcon({
+        _.markers[plotId][rowId].setIcon({
           path: google.maps.SymbolPath.CIRCLE,
           scale: 7,
           strokeWeight: 2,
           fillOpacity: 0.8,
           fillColor: color
         });
-        _.markers[rowId].set("selected", true);
-        _.listeners[rowId].remove();
-        return _.listeners[rowId] = _.markers[rowId].addListener('click', function() {
+        _.markers[plotId][rowId].set("selected", true);
+        _.listeners[plotId][rowId].remove();
+        return _.listeners[plotId][rowId] = _.markers[plotId][rowId].addListener('click', function() {
           var _dataLoggerId;
           _dataLoggerId = this.get("dataloggerid");
           return _.plotter.removeStation(plotId, _dataLoggerId);
@@ -598,7 +600,7 @@
       _ = this;
       _bounds = new google.maps.LatLngBounds();
       _bound_points = [];
-      ref = this.markers;
+      ref = this.markers[plotId];
       for (_key in ref) {
         _marker = ref[_key];
         _selected = _marker.get("selected");

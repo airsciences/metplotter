@@ -23,7 +23,7 @@ window.Plotting.Data = class Data
     for i in [0.._len]
       if @data[i] is undefined
         console.log("#{preError} on construct, @data[i] is (i, row)",
-        i, @data[i])
+          i, @data[i])
 
     @test = (row, joinRow, onKeys) ->
       # Test the row match

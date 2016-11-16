@@ -293,6 +293,9 @@ window.Plotting.Controls = class Controls
       disableAutoPan: true
     })
     
+    @markers[plotId] = []
+    @listeners[plotId] = []
+    
     _bounds = new google.maps.LatLngBounds()
     _bound_points = []
     
@@ -337,13 +340,13 @@ window.Plotting.Controls = class Controls
           infowindow.close()
         )
         
-        @listeners[_row_id] = marker.addListener('click', ->
+        @listeners[plotId][_row_id] = marker.addListener('click', ->
           console.log("Marker clicked", this)
           _.plotter.addStation(plotId, @dataloggerid)
         )
         
-        _len = @markers[_row_id] = marker
-        @markers[_row_id].setMap(@maps[plotId])
+        _len = @markers[plotId][_row_id] = marker
+        @markers[plotId][_row_id].setMap(@maps[plotId])
     
     # Fit to Bounds
     for _point in _bound_points
@@ -356,7 +359,7 @@ window.Plotting.Controls = class Controls
     # Reset the Station Map
     _= @
     
-    for _key, _marker of @markers
+    for _key, _marker of @markers[plotId]
       _marker.setIcon({
         path: google.maps.SymbolPath.CIRCLE,
         scale: 5,
@@ -366,8 +369,8 @@ window.Plotting.Controls = class Controls
       })
       _marker.set("selected", false)
       
-      _.listeners[_key].remove()
-      _.listeners[_key] = _marker.addListener('click', ->
+      _.listeners[plotId][_key].remove()
+      _.listeners[plotId][_key] = _marker.addListener('click', ->
         _dataLoggerId = this.get("dataloggerid")
         _.plotter.addStation(plotId, _dataLoggerId)
       )
@@ -379,19 +382,20 @@ window.Plotting.Controls = class Controls
     @resetStationMap(plotId)
     
     updateMarker = (plotId, rowId, color) ->
-      _.markers[rowId].setIcon({
+      _.markers[plotId][rowId].setIcon({
         path: google.maps.SymbolPath.CIRCLE,
         scale: 7,
         strokeWeight: 2,
         fillOpacity: 0.8,
         fillColor: color
       })
-      _.markers[rowId].set("selected", true)
+      _.markers[plotId][rowId].set("selected", true)
       
-      _.listeners[rowId].remove()
-      _.listeners[rowId] = _.markers[rowId].addListener('click', ->
-        _dataLoggerId = this.get("dataloggerid")
-        _.plotter.removeStation(plotId, _dataLoggerId)
+      _.listeners[plotId][rowId].remove()
+      _.listeners[plotId][rowId] = _.markers[plotId][rowId].addListener(
+        'click', ->
+          _dataLoggerId = this.get("dataloggerid")
+          _.plotter.removeStation(plotId, _dataLoggerId)
       )
         
     _options = @plotter.template[plotId].proto.options
@@ -419,7 +423,7 @@ window.Plotting.Controls = class Controls
     _bounds = new google.maps.LatLngBounds()
     _bound_points = []
     
-    for _key, _marker of @markers
+    for _key, _marker of @markers[plotId]
       _selected = _marker.get("selected")
       if _selected is true
         _bound_points.push(_marker.getPosition())
