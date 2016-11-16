@@ -612,7 +612,10 @@
         _point = _bound_points[i];
         _bounds.extend(_point);
       }
-      return this.maps[plotId].fitBounds(_bounds);
+      this.maps[plotId].fitBounds(_bounds);
+      if (this.maps[plotId].getZoom() < 6) {
+        return this.maps[plotId].setZoom(6);
+      }
     };
 
     Controls.prototype.toggleMap = function(plotId) {

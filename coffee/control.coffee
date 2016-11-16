@@ -433,6 +433,8 @@ window.Plotting.Controls = class Controls
       _bounds.extend(_point)
     
     @maps[plotId].fitBounds(_bounds)
+    if @maps[plotId].getZoom() < 6
+      @maps[plotId].setZoom(6)
 
   toggleMap: (plotId) ->
     # toggle the map div.
