@@ -18,7 +18,7 @@ window.Plotting ||= {}
 window.Plotting.Handler = class Handler
   constructor: (access, options, plots) ->
     @preError = "Plotting.Handler"
-    
+
     defaults =
       templateId: null
       href: location.origin
@@ -53,10 +53,10 @@ window.Plotting.Handler = class Handler
         ]
     @options = Object.mergeDefaults options, defaults
     @now = new Date()
-    
+
     if @options.href is "http://localhost:5000"
       @options.href = "http://dev.nwac.us"
-    
+
     @endpoint = null
     accessToken =
       token: null
@@ -64,7 +64,7 @@ window.Plotting.Handler = class Handler
       expired: true
       admin: false
     access = Object.mergeDefaults access, accessToken
-      
+
     @api = new window.Plotting.API(access.token)
     @syncronousapi = new window.Plotting.API(access.token, false)
     @controls = new window.Plotting.Controls(@, access)
@@ -83,7 +83,7 @@ window.Plotting.Handler = class Handler
       if @parseDate(access.expires) > new Date
         access.expired = true
       if access.expired then false else true
-    
+
   initialize: ->
     # Initialize the page.
     @getTemplate()
@@ -131,7 +131,7 @@ window.Plotting.Handler = class Handler
     target = "#{@options.href}/api/v5/plothandler/#{@options.plotHandlerId}"
     args = null
     _ = @
-    
+
     callback = (data) ->
       if data.responseJSON == null || data.responseJSON.error
         console.log "#{preError}.callback(...) error detected (data)", data
@@ -142,12 +142,12 @@ window.Plotting.Handler = class Handler
       catch error
         console.log("#{preError}.callback(...) JSON.parse error", error)
       _.parseDates(_.template)
-    
+
     @syncronousapi.get(target, args, callback)
 
   parseDates: (template) ->
     _ = @
-    
+
     parse = (datetime) ->
       if datetime.includes("now")
         newDatetime = new Date()
@@ -155,9 +155,9 @@ window.Plotting.Handler = class Handler
           _offset = parseInt(datetime.replace("(", "")
             .replace(")", "").replace("now", ""))
           newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000))
-        datetime = @format(newDatetime)
+        datetime = _.format(newDatetime)
       return datetime
-    
+
     for row in template
       for sub in row.dataParams
         sub.max_datetime = parse(sub.max_datetime)
@@ -175,15 +175,15 @@ window.Plotting.Handler = class Handler
       template_data:
         templateData: @template
     _ = @
-    
+
     callback = (data) ->
       if data.responseJSON == null || data.responseJSON.error
         console.log "#{preError}.callback(...) error detected (data)", data
         return
       console.log("#{preError}.callback() success saving template.")
-    
+
     @api.put(target, args, callback)
-    
+
   getStationParamData: (plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
@@ -199,24 +199,24 @@ window.Plotting.Handler = class Handler
       # console.log("#{preError} (template.data)", _.template[plotId].data)
 
     @syncronousapi.get(target, args, callback)
-    
+
   getTemplatePlotData: ->
     preError = "#{@preError}.getPlotData()"
     for key, plot of @template
       for subKey, params of @template[key].dataParams
         @getStationParamData(key, subKey)
-  
+
   append: () ->
     # Master append plots.
     preError = "#{@preError}.append()"
     _ = @
-    
+
     for key, plot of @template
       target = @utarget(@options.target)
       $(@options.target).append("<div id='#{target}'></div>")
 
       @mergeTemplateOption(key)
-      
+
       if plot.options.y2 is undefined
         plot.options.y2 = {}
       if plot.options.y3 is undefined
@@ -224,26 +224,26 @@ window.Plotting.Handler = class Handler
       plot.options.plotId = key
       plot.options.uuid = @uuid()
       plot.options.target = "\##{target}"
-      
+
       plot.options.y.color = @getColor('light', key)
       plot.options.y2.color = @getColor('light', parseInt(key+4%7))
       plot.options.y3.color = @getColor('light', parseInt(key+6%7))
-      
+
       _bounds = @getVariableBounds(plot.options.y.variable)
-      
+
       if _bounds
         plot.options.y.min = _bounds.min
         plot.options.y.max = _bounds.max
       if plot.options.y.variable == 'temperature'
         plot.options.y.maxBarValue = 32
-      
+
       # Join Multi-Station Data
       __data = new window.Plotting.Data(plot.data[0])
       _len = plot.data.length-1
       if _len > 0
         for i in [1.._len]
           __data.join(plot.data[i], [plot.options.x.variable])
-            
+
       title = @getTitle(plot)
       instance = new window.Plotting.LinePlot(@, __data.get(), plot.options)
       instance.preAppend()
@@ -273,7 +273,7 @@ window.Plotting.Handler = class Handler
       plot.options.y2.dataLoggerId = plot.options.dataParams[1].data_logger
     if _params > 2
       plot.options.y2.dataLoggerId = plot.options.dataParams[2].data_logger
-      
+
   getAppendData: (call, plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getAppendData(key, dataParams)"
@@ -281,7 +281,7 @@ window.Plotting.Handler = class Handler
     _ = @
     args = @template[plotId].proto.options.dataParams[paramsKey]
     _length = @template[plotId].proto.options.dataParams.length
-    
+
     callback = (data) ->
       plot = _.template[plotId]
       if plot.__data is undefined
@@ -304,7 +304,7 @@ window.Plotting.Handler = class Handler
           plot.proto.setData(plot.__data[call].get())
           plot.proto.append()
         delete plot.__data[call]
-        
+
     @api.get(target, args, callback)
 
   prependData: (plotId) ->
@@ -319,21 +319,21 @@ window.Plotting.Handler = class Handler
         @format(state.range.data.min)
       plot.proto.options.dataParams[paramsKey].limit = @options.updateLength
       @getAppendData(call, plotId, paramsKey)
-    
+
   appendData: (plotId) ->
     # Move forward a certain offset of time records on all plots.
     preError = "#{@preError}.appendData()"
     plot = @template[plotId]
     state = plot.proto.getState()
     _now = new Date()
-    
+
     # Get the Current Plot & Plot State
     if state.range.data.max >= _now
       return
-    
+
     _max_datetime = state.range.data.max.getTime()
     _new_max_datetime = _max_datetime + (@options.updateLength * 3600000)
-    
+
     call = @uuid()
     for paramsKey, params of plot.proto.options.dataParams
       plot.proto.options.dataParams[paramsKey].max_datetime =
@@ -360,7 +360,7 @@ window.Plotting.Handler = class Handler
     # Add another data logger to the plot.
     if !@template[plotId].proto.initialized
       return @appendNew(plotId, dataLoggerId)
-      
+
     if (
       @template[plotId].proto.options.y.dataLoggerId and
       @template[plotId].proto.options.y2.dataLoggerId and
@@ -368,17 +368,17 @@ window.Plotting.Handler = class Handler
     )
       console.log("Maximum of 3 Plot selected.")
       return null
-    
+
     state = @template[plotId].proto.getState()
     _variable = @template[plotId].proto.options.y.variable
     _max_datetime = state.range.data.max.getTime()
-    
+
     _params = $.extend(true, {}, @template[plotId].proto.options.dataParams[0])
     _params.data_logger = dataLoggerId
     _len = @template[plotId].proto.options.dataParams.push(_params)
 
     @setNewOptions(plotId, _variable, dataLoggerId)
-    
+
     uuid = @uuid()
     for paramsKey, params of @template[plotId].proto.options.dataParams
       @template[plotId].proto.options.dataParams[paramsKey].max_datetime =
@@ -392,18 +392,18 @@ window.Plotting.Handler = class Handler
   removeStation: (plotId, dataLoggerId) ->
     # Remove the station from the plot & data.
     _key = null
-        
+
     _template = @template[plotId]
     _plot = @template[plotId].proto
     _paramKey = @indexOfValue(_template.dataParams, "data_logger", dataLoggerId)
-    
+
     if _plot.options.y.dataLoggerId is dataLoggerId
       _key = "y"
     else if _plot.options.y2.dataLoggerId is dataLoggerId
       _key = "y2"
     else if _plot.options.y3.dataLoggerId is dataLoggerId
       _key = "y3"
-     
+
     if _paramKey > -1
       _template.dataParams.splice(_paramKey, 1)
       _plot.options[_key] = null
@@ -427,7 +427,7 @@ window.Plotting.Handler = class Handler
     # Set the zoom state of all plots. Triggered by a single plot.
     for plot in @template
       plot.proto.setZoomTransform(transform)
-    
+
   crosshair: (transform, mouse) ->
     # Set the cursor hover position of all plots. Triggered by a single plot."
     for plot in @template
@@ -447,19 +447,19 @@ window.Plotting.Handler = class Handler
     # Append the Control Set to the Plot
     selector = "plot-controls-#{plotId}"
     _li_style = ""
-    
+
     html = "<ul id=\"#{selector}\" class=\"unstyled\"
         style=\"list-style-type: none; padding-left: 6px;\">
       </ul>"
-    
+
     $(@template[plotId].proto.options.target)
       .find(".line-plot-controls").append(html)
-    
+
     @controls.move(plotId, '#'+selector, 'up')
     @controls.new('#'+selector, 'down')
     @controls.remove(plotId, '#'+selector)
     @controls.move(plotId, '#'+selector, 'down')
-    
+
     if @template[plotId].type is "station"
       current = [
         @template[plotId].proto.options.y,
@@ -504,12 +504,12 @@ window.Plotting.Handler = class Handler
     # Add a new plot.
     if @template[@template.length-1].proto.initialized is false
       return
-      
+
     _target = @utarget(@options.target)
     _plot =
       plotOrder: @template.length
       type: type
-      
+
     _options =
       target: '#' + _target
       type: type
@@ -518,9 +518,9 @@ window.Plotting.Handler = class Handler
 
     html = "<div id=\"#{_target}\"></div>"
     $(@options.target).append(html)
-    
+
     _key = @template.push(_plot)-1
-    
+
     instance = new window.Plotting.LinePlot(@, [], _options)
     instance.preAppend()
     @template[_key].proto = instance
@@ -538,21 +538,21 @@ window.Plotting.Handler = class Handler
     @template[plotId].proto.options.y.title = title
     @appendControls(plotId)
     @template[plotId].proto.removeTemp()
-    
+
   appendNew: (plotId, dataLoggerId) ->
     # Build the new plot.
     _plot = @template[plotId]
-    
+
     _plot.dataParams[0].data_logger = dataLoggerId
     _plot.proto.options.dataParams = _plot.dataParams
     _plot.proto.options.y.dataloggerid = dataLoggerId
     @getAppendData(@uuid(), plotId, 0)
-    
+
   setNewOptions: (plotId, variable, dataLoggerId) ->
     # Set the new Options Key
     _bounds = @getVariableBounds(variable)
     _info = @getVariableInfo(variable)
-    
+
     if @template[plotId].proto.options.y.variable == null
       @template[plotId].proto.options.y =
         dataLoggerId: dataLoggerId
@@ -586,7 +586,7 @@ window.Plotting.Handler = class Handler
       if _bounds
         @template[plotId].proto.options.y3.min = _bounds.min
         @template[plotId].proto.options.y3.max = _bounds.max
-    
+
   getVariableBounds: (variable) ->
     bounds =
       battery_voltage:
@@ -645,7 +645,7 @@ window.Plotting.Handler = class Handler
         title: "Wind Speed"
         units: "mph"
     return info[variable]
-        
+
   getColor: (shade, key) ->
     # Return the Color from the ordered list.
     return @options.colors[shade][key]
@@ -671,11 +671,10 @@ window.Plotting.Handler = class Handler
       if array[i][key] is value
         index = i
     return index
-            
+
   uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
-    
+
   utarget: (prepend) ->
     prepend = prepend.replace '#', ''
     return "#{prepend}-#{@uuid()}"
-    

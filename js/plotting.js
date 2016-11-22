@@ -2019,7 +2019,7 @@ Air Sciences Inc. - 2016
             _offset = parseInt(datetime.replace("(", "").replace(")", "").replace("now", ""));
             newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000));
           }
-          datetime = this.format(newDatetime);
+          datetime = _.format(newDatetime);
         }
         return datetime;
       };
