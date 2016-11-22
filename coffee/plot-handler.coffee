@@ -26,7 +26,7 @@ window.Plotting.Handler = class Handler
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       # Performance Variables:
       refresh: 500
-      updateLength: 256
+      updateLength: 168
       ##
       colors:
         light: [
@@ -53,6 +53,7 @@ window.Plotting.Handler = class Handler
         ]
     @options = Object.mergeDefaults options, defaults
     @now = new Date()
+    @updates = 0
 
     if @options.href is "http://localhost:5000"
       @options.href = "http://dev.nwac.us"
@@ -97,10 +98,12 @@ window.Plotting.Handler = class Handler
       if plot.proto.initialized
         state = plot.proto.getState()
         # Min-Side Events
-        if state.request.data.min
+        if state.request.data.min and @updates < 7
+          @updates++
           @prependData(key)
         # Max-Side Events
-        if state.request.data.max
+        if state.request.data.max and @updates < 7
+          @updates++
           @appendData(key)
 
     setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
@@ -304,6 +307,9 @@ window.Plotting.Handler = class Handler
           plot.proto.setData(plot.__data[call].get())
           plot.proto.append()
         delete plot.__data[call]
+      _.updates--
+      if _.updates < 0
+        console.log("Unopened request closed (@updates)!", _.updates)
 
     @api.get(target, args, callback)
 

@@ -275,6 +275,7 @@
       uuid = this.uuid();
       callback = function(data) {
         var _dots, _id, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
+        console.log("Append station dropdown (data)", data);
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
         _.stations[plotId] = data.responseJSON.results;
         ref = data.responseJSON.results;
@@ -335,6 +336,7 @@
         _.bindSubMenuEvent(".subheader");
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
+      console.log("Calling station dropdown, (target, args)", target, args);
       return this.api.get(target, args, callback);
     };
 
@@ -1034,8 +1036,8 @@
         },
         zoom: {
           scale: {
-            min: 0.3,
-            max: 10
+            min: 0.05,
+            max: 5
           }
         },
         aspectDivisor: 5,
@@ -1527,10 +1529,10 @@
       if (this.options.y.units) {
         _y_title = _y_title + " " + this.options.y.units;
       }
-      _y_vert = -95;
+      _y_vert = -15;
       _y_offset = -52;
       if (this.device === 'small') {
-        _y_vert = -50;
+        _y_vert = -10;
         _y_offset = -30;
       }
       this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
@@ -1753,15 +1755,15 @@
       this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
       if (this.options.y.variable !== null && !isNaN(dy)) {
         this.focusCircle.attr("cx", dx).attr("cy", dy);
-        this.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(2) + " " + this.options.y.units);
+        this.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(1) + " " + this.options.y.units);
       }
       if (this.options.y2.variable !== null && !isNaN(dy2)) {
         this.focusCircle2.attr("cx", dx).attr("cy", dy2);
-        this.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(2) + " " + this.options.y2.units);
+        this.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(1) + " " + this.options.y2.units);
       }
       if (this.options.y3.variable !== null && !isNaN(dy3)) {
         this.focusCircle3.attr("cx", dx).attr("cy", dy3);
-        this.focusText3.attr("x", dx + _dims.leftPadding / 10).attr("y", dy3 - _dims.topPadding / 10).text(d.y3.toFixed(2) + " " + this.options.y3.units);
+        this.focusText3.attr("x", dx + _dims.leftPadding / 10).attr("y", dy3 - _dims.topPadding / 10).text(d.y3.toFixed(1) + " " + this.options.y3.units);
       }
       if (this.options.y.variable !== null && this.options.y2.variable !== null && this.options.y3.variable !== null) {
         ypos = [];
@@ -1885,7 +1887,7 @@ Air Sciences Inc. - 2016
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
-        updateLength: 256,
+        updateLength: 168,
         colors: {
           light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
           dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
@@ -1893,6 +1895,7 @@ Air Sciences Inc. - 2016
       };
       this.options = Object.mergeDefaults(options, defaults);
       this.now = new Date();
+      this.updates = 0;
       if (this.options.href === "http://localhost:5000") {
         this.options.href = "http://dev.nwac.us";
       }
@@ -1941,10 +1944,12 @@ Air Sciences Inc. - 2016
         plot = ref[key];
         if (plot.proto.initialized) {
           state = plot.proto.getState();
-          if (state.request.data.min) {
+          if (state.request.data.min && this.updates < 7) {
+            this.updates++;
             this.prependData(key);
           }
-          if (state.request.data.max) {
+          if (state.request.data.max && this.updates < 7) {
+            this.updates++;
             this.appendData(key);
           }
         }
@@ -2192,7 +2197,11 @@ Air Sciences Inc. - 2016
             plot.proto.setData(plot.__data[call].get());
             plot.proto.append();
           }
-          return delete plot.__data[call];
+          delete plot.__data[call];
+        }
+        _.updates--;
+        if (_.updates < 0) {
+          return console.log("Unopened request closed (@updates)!", _.updates);
         }
       };
       return this.api.get(target, args, callback);

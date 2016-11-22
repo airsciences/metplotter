@@ -61,8 +61,8 @@ window.Plotting.LinePlot = class LinePlot
         maxVariable: null
       zoom:
         scale:
-          min: 0.3
-          max: 10
+          min: 0.05
+          max: 5
       aspectDivisor: 5
       transitionDuration: 500
       weight: 2
@@ -258,7 +258,7 @@ window.Plotting.LinePlot = class LinePlot
         @state.range.scale.max.getTime())/3600000)
 
   setDataRequirement: ->
-    # Calculate how necessary a download, in what direction, and  or data
+    # Calculate how necessary a download, in what direction, and/or data
     _now = new Date()
     _data_max = false
 
@@ -578,10 +578,10 @@ window.Plotting.LinePlot = class LinePlot
     if @options.y.units
       _y_title = "#{_y_title} #{@options.y.units}"
 
-    _y_vert = -95
+    _y_vert = -15
     _y_offset = -52
     if @device == 'small'
-      _y_vert = -50
+      _y_vert = -10
       _y_offset = -30
 
     # Y-Axis Title
@@ -1060,7 +1060,7 @@ window.Plotting.LinePlot = class LinePlot
       @focusText
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy - _dims.topPadding / 10)
-        .text(d.y.toFixed(2) + " " + @options.y.units)
+        .text(d.y.toFixed(1) + " " + @options.y.units)
 
     if @options.y2.variable != null and !isNaN(dy2)
       @focusCircle2
@@ -1070,7 +1070,7 @@ window.Plotting.LinePlot = class LinePlot
       @focusText2
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy2 - _dims.topPadding / 10)
-        .text(d.y2.toFixed(2) + " " + @options.y2.units)
+        .text(d.y2.toFixed(1) + " " + @options.y2.units)
 
     if @options.y3.variable != null and !isNaN(dy3)
       @focusCircle3
@@ -1080,7 +1080,7 @@ window.Plotting.LinePlot = class LinePlot
       @focusText3
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy3 - _dims.topPadding / 10)
-        .text(d.y3.toFixed(2) + " " + @options.y3.units)
+        .text(d.y3.toFixed(1) + " " + @options.y3.units)
 
     # Tooltip Overlap Prevention
     if (

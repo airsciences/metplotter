@@ -12,7 +12,7 @@ window.Plotting.Controls = class Controls
   constructor: (plotter, access, options) ->
     @preError = "Plotting.Dropdown"
     @plotter = plotter
-    
+
     defaults =
       target: null
     @options = Object.mergeDefaults options, defaults
@@ -22,7 +22,7 @@ window.Plotting.Controls = class Controls
       expires: null
       expired: true
     access = Object.mergeDefaults access, accessToken
-    
+
     # Settings
     @maps = []
     @stations = {}
@@ -37,8 +37,10 @@ window.Plotting.Controls = class Controls
     _ = @
     args = {}
     uuid = @uuid()
-    
+
     callback = (data) ->
+      console.log("Append station dropdown (data)", data)
+
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
             role=\"button\"
@@ -46,7 +48,7 @@ window.Plotting.Controls = class Controls
           <i class=\"icon-list\"></i></a>
         <ul id=\"station-dropdown-#{plotId}\"
           class=\"dropdown-menu pull-right\">"
-     
+
       _.stations[plotId] = data.responseJSON.results
       for region in data.responseJSON.results
         a_color = ""
@@ -86,16 +88,16 @@ window.Plotting.Controls = class Controls
               list-style-type: none\" onclick=\"\">
                #{_prepend} #{station.datalogger_name} |
                #{station.elevation} ft</li>"
-        
+
         html = "#{html}
           </ul>"
-      
+
       html = "#{html}
         </ul>
         </li>"
-    
+
       $(appendTarget).prepend(html)
-      
+
       # Bind Onclick Events
       for region in data.responseJSON.results
         for station in region.dataloggers
@@ -106,19 +108,20 @@ window.Plotting.Controls = class Controls
             _stationId = $(this).attr("data-station-id")
             _.plotter.addStation(_plotId, _stationId)
           )
-      
+
       # Bind Dropdown & Submenu Click Event.
       $('#'+uuid).dropdown()
       _.bindSubMenuEvent(".subheader")
-      
+
       _.appendStationMap(plotId, appendTarget, data.responseJSON.results,
         current)
-    
+
+    console.log("Calling station dropdown, (target, args)", target, args)
     @api.get(target, args, callback)
 
   resetStationDropdown: (plotId) ->
     _ = @
-    
+
     for region in @stations[plotId]
       for station in region.dataloggers
         _id = "add-station-#{plotId}-#{station.id}"
@@ -136,9 +139,9 @@ window.Plotting.Controls = class Controls
     _ = @
     _options = @plotter.template[plotId].proto.options
     _append = ""
-    
+
     @resetStationDropdown(plotId)
-    
+
     if _options.y.dataLoggerId != null
       _id = _options.y.dataLoggerId
       _cid= "circle-plot#{plotId}-station#{_id}"
@@ -214,9 +217,9 @@ window.Plotting.Controls = class Controls
       sensortype?sensors__data_logger=#{dataLoggerId}"
     args = {}
     uuid = @uuid()
-    
+
     _current = []
-    
+
     callback = (data) ->
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\"
@@ -226,7 +229,7 @@ window.Plotting.Controls = class Controls
         <ul id=\"param-dropdown-#{plotId}\"
           class=\"dropdown-menu pull-right\" role=\"menu\"
           aria-labelledby=\"#{uuid}\">"
-           
+
       for parameter in data.responseJSON.results
         if (
           parameter.field_name is "wind_speed_minimum" or
@@ -250,22 +253,22 @@ window.Plotting.Controls = class Controls
               style=\"color: #{current.color}\"></i>"
           else
             _prepend = "<i id=\"#{id}\" class=\"icon-circle\" style=\"\"></i>"
-    
+
         html = "#{html}
             <li><a style=\"cursor: pointer\"
               onclick=\"plotter.addVariable(#{plotId},
               '#{_add}')\">#{_prepend}
              #{parameter.sensortype_name}</a></li>"
-      
+
       html = "#{html}
             </ul>
           </li>
         </div>"
-          
+
       $(appendTarget).prepend(html)
-      
+
       $('#'+uuid).dropdown()
-        
+
     @api.get(target, args, callback)
 
   updateParameterDropdown: (plotId) ->
@@ -285,7 +288,7 @@ window.Plotting.Controls = class Controls
       id = "#{_id}-plot-#{plotId}"
       $(_options.target).find("\##{id}")
         .css("color", _options.y3.color)
-  
+
   appendStationMap: (plotId, appendTarget, results, current) ->
     # Append a google maps popover.
     _ = @
@@ -306,7 +309,7 @@ window.Plotting.Controls = class Controls
     $("#map-#{plotId}").on('click', ->
       _.plotter.controls.toggleMap(plotId)
     )
-    
+
     @maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
       center: new google.maps.LatLng(46.980, -121.980),
       zoom: 6,
@@ -319,18 +322,18 @@ window.Plotting.Controls = class Controls
       rotateControl: false,
       fullscreenControl: false
     })
-    
+
     infowindow = new google.maps.InfoWindow({
       content: "",
       disableAutoPan: true
     })
-    
+
     @markers[plotId] = []
     @listeners[plotId] = []
-    
+
     _bounds = new google.maps.LatLngBounds()
     _bound_points = []
-    
+
     for region in results
       for station in region.dataloggers
         # Append Marker
@@ -345,7 +348,7 @@ window.Plotting.Controls = class Controls
           scale = 7
           opacity = 0.8
           _bound_points.push(new google.maps.LatLng(station.lat, station.lon))
-        
+
         marker = new google.maps.Marker({
           position: {
             lat: station.lat,
@@ -367,30 +370,30 @@ window.Plotting.Controls = class Controls
           infowindow.setContent(@tooltip)
           infowindow.open(_.maps[plotId], this)
         )
-        
+
         marker.addListener('mouseout', ->
           infowindow.close()
         )
-        
+
         @listeners[plotId][_row_id] = marker.addListener('click', ->
           console.log("Marker clicked", this)
           _.plotter.addStation(plotId, @dataloggerid)
         )
-        
+
         _len = @markers[plotId][_row_id] = marker
         @markers[plotId][_row_id].setMap(@maps[plotId])
-    
+
     # Fit to Bounds
     for _point in _bound_points
       _bounds.extend(_point)
-    
+
     @maps[plotId].fitBounds(_bounds)
     #@maps[plotId].setZoom(12)
 
   resetStationMap: (plotId) ->
     # Reset the Station Map
     _= @
-    
+
     for _key, _marker of @markers[plotId]
       _marker.setIcon({
         path: google.maps.SymbolPath.CIRCLE,
@@ -400,7 +403,7 @@ window.Plotting.Controls = class Controls
         fillColor: "rgb(200,200,200)"
       })
       _marker.set("selected", false)
-      
+
       _.listeners[plotId][_key].remove()
       _.listeners[plotId][_key] = _marker.addListener('click', ->
         _dataLoggerId = this.get("dataloggerid")
@@ -410,9 +413,9 @@ window.Plotting.Controls = class Controls
   updateStationMap: (plotId) ->
     # Update the station map markers.
     _ = @
-    
+
     @resetStationMap(plotId)
-    
+
     updateMarker = (plotId, rowId, color) ->
       _.markers[plotId][rowId].setIcon({
         path: google.maps.SymbolPath.CIRCLE,
@@ -422,14 +425,14 @@ window.Plotting.Controls = class Controls
         fillColor: color
       })
       _.markers[plotId][rowId].set("selected", true)
-      
+
       _.listeners[plotId][rowId].remove()
       _.listeners[plotId][rowId] = _.markers[plotId][rowId].addListener(
         'click', ->
           _dataLoggerId = this.get("dataloggerid")
           _.plotter.removeStation(plotId, _dataLoggerId)
       )
-        
+
     _options = @plotter.template[plotId].proto.options
     if _options.y.variable != null
       _id = _options.y.variable.replace('_', '-')
@@ -446,7 +449,7 @@ window.Plotting.Controls = class Controls
       _row_id = "map-plot-#{plotId}-station-#{_options.y3.dataLoggerId}"
       _color = _options.y3.color
       updateMarker(plotId, _row_id, _color)
-      
+
     @boundOnSelected(plotId)
 
   boundOnSelected: (plotId) ->
@@ -454,16 +457,16 @@ window.Plotting.Controls = class Controls
     _ = @
     _bounds = new google.maps.LatLngBounds()
     _bound_points = []
-    
+
     for _key, _marker of @markers[plotId]
       _selected = _marker.get("selected")
       if _selected is true
         _bound_points.push(_marker.getPosition())
-    
+
     # Fit to Bounds
     for _point in _bound_points
       _bounds.extend(_point)
-    
+
     @maps[plotId].fitBounds(_bounds)
     if @maps[plotId].getZoom() < 6
       @maps[plotId].setZoom(6)
@@ -472,19 +475,19 @@ window.Plotting.Controls = class Controls
     # toggle the map div.
     __nwac_left = 128
     __nwac_top = 256
-    
+
     _center = @plotter.controls.maps[plotId].getCenter()
     _zoom = @plotter.controls.maps[plotId].getZoom()
-    
+
     _offset = $("#map-control-#{plotId}").parent().parent().prev().offset()
     $("#map-control-#{plotId}").parent().parent().toggle()
       .css("left", _offset.left - 356 - __nwac_left)
       .css("top", _offset.top - __nwac_top)
-    
+
     google.maps.event.trigger(@plotter.controls.maps[plotId], 'resize')
     @plotter.controls.maps[plotId].setCenter(_center)
     @plotter.controls.maps[plotId].setZoom(_zoom)
-    
+
   toggle: (selector) ->
     # Toggle the plotId's station down.
     $(selector).toggle()
@@ -497,7 +500,7 @@ window.Plotting.Controls = class Controls
     $("#move-#{plotId}-#{direction}").on('click', ->
       _.plotter.move(plotId, direction)
     )
-    
+
   remove: (plotId, appendTarget) ->
     _ = @
     html = "<i id=\"remove-#{plotId}\" style=\"cursor: pointer;\"
@@ -525,11 +528,11 @@ window.Plotting.Controls = class Controls
             <i class=\"icon-plus\"></i>
           </a></li>
         </div>"
-    
+
     # Append & Bind Dropdown
     $(appendTarget).append(html)
     #$("#new-#{uuid}").dropdown()
-    
+
     # Bind Click Events
     $("#new-#{uuid}").on('click', ->
       _.plotter.add("parameter")
@@ -540,7 +543,7 @@ window.Plotting.Controls = class Controls
 
   uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
-    
+
   isCurrent: (current, key, value) ->
     for cKey, cValue of current
       if cValue[key] == value
@@ -553,7 +556,7 @@ window.Plotting.Controls = class Controls
       event.preventDefault()
       event.stopPropagation()
       next = $(this).next()
-      
+
       if next.is(":visible")
         $(this).find("i").removeClass("icon-caret-up")
           .addClass("icon-caret-down")
@@ -563,4 +566,3 @@ window.Plotting.Controls = class Controls
           .addClass("icon-caret-up")
         next.slideDown()
     )
-    
