@@ -62,7 +62,7 @@ window.Plotting.LinePlot = class LinePlot
       zoom:
         scale:
           min: 0.3
-          max: 5
+          max: 10
       aspectDivisor: 5
       transitionDuration: 500
       weight: 2
@@ -85,7 +85,7 @@ window.Plotting.LinePlot = class LinePlot
       options.y3 = Object.mergeDefaults(options.y3, @defaults.y3)
     @options = Object.mergeDefaults options, @defaults
     @device = 'full'
-    
+
     @links = [
       {"variable": "battery_voltage", "title": "Battery Voltage"},
       {"variable": "temperature", "title": "Temperature"},
@@ -101,7 +101,7 @@ window.Plotting.LinePlot = class LinePlot
       {"variable": "snowfall_24_hour", "title": "24-Hr Snowfall"},
       {"variable": "intermittent_snow", "title": "Intermittent Snow"}
     ]
-    
+
     # Wrapped Logging Functions
     @log = (log...) ->
     if @options.debug
@@ -115,14 +115,14 @@ window.Plotting.LinePlot = class LinePlot
     # Prepare the Data & Definition
     @data = @processData(data)
     @getDefinition()
-    
+
     # Initialize the State
     _domainScale = null
     _domainMean = null
     if data.length > 0
       _domainScale = @getDomainScale(@definition.x)
       _domainMean = @getDomainMean(@definition.x)
-    
+
     @state =
       range:
         data: null
@@ -136,7 +136,7 @@ window.Plotting.LinePlot = class LinePlot
         data: null
       mean:
         scale: _domainMean
-    
+
     if data.length > 0
       @setDataState()
       @setIntervalState()
@@ -181,27 +181,27 @@ window.Plotting.LinePlot = class LinePlot
       )
         result[key].y3Min = row[@options.y3Band.minVariable]
         result[key].y3Max = row[@options.y3Band.maxVariable]
-    
+
     _result = new Plotting.Data(result)
     result = _result._clean(_result.get())
-    
+
     return result.sort(@sortDatetimeAsc)
 
   setData: (data) ->
     # Set the initial data.
     @data = @processData(data)
     @getDefinition()
-    
+
     # Initialize the State
     _domainScale = null
     _domainMean = null
     if data.length > 0
       _domainScale = @getDomainScale(@definition.x)
       _domainMean = @getDomainMean(@definition.x)
-    
+
     @state.range.scale = _domainScale
     @state.mean.scale = _domainMean
-    
+
     if data.length > 0
       @setDataState()
       @setIntervalState()
@@ -214,7 +214,7 @@ window.Plotting.LinePlot = class LinePlot
     _full.append(_data, ["x"])
     @data = _full._clean(_full.get())
     @data = @data.sort(@sortDatetimeAsc)
-    
+
     # Reset the Data Range
     if @initialized
       @setDataState()
@@ -230,12 +230,12 @@ window.Plotting.LinePlot = class LinePlot
     _full = new Plotting.Data(result)
     @data = _full.get()
     @data = @data.sort(@sortDatetimeAsc)
-    
+
     if @initialized
       @setDataState()
       @setIntervalState()
       @setDataRequirement()
-    
+
   setDataState: ->
     # Set Data Ranges
     _len = @data.length-1
@@ -245,7 +245,7 @@ window.Plotting.LinePlot = class LinePlot
     @state.range.data =
       min: d3.min(@data, (d)-> d.x)
       max: d3.max(@data, (d)-> d.x)
-    
+
     # Set Data Length States
     @state.length.data = @data.length
 
@@ -261,10 +261,10 @@ window.Plotting.LinePlot = class LinePlot
     # Calculate how necessary a download, in what direction, and  or data
     _now = new Date()
     _data_max = false
-    
+
     if @state.range.data.max < _now
       _data_max = @state.interval.data.max < @options.requestInterval.data
-    
+
     @state.request.data =
       min: @state.interval.data.min < @options.requestInterval.data
       max: _data_max
@@ -286,7 +286,7 @@ window.Plotting.LinePlot = class LinePlot
     center.setSeconds(0)
     center.setMilliseconds(0)
     return center
-    
+
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
     _ = @
@@ -302,11 +302,11 @@ window.Plotting.LinePlot = class LinePlot
       .ticks(Math.round($(@options.target).width() / 100))
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
       .ticks(@options.y.ticks)
-      
+
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
-    
+
     # Define the Zoom Method
     _extent = [
         [-Infinity, 0],
@@ -341,7 +341,7 @@ window.Plotting.LinePlot = class LinePlot
       )
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y3))
-      
+
     @definition.area = d3.area()
       .defined((d)->
         !isNaN(d.y) and d.y isnt null
@@ -415,7 +415,7 @@ window.Plotting.LinePlot = class LinePlot
     @definition.dimensions.innerWidth =
       parseInt(@definition.dimensions.width -
       @definition.dimensions.margin.left - @definition.dimensions.margin.right)
-    
+
     # Define the X & Y Scales
     @definition.x = d3.scaleTime().range([margin.left, (width-margin.right)])
     @definition.y = d3.scaleLinear().range([(height-margin.bottom),
@@ -442,7 +442,7 @@ window.Plotting.LinePlot = class LinePlot
       d3.min(data, (d)-> d.y2Min)
       d3.min(data, (d)-> d.y3Min)
     ])
-    
+
     @definition.y.max = d3.max([
       d3.max(data, (d)-> d.y)
       d3.max(data, (d)-> d.y2)
@@ -456,7 +456,7 @@ window.Plotting.LinePlot = class LinePlot
     if @definition.y.min == @definition.y.max
       @definition.y.min = @definition.y.min * 0.8
       @definition.y.max = @definition.y.min * 1.2
-     
+
     # Revert to Options
     @definition.y.min = if @options.y.min is null then @definition.y.min
     else @options.y.min
@@ -466,14 +466,14 @@ window.Plotting.LinePlot = class LinePlot
   preAppend: ->
     preError = "#{@preError}preAppend()"
     _ = @
-    
+
     # Create the SVG Div
     @outer = d3.select(@options.target).append("div")
       .attr("class", "line-plot-body")
       .style("width", "#{@definition.dimensions.width}px")
       .style("height", "#{@definition.dimensions.height}px")
       .style("display", "inline-block")
-          
+
     # Create the Controls Div
     @ctls = d3.select(@options.target).append("div")
       .attr("class", "line-plot-controls")
@@ -501,15 +501,15 @@ window.Plotting.LinePlot = class LinePlot
           "#{parseInt(_offset.left+@definition.dimensions.margin.left)}px")
         .style("width", "#{@definition.dimensions.innerWidth}px")
         .style("text-align", "center")
-      
+
       @dropdown = @temp.append("div")
         .attr("class", "dropdown")
-        
+
       @dropdown.append("a")
         .text(add_text)
         .attr("class", "dropdown-toggle")
         .attr("data-toggle", "dropdown")
-        
+
       @dropdown.append("ul")
         .attr("class", "dropdown-menu")
         .selectAll("li")
@@ -520,7 +520,7 @@ window.Plotting.LinePlot = class LinePlot
         .on("click", (d) ->
           _.plotter.initVariable(_.options.plotId, d.variable, d.title)
         )
-        
+
       @temp.append("p")
         .text(sub_text)
         .style("color", "#ggg")
@@ -543,7 +543,7 @@ window.Plotting.LinePlot = class LinePlot
         "translate(#{@definition.dimensions.leftPadding},
         #{@definition.dimensions.topPadding})"
       )
-    
+
     # Append the X-Axis
     @svg.append("g")
       .attr("class", "line-plot-axis-x")
@@ -572,18 +572,18 @@ window.Plotting.LinePlot = class LinePlot
       return
     preError = "#{@preError}append()"
     _ = @
-        
+
     # Append Axis Label
     _y_title = "#{@options.y.title}"
     if @options.y.units
       _y_title = "#{_y_title} #{@options.y.units}"
-    
+
     _y_vert = -95
     _y_offset = -52
     if @device == 'small'
       _y_vert = -50
       _y_offset = -30
-      
+
     # Y-Axis Title
     @svg.select(".line-plot-axis-y")
       .append("text")
@@ -598,7 +598,7 @@ window.Plotting.LinePlot = class LinePlot
 
     if @options.y2.title
       _y2_title = "#{_y2_title} #{@options.y2.title}"
-      
+
     if @options.y3.units
       _y3_title = "#{_y3_title} #{@options.y3.units}"
 
@@ -706,7 +706,7 @@ window.Plotting.LinePlot = class LinePlot
       .style("stroke-width", @options.crosshairX.weight)
       .style("stroke-dasharray", ("3, 3"))
       .style("fill", "none")
-      
+
     # Create the Focus Label Underlay
     @crosshairs.append("rect")
       .attr("class", "crosshair-x-under")
@@ -774,7 +774,7 @@ window.Plotting.LinePlot = class LinePlot
     # Append the Crosshair & Zoom Event Rectangle
     @overlay = @svg.append("rect")
       .attr("class", "plot-event-target")
-      
+
     # Append Crosshair & Zoom Listening Targets
     @appendCrosshairTarget()
     @appendZoomTarget()
@@ -791,7 +791,7 @@ window.Plotting.LinePlot = class LinePlot
     @svg.select(".line-plot-area2")
       .datum(@data)
       .attr("d", @definition.area2)
-      
+
     @svg.select(".line-plot-area3")
       .datum(@data)
       .attr("d", @definition.area3)
@@ -833,7 +833,7 @@ window.Plotting.LinePlot = class LinePlot
     @svg.select(".line-plot-area2")
       .datum(@data)
       .attr("d", @definition.area2)
-      
+
     @svg.select(".line-plot-area3")
       .datum(@data)
       .attr("d", @definition.area3)
@@ -854,17 +854,17 @@ window.Plotting.LinePlot = class LinePlot
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
       .call(@definition.yAxis)
-         
+
   removeTemp: ->
     @temp.remove()
-          
+
   appendCrosshairTarget: (transform) ->
     # Move Crosshairs and Focus Circle Based on Mouse Location
     if !@initialized
       return
     preError = "#{@preError}appendCrosshairTarget()"
     _ = @
-    
+
     @overlay.datum(@data)
       .attr("class", "overlay")
       .attr("width", @definition.dimensions.innerWidth)
@@ -881,13 +881,13 @@ window.Plotting.LinePlot = class LinePlot
         mouse = _.setCrosshair(transform)
         _.plotter.crosshair(transform, mouse)
       )
-      
+
   appendZoomTarget: ->
     if !@initialized
       return
     preError = "#{@preError}appendZoomTarget()"
     _ = @
-    
+
     # Append the Zoom Rectangle
     @overlay.attr("class", "zoom-pane")
       .attr("width", @definition.dimensions.innerWidth)
@@ -900,7 +900,7 @@ window.Plotting.LinePlot = class LinePlot
       .style("pointer-events", "all")
       .style("cursor", "move")
       .call(@definition.zoom, d3.zoomIdentity)
-      
+
   setZoomTransform: (transform) ->
     # Set the current zoom transform state.
     if !@initialized
@@ -908,13 +908,13 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}.setZoomTransform(transform)"
     _ = @
     _transform = if transform then transform else d3.event.transform
-    
+
     # Zoom the X-Axis
     _rescaleX = _transform.rescaleX(@definition.x)
     @svg.select(".line-plot-axis-x").call(
       @definition.xAxis.scale(_rescaleX)
     )
-    
+
     # Set the scaleRange
     @state.range.scale = @getDomainScale(_rescaleX)
     @state.mean.scale = @getDomainMean(_rescaleX)
@@ -954,7 +954,7 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
       .y0((d) -> _.definition.y(d.y2Min))
       .y1((d) -> _.definition.y(d.y2Max))
-     
+
     @svg.select(".line-plot-area2")
       .attr("d", @definition.area2)
 
@@ -977,7 +977,7 @@ window.Plotting.LinePlot = class LinePlot
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
       .y0((d) -> _.definition.y(d.y3Min))
       .y1((d) -> _.definition.y(d.y3Max))
-     
+
     @svg.select(".line-plot-area3")
       .attr("d", @definition.area3)
 
@@ -991,7 +991,7 @@ window.Plotting.LinePlot = class LinePlot
 
     @svg.select(".line-plot-path3")
       .attr("d", @definition.line3)
-      
+
     @appendCrosshairTarget(_transform)
     return _transform
 
@@ -1002,11 +1002,11 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}.setCrosshair(mouse)"
     _ = @
     _dims = @definition.dimensions
-    
+
     _mouseTarget = @overlay.node()
     _datum = @overlay.datum()
     mouse = if mouse then mouse else d3.mouse(_mouseTarget)
-    
+
     x0 = @definition.x.invert(mouse[0] + _dims.leftPadding)
     if transform
       x0 = @definition.x.invert(
@@ -1018,7 +1018,7 @@ window.Plotting.LinePlot = class LinePlot
       d = _datum[i - 1]
     if x0.getTime() > @state.range.data.max.getTime()
       d = _datum[i - 1]
-     
+
     dx = if transform then transform.applyX(@definition.x(d.x)) else
       @definition.x(d.x)
     if @options.y.variable != null
@@ -1044,7 +1044,7 @@ window.Plotting.LinePlot = class LinePlot
       .attr("x2", cx)
       .attr("y2", _dims.innerHeight + _dims.topPadding)
       .attr("transform", "translate(#{_dims.leftPadding}, 0)")
-       
+
     @crosshairs.select(".crosshair-x-under")
       .attr("x", cx)
       .attr("y", _dims.topPadding)
@@ -1111,54 +1111,54 @@ window.Plotting.LinePlot = class LinePlot
         .attr("transform", (d, i) ->
           return "translate (0, #{ypos[i].offset})"
         )
-    
+
     return mouse
-    
+
   showCrosshair: ->
     # Show the Crosshair
     if !@initialized
       return
     @crosshairs.select(".crosshair-x")
       .style("display", null)
-      
+
     @crosshairs.select(".crosshair-x-under")
       .style("display", null)
-    
+
     if @options.y.variable != null
       @focusCircle.style("display", null)
         .attr("fill", @options.y.color)
       @focusText.style("display", null)
         .style("color", @options.y.color)
         .style("fill", @options.y.color)
-      
+
     if @options.y2.variable != null
       @focusCircle2.style("display", null)
         .attr("fill", @options.y2.color)
       @focusText2.style("display", null)
         .style("color", @options.y2.color)
         .style("fill", @options.y2.color)
-  
+
     if @options.y3.variable != null
       @focusCircle3.style("display", null)
         .attr("fill", @options.y3.color)
       @focusText3.style("display", null)
         .style("color", @options.y3.color)
         .style("fill", @options.y3.color)
-  
+
   hideCrosshair: () ->
     # Hide the Crosshair
     if !@initialized
       return
     @crosshairs.select(".crosshair-x")
       .style("display", "none")
-  
+
     @crosshairs.select(".crosshair-x-under")
       .style("display", "none")
-  
+
     if @options.y.variable != null
       @focusCircle.style("display", "none")
       @focusText.style("display", "none")
-  
+
     if @options.y2.variable != null
       @focusCircle2.style("display", "none")
       @focusText2.style("display", "none")
@@ -1176,17 +1176,17 @@ window.Plotting.LinePlot = class LinePlot
       _offsetFactor = 0.4
       _mainSize = '10px'
       _subSize = '7px'
-    
+
     @title = @svg.append("g")
       .attr("class", "line-plot-title")
-      
+
     @title.append("text")
       .attr("x", (@definition.dimensions.margin.left + 10))
       .attr("y", (@definition.dimensions.margin.top / 2 - (4*_offsetFactor)))
       .style("font-size", _mainSize)
       .style("font-weight", 600)
       .text(title)
-    
+
     if subtitle
       @title.append("text")
         .attr("x", (@definition.dimensions.margin.left + 10))

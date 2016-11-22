@@ -5,8 +5,8 @@ html(lang='en')
     meta(http-equiv='X-UA-Compatible' content='IE=edge')
     meta(name='viewport' content='width=device-width, initial-scale=1')
     title='NWAC Plotting Tool Demo'
-    link(rel='stylesheet', href='bootstrap.min.css')
-    link(rel='stylesheet', href='font-awesome.css')
+    link(rel='stylesheet', href='/bootstrap.min.css')
+    link(rel='stylesheet', href='/font-awesome.css')
   body
     div(class='container')
       div(class='row-sm-12')
@@ -23,17 +23,17 @@ html(lang='en')
         div(style='margin-bottom: 15px')
           small
             code="NWAC Emulator - (Node.js)"
-    script(src='jquery.min.js')
+    script(src='/jquery.min.js')
     script(src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmlnWKI60J2KE3CP6XfqwemnJCjQkCMVU")
-    script(src='bootstrap.min.js')
-    script(src='d3.min.js')
-    script(src='plotting.js')
+    script(src='/bootstrap.min.js')
+    script(src='/d3.min.js')
+    script(src='/plotting.js')
     script.
       var options = {
           "target": "#d3-plot-target",
           "plotHandlerId": #{plotTemplateId}
       };
-      
+
       var access = {
           "token": "#{token.token}",
           "expires": "#{token.expires}",
@@ -42,6 +42,3 @@ html(lang='en')
 
       var plotter214 = new Plotting.Handler(access, options);
       plotter214.initialize();
-
-      
-  

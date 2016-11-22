@@ -1035,7 +1035,7 @@
         zoom: {
           scale: {
             min: 0.3,
-            max: 5
+            max: 10
           }
         },
         aspectDivisor: 5,

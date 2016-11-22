@@ -17,7 +17,7 @@ app.get('/', function (req, res) {
     var access = process.env.NWAC_TOKEN;
     var date = new Date();
     var expires = new Date(date.getTime() + minutes*60000);
-    
+
     var data = {
         title: "White Pass - Upper & Pigtail",
         token: {
@@ -26,25 +26,26 @@ app.get('/', function (req, res) {
         },
         plotTemplateId: 1
     };
-    
+
     res.render('advanced', data);
 });
 
-app.get('/multi', function (req, res) {
+app.get('/plots/:plotTemplateId', function (req, res) {
+    var plotTemplateId = parseInt(req.params.plotTemplateId);
     var minutes = 60;
     var access = process.env.NWAC_TOKEN;
     var date = new Date();
     var expires = new Date(date.getTime() + minutes*60000);
-    
+
     var data = {
-        title: "White Pass - Upper, Base, & Pigtail",
+        title: "Testing Dev Template ID: " + plotTemplateId,
         token: {
             token: access,
             expires: expires
         },
-        plotTemplateId: 2
+        plotTemplateId: plotTemplateId
     };
-    
+
     res.render('advanced', data);
 });
 
@@ -57,14 +58,14 @@ app.get('/template/:plotTemplateId', function(req, res) {
         "error": true,
         "message": "No plot template exists."
     };
-    
+
     xVar =  {
-        "variable": "datetime", 
+        "variable": "datetime",
         "format": "%Y-%m-%dT%H:%M:%SZ",
         "min": "2016-02-19T00:00:00Z",
         "max": "2016-02-26T00:00:00Z"
     };
-    
+
     if (plotTemplateId === 1) {
         result = {"templateData": [
             {
@@ -180,7 +181,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
                     "y2": {
                         "variable": "temperature",
                         "title": "Temperature",
-                        "units": "°F"                        
+                        "units": "°F"
                     }
                 }
             },
@@ -278,7 +279,7 @@ app.get('/template/:plotTemplateId', function(req, res) {
             }
         ]};
     }
-    
+
     res.json(result);
 });
 
@@ -286,4 +287,5 @@ app.get('/template/:plotTemplateId', function(req, res) {
 var server = app.listen(app.get('port'), function () {
     var port = app.get('port');
     console.log("NWAC Development Emulator Listening (http://localhost:"+port+")...");
+    console.log("__dirname: ", __dirname);
 });
