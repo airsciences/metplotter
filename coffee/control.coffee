@@ -39,8 +39,6 @@ window.Plotting.Controls = class Controls
     uuid = @uuid()
 
     callback = (data) ->
-      console.log("Append station dropdown (data)", data)
-
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
             role=\"button\"
@@ -116,7 +114,6 @@ window.Plotting.Controls = class Controls
       _.appendStationMap(plotId, appendTarget, data.responseJSON.results,
         current)
 
-    console.log("Calling station dropdown, (target, args)", target, args)
     @api.get(target, args, callback)
 
   resetStationDropdown: (plotId) ->
@@ -125,8 +122,6 @@ window.Plotting.Controls = class Controls
     for region in @stations[plotId]
       for station in region.dataloggers
         _id = "add-station-#{plotId}-#{station.id}"
-        console.log("Reset Station (color)",
-          $("#"+_id).find("i.icon-circle").css("color"))
         $("#"+_id).find("i.icon-circle").css("color", "")
         $("#"+_id).off("click").on("click", (event) ->
           event.stopPropagation()
@@ -159,7 +154,6 @@ window.Plotting.Controls = class Controls
           .append(_append)
       $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
         event.stopPropagation()
-        console.log("this", $(this))
         _plotId = $(this).attr("data-plot-id")
         _stationId = $(this).attr("data-station-id")
         _.plotter.removeStation(_plotId, _stationId)
@@ -376,7 +370,6 @@ window.Plotting.Controls = class Controls
         )
 
         @listeners[plotId][_row_id] = marker.addListener('click', ->
-          console.log("Marker clicked", this)
           _.plotter.addStation(plotId, @dataloggerid)
         )
 

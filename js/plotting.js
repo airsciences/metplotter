@@ -275,7 +275,6 @@
       uuid = this.uuid();
       callback = function(data) {
         var _dots, _id, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
-        console.log("Append station dropdown (data)", data);
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
         _.stations[plotId] = data.responseJSON.results;
         ref = data.responseJSON.results;
@@ -336,7 +335,6 @@
         _.bindSubMenuEvent(".subheader");
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
-      console.log("Calling station dropdown, (target, args)", target, args);
       return this.api.get(target, args, callback);
     };
 
@@ -354,7 +352,6 @@
           for (j = 0, len1 = ref1.length; j < len1; j++) {
             station = ref1[j];
             _id = "add-station-" + plotId + "-" + station.id;
-            console.log("Reset Station (color)", $("#" + _id).find("i.icon-circle").css("color"));
             $("#" + _id).find("i.icon-circle").css("color", "");
             results2.push($("#" + _id).off("click").on("click", function(event) {
               var _plotId, _stationId;
@@ -387,7 +384,6 @@
         $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
           var _cir, _plotId, _stationId;
           event.stopPropagation();
-          console.log("this", $(this));
           _plotId = $(this).attr("data-plot-id");
           _stationId = $(this).attr("data-station-id");
           _.plotter.removeStation(_plotId, _stationId);
@@ -564,7 +560,6 @@
             return infowindow.close();
           });
           this.listeners[plotId][_row_id] = marker.addListener('click', function() {
-            console.log("Marker clicked", this);
             return _.plotter.addStation(plotId, this.dataloggerid);
           });
           _len = this.markers[plotId][_row_id] = marker;
@@ -2061,7 +2056,7 @@ Air Sciences Inc. - 2016
           console.log(preError + ".callback(...) error detected (data)", data);
           return;
         }
-        return console.log(preError + ".callback() success saving template.");
+        return console.log(preError + ".callback() successfully saved template.");
       };
       return this.api.put(target, args, callback);
     };
@@ -2201,7 +2196,8 @@ Air Sciences Inc. - 2016
         }
         _.updates--;
         if (_.updates < 0) {
-          return console.log("Unopened request closed (@updates)!", _.updates);
+          console.log("Unopened request closed (@updates)!", _.updates);
+          return _.updates = 0;
         }
       };
       return this.api.get(target, args, callback);

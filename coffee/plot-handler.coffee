@@ -183,7 +183,7 @@ window.Plotting.Handler = class Handler
       if data.responseJSON == null || data.responseJSON.error
         console.log "#{preError}.callback(...) error detected (data)", data
         return
-      console.log("#{preError}.callback() success saving template.")
+      console.log("#{preError}.callback() successfully saved template.")
 
     @api.put(target, args, callback)
 
@@ -199,7 +199,6 @@ window.Plotting.Handler = class Handler
         _.template[plotId].data = [data.responseJSON.results]
       else
         _.template[plotId].data.push(data.responseJSON.results)
-      # console.log("#{preError} (template.data)", _.template[plotId].data)
 
     @syncronousapi.get(target, args, callback)
 
@@ -267,8 +266,9 @@ window.Plotting.Handler = class Handler
     # Merge the templated plot options with returned options
     plot = @template[plotId]
     plot.options.dataParams = plot.dataParams
-    # console.log("Merge Template Options (options)", plot.options)
+
     _params = plot.options.dataParams.length
+
     # Define Data Loggers
     if _params > 0
       plot.options.y.dataLoggerId = plot.options.dataParams[0].data_logger
@@ -296,12 +296,7 @@ window.Plotting.Handler = class Handler
           [plot.proto.options.x.variable])
       if plot.__data[call].getSourceCount() is _length
         if plot.proto.initialized
-          # console.log("Plot is appending data (data, plot.data,
-          #      plot.options)",
-          #   plot.__data[call].get(), plot.proto.data, plot.proto.options)
           plot.proto.appendData(plot.__data[call].get())
-          #console.log("Plot data is appended (plot.data, plot.options)",
-          #  plot.proto.data, plot.proto.options)
           plot.proto.update()
         else
           plot.proto.setData(plot.__data[call].get())
@@ -310,6 +305,7 @@ window.Plotting.Handler = class Handler
       _.updates--
       if _.updates < 0
         console.log("Unopened request closed (@updates)!", _.updates)
+        _.updates = 0
 
     @api.get(target, args, callback)
 
