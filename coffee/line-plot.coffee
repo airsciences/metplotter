@@ -134,6 +134,10 @@ window.Plotting.LinePlot = class LinePlot
       zoom: 1
       request:
         data: null
+      requested:
+        data:
+          min: false
+          max: false
       mean:
         scale: _domainMean
 
@@ -339,12 +343,13 @@ window.Plotting.LinePlot = class LinePlot
       .defined((d)->
         !isNaN(d.y3) and d.y3 isnt null
       )
-      .x((d) -> _.definition.x(d.x))
+      .x((d) -> _.definsition.x(d.x))
       .y((d) -> _.definition.y(d.y3))
 
     @definition.area = d3.area()
       .defined((d)->
-        !isNaN(d.y) and d.y isnt null
+        !isNaN(d.yMin) and d.yMin isnt null and
+        !isNaN(d.yMax) and d.yMax isnt null
       )
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.yMin))
@@ -352,7 +357,8 @@ window.Plotting.LinePlot = class LinePlot
 
     @definition.area2 = d3.area()
       .defined((d)->
-        !isNaN(d.y2) and d.y2 isnt null
+        !isNaN(d.y2Min) and d.y2Min isnt null and
+        !isNaN(d.y2Max) and d.y2Max isnt null
       )
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.y2Min))
@@ -360,7 +366,8 @@ window.Plotting.LinePlot = class LinePlot
 
     @definition.area3 = d3.area()
       .defined((d)->
-        !isNaN(d.y3) and d.y3 isnt null
+        !isNaN(d.y3Min) and d.y3Min isnt null and
+        !isNaN(d.y3Max) and d.y3Max isnt null
       )
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.y3Min))
@@ -603,53 +610,53 @@ window.Plotting.LinePlot = class LinePlot
       _y3_title = "#{_y3_title} #{@options.y3.units}"
 
     # Append Bands
-    if (
-      @options.yBand.minVariable != null and
-      @options.yBand.maxVariable != null
-    )
-      @lineband = @svg.append("g")
-        .attr("clip-path", "url(\##{@options.target}_clip)")
-        .append("path")
-        .datum(@data)
-        .attr("d", @definition.area)
-        .attr("class", "line-plot-area")
-        .style("fill", @options.y.color)
-        .style("opacity", 0.15)
-        .style("stroke", () ->
-          return d3.color(_.options.y.color).darker(1)
-        )
+    #if (
+    #  @options.yBand.minVariable != null and
+    #  @options.yBand.maxVariable != null
+    #)
+    @lineband = @svg.append("g")
+      .attr("clip-path", "url(\##{@options.target}_clip)")
+      .append("path")
+      .datum(@data)
+      .attr("d", @definition.area)
+      .attr("class", "line-plot-area")
+      .style("fill", @options.y.color)
+      .style("opacity", 0.15)
+      .style("stroke", () ->
+        return d3.color(_.options.y.color).darker(1)
+      )
 
-    if (
-      @options.y2Band.minVariable != null and
-      @options.y2Band.maxVariable != null
-    )
-      @lineband2 = @svg.append("g")
-        .attr("clip-path", "url(\##{@options.target}_clip)")
-        .append("path")
-        .datum(@data)
-        .attr("d", @definition.area2)
-        .attr("class", "line-plot-area2")
-        .style("fill", @options.y2.color)
-        .style("opacity", 0.25)
-        .style("stroke", () ->
-          return d3.rgb(_.options.y2.color).darker(1)
-        )
+    #if (
+    #  @options.y2Band.minVariable != null and
+    #  @options.y2Band.maxVariable != null
+    #)
+    @lineband2 = @svg.append("g")
+      .attr("clip-path", "url(\##{@options.target}_clip)")
+      .append("path")
+      .datum(@data)
+      .attr("d", @definition.area2)
+      .attr("class", "line-plot-area2")
+      .style("fill", @options.y2.color)
+      .style("opacity", 0.25)
+      .style("stroke", () ->
+        return d3.rgb(_.options.y2.color).darker(1)
+      )
 
-    if (
-      @options.y3Band.minVariable != null and
-      @options.y3Band.maxVariable != null
-    )
-      @lineband3 = @svg.append("g")
-        .attr("clip-path", "url(\##{@options.target}_clip)")
-        .append("path")
-        .datum(@data)
-        .attr("d", @definition.area3)
-        .attr("class", "line-plot-area3")
-        .style("fill", @options.y3.color)
-        .style("opacity", 0.25)
-        .style("stroke", () ->
-          return d3.rgb(_.options.y3.color).darker(1)
-        )
+    #if (
+    #  @options.y3Band.minVariable != null and
+    #  @options.y3Band.maxVariable != null
+    #)
+    @lineband3 = @svg.append("g")
+      .attr("clip-path", "url(\##{@options.target}_clip)")
+      .append("path")
+      .datum(@data)
+      .attr("d", @definition.area3)
+      .attr("class", "line-plot-area3")
+      .style("fill", @options.y3.color)
+      .style("opacity", 0.25)
+      .style("stroke", () ->
+        return d3.rgb(_.options.y3.color).darker(1)
+      )
 
     # Append the Line Paths
     @svg.append("g")
@@ -787,14 +794,26 @@ window.Plotting.LinePlot = class LinePlot
     @svg.select(".line-plot-area")
       .datum(@data)
       .attr("d", @definition.area)
+      .style("fill", @options.y.color)
+      .style("stroke", () ->
+        return d3.rgb(_.options.y.color).darker(1)
+      )
 
     @svg.select(".line-plot-area2")
       .datum(@data)
       .attr("d", @definition.area2)
+      .style("fill", @options.y2.color)
+      .style("stroke", () ->
+        return d3.rgb(_.options.y2.color).darker(1)
+      )
 
     @svg.select(".line-plot-area3")
       .datum(@data)
       .attr("d", @definition.area3)
+      .style("fill", @options.y3.color)
+      .style("stroke", () ->
+        return d3.rgb(_.options.y3.color).darker(1)
+      )
 
     @svg.select(".line-plot-path")
       .datum(@data)
@@ -1060,7 +1079,7 @@ window.Plotting.LinePlot = class LinePlot
       @focusText
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy - _dims.topPadding / 10)
-        .text(d.y.toFixed(1) + " " + @options.y.units)
+        .text(if d.y then d.y.toFixed(1) + " " + @options.y.units)
 
     if @options.y2.variable != null and !isNaN(dy2)
       @focusCircle2
@@ -1070,7 +1089,7 @@ window.Plotting.LinePlot = class LinePlot
       @focusText2
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy2 - _dims.topPadding / 10)
-        .text(d.y2.toFixed(1) + " " + @options.y2.units)
+        .text(if d.y2 then d.y2.toFixed(1) + " " + @options.y2.units)
 
     if @options.y3.variable != null and !isNaN(dy3)
       @focusCircle3
@@ -1080,7 +1099,7 @@ window.Plotting.LinePlot = class LinePlot
       @focusText3
         .attr("x", dx + _dims.leftPadding / 10)
         .attr("y", dy3 - _dims.topPadding / 10)
-        .text(d.y3.toFixed(1) + " " + @options.y3.units)
+        .text(if d.y3 then d.y3.toFixed(1) + " " + @options.y3.units)
 
     # Tooltip Overlap Prevention
     if (

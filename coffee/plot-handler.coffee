@@ -95,16 +95,19 @@ window.Plotting.Handler = class Handler
   listen: ->
     # Listen to Plot States & Update Data & Visible if Needed
     for key, plot of @template
-      if plot.proto.initialized
-        state = plot.proto.getState()
-        # Min-Side Events
-        if state.request.data.min and @updates < 7
-          @updates++
-          @prependData(key)
-        # Max-Side Events
-        if state.request.data.max and @updates < 7
-          @updates++
-          @appendData(key)
+      if plot
+        if plot.proto.initialized
+          state = plot.proto.getState()
+          # Min-Side Events
+          if state.request.data.min and @updates < 7 and !state.requested.min
+            @updates++
+            plot.proto.state.requested.min = true
+            @prependData(key)
+          # Max-Side Events
+          if state.request.data.max and @updates < 7 and !state.requested.max
+            @updates++
+            plot.proto.state.requested.max = true
+            @appendData(key)
 
     setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
 
@@ -277,7 +280,7 @@ window.Plotting.Handler = class Handler
     if _params > 2
       plot.options.y2.dataLoggerId = plot.options.dataParams[2].data_logger
 
-  getAppendData: (call, plotId, paramsKey) ->
+  getAppendData: (call, plotId, paramsKey, dir) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getAppendData(key, dataParams)"
     target = "#{@options.href}/api/v5/measurement"
@@ -292,6 +295,12 @@ window.Plotting.Handler = class Handler
       if plot.__data[call] is undefined
         plot.__data[call] = new window.Plotting.Data(data.responseJSON.results)
       else
+        if args.data_logger is plot.options.y2.dataLoggerId
+          data.responseJSON.results =
+            plot.__data.appendKeys(data.responseJSON.results, "_2")
+        else if args.data_logger is plot.options.y3.dataLoggerId
+          data.responseJSON.results =
+            plot.__data.appendKeys(data.responseJSON.results, "_3")
         plot.__data[call].join(data.responseJSON.results,
           [plot.proto.options.x.variable])
       if plot.__data[call].getSourceCount() is _length
@@ -302,6 +311,10 @@ window.Plotting.Handler = class Handler
           plot.proto.setData(plot.__data[call].get())
           plot.proto.append()
         delete plot.__data[call]
+      if dir is "min"
+        plot.proto.state.requested.min = false
+      else if dir is "max"
+        plot.proto.state.requested.max = false
       _.updates--
       if _.updates < 0
         console.log("Unopened request closed (@updates)!", _.updates)
@@ -320,7 +333,7 @@ window.Plotting.Handler = class Handler
       plot.proto.options.dataParams[paramsKey].max_datetime =
         @format(state.range.data.min)
       plot.proto.options.dataParams[paramsKey].limit = @options.updateLength
-      @getAppendData(call, plotId, paramsKey)
+      @getAppendData(call, plotId, paramsKey, "min")
 
   appendData: (plotId) ->
     # Move forward a certain offset of time records on all plots.
@@ -341,7 +354,7 @@ window.Plotting.Handler = class Handler
       plot.proto.options.dataParams[paramsKey].max_datetime =
         @format(new Date(_new_max_datetime))
       plot.proto.options.dataParams[paramsKey].limit = @options.updateLength
-      @getAppendData(call, plotId, paramsKey)
+      @getAppendData(call, plotId, paramsKey, "max")
 
   addVariable: (plotId, variable) ->
     # Add a variable to the plot.
@@ -428,22 +441,26 @@ window.Plotting.Handler = class Handler
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
     for plot in @template
-      plot.proto.setZoomTransform(transform)
+      if plot
+        plot.proto.setZoomTransform(transform)
 
   crosshair: (transform, mouse) ->
     # Set the cursor hover position of all plots. Triggered by a single plot."
     for plot in @template
-      plot.proto.setCrosshair(transform, mouse)
+      if plot
+        plot.proto.setCrosshair(transform, mouse)
 
   showCrosshairs: ->
     # Show all Crosshair Command
     for plot in @template
-      plot.proto.showCrosshair()
+      if plot
+        plot.proto.showCrosshair()
 
   hideCrosshairs: ->
     # Hide cursor crosshairs.
     for plot in @template
-      plot.proto.hideCrosshair()
+      if plot
+        plot.proto.hideCrosshair()
 
   appendControls: (plotId) ->
     # Append the Control Set to the Plot
@@ -555,11 +572,19 @@ window.Plotting.Handler = class Handler
     _bounds = @getVariableBounds(variable)
     _info = @getVariableInfo(variable)
 
+    console.log("Setting new options (variable)", variable)
+
     if @template[plotId].proto.options.y.variable == null
       @template[plotId].proto.options.y =
         dataLoggerId: dataLoggerId
         variable: variable
         color: @getColor('light', parseInt(plotId))
+      if variable is "wind_speed_average"
+        @template[plotId].proto.options.yBand.minVariable =
+          "wind_speed_minimum"
+        @template[plotId].proto.options.yBand.maxVariable =
+          "wind_speed_maximum"
+        console.log("Set yBand (option)", @template[plotId].proto.options.yBand)
       if _info
         @template[plotId].proto.options.y.title = _info.title
         @template[plotId].proto.options.y.units = _info.units
@@ -571,6 +596,13 @@ window.Plotting.Handler = class Handler
         dataLoggerId: dataLoggerId
         variable: variable
         color: @getColor('light', (parseInt(plotId)+4%7))
+      if variable is "wind_speed_average"
+        @template[plotId].proto.options.y2Band.minVariable =
+          "wind_speed_minimum_2"
+        @template[plotId].proto.options.y2Band.maxVariable =
+          "wind_speed_maximum_2"
+        console.log("Set y2Band (option)",
+          @template[plotId].proto.options.y2Band)
       if _info
         @template[plotId].proto.options.y2.title = _info.title
         @template[plotId].proto.options.y2.units = _info.units
@@ -582,9 +614,16 @@ window.Plotting.Handler = class Handler
         dataLoggerId: dataLoggerId
         variable: variable
         color: @getColor('light', (parseInt(plotId)+6%7))
+      if variable is "wind_speed_average"
+        @template[plotId].proto.options.y3Band.minVariable =
+          "wind_speed_minimum_3"
+        @template[plotId].proto.options.y3Band.maxVariable =
+          "wind_speed_maximum_3"
+        console.log("Set y3Band (option)",
+          @template[plotId].proto.options.y3Band)
       if _info
-        @template[plotId].proto.options.y2.title = _info.title
-        @template[plotId].proto.options.y2.units = _info.units
+        @template[plotId].proto.options.y3.title = _info.title
+        @template[plotId].proto.options.y3.units = _info.units
       if _bounds
         @template[plotId].proto.options.y3.min = _bounds.min
         @template[plotId].proto.options.y3.max = _bounds.max

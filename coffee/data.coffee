@@ -55,7 +55,7 @@ window.Plotting.Data = class Data
     preError = "#{@preError}.join(data, onKeys)"
     result = []
     _offset = "_#{parseInt(@sourceCount+1)}"
-    
+
     _protoKeys = Object.keys(@data[0])
     _dataKeys = Object.keys(data[0])
 
@@ -65,7 +65,7 @@ window.Plotting.Data = class Data
     else
       _primary = $.extend(true, [], @data)
       _secondary = $.extend(true, [], data)
-        
+
     for key, row of _primary
       _len = result.push($.extend(true, {}, row))
       for _key, _row of _secondary
@@ -87,7 +87,7 @@ window.Plotting.Data = class Data
     #   appends new)
     preError = "#{@preError}.merge(data, onKeys)"
     result = []
-    
+
     _protoKeys = Object.keys(@data[0])
     _dataKeys = Object.keys(data[0])
 
@@ -97,7 +97,7 @@ window.Plotting.Data = class Data
     else
       _primary = $.extend(true, [], @data)
       _secondary = $.extend(true, [], data)
-        
+
     for key, row of _primary
       _len = result.push($.extend(true, {}, row))
       for _key, _row of _secondary
@@ -115,11 +115,11 @@ window.Plotting.Data = class Data
 
   append: (data, onKeys) ->
     preError = "#{@preError}.append(data, onKeys)"
-    
+
     # Append/Prepend new data.
     _primary = $.extend(true, [], @data)
     _secondary = $.extend(true, [], data)
-    
+
     # Overwrite @data with overlapping new data
     for key, row of _primary
       for _key, _row of _secondary
@@ -135,7 +135,15 @@ window.Plotting.Data = class Data
     @data = @_clean(result)
     #@_tryError(@data, preError)
     return @data
-     
+
+  appendKeys: (data, append) ->
+    result = []
+
+    for key, row of data
+      result[key + append] = row
+
+    return @_clean(result)
+
   sub: (start, end) ->
     # Trim the data set.
     @data = @_clean($.extend(true, [], @data.slice(start, end)))
@@ -150,7 +158,7 @@ window.Plotting.Data = class Data
   _clean: (data) ->
     _data = $.extend(true, [], data)
     _len = _data.length - 1
-    
+
     for i in [0.._len]
       if _data[i] is undefined
         _data.splice(i, 1)

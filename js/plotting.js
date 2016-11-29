@@ -901,6 +901,16 @@
       return this.data;
     };
 
+    Data.prototype.appendKeys = function(data, append) {
+      var key, result, row;
+      result = [];
+      for (key in data) {
+        row = data[key];
+        result[key + append] = row;
+      }
+      return this._clean(result);
+    };
+
     Data.prototype.sub = function(start, end) {
       this.data = this._clean($.extend(true, [], this.data.slice(start, end)));
       return this.data;
@@ -1148,6 +1158,12 @@
         request: {
           data: null
         },
+        requested: {
+          data: {
+            min: false,
+            max: false
+          }
+        },
         mean: {
           scale: _domainMean
         }
@@ -1349,12 +1365,12 @@
       this.definition.line3 = d3.line().defined(function(d) {
         return !isNaN(d.y3) && d.y3 !== null;
       }).x(function(d) {
-        return _.definition.x(d.x);
+        return _.definsition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y3);
       });
       this.definition.area = d3.area().defined(function(d) {
-        return !isNaN(d.y) && d.y !== null;
+        return !isNaN(d.yMin) && d.yMin !== null && !isNaN(d.yMax) && d.yMax !== null;
       }).x(function(d) {
         return _.definition.x(d.x);
       }).y0(function(d) {
@@ -1363,7 +1379,7 @@
         return _.definition.y(d.yMax);
       });
       this.definition.area2 = d3.area().defined(function(d) {
-        return !isNaN(d.y2) && d.y2 !== null;
+        return !isNaN(d.y2Min) && d.y2Min !== null && !isNaN(d.y2Max) && d.y2Max !== null;
       }).x(function(d) {
         return _.definition.x(d.x);
       }).y0(function(d) {
@@ -1372,7 +1388,7 @@
         return _.definition.y(d.y2Max);
       });
       return this.definition.area3 = d3.area().defined(function(d) {
-        return !isNaN(d.y3) && d.y3 !== null;
+        return !isNaN(d.y3Min) && d.y3Min !== null && !isNaN(d.y3Max) && d.y3Max !== null;
       }).x(function(d) {
         return _.definition.x(d.x);
       }).y0(function(d) {
@@ -1537,21 +1553,15 @@
       if (this.options.y3.units) {
         _y3_title = _y3_title + " " + this.options.y3.units;
       }
-      if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
-        this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.y.color).style("opacity", 0.15).style("stroke", function() {
-          return d3.color(_.options.y.color).darker(1);
-        });
-      }
-      if (this.options.y2Band.minVariable !== null && this.options.y2Band.maxVariable !== null) {
-        this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", this.options.y2.color).style("opacity", 0.25).style("stroke", function() {
-          return d3.rgb(_.options.y2.color).darker(1);
-        });
-      }
-      if (this.options.y3Band.minVariable !== null && this.options.y3Band.maxVariable !== null) {
-        this.lineband3 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area3).attr("class", "line-plot-area3").style("fill", this.options.y3.color).style("opacity", 0.25).style("stroke", function() {
-          return d3.rgb(_.options.y3.color).darker(1);
-        });
-      }
+      this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.y.color).style("opacity", 0.15).style("stroke", function() {
+        return d3.color(_.options.y.color).darker(1);
+      });
+      this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", this.options.y2.color).style("opacity", 0.25).style("stroke", function() {
+        return d3.rgb(_.options.y2.color).darker(1);
+      });
+      this.lineband3 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area3).attr("class", "line-plot-area3").style("fill", this.options.y3.color).style("opacity", 0.25).style("stroke", function() {
+        return d3.rgb(_.options.y3.color).darker(1);
+      });
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.y.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.y2.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line3).attr("class", "line-plot-path3").style("stroke", this.options.y3.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
@@ -1576,9 +1586,15 @@
       var _, preError;
       preError = this.preError + "update()";
       _ = this;
-      this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
-      this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2);
-      this.svg.select(".line-plot-area3").datum(this.data).attr("d", this.definition.area3);
+      this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area).style("fill", this.options.y.color).style("stroke", function() {
+        return d3.rgb(_.options.y.color).darker(1);
+      });
+      this.svg.select(".line-plot-area2").datum(this.data).attr("d", this.definition.area2).style("fill", this.options.y2.color).style("stroke", function() {
+        return d3.rgb(_.options.y2.color).darker(1);
+      });
+      this.svg.select(".line-plot-area3").datum(this.data).attr("d", this.definition.area3).style("fill", this.options.y3.color).style("stroke", function() {
+        return d3.rgb(_.options.y3.color).darker(1);
+      });
       this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line).style("stroke", this.options.y.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.select(".line-plot-path2").datum(this.data).attr("d", this.definition.line2).style("stroke", this.options.y2.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       this.svg.select(".line-plot-path3").datum(this.data).attr("d", this.definition.line3).style("stroke", this.options.y3.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
@@ -1750,15 +1766,15 @@
       this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
       if (this.options.y.variable !== null && !isNaN(dy)) {
         this.focusCircle.attr("cx", dx).attr("cy", dy);
-        this.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y.toFixed(1) + " " + this.options.y.units);
+        this.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y ? d.y.toFixed(1) + " " + this.options.y.units : void 0);
       }
       if (this.options.y2.variable !== null && !isNaN(dy2)) {
         this.focusCircle2.attr("cx", dx).attr("cy", dy2);
-        this.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2.toFixed(1) + " " + this.options.y2.units);
+        this.focusText2.attr("x", dx + _dims.leftPadding / 10).attr("y", dy2 - _dims.topPadding / 10).text(d.y2 ? d.y2.toFixed(1) + " " + this.options.y2.units : void 0);
       }
       if (this.options.y3.variable !== null && !isNaN(dy3)) {
         this.focusCircle3.attr("cx", dx).attr("cy", dy3);
-        this.focusText3.attr("x", dx + _dims.leftPadding / 10).attr("y", dy3 - _dims.topPadding / 10).text(d.y3.toFixed(1) + " " + this.options.y3.units);
+        this.focusText3.attr("x", dx + _dims.leftPadding / 10).attr("y", dy3 - _dims.topPadding / 10).text(d.y3 ? d.y3.toFixed(1) + " " + this.options.y3.units : void 0);
       }
       if (this.options.y.variable !== null && this.options.y2.variable !== null && this.options.y3.variable !== null) {
         ypos = [];
@@ -1937,15 +1953,19 @@ Air Sciences Inc. - 2016
       ref = this.template;
       for (key in ref) {
         plot = ref[key];
-        if (plot.proto.initialized) {
-          state = plot.proto.getState();
-          if (state.request.data.min && this.updates < 7) {
-            this.updates++;
-            this.prependData(key);
-          }
-          if (state.request.data.max && this.updates < 7) {
-            this.updates++;
-            this.appendData(key);
+        if (plot) {
+          if (plot.proto.initialized) {
+            state = plot.proto.getState();
+            if (state.request.data.min && this.updates < 7 && !state.requested.min) {
+              this.updates++;
+              plot.proto.state.requested.min = true;
+              this.prependData(key);
+            }
+            if (state.request.data.max && this.updates < 7 && !state.requested.max) {
+              this.updates++;
+              plot.proto.state.requested.max = true;
+              this.appendData(key);
+            }
           }
         }
       }
@@ -2166,7 +2186,7 @@ Air Sciences Inc. - 2016
       }
     };
 
-    Handler.prototype.getAppendData = function(call, plotId, paramsKey) {
+    Handler.prototype.getAppendData = function(call, plotId, paramsKey, dir) {
       var _, _length, args, callback, preError, target;
       preError = this.preError + ".getAppendData(key, dataParams)";
       target = this.options.href + "/api/v5/measurement";
@@ -2182,6 +2202,11 @@ Air Sciences Inc. - 2016
         if (plot.__data[call] === void 0) {
           plot.__data[call] = new window.Plotting.Data(data.responseJSON.results);
         } else {
+          if (args.data_logger === plot.options.y2.dataLoggerId) {
+            data.responseJSON.results = plot.__data.appendKeys(data.responseJSON.results, "_2");
+          } else if (args.data_logger === plot.options.y3.dataLoggerId) {
+            data.responseJSON.results = plot.__data.appendKeys(data.responseJSON.results, "_3");
+          }
           plot.__data[call].join(data.responseJSON.results, [plot.proto.options.x.variable]);
         }
         if (plot.__data[call].getSourceCount() === _length) {
@@ -2193,6 +2218,11 @@ Air Sciences Inc. - 2016
             plot.proto.append();
           }
           delete plot.__data[call];
+        }
+        if (dir === "min") {
+          plot.proto.state.requested.min = false;
+        } else if (dir === "max") {
+          plot.proto.state.requested.max = false;
         }
         _.updates--;
         if (_.updates < 0) {
@@ -2215,7 +2245,7 @@ Air Sciences Inc. - 2016
         params = ref[paramsKey];
         plot.proto.options.dataParams[paramsKey].max_datetime = this.format(state.range.data.min);
         plot.proto.options.dataParams[paramsKey].limit = this.options.updateLength;
-        results.push(this.getAppendData(call, plotId, paramsKey));
+        results.push(this.getAppendData(call, plotId, paramsKey, "min"));
       }
       return results;
     };
@@ -2238,7 +2268,7 @@ Air Sciences Inc. - 2016
         params = ref[paramsKey];
         plot.proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_new_max_datetime));
         plot.proto.options.dataParams[paramsKey].limit = this.options.updateLength;
-        results.push(this.getAppendData(call, plotId, paramsKey));
+        results.push(this.getAppendData(call, plotId, paramsKey, "max"));
       }
       return results;
     };
@@ -2328,7 +2358,11 @@ Air Sciences Inc. - 2016
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         plot = ref[j];
-        results.push(plot.proto.setZoomTransform(transform));
+        if (plot) {
+          results.push(plot.proto.setZoomTransform(transform));
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -2339,7 +2373,11 @@ Air Sciences Inc. - 2016
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         plot = ref[j];
-        results.push(plot.proto.setCrosshair(transform, mouse));
+        if (plot) {
+          results.push(plot.proto.setCrosshair(transform, mouse));
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -2350,7 +2388,11 @@ Air Sciences Inc. - 2016
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         plot = ref[j];
-        results.push(plot.proto.showCrosshair());
+        if (plot) {
+          results.push(plot.proto.showCrosshair());
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -2361,7 +2403,11 @@ Air Sciences Inc. - 2016
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         plot = ref[j];
-        results.push(plot.proto.hideCrosshair());
+        if (plot) {
+          results.push(plot.proto.hideCrosshair());
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -2464,12 +2510,18 @@ Air Sciences Inc. - 2016
       var _bounds, _info;
       _bounds = this.getVariableBounds(variable);
       _info = this.getVariableInfo(variable);
+      console.log("Setting new options (variable)", variable);
       if (this.template[plotId].proto.options.y.variable === null) {
         this.template[plotId].proto.options.y = {
           dataLoggerId: dataLoggerId,
           variable: variable,
           color: this.getColor('light', parseInt(plotId))
         };
+        if (variable === "wind_speed_average") {
+          this.template[plotId].proto.options.yBand.minVariable = "wind_speed_minimum";
+          this.template[plotId].proto.options.yBand.maxVariable = "wind_speed_maximum";
+          console.log("Set yBand (option)", this.template[plotId].proto.options.yBand);
+        }
         if (_info) {
           this.template[plotId].proto.options.y.title = _info.title;
           this.template[plotId].proto.options.y.units = _info.units;
@@ -2484,6 +2536,11 @@ Air Sciences Inc. - 2016
           variable: variable,
           color: this.getColor('light', parseInt(plotId) + 4 % 7)
         };
+        if (variable === "wind_speed_average") {
+          this.template[plotId].proto.options.y2Band.minVariable = "wind_speed_minimum_2";
+          this.template[plotId].proto.options.y2Band.maxVariable = "wind_speed_maximum_2";
+          console.log("Set y2Band (option)", this.template[plotId].proto.options.y2Band);
+        }
         if (_info) {
           this.template[plotId].proto.options.y2.title = _info.title;
           this.template[plotId].proto.options.y2.units = _info.units;
@@ -2498,9 +2555,14 @@ Air Sciences Inc. - 2016
           variable: variable,
           color: this.getColor('light', parseInt(plotId) + 6 % 7)
         };
+        if (variable === "wind_speed_average") {
+          this.template[plotId].proto.options.y3Band.minVariable = "wind_speed_minimum_3";
+          this.template[plotId].proto.options.y3Band.maxVariable = "wind_speed_maximum_3";
+          console.log("Set y3Band (option)", this.template[plotId].proto.options.y3Band);
+        }
         if (_info) {
-          this.template[plotId].proto.options.y2.title = _info.title;
-          this.template[plotId].proto.options.y2.units = _info.units;
+          this.template[plotId].proto.options.y3.title = _info.title;
+          this.template[plotId].proto.options.y3.units = _info.units;
         }
         if (_bounds) {
           this.template[plotId].proto.options.y3.min = _bounds.min;
