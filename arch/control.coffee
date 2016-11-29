@@ -23,23 +23,9 @@ window.Plotting.Controls = class Controls
       expired: true
     access = Object.mergeDefaults access, accessToken
 
-    # Settings
-    @current = []
     @maps = []
-    @stations = {}
-    @markers = {}
-    @listeners = {}
+    @markers = []
     @api = new window.Plotting.API access.token
-
-  setCurrent: (plotId) ->
-    @current[plotId] = []
-    for row in @plotter.template[plotId].proto.options.dataParams
-      @current[plotId].push(parseInt(row.data_logger))
-
-  getCurrent: (plotId) ->
-    if plotId >= 0
-      return @current[plotId]
-    return @current
 
   appendStationDropdown: (plotId, appendTarget, parameter, current) ->
     # Append Station Dropdown.
@@ -49,8 +35,6 @@ window.Plotting.Controls = class Controls
     args = {}
     uuid = @uuid()
 
-    @setCurrent(plotId)
-
     callback = (data) ->
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
@@ -58,9 +42,8 @@ window.Plotting.Controls = class Controls
             data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
         <ul id=\"station-dropdown-#{plotId}\"
-          class=\"dropdown-menu pull-right\">"
+          class=\"dropdown-menu dropdown-menu-right\">"
 
-      _.stations[plotId] = data.responseJSON.results
       for region in data.responseJSON.results
         a_color = ""
         r_color = ""
@@ -91,14 +74,12 @@ window.Plotting.Controls = class Controls
           id = "data-logger-#{station.id}-plot-#{plotId}"
           _prepend = "<i id=\"#{id}\" class=\"icon-circle\"
             #{color}></i>"
-          _id = "add-station-#{plotId}-#{station.id}"
           html = "#{html}
-            <li class=\"station\" id=\"#{_id}\"
-              data-station-id=\"#{station.id}\" data-plot-id=\"#{plotId}\"
+            <li class=\"station\"
               style=\"padding: 1px 5px; cursor: pointer;
-              list-style-type: none\" onclick=\"\">
-               #{_prepend} #{station.datalogger_name} |
-               #{station.elevation} ft</li>"
+              list-style-type: none\" onclick=\"plotter.addStation(#{plotId},
+                #{station.id})\">
+               #{_prepend} #{station.datalogger_name}</li>"
 
         html = "#{html}
           </ul>"
@@ -109,17 +90,6 @@ window.Plotting.Controls = class Controls
 
       $(appendTarget).prepend(html)
 
-      # Bind Onclick Events
-      for region in data.responseJSON.results
-        for station in region.dataloggers
-          _id = "add-station-#{plotId}-#{station.id}"
-          $("#"+_id).off("click").on("click", (event) ->
-            event.stopPropagation()
-            _plotId = $(this).attr("data-plot-id")
-            _stationId = $(this).attr("data-station-id")
-            _.plotter.addStation(_plotId, _stationId)
-          )
-
       # Bind Dropdown & Submenu Click Event.
       $('#'+uuid).dropdown()
       _.bindSubMenuEvent(".subheader")
@@ -129,66 +99,46 @@ window.Plotting.Controls = class Controls
 
     @api.get(target, args, callback)
 
-  resetStationDropdown: (plotId) ->
-    _ = @
-
-    for region in @stations[plotId]
-      for station in region.dataloggers
-        _id = "add-station-#{plotId}-#{station.id}"
-        $("#"+_id).find("i.icon-circle").css("color", "")
-        $("#"+_id).off("click").on("click", (event) ->
-          event.stopPropagation()
-          _plotId = $(this).attr("data-plot-id")
-          _stationId = $(this).attr("data-station-id")
-          _.plotter.addStation(_plotId, _stationId)
-        )
-
   updateStationDropdown: (plotId) ->
-    _ = @
     _options = @plotter.template[plotId].proto.options
     _append = ""
-
-    @resetStationDropdown(plotId)
-
-    setActive = (key, dataLoggerId) ->
-      _color = _options[key].color
-      _cid = "circle-plot#{plotId}-station#{dataLoggerId}"
-      _append = " <i class=\"icon-circle\" id=\"#{_cid}\"
-        style=\"color: #{_color}\"></i>"
-      _id = "data-logger-#{dataLoggerId}-plot-#{plotId}"
-
-      console.log("(key) #{key} Variable active: (_id, _cid, dataLoggerId)",
-        _id, _cid, dataLoggerId)
-      if $("#" + _cid).length is 0
-        $(_options.target).find("##{_id}")
-          .css("color", _color)
-          .parent().parent().prev()
-          .css("background-color", "rgb(248,248,248)")
-          .css("font-weight", 700)
-
-        console.log("Station dots (dom)",
-          $(_options.target).find("##{_id}").children(":first")
-          .find(".station-dots"))
-
-        $(_options.target).find("##{_id}").children(":first")
-          .find(".station-dots")
-          .empty()
-          .append(_append)
-      $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
-        event.stopPropagation()
-        _plotId = $(this).attr("data-plot-id")
-        _stationId = $(this).attr("data-station-id")
-        _.plotter.removeStation(_plotId, _stationId)
-        _cir = "circle-plot#{_plotId}-station#{_stationId}"
-        $("#"+_cir).remove()
-      )
-
     if _options.y.dataLoggerId != null
-      setActive("y", _options.y.dataLoggerId)
+      _id = _options.y.dataLoggerId
+      _append = " <i class=\"icon-circle\"
+        style=\"color: #{_options.y.color}\"></i>"
+      id = "data-logger-#{_id}-plot-#{plotId}"
+      $(_options.target).find("\##{id}")
+        .css("color", _options.y.color)
+        .attr("onclic", "removeStation(#{plotId}, #{_options.y.dataLoggerId})")
+        .parent().parent().prev()
+        .css("background-color", "rgb(248,248,248)")
+        .children(":first").children(".station-dots")
+        .empty()
+        .append(_append)
     if _options.y2.variable != null
-      setActive("y2", _options.y2.dataLoggerId)
+      _id = _options.y2.dataLoggerId
+      _append = " <i class=\"icon-circle\"
+        style=\"color: #{_options.y2.color}\"></i>"
+      id = "data-logger-#{_id}-plot-#{plotId}"
+      $(_options.target).find("\##{id}")
+        .css("color", _options.y2.color)
+        .attr("onclic", "removeStation(#{plotId}, #{_options.y2.dataLoggerId})")
+        .parent().parent().prev()
+        .css("background-color", "rgb(248,248,248)")
+        .children(":first")
+        .append(_append)
     if _options.y3.variable != null
-      setActive("y3", _options.y3.dataLoggerId)
+      _id = _options.y3.dataLoggerId
+      _append = " <i class=\"icon-circle\"
+        style=\"color: #{_options.y3.color}\"></i>"
+      id = "data-logger-#{_id}-plot-#{plotId}"
+      $(_options.target).find("\##{id}")
+        .css("color", _options.y3.color)
+        .attr("onclic", "removeStation(#{plotId}, #{_options.y3.dataLoggerId})")
+        .parent().parent().prev()
+        .css("background-color", "rgb(248,248,248)")
+        .children(":first")
+        .append(_append)
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.
@@ -206,7 +156,7 @@ window.Plotting.Controls = class Controls
           data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
         <ul id=\"param-dropdown-#{plotId}\"
-          class=\"dropdown-menu pull-right\" role=\"menu\"
+          class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
           aria-labelledby=\"#{uuid}\">"
 
       for parameter in data.responseJSON.results
@@ -255,16 +205,19 @@ window.Plotting.Controls = class Controls
     if _options.y.variable != null
       _id = _options.y.variable.replace('_', '-')
       id = "#{_id}-plot-#{plotId}"
+      console.log("Update-Dropdown y", id)
       $(_options.target).find("\##{id}")
         .css("color", _options.y.color)
     if _options.y2.variable != null
       _id = _options.y2.variable.replace('_', '-')
       id = "#{_id}-plot-#{plotId}"
+      console.log("Update-Dropdown y2", id)
       $(_options.target).find("\##{id}")
         .css("color", _options.y2.color)
     if _options.y3.variable != null
       _id = _options.y3.variable.replace('_', '-')
       id = "#{_id}-plot-#{plotId}"
+      console.log("Update-Dropdown y3", id)
       $(_options.target).find("\##{id}")
         .css("color", _options.y3.color)
 
@@ -272,10 +225,10 @@ window.Plotting.Controls = class Controls
     # Append a google maps popover.
     _ = @
     uuid = @uuid()
-    dom_uuid = "map-control-" + plotId
+    dom_uuid = "map-control-" + uuid
     html = "<li data-toggle=\"popover\" data-placement=\"left\">
-          <i id=\"map-#{plotId}\" class=\"icon-map-marker\"
-          style=\"cursor: pointer\"></i>
+          <i class=\"icon-map-marker\" style=\"cursor: pointer\"
+          onclick=\"plotter.controls.toggleMap('#{uuid}')\"></i>
         </li>
         <div class=\"popover\" style=\"max-width: 356px;\">
           <div class=\"arrow\"></div>
@@ -285,14 +238,11 @@ window.Plotting.Controls = class Controls
           </div>
         </div>"
     $(appendTarget).prepend(html)
-    $("#map-#{plotId}").on('click', ->
-      _.plotter.controls.toggleMap(plotId)
-    )
 
-    @maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
+    @markers[uuid] = []
+    @maps[uuid] = new google.maps.Map(document.getElementById(dom_uuid), {
       center: new google.maps.LatLng(46.980, -121.980),
       zoom: 6,
-      maxZoom: 12,
       mapTypeId: 'terrain',
       zoomControl: true,
       mapTypeControl: false,
@@ -303,12 +253,8 @@ window.Plotting.Controls = class Controls
     })
 
     infowindow = new google.maps.InfoWindow({
-      content: "",
-      disableAutoPan: true
+      content: ""
     })
-
-    @markers[plotId] = []
-    @listeners[plotId] = []
 
     _bounds = new google.maps.LatLngBounds()
     _bound_points = []
@@ -319,7 +265,6 @@ window.Plotting.Controls = class Controls
         color = "rgb(200,200,200)"
         scale = 5
         opacity = 0.5
-        _row_id = "map-plot-#{plotId}-station-#{station.id}"
         _row_current = _.isCurrent(current, 'dataLoggerId', station.id)
 
         if _row_current
@@ -327,13 +272,11 @@ window.Plotting.Controls = class Controls
           scale = 7
           opacity = 0.8
           _bound_points.push(new google.maps.LatLng(station.lat, station.lon))
-
         marker = new google.maps.Marker({
           position: {
             lat: station.lat,
             lng: station.lon
           },
-          id: _row_id,
           tooltip: "#{station.datalogger_name} - #{station.elevation} ft",
           dataloggerid: station.id,
           icon: {
@@ -347,125 +290,38 @@ window.Plotting.Controls = class Controls
         })
         marker.addListener('mouseover', ->
           infowindow.setContent(@tooltip)
-          infowindow.open(_.maps[plotId], this)
+          infowindow.open(_.maps[uuid], this)
         )
 
         marker.addListener('mouseout', ->
           infowindow.close()
         )
 
-        @listeners[plotId][_row_id] = marker.addListener('click', ->
+        marker.addListener('click', ->
           _.plotter.addStation(plotId, @dataloggerid)
         )
 
-        _len = @markers[plotId][_row_id] = marker
-        @markers[plotId][_row_id].setMap(@maps[plotId])
+        _len = @markers[uuid].push(marker)
+        @markers[uuid][_len-1].setMap(@maps[uuid])
 
     # Fit to Bounds
     for _point in _bound_points
       _bounds.extend(_point)
 
-    @maps[plotId].fitBounds(_bounds)
-    #@maps[plotId].setZoom(12)
+    @maps[uuid].fitBounds(_bounds)
+    @maps[uuid].setZoom(12)
 
-  resetStationMap: (plotId) ->
-    # Reset the Station Map
-    _= @
-
-    for _key, _marker of @markers[plotId]
-      _marker.setIcon({
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 5,
-        strokeWeight: 2,
-        fillOpacity: 0.5,
-        fillColor: "rgb(200,200,200)"
-      })
-      _marker.set("selected", false)
-
-      _.listeners[plotId][_key].remove()
-      _.listeners[plotId][_key] = _marker.addListener('click', ->
-        _dataLoggerId = this.get("dataloggerid")
-        _.plotter.addStation(plotId, _dataLoggerId)
-      )
-
-  updateStationMap: (plotId) ->
-    # Update the station map markers.
-    _ = @
-
-    @resetStationMap(plotId)
-    @setCurrent(plotId)
-
-    updateMarker = (plotId, rowId, color) ->
-      _.markers[plotId][rowId].setIcon({
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 7,
-        strokeWeight: 2,
-        fillOpacity: 0.8,
-        fillColor: color
-      })
-      _.markers[plotId][rowId].set("selected", true)
-
-      _.listeners[plotId][rowId].remove()
-      _.listeners[plotId][rowId] = _.markers[plotId][rowId].addListener(
-        'click', ->
-          _dataLoggerId = this.get("dataloggerid")
-          _.plotter.removeStation(plotId, _dataLoggerId)
-      )
-
-    _options = @plotter.template[plotId].proto.options
-    if _options.y.variable != null
-      _id = _options.y.variable.replace('_', '-')
-      _row_id = "map-plot-#{plotId}-station-#{_options.y.dataLoggerId}"
-      _color = _options.y.color
-      updateMarker(plotId, _row_id, _color)
-    if _options.y2.variable != null
-      _id = _options.y2.variable.replace('_', '-')
-      _row_id = "map-plot-#{plotId}-station-#{_options.y2.dataLoggerId}"
-      _color = _options.y2.color
-      updateMarker(plotId, _row_id, _color)
-    if _options.y3.variable != null
-      _id = _options.y3.variable.replace('_', '-')
-      _row_id = "map-plot-#{plotId}-station-#{_options.y3.dataLoggerId}"
-      _color = _options.y3.color
-      updateMarker(plotId, _row_id, _color)
-
-    @boundOnSelected(plotId)
-
-  boundOnSelected: (plotId) ->
-    # Reset the Station Map
-    _ = @
-    _bounds = new google.maps.LatLngBounds()
-    _bound_points = []
-
-    for _key, _marker of @markers[plotId]
-      _selected = _marker.get("selected")
-      if _selected is true
-        _bound_points.push(_marker.getPosition())
-
-    # Fit to Bounds
-    for _point in _bound_points
-      _bounds.extend(_point)
-
-    @maps[plotId].fitBounds(_bounds)
-    if @maps[plotId].getZoom() < 6
-      @maps[plotId].setZoom(6)
-
-  toggleMap: (plotId) ->
+  toggleMap: (mapUuid) ->
     # toggle the map div.
-    __nwac_left = 128
-    __nwac_top = 256
-
-    _center = @plotter.controls.maps[plotId].getCenter()
-    _zoom = @plotter.controls.maps[plotId].getZoom()
-
-    _offset = $("#map-control-#{plotId}").parent().parent().prev().offset()
-    $("#map-control-#{plotId}").parent().parent().toggle()
-      .css("left", _offset.left - 356 - __nwac_left)
-      .css("top", _offset.top - __nwac_top)
-
-    google.maps.event.trigger(@plotter.controls.maps[plotId], 'resize')
-    @plotter.controls.maps[plotId].setCenter(_center)
-    @plotter.controls.maps[plotId].setZoom(_zoom)
+    _offset = $("\#map-control-#{mapUuid}").parent().parent().prev().offset()
+    $("\#map-control-#{mapUuid}").parent().parent().toggle()
+      .css("left", _offset.left - 356)
+      .css("top", _offset.top)
+    _center = @plotter.controls.maps[mapUuid].getCenter()
+    _zoom = @plotter.controls.maps[mapUuid].getZoom()
+    google.maps.event.trigger(@plotter.controls.maps[mapUuid], 'resize')
+    @plotter.controls.maps[mapUuid].setCenter(_center)
+    @plotter.controls.maps[mapUuid].setZoom(_zoom)
 
   toggle: (selector) ->
     # Toggle the plotId's station down.
@@ -493,32 +349,32 @@ window.Plotting.Controls = class Controls
     _ = @
     uuid = @uuid()
 
-    _ul = "<ul id=\"new-#{uuid}-dropdown\"
-        class=\"dropdown-menu pull-right\" role=\"menu\"
-        aria-labelledby=\"new-#{uuid}\">
-        <li><a id=\"new-#{uuid}-parameter\"
-          style=\"cursor: pointer\">Add Parameter Plot</a></li>
-        <li><a id=\"new-#{uuid}-station\"
-          style=\"cursor: pointer\">Add Station Plot</a></li>
-      </ul>"
-
     html = "<div class=\"dropdown\">
-        <li><a id=\"new-#{uuid}\" role=\"button\" href=\"#\">
-            <i class=\"icon-plus\"></i>
-          </a></li>
+        <li><a id=\"new-#{uuid}\" class=\"new-dropdown dropdown-toggle\"
+          role=\"button\" data-toggle=\"dropdown\" href=\"#\">
+          <i class=\"icon-plus\"></i></a>
+        <ul id=\"new-#{uuid}-dropdown\"
+          class=\"dropdown-menu dropdown-menu-right\" role=\"menu\"
+          aria-labelledby=\"new-#{uuid}\">
+          <li><a id=\"new-#{uuid}-parameter\"
+            style=\"cursor: pointer\">Add Parameter Plot</a></li>
+          <li><a id=\"new-#{uuid}-station\"
+            style=\"cursor: pointer\">Add Station Plot</a></li>
+        </ul>
+        </li>
         </div>"
 
     # Append & Bind Dropdown
     $(appendTarget).append(html)
-    #$("#new-#{uuid}").dropdown()
+    $("#new-#{uuid}").dropdown()
 
     # Bind Click Events
-    $("#new-#{uuid}").on('click', ->
+    $("#new-#{uuid}-parameter").on('click', ->
       _.plotter.add("parameter")
     )
-    # $("#new-#{uuid}-station").on('click', ->
-    #   _.plotter.add("station")
-    # )
+    $("#new-#{uuid}-station").on('click', ->
+      _.plotter.add("station")
+    )
 
   uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
@@ -545,3 +401,12 @@ window.Plotting.Controls = class Controls
           .addClass("icon-caret-up")
         next.slideDown()
     )
+
+  selectInitParameter: () ->
+    html = "<ul>
+
+      </ul>"
+
+
+  selectInitStation: () ->
+    html = ""

@@ -381,6 +381,8 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.y3.dataLoggerId
     )
       console.log("Maximum of 3 Plot selected.")
+      @controls.updateStationDropdown(plotId)
+      @controls.updateStationMap(plotId)
       return null
 
     state = @template[plotId].proto.getState()

@@ -260,6 +260,7 @@
         expired: true
       };
       access = Object.mergeDefaults(access, accessToken);
+      this.current = [];
       this.maps = [];
       this.stations = {};
       this.markers = {};
@@ -267,12 +268,32 @@
       this.api = new window.Plotting.API(access.token);
     }
 
+    Controls.prototype.setCurrent = function(plotId) {
+      var i, len, ref, results1, row;
+      this.current[plotId] = [];
+      ref = this.plotter.template[plotId].proto.options.dataParams;
+      results1 = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        row = ref[i];
+        results1.push(this.current[plotId].push(parseInt(row.data_logger)));
+      }
+      return results1;
+    };
+
+    Controls.prototype.getCurrent = function(plotId) {
+      if (plotId >= 0) {
+        return this.current[plotId];
+      }
+      return this.current;
+    };
+
     Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter, current) {
       var _, args, callback, target, uuid;
       target = location.protocol + "//dev.nwac.us/api/v5/dataloggerregion?sensor_name=" + parameter;
       _ = this;
       args = {};
       uuid = this.uuid();
+      this.setCurrent(plotId);
       callback = function(data) {
         var _dots, _id, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
@@ -368,54 +389,22 @@
     };
 
     Controls.prototype.updateStationDropdown = function(plotId) {
-      var _, _append, _cid, _id, _options, id;
+      var _, _append, _options, setActive;
       _ = this;
       _options = this.plotter.template[plotId].proto.options;
       _append = "";
       this.resetStationDropdown(plotId);
-      if (_options.y.dataLoggerId !== null) {
-        _id = _options.y.dataLoggerId;
-        _cid = "circle-plot" + plotId + "-station" + _id;
-        _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _options.y.color + "\"></i>";
-        id = "data-logger-" + _id + "-plot-" + plotId;
+      setActive = function(key, dataLoggerId) {
+        var _cid, _color, _id;
+        _color = _options[key].color;
+        _cid = "circle-plot" + plotId + "-station" + dataLoggerId;
+        _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _color + "\"></i>";
+        _id = "data-logger-" + dataLoggerId + "-plot-" + plotId;
+        console.log("(key) " + key + " Variable active: (_id, _cid, dataLoggerId)", _id, _cid, dataLoggerId);
         if ($("#" + _cid).length === 0) {
-          $(_options.target).find("#" + id).css("color", _options.y.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").children(".station-dots").empty().append(_append);
-        }
-        $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
-          var _cir, _plotId, _stationId;
-          event.stopPropagation();
-          _plotId = $(this).attr("data-plot-id");
-          _stationId = $(this).attr("data-station-id");
-          _.plotter.removeStation(_plotId, _stationId);
-          _cir = "circle-plot" + _plotId + "-station" + _stationId;
-          return $("#" + _cir).remove();
-        });
-      }
-      if (_options.y2.variable !== null) {
-        _id = _options.y2.dataLoggerId;
-        _cid = "circle-plot" + plotId + "-station" + _id;
-        _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _options.y2.color + "\"></i>";
-        id = "data-logger-" + _id + "-plot-" + plotId;
-        if ($("#" + _cid).length === 0) {
-          $(_options.target).find("\#" + id).css("color", _options.y2.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").append(_append);
-        }
-        $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
-          var _cir, _plotId, _stationId;
-          event.stopPropagation();
-          _plotId = $(this).attr("data-plot-id");
-          _stationId = $(this).attr("data-station-id");
-          _.plotter.removeStation(_plotId, _stationId);
-          _cir = "circle-plot" + _plotId + "-station" + _stationId;
-          return $("#" + _cir).remove();
-        });
-      }
-      if (_options.y3.variable !== null) {
-        _id = _options.y3.dataLoggerId;
-        _cid = "circle-plot" + plotId + "-station" + _id;
-        _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _options.y3.color + "\"></i>";
-        id = "data-logger-" + _id + "-plot-" + plotId;
-        if ($("#" + _cid).length === 0) {
-          $(_options.target).find("\#" + id).css("color", _options.y3.color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700).children(":first").append(_append);
+          $(_options.target).find("#" + _id).css("color", _color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700);
+          console.log("Station dots (dom)", $(_options.target).find("#" + _id).children(":first").find(".station-dots"));
+          $(_options.target).find("#" + _id).children(":first").find(".station-dots").empty().append(_append);
         }
         return $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
           var _cir, _plotId, _stationId;
@@ -426,6 +415,15 @@
           _cir = "circle-plot" + _plotId + "-station" + _stationId;
           return $("#" + _cir).remove();
         });
+      };
+      if (_options.y.dataLoggerId !== null) {
+        setActive("y", _options.y.dataLoggerId);
+      }
+      if (_options.y2.variable !== null) {
+        setActive("y2", _options.y2.dataLoggerId);
+      }
+      if (_options.y3.variable !== null) {
+        return setActive("y3", _options.y3.dataLoggerId);
       }
     };
 
@@ -602,6 +600,7 @@
       var _, _color, _id, _options, _row_id, updateMarker;
       _ = this;
       this.resetStationMap(plotId);
+      this.setCurrent(plotId);
       updateMarker = function(plotId, rowId, color) {
         _.markers[plotId][rowId].setIcon({
           path: google.maps.SymbolPath.CIRCLE,
@@ -1178,7 +1177,6 @@
     LinePlot.prototype.processData = function(data) {
       var _result, key, result, row;
       result = [];
-      console.log("Process Data (data)", data);
       for (key in data) {
         row = data[key];
         result[key] = {
@@ -1257,6 +1255,8 @@
       for (_key in ref) {
         _row = ref[_key];
         delete _row[key];
+        delete _row[key + "Min"];
+        delete _row[key + "Max"];
         result[_key] = _row;
       }
       _full = new Plotting.Data(result);
@@ -1763,8 +1763,10 @@
         console.log("d is broken (d)", d);
       }
       cx = dx - _dims.leftPadding;
-      this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-      this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+      if (cx >= 0) {
+        this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+        this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+      }
       if (this.options.y.variable !== null && !isNaN(dy)) {
         this.focusCircle.attr("cx", dx).attr("cy", dy);
         this.focusText.attr("x", dx + _dims.leftPadding / 10).attr("y", dy - _dims.topPadding / 10).text(d.y ? d.y.toFixed(1) + " " + this.options.y.units : void 0);
@@ -2297,6 +2299,8 @@ Air Sciences Inc. - 2016
       }
       if (this.template[plotId].proto.options.y.dataLoggerId && this.template[plotId].proto.options.y2.dataLoggerId && this.template[plotId].proto.options.y3.dataLoggerId) {
         console.log("Maximum of 3 Plot selected.");
+        this.controls.updateStationDropdown(plotId);
+        this.controls.updateStationMap(plotId);
         return null;
       }
       state = this.template[plotId].proto.getState();

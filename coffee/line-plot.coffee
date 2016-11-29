@@ -149,7 +149,7 @@ window.Plotting.LinePlot = class LinePlot
   processData: (data) ->
     # Process a data set.
     result = []
-    console.log("Process Data (data)", data)
+    #console.log("Process Data (data)", data)
     for key, row of data
       result[key] =
         #x: @parseDate(row[@options.x.variable])
@@ -231,6 +231,8 @@ window.Plotting.LinePlot = class LinePlot
     result = []
     for _key, _row of @data
       delete _row[key]
+      delete _row[key + "Min"]
+      delete _row[key + "Max"]
       result[_key] = _row
     _full = new Plotting.Data(result)
     @data = _full.get()
@@ -1061,19 +1063,21 @@ window.Plotting.LinePlot = class LinePlot
       console.log("d is broken (d)", d)
 
     cx = dx - _dims.leftPadding
-    @crosshairs.select(".crosshair-x")
-      .attr("x1", cx)
-      .attr("y1", _dims.topPadding)
-      .attr("x2", cx)
-      .attr("y2", _dims.innerHeight + _dims.topPadding)
-      .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-    @crosshairs.select(".crosshair-x-under")
-      .attr("x", cx)
-      .attr("y", _dims.topPadding)
-      .attr("width", (_dims.innerWidth - cx))
-      .attr("height", _dims.innerHeight)
-      .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+    if cx >= 0
+      @crosshairs.select(".crosshair-x")
+        .attr("x1", cx)
+        .attr("y1", _dims.topPadding)
+        .attr("x2", cx)
+        .attr("y2", _dims.innerHeight + _dims.topPadding)
+        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+
+      @crosshairs.select(".crosshair-x-under")
+        .attr("x", cx)
+        .attr("y", _dims.topPadding)
+        .attr("width", (_dims.innerWidth - cx))
+        .attr("height", _dims.innerHeight)
+        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
     if @options.y.variable != null and !isNaN(dy)
       @focusCircle
