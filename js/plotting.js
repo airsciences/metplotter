@@ -2226,7 +2226,6 @@ Air Sciences Inc. - 2016
         }
         _.updates--;
         if (_.updates < 0) {
-          console.log("Unopened request closed (@updates)!", _.updates);
           return _.updates = 0;
         }
       };
@@ -2510,7 +2509,6 @@ Air Sciences Inc. - 2016
       var _bounds, _info;
       _bounds = this.getVariableBounds(variable);
       _info = this.getVariableInfo(variable);
-      console.log("Setting new options (variable)", variable);
       if (this.template[plotId].proto.options.y.variable === null) {
         this.template[plotId].proto.options.y = {
           dataLoggerId: dataLoggerId,
@@ -2520,7 +2518,6 @@ Air Sciences Inc. - 2016
         if (variable === "wind_speed_average") {
           this.template[plotId].proto.options.yBand.minVariable = "wind_speed_minimum";
           this.template[plotId].proto.options.yBand.maxVariable = "wind_speed_maximum";
-          console.log("Set yBand (option)", this.template[plotId].proto.options.yBand);
         }
         if (_info) {
           this.template[plotId].proto.options.y.title = _info.title;
@@ -2539,7 +2536,6 @@ Air Sciences Inc. - 2016
         if (variable === "wind_speed_average") {
           this.template[plotId].proto.options.y2Band.minVariable = "wind_speed_minimum_2";
           this.template[plotId].proto.options.y2Band.maxVariable = "wind_speed_maximum_2";
-          console.log("Set y2Band (option)", this.template[plotId].proto.options.y2Band);
         }
         if (_info) {
           this.template[plotId].proto.options.y2.title = _info.title;
@@ -2558,7 +2554,6 @@ Air Sciences Inc. - 2016
         if (variable === "wind_speed_average") {
           this.template[plotId].proto.options.y3Band.minVariable = "wind_speed_minimum_3";
           this.template[plotId].proto.options.y3Band.maxVariable = "wind_speed_maximum_3";
-          console.log("Set y3Band (option)", this.template[plotId].proto.options.y3Band);
         }
         if (_info) {
           this.template[plotId].proto.options.y3.title = _info.title;
@@ -2602,7 +2597,7 @@ Air Sciences Inc. - 2016
           min: 0,
           max: 60
         },
-        wind_speed: {
+        wind_speed_average: {
           min: 0,
           max: 60
         }
@@ -2645,7 +2640,7 @@ Air Sciences Inc. - 2016
           title: "Temperature",
           units: "°F"
         },
-        wind_speed: {
+        wind_speed_average: {
           title: "Wind Speed",
           units: "mph"
         }

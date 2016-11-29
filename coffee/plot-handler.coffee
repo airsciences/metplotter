@@ -317,7 +317,6 @@ window.Plotting.Handler = class Handler
         plot.proto.state.requested.max = false
       _.updates--
       if _.updates < 0
-        console.log("Unopened request closed (@updates)!", _.updates)
         _.updates = 0
 
     @api.get(target, args, callback)
@@ -572,7 +571,6 @@ window.Plotting.Handler = class Handler
     _bounds = @getVariableBounds(variable)
     _info = @getVariableInfo(variable)
 
-    console.log("Setting new options (variable)", variable)
 
     if @template[plotId].proto.options.y.variable == null
       @template[plotId].proto.options.y =
@@ -584,7 +582,6 @@ window.Plotting.Handler = class Handler
           "wind_speed_minimum"
         @template[plotId].proto.options.yBand.maxVariable =
           "wind_speed_maximum"
-        console.log("Set yBand (option)", @template[plotId].proto.options.yBand)
       if _info
         @template[plotId].proto.options.y.title = _info.title
         @template[plotId].proto.options.y.units = _info.units
@@ -601,8 +598,6 @@ window.Plotting.Handler = class Handler
           "wind_speed_minimum_2"
         @template[plotId].proto.options.y2Band.maxVariable =
           "wind_speed_maximum_2"
-        console.log("Set y2Band (option)",
-          @template[plotId].proto.options.y2Band)
       if _info
         @template[plotId].proto.options.y2.title = _info.title
         @template[plotId].proto.options.y2.units = _info.units
@@ -619,8 +614,6 @@ window.Plotting.Handler = class Handler
           "wind_speed_minimum_3"
         @template[plotId].proto.options.y3Band.maxVariable =
           "wind_speed_maximum_3"
-        console.log("Set y3Band (option)",
-          @template[plotId].proto.options.y3Band)
       if _info
         @template[plotId].proto.options.y3.title = _info.title
         @template[plotId].proto.options.y3.units = _info.units
@@ -651,7 +644,7 @@ window.Plotting.Handler = class Handler
       temperature:
         min: 0
         max: 60
-      wind_speed:
+      wind_speed_average:
         min: 0
         max: 60
      return bounds[variable]
@@ -682,7 +675,7 @@ window.Plotting.Handler = class Handler
       temperature:
         title: "Temperature"
         units: "°F"
-      wind_speed:
+      wind_speed_average:
         title: "Wind Speed"
         units: "mph"
     return info[variable]
