@@ -149,6 +149,7 @@ window.Plotting.LinePlot = class LinePlot
   processData: (data) ->
     # Process a data set.
     result = []
+    console.log("Process Data (data)", data)
     for key, row of data
       result[key] =
         #x: @parseDate(row[@options.x.variable])
@@ -343,7 +344,7 @@ window.Plotting.LinePlot = class LinePlot
       .defined((d)->
         !isNaN(d.y3) and d.y3 isnt null
       )
-      .x((d) -> _.definsition.x(d.x))
+      .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y3))
 
     @definition.area = d3.area()

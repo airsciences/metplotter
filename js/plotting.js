@@ -1178,6 +1178,7 @@
     LinePlot.prototype.processData = function(data) {
       var _result, key, result, row;
       result = [];
+      console.log("Process Data (data)", data);
       for (key in data) {
         row = data[key];
         result[key] = {
@@ -1365,7 +1366,7 @@
       this.definition.line3 = d3.line().defined(function(d) {
         return !isNaN(d.y3) && d.y3 !== null;
       }).x(function(d) {
-        return _.definsition.x(d.x);
+        return _.definition.x(d.x);
       }).y(function(d) {
         return _.definition.y(d.y3);
       });

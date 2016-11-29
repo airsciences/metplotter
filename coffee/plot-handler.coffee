@@ -571,7 +571,6 @@ window.Plotting.Handler = class Handler
     _bounds = @getVariableBounds(variable)
     _info = @getVariableInfo(variable)
 
-
     if @template[plotId].proto.options.y.variable == null
       @template[plotId].proto.options.y =
         dataLoggerId: dataLoggerId
