@@ -945,7 +945,8 @@ window.Plotting.LinePlot = class LinePlot
     # Redefine & Redraw the Area
     @definition.area = d3.area()
       .defined((d)->
-        !isNaN(d.y) and d.y isnt null
+        !isNaN(d.yMin) and d.yMin isnt null and
+        !isNaN(d.yMax) and d.yMax isnt null
       )
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
       .y0((d) -> _.definition.y(d.yMin))
@@ -968,6 +969,7 @@ window.Plotting.LinePlot = class LinePlot
     # Redefine & Redraw the Area2
     @definition.area2 = d3.area()
       .defined((d)->
+        !isNaN(d.y2Min) and d.y2Min isnt null and
         !isNaN(d.y2Max) and d.y2Max isnt null
       )
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
@@ -991,6 +993,7 @@ window.Plotting.LinePlot = class LinePlot
     # Redefine & Redraw the Area3
     @definition.area3 = d3.area()
       .defined((d)->
+        !isNaN(d.y3Min) and d.y3Min isnt null and
         !isNaN(d.y3Max) and d.y3Max isnt null
       )
       .x((d) -> _transform.applyX(_.definition.x(d.x)))

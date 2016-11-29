@@ -1659,7 +1659,7 @@
       this.setDataRequirement();
       this.setZoomState(_transform.k);
       this.definition.area = d3.area().defined(function(d) {
-        return !isNaN(d.y) && d.y !== null;
+        return !isNaN(d.yMin) && d.yMin !== null && !isNaN(d.yMax) && d.yMax !== null;
       }).x(function(d) {
         return _transform.applyX(_.definition.x(d.x));
       }).y0(function(d) {
@@ -1677,7 +1677,7 @@
       });
       this.svg.select(".line-plot-path").attr("d", this.definition.line);
       this.definition.area2 = d3.area().defined(function(d) {
-        return !isNaN(d.y2Max) && d.y2Max !== null;
+        return !isNaN(d.y2Min) && d.y2Min !== null && !isNaN(d.y2Max) && d.y2Max !== null;
       }).x(function(d) {
         return _transform.applyX(_.definition.x(d.x));
       }).y0(function(d) {
@@ -1695,7 +1695,7 @@
       });
       this.svg.select(".line-plot-path2").attr("d", this.definition.line2);
       this.definition.area3 = d3.area().defined(function(d) {
-        return !isNaN(d.y3Max) && d.y3Max !== null;
+        return !isNaN(d.y3Min) && d.y3Min !== null && !isNaN(d.y3Max) && d.y3Max !== null;
       }).x(function(d) {
         return _transform.applyX(_.definition.x(d.x));
       }).y0(function(d) {
