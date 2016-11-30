@@ -311,8 +311,13 @@ window.Plotting.Handler = class Handler
           plot.proto.setData(plot.__data[call].get())
           plot.proto.append()
         delete plot.__data[call]
+
+      # Update Controls
+      _.controls.removeSpinner(plotId)
       _.controls.updateStationDropdown(plotId)
       _.controls.updateStationMap(plotId)
+
+      # Update Request Readiness
       if dir is "min"
         plot.proto.state.requested.min = false
       else if dir is "max"
@@ -434,6 +439,9 @@ window.Plotting.Handler = class Handler
       _plot.getDefinition()
       _plot.removeData(_key)
       _plot.update()
+
+    # Update The Controls After Remove
+    @controls.removeSpinner(plotId)
     @controls.updateStationDropdown(plotId)
     @controls.updateStationMap(plotId)
 

@@ -156,17 +156,21 @@ window.Plotting.Controls = class Controls
         $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]")
           .off("click").on("click", (event) ->
             event.stopPropagation()
-            plotter.removeStation($(this).attr("data-plot-id"),
+            _plotId = $(this).attr("data-plot-id")
+            plotter.removeStation(_plotId,
               $(this).attr("data-station-id"))
-            console.log("Remove Station Clicked!")
+            $(this).append("<i class=\"icon-spinner icon-spin\"
+            data-plot-id=\"#{_plotId}\"></i>")
           )
       else
         $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]")
           .off("click").on("click", (event) ->
             event.stopPropagation()
-            plotter.addStation($(this).attr("data-plot-id"),
+            _plotId = $(this).attr("data-plot-id")
+            plotter.addStation(_plotId,
               $(this).attr("data-station-id"))
-            console.log("Add Station Clicked!")
+            $(this).append("<i class=\"icon-spinner icon-spin\"
+            data-plot-id=\"#{_plotId}\"></i>")
           )
 
     # Set the appropriate styling and onclick events for a plot's dropdown.
@@ -190,6 +194,9 @@ window.Plotting.Controls = class Controls
       $("[data-region=\"#{_data_region}\"][data-plot-id=\"#{plotId}\"] \
       > span.region-dots")
         .html(_dots_html)
+
+  removeSpinner: (plotId) ->
+    $("i.icon-spinner[data-plot-id=\"#{plotId}\"]").remove()
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.

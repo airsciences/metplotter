@@ -381,15 +381,19 @@
       __bindStationClicks = function(plotId, plotter, station) {
         if (station.displayed) {
           return $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]").off("click").on("click", function(event) {
+            var _plotId;
             event.stopPropagation();
-            plotter.removeStation($(this).attr("data-plot-id"), $(this).attr("data-station-id"));
-            return console.log("Remove Station Clicked!");
+            _plotId = $(this).attr("data-plot-id");
+            plotter.removeStation(_plotId, $(this).attr("data-station-id"));
+            return $(this).append("<i class=\"icon-spinner icon-spin\" data-plot-id=\"" + _plotId + "\"></i>");
           });
         } else {
           return $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]").off("click").on("click", function(event) {
+            var _plotId;
             event.stopPropagation();
-            plotter.addStation($(this).attr("data-plot-id"), $(this).attr("data-station-id"));
-            return console.log("Add Station Clicked!");
+            _plotId = $(this).attr("data-plot-id");
+            plotter.addStation(_plotId, $(this).attr("data-station-id"));
+            return $(this).append("<i class=\"icon-spinner icon-spin\" data-plot-id=\"" + _plotId + "\"></i>");
           });
         }
       };
@@ -412,6 +416,10 @@
         results1.push($("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"] > span.region-dots").html(_dots_html));
       }
       return results1;
+    };
+
+    Controls.prototype.removeSpinner = function(plotId) {
+      return $("i.icon-spinner[data-plot-id=\"" + plotId + "\"]").remove();
     };
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
@@ -2213,6 +2221,7 @@ Air Sciences Inc. - 2016
           }
           delete plot.__data[call];
         }
+        _.controls.removeSpinner(plotId);
         _.controls.updateStationDropdown(plotId);
         _.controls.updateStationMap(plotId);
         if (dir === "min") {
@@ -2343,6 +2352,7 @@ Air Sciences Inc. - 2016
         _plot.removeData(_key);
         _plot.update();
       }
+      this.controls.removeSpinner(plotId);
       this.controls.updateStationDropdown(plotId);
       return this.controls.updateStationMap(plotId);
     };
