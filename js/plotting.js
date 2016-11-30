@@ -298,7 +298,7 @@
     };
 
     Controls.prototype.updateStationStates = function(plotId) {
-      var _active, dot_append, i, j, len, len1, ref, ref1, region, station;
+      var _index, dot_append, i, j, len, len1, ref, ref1, region, station;
       ref = this.stations[plotId];
       for (i = 0, len = ref.length; i < len; i++) {
         region = ref[i];
@@ -306,12 +306,13 @@
         ref1 = region.dataloggers;
         for (j = 0, len1 = ref1.length; j < len1; j++) {
           station = ref1[j];
-          _active = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id) > -1;
-          if (_active) {
+          station.displayed = false;
+          _index = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id);
+          if (_index > -1) {
             station.displayed = true;
             dot_append = {
               dataLoggerId: station.id,
-              color: station.color
+              color: this.current[plotId][_index].color
             };
             region.displayed.push(dot_append);
           }
@@ -346,9 +347,10 @@
           html = html + " </ul>";
         }
         html = html + " </ul> </li>";
-        _.updateStationStates(plotId);
         $(appendTarget).prepend(html);
         $('#' + uuid).dropdown();
+        _.updateStationStates(plotId);
+        _.updateDropdownRegion(plotId);
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
       return this.api.get(target, args, callback);
@@ -423,27 +425,27 @@
     };
 
     Controls.prototype.updateDropdownRegion = function(plotId) {
-      var _active, _active_count, _current, _stations, i, j, len, len1, ref, ref1, region, results1, station;
-      _stations = this.stations[plotId];
-      _current = this.current[plotId];
-      console.log("Building station dots (stations, current)", _stations, _current);
+      var i, len, ref, region, results1, station;
       ref = this.stations[plotId];
       results1 = [];
       for (i = 0, len = ref.length; i < len; i++) {
         region = ref[i];
-        _active_count = 0;
-        ref1 = region.dataloggers;
-        for (j = 0, len1 = ref1.length; j < len1; j++) {
-          station = ref1[j];
-          _active = this.plotter.indexOfValue(_current, "dataLoggerId", station.id);
-          console.log("station is shown (current, id)", _current, station.id, _active);
-          if (_active) {
-            _active_count++;
-          }
-        }
-        console.log("active count", _active_count);
-        if (_active_count > 0) {
-          results1.push($("[data-region=\"" + region.name + "\"]").css("background-color", "rgb(248, 248, 248)").css("font-weight", 700));
+        if (region.displayed.length > 0) {
+          $("[data-region=\"" + region.name + "\"]").css("background-color", "rgb(248, 248, 248)").css("font-weight", 700);
+          results1.push((function() {
+            var j, len1, ref1, results2;
+            ref1 = region.dataloggers;
+            results2 = [];
+            for (j = 0, len1 = ref1.length; j < len1; j++) {
+              station = ref1[j];
+              if (station.displayed) {
+                results2.push(console.log("Update station to active (station)", station));
+              } else {
+                results2.push(void 0);
+              }
+            }
+            return results2;
+          })());
         } else {
           results1.push(void 0);
         }

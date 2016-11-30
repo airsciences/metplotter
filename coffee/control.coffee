@@ -55,13 +55,14 @@ window.Plotting.Controls = class Controls
     for region in @stations[plotId]
       region.displayed = []
       for station in region.dataloggers
-        _active = @plotter.indexOfValue(
-          @current[plotId], "dataLoggerId", station.id) > -1
-        if _active
+        station.displayed = false
+        _index = @plotter.indexOfValue(
+          @current[plotId], "dataLoggerId", station.id)
+        if _index > -1
           station.displayed = true
           dot_append =
             dataLoggerId: station.id
-            color: station.color
+            color: @current[plotId][_index].color
           region.displayed.push(dot_append)
     console.log("State of the Stations (@stations)", @stations[plotId])
 
@@ -119,11 +120,13 @@ window.Plotting.Controls = class Controls
         </ul>
         </li>"
 
-      # Update the Array State.
-      _.updateStationStates(plotId)
-
+      # Append the Object
       $(appendTarget).prepend(html)
       $('#'+uuid).dropdown()
+
+      # Update the Controls State.
+      _.updateStationStates(plotId)
+      _.updateDropdownRegion(plotId)
       # Bind Onclick Events
       #for region in data.responseJSON.results
       #  for station in region.dataloggers
@@ -205,25 +208,16 @@ window.Plotting.Controls = class Controls
 
   updateDropdownRegion: (plotId) ->
     # Set the appropriate styling and onclick events for a plot's dropdown.
-    _stations = @stations[plotId]
-    _current = @current[plotId]
-
-    console.log("Building station dots (stations, current)",
-      _stations, _current)
-
-    # Update the Parent Header Weight.
     for region in @stations[plotId]
-      _active_count = 0
-      for station in region.dataloggers
-        _active = @plotter.indexOfValue(_current, "dataLoggerId", station.id)
-        console.log("station is shown (current, id)",
-          _current, station.id, _active)
-        if _active then _active_count++
-      console.log("active count", _active_count)
-      if _active_count > 0
+      if region.displayed.length > 0
+        # Update the Parent Header Weight.
         $("[data-region=\"#{region.name}\"]")
           .css("background-color", "rgb(248, 248, 248)")
           .css("font-weight", 700)
+        for station in region.dataloggers
+          # Stations
+          if station.displayed
+            console.log("Update station to active (station)", station)
 
   updateDropdownStation: (plotId) ->
     # Set the appropriate styling and onclick events for a plot's dropdown.
