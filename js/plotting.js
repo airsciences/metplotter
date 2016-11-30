@@ -298,27 +298,38 @@
     };
 
     Controls.prototype.updateStationStates = function(plotId) {
-      var _index, dot_append, i, j, len, len1, ref, ref1, region, station;
+      var _color, _index, dot_append, i, len, ref, region, results1, station;
       ref = this.stations[plotId];
+      results1 = [];
       for (i = 0, len = ref.length; i < len; i++) {
         region = ref[i];
         region.displayed = [];
-        ref1 = region.dataloggers;
-        for (j = 0, len1 = ref1.length; j < len1; j++) {
-          station = ref1[j];
-          station.displayed = false;
-          _index = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id);
-          if (_index > -1) {
-            station.displayed = true;
-            dot_append = {
-              dataLoggerId: station.id,
-              color: this.current[plotId][_index].color
-            };
-            region.displayed.push(dot_append);
+        results1.push((function() {
+          var j, len1, ref1, results2;
+          ref1 = region.dataloggers;
+          results2 = [];
+          for (j = 0, len1 = ref1.length; j < len1; j++) {
+            station = ref1[j];
+            station.displayed = false;
+            station.color = null;
+            _index = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id);
+            if (_index > -1) {
+              _color = this.current[plotId][_index].color;
+              station.displayed = true;
+              station.color = _color;
+              dot_append = {
+                dataLoggerId: station.id,
+                color: _color
+              };
+              results2.push(region.displayed.push(dot_append));
+            } else {
+              results2.push(void 0);
+            }
           }
-        }
+          return results2;
+        }).call(this));
       }
-      return console.log("State of the Stations (@stations)", this.stations[plotId]);
+      return results1;
     };
 
     Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter, current) {
@@ -329,134 +340,79 @@
       uuid = this.uuid();
       this.setCurrent(plotId);
       callback = function(data) {
-        var _id, _region_name, html, i, id, j, len, len1, ref, ref1, region, station;
+        var _region_name, html, i, j, len, len1, ref, ref1, region, station;
         _.stations[plotId] = data.responseJSON.results;
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
         ref = _.stations[plotId];
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
           _region_name = _.__lcname(region.name);
-          html = html + " <li class=\"subheader\"> <a data-region=\"" + _region_name + "\" href=\"\"> <i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> <span class=\"region-name\">" + region.name + "</span> <span class=\"region-dots\"></span> </a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
+          html = html + " <li class=\"subheader\"> <a data-region=\"" + _region_name + "\" data-plot-id=\"" + plotId + "\" href=\"\"> <i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> <span class=\"region-name\">" + region.name + "</span> <span class=\"region-dots\"></span> </a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
           ref1 = region.dataloggers;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
             station = ref1[j];
-            id = "data-logger-" + station.id + "-plot-" + plotId;
-            _id = "add-station-" + plotId + "-" + station.id;
-            html = html + " <li class=\"station\" id=\"" + _id + "\" data-station-id=\"" + station.id + "\" data-plot-id=\"" + plotId + "\" data-region-parent=\"" + _region_name + "\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"\"> <i id=\"" + id + "\" class=\"icon-circle\"></i> <span>" + station.datalogger_name + " | " + station.elevation + " ft</span></li>";
+            html = html + " <li class=\"station\" data-station-id=\"" + station.id + "\" data-plot-id=\"" + plotId + "\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\"> <i class=\"icon-circle\"></i> <span class=\"station-name\"> " + station.datalogger_name + " | " + station.elevation + " ft </span> </li>";
           }
           html = html + " </ul>";
         }
         html = html + " </ul> </li>";
         $(appendTarget).prepend(html);
         $('#' + uuid).dropdown();
-        _.updateStationStates(plotId);
-        _.updateDropdownRegion(plotId);
         _.bindSubMenuEvent(".subheader");
+        _.updateStationDropdown(plotId);
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
       return this.api.get(target, args, callback);
     };
 
-    Controls.prototype.resetStationDropdown = function(plotId) {
-      var _, _id, i, len, ref, region, results1, station;
-      _ = this;
-      ref = this.stations[plotId];
-      results1 = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        region = ref[i];
-        results1.push((function() {
-          var j, len1, ref1, results2;
-          ref1 = region.dataloggers;
-          results2 = [];
-          for (j = 0, len1 = ref1.length; j < len1; j++) {
-            station = ref1[j];
-            _id = "add-station-" + plotId + "-" + station.id;
-            $("#" + _id).find("i.icon-circle").css("color", "");
-            results2.push($("#" + _id).off("click").on("click", function(event) {
-              var _plotId, _stationId;
-              event.stopPropagation();
-              _plotId = $(this).attr("data-plot-id");
-              _stationId = $(this).attr("data-station-id");
-              return _.plotter.addStation(_plotId, _stationId);
-            }));
-          }
-          return results2;
-        })());
-      }
-      return results1;
-    };
-
     Controls.prototype.updateStationDropdown = function(plotId) {
-      var _, _append, _options, setActive;
+      var _, __bindStationClicks, __buildDots, _data_region, _dots_html, i, j, len, len1, ref, ref1, region, results1, station;
       _ = this;
-      _options = this.plotter.template[plotId].proto.options;
-      _append = "";
-      this.resetStationDropdown(plotId);
-      setActive = function(key, dataLoggerId) {
-        var _cid, _color, _id;
-        dataLoggerId = _options[key].dataLoggerId;
-        _color = _options[key].color;
-        _cid = "circle-plot" + plotId + "-station" + dataLoggerId;
-        _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _color + "\"></i>";
-        _id = "data-logger-" + dataLoggerId + "-plot-" + plotId;
-        if ($("#" + _cid).length === 0) {
-          $(_options.target).find("#" + _id).css("color", _color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700);
-          console.log("Station dots (dom)", $(_options.target).find("#" + _id).children(":first").find(".station-dots"));
-          $(_options.target).find("#" + _id).children(":first").find(".station-dots").empty().append(_append);
+      this.updateStationStates(plotId);
+      __buildDots = function(displayed) {
+        var html, i, len, station;
+        html = "";
+        for (i = 0, len = displayed.length; i < len; i++) {
+          station = displayed[i];
+          html = html + " <i style=\"color: " + station.color + ";\" class=\"icon-circle\"></i>";
         }
-        return $("#add-station-" + plotId + "-" + _id).off('click').on("click", function(event) {
-          var _cir, _plotId, _stationId;
-          event.stopPropagation();
-          _plotId = $(this).attr("data-plot-id");
-          _stationId = $(this).attr("data-station-id");
-          _.plotter.removeStation(_plotId, _stationId);
-          _cir = "circle-plot" + _plotId + "-station" + _stationId;
-          return $("#" + _cir).remove();
-        });
+        return html;
       };
-      if (_options.y.dataLoggerId !== null) {
-        setActive("y");
-      }
-      if (_options.y2.dataLoggerId !== null) {
-        setActive("y2");
-      }
-      if (_options.y3.dataLoggerId !== null) {
-        return setActive("y3");
-      }
-    };
-
-    Controls.prototype.updateDropdownRegion = function(plotId) {
-      var _data_region, i, len, ref, region, results1, station;
+      __bindStationClicks = function(plotId, plotter, station) {
+        if (station.displayed) {
+          return $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]").off("click").on("click", function(event) {
+            event.stopPropagation();
+            plotter.removeStation($(this).attr("data-plot-id"), $(this).attr("data-station-id"));
+            return console.log("Remove Station Clicked!");
+          });
+        } else {
+          return $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]").off("click").on("click", function(event) {
+            event.stopPropagation();
+            plotter.addStation($(this).attr("data-plot-id"), $(this).attr("data-station-id"));
+            return console.log("Add Station Clicked!");
+          });
+        }
+      };
       ref = this.stations[plotId];
       results1 = [];
       for (i = 0, len = ref.length; i < len; i++) {
         region = ref[i];
+        _data_region = this.__lcname(region.name);
+        _dots_html = "";
         if (region.displayed.length > 0) {
-          console.log("Update region to active (region)", region);
-          _data_region = this.__lcname(region.name);
-          $("[data-region=\"" + _data_region + "\"]").css("background-color", "rgb(248, 248, 248)").css("font-weight", 700);
-          results1.push((function() {
-            var j, len1, ref1, results2;
-            ref1 = region.dataloggers;
-            results2 = [];
-            for (j = 0, len1 = ref1.length; j < len1; j++) {
-              station = ref1[j];
-              if (station.displayed) {
-                results2.push(console.log("Update station to active (station)", station));
-              } else {
-                results2.push(void 0);
-              }
-            }
-            return results2;
-          })());
-        } else {
-          results1.push(void 0);
+          $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"]").css("background-color", "rgb(248, 248, 248)").css("font-weight", 700);
+          _dots_html = __buildDots(region.displayed);
         }
+        ref1 = region.dataloggers;
+        for (j = 0, len1 = ref1.length; j < len1; j++) {
+          station = ref1[j];
+          $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]> i.icon-circle").css("color", station.color);
+          __bindStationClicks(plotId, _.plotter, station);
+        }
+        results1.push($("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"] > span.region-dots").html(_dots_html));
       }
       return results1;
     };
-
-    Controls.prototype.updateDropdownStation = function(plotId) {};
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
       var _current, args, callback, target, uuid;
@@ -694,13 +650,13 @@
     };
 
     Controls.prototype.toggleMap = function(plotId) {
-      var __nwac_left, __nwac_top, _center, _offset, _zoom;
-      __nwac_left = 128;
-      __nwac_top = 256;
+      var __nwac_offset_left, __nwac_offset_top, _center, _offset, _zoom;
+      __nwac_offset_left = 128;
+      __nwac_offset_top = 256;
       _center = this.plotter.controls.maps[plotId].getCenter();
       _zoom = this.plotter.controls.maps[plotId].getZoom();
       _offset = $("#map-control-" + plotId).parent().parent().prev().offset();
-      $("#map-control-" + plotId).parent().parent().toggle().css("left", _offset.left - 356 - __nwac_left).css("top", _offset.top - __nwac_top);
+      $("#map-control-" + plotId).parent().parent().toggle().css("left", _offset.left - 356 - __nwac_offset_left).css("top", _offset.top - __nwac_offset_top);
       google.maps.event.trigger(this.plotter.controls.maps[plotId], 'resize');
       this.plotter.controls.maps[plotId].setCenter(_center);
       return this.plotter.controls.maps[plotId].setZoom(_zoom);
@@ -2257,6 +2213,8 @@ Air Sciences Inc. - 2016
           }
           delete plot.__data[call];
         }
+        _.controls.updateStationDropdown(plotId);
+        _.controls.updateStationMap(plotId);
         if (dir === "min") {
           plot.proto.state.requested.min = false;
         } else if (dir === "max") {
@@ -2328,14 +2286,12 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.addStation = function(plotId, dataLoggerId) {
-      var _len, _max_datetime, _params, _variable, params, paramsKey, ref, state, uuid;
+      var _len, _max_datetime, _params, _variable, params, paramsKey, ref, results, state, uuid;
       if (!this.template[plotId].proto.initialized) {
         return this.appendNew(plotId, dataLoggerId);
       }
       if (this.template[plotId].proto.options.y.dataLoggerId && this.template[plotId].proto.options.y2.dataLoggerId && this.template[plotId].proto.options.y3.dataLoggerId) {
         console.log("Maximum of 3 Plot selected.");
-        this.controls.updateStationDropdown(plotId);
-        this.controls.updateStationMap(plotId);
         return null;
       }
       state = this.template[plotId].proto.getState();
@@ -2347,14 +2303,14 @@ Air Sciences Inc. - 2016
       this.setNewOptions(plotId, _variable, dataLoggerId);
       uuid = this.uuid();
       ref = this.template[plotId].proto.options.dataParams;
+      results = [];
       for (paramsKey in ref) {
         params = ref[paramsKey];
         this.template[plotId].proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_max_datetime));
         this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
-        this.getAppendData(uuid, plotId, paramsKey);
+        results.push(this.getAppendData(uuid, plotId, paramsKey));
       }
-      this.controls.updateStationDropdown(plotId);
-      return this.controls.updateStationMap(plotId);
+      return results;
     };
 
     Handler.prototype.removeStation = function(plotId, dataLoggerId) {

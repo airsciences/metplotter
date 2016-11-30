@@ -56,15 +56,17 @@ window.Plotting.Controls = class Controls
       region.displayed = []
       for station in region.dataloggers
         station.displayed = false
+        station.color = null
         _index = @plotter.indexOfValue(
           @current[plotId], "dataLoggerId", station.id)
         if _index > -1
+          _color = @current[plotId][_index].color
           station.displayed = true
+          station.color = _color
           dot_append =
             dataLoggerId: station.id
-            color: @current[plotId][_index].color
+            color: _color
           region.displayed.push(dot_append)
-    console.log("State of the Stations (@stations)", @stations[plotId])
 
   appendStationDropdown: (plotId, appendTarget, parameter, current) ->
     # Append Station Dropdown.
@@ -89,10 +91,10 @@ window.Plotting.Controls = class Controls
 
       for region in _.stations[plotId]
         _region_name = _.__lcname(region.name)
-
         html = "#{html}
             <li class=\"subheader\">
-              <a data-region=\"#{_region_name}\" href=\"\">
+              <a data-region=\"#{_region_name}\" data-plot-id=\"#{plotId}\"
+              href=\"\">
                 <i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i>
                 <span class=\"region-name\">#{region.name}</span>
                 <span class=\"region-dots\"></span>
@@ -100,18 +102,17 @@ window.Plotting.Controls = class Controls
             </li>
             <ul class=\"list-group-item sublist\"
               style=\"display: none;\">"
+
         for station in region.dataloggers
-          id = "data-logger-#{station.id}-plot-#{plotId}"
-          _id = "add-station-#{plotId}-#{station.id}"
           html = "#{html}
-            <li class=\"station\" id=\"#{_id}\"
-              data-station-id=\"#{station.id}\" data-plot-id=\"#{plotId}\"
-              data-region-parent=\"#{_region_name}\"
-              style=\"padding: 1px 5px; cursor: pointer;
-              list-style-type: none\" onclick=\"\">
-                <i id=\"#{id}\" class=\"icon-circle\"></i>
-                <span>#{station.datalogger_name} |
-                #{station.elevation} ft</span></li>"
+            <li class=\"station\" data-station-id=\"#{station.id}\"
+            data-plot-id=\"#{plotId}\" style=\"padding: 1px 5px; cursor:
+            pointer; list-style-type: none\">
+              <i class=\"icon-circle\"></i>
+              <span class=\"station-name\">
+                #{station.datalogger_name} | #{station.elevation} ft
+              </span>
+            </li>"
 
         html = "#{html}
           </ul>"
@@ -123,106 +124,72 @@ window.Plotting.Controls = class Controls
       # Append the Object
       $(appendTarget).prepend(html)
       $('#'+uuid).dropdown()
-
-      # Update the Controls State.
-      _.updateStationStates(plotId)
-      _.updateDropdownRegion(plotId)
-      # Bind Onclick Events
-      #for region in data.responseJSON.results
-      #  for station in region.dataloggers
-      #    _id = "add-station-#{plotId}-#{station.id}"
-      #    $("#"+_id).off("click").on("click", (event) ->
-      #      event.stopPropagation()
-      #      _plotId = $(this).attr("data-plot-id")
-      #      _stationId = $(this).attr("data-station-id")
-      #      _.plotter.addStation(_plotId, _stationId)
-      #    )
-
-      # Bind Dropdown & Submenu Click Event.
-
       _.bindSubMenuEvent(".subheader")
 
+      # Update Dropdown Highlighting & Events.
+      _.updateStationDropdown(plotId)
+
+      # Append the Station Map (Move)
       _.appendStationMap(plotId, appendTarget, data.responseJSON.results,
         current)
 
     @api.get(target, args, callback)
 
-  resetStationDropdown: (plotId) ->
-    _ = @
-
-    for region in @stations[plotId]
-      for station in region.dataloggers
-        _id = "add-station-#{plotId}-#{station.id}"
-        $("#"+_id).find("i.icon-circle").css("color", "")
-        $("#"+_id).off("click").on("click", (event) ->
-          event.stopPropagation()
-          _plotId = $(this).attr("data-plot-id")
-          _stationId = $(this).attr("data-station-id")
-          _.plotter.addStation(_plotId, _stationId)
-        )
-
   updateStationDropdown: (plotId) ->
     _ = @
-    _options = @plotter.template[plotId].proto.options
-    _append = ""
 
-    @resetStationDropdown(plotId)
+    # Update the Dropdown State Array
+    @updateStationStates(plotId)
 
-    setActive = (key, dataLoggerId) ->
-      dataLoggerId = _options[key].dataLoggerId
-      _color = _options[key].color
-      _cid = "circle-plot#{plotId}-station#{dataLoggerId}"
-      _append = " <i class=\"icon-circle\" id=\"#{_cid}\"
-        style=\"color: #{_color}\"></i>"
-      _id = "data-logger-#{dataLoggerId}-plot-#{plotId}"
+    # Private Dot HTML Function
+    __buildDots = (displayed) ->
+      # Build the Region Dot HTML
+      html = ""
+      for station in displayed
+        html = "#{html}
+          <i style=\"color: #{station.color};\" class=\"icon-circle\"></i>"
+      return html
 
-      # console.log("(key) #{key} Variable active: (_id, _cid, dataLoggerId)",
-      #   _id, _cid, dataLoggerId)
-      if $("#" + _cid).length is 0
-        $(_options.target).find("##{_id}")
-          .css("color", _color)
-          .parent().parent().prev()
-          .css("background-color", "rgb(248,248,248)")
-          .css("font-weight", 700)
+    # Private Station Click Event Function
+    __bindStationClicks = (plotId, plotter, station) ->
+      if station.displayed
+        $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]")
+          .off("click").on("click", (event) ->
+            event.stopPropagation()
+            plotter.removeStation($(this).attr("data-plot-id"),
+              $(this).attr("data-station-id"))
+            console.log("Remove Station Clicked!")
+          )
+      else
+        $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]")
+          .off("click").on("click", (event) ->
+            event.stopPropagation()
+            plotter.addStation($(this).attr("data-plot-id"),
+              $(this).attr("data-station-id"))
+            console.log("Add Station Clicked!")
+          )
 
-        console.log("Station dots (dom)",
-          $(_options.target).find("##{_id}").children(":first")
-          .find(".station-dots"))
-
-        $(_options.target).find("##{_id}").children(":first")
-          .find(".station-dots")
-          .empty()
-          .append(_append)
-      $("#add-station-#{plotId}-#{_id}").off('click').on("click", (event) ->
-        event.stopPropagation()
-        _plotId = $(this).attr("data-plot-id")
-        _stationId = $(this).attr("data-station-id")
-        _.plotter.removeStation(_plotId, _stationId)
-        _cir = "circle-plot#{_plotId}-station#{_stationId}"
-        $("#"+_cir).remove()
-      )
-
-    if _options.y.dataLoggerId != null then setActive("y")
-    if _options.y2.dataLoggerId != null then setActive("y2")
-    if _options.y3.dataLoggerId != null then setActive("y3")
-
-  updateDropdownRegion: (plotId) ->
     # Set the appropriate styling and onclick events for a plot's dropdown.
     for region in @stations[plotId]
+      # Clear the Dots
+      _data_region = @__lcname(region.name)
+      _dots_html = ""
       if region.displayed.length > 0
         # Update the Parent Header Weight.
-        console.log("Update region to active (region)", region)
-        _data_region = @__lcname(region.name)
-        $("[data-region=\"#{_data_region}\"]")
+        $("[data-region=\"#{_data_region}\"][data-plot-id=\"#{plotId}\"]")
           .css("background-color", "rgb(248, 248, 248)")
           .css("font-weight", 700)
-        for station in region.dataloggers
-          # Stations
-          if station.displayed
-            console.log("Update station to active (station)", station)
+        _dots_html = __buildDots(region.displayed)
+      for station in region.dataloggers
+        # Add Station Color States
+        $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]\
+        > i.icon-circle")
+          .css("color", station.color)
+        __bindStationClicks(plotId, _.plotter, station)
 
-  updateDropdownStation: (plotId) ->
-    # Set the appropriate styling and onclick events for a plot's dropdown.
+      $("[data-region=\"#{_data_region}\"][data-plot-id=\"#{plotId}\"] \
+      > span.region-dots")
+        .html(_dots_html)
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.
@@ -486,16 +453,16 @@ window.Plotting.Controls = class Controls
 
   toggleMap: (plotId) ->
     # toggle the map div.
-    __nwac_left = 128
-    __nwac_top = 256
+    __nwac_offset_left = 128
+    __nwac_offset_top = 256
 
     _center = @plotter.controls.maps[plotId].getCenter()
     _zoom = @plotter.controls.maps[plotId].getZoom()
 
     _offset = $("#map-control-#{plotId}").parent().parent().prev().offset()
     $("#map-control-#{plotId}").parent().parent().toggle()
-      .css("left", _offset.left - 356 - __nwac_left)
-      .css("top", _offset.top - __nwac_top)
+      .css("left", _offset.left - 356 - __nwac_offset_left)
+      .css("top", _offset.top - __nwac_offset_top)
 
     google.maps.event.trigger(@plotter.controls.maps[plotId], 'resize')
     @plotter.controls.maps[plotId].setCenter(_center)

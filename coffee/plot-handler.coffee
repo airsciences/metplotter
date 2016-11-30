@@ -311,6 +311,8 @@ window.Plotting.Handler = class Handler
           plot.proto.setData(plot.__data[call].get())
           plot.proto.append()
         delete plot.__data[call]
+      _.controls.updateStationDropdown(plotId)
+      _.controls.updateStationMap(plotId)
       if dir is "min"
         plot.proto.state.requested.min = false
       else if dir is "max"
@@ -381,8 +383,6 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.y3.dataLoggerId
     )
       console.log("Maximum of 3 Plot selected.")
-      @controls.updateStationDropdown(plotId)
-      @controls.updateStationMap(plotId)
       return null
 
     state = @template[plotId].proto.getState()
@@ -402,8 +402,6 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.dataParams[paramsKey].limit =
         state.length.data
       @getAppendData(uuid, plotId, paramsKey)
-    @controls.updateStationDropdown(plotId)
-    @controls.updateStationMap(plotId)
 
   removeStation: (plotId, dataLoggerId) ->
     # Remove the station from the plot & data.
