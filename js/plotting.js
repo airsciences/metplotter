@@ -297,6 +297,29 @@
       return this.current;
     };
 
+    Controls.prototype.updateStationStates = function(plotId) {
+      var _active, dot_append, i, j, len, len1, ref, ref1, region, station;
+      ref = this.stations[plotId];
+      for (i = 0, len = ref.length; i < len; i++) {
+        region = ref[i];
+        region.displayed = [];
+        ref1 = region.dataloggers;
+        for (j = 0, len1 = ref1.length; j < len1; j++) {
+          station = ref1[j];
+          _active = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id) > -1;
+          if (_active) {
+            station.displayed = true;
+            dot_append = {
+              dataLoggerId: station.id,
+              color: station.color
+            };
+            region.displayed.push(dot_append);
+          }
+        }
+      }
+      return console.log("State of the Stations (@stations)", this.stations[plotId]);
+    };
+
     Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter, current) {
       var _, args, callback, target, uuid;
       target = location.protocol + "//dev.nwac.us/api/v5/dataloggerregion?sensor_name=" + parameter;
@@ -305,67 +328,27 @@
       uuid = this.uuid();
       this.setCurrent(plotId);
       callback = function(data) {
-        var _dots, _id, _prepend, _region_name, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
+        var _id, _region_name, html, i, id, j, len, len1, ref, ref1, region, station;
         _.stations[plotId] = data.responseJSON.results;
-        console.log("Stations ", _.stations[plotId]);
         html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
         ref = _.stations[plotId];
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
-          a_color = "";
-          r_color = "";
-          _dots = "<span class=\"station-dots\">";
-          _region_selected = 0;
           _region_name = _.__lcname(region.name);
+          html = html + " <li class=\"subheader\"> <a data-region=\"" + _region_name + "\" href=\"\"> <i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> <span class=\"region-name\">" + region.name + "</span> <span class=\"region-dots\"></span> </a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
           ref1 = region.dataloggers;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
-            _station = ref1[j];
-            _row_current = _.plotter.indexOfValue(_.getCurrent(plotId), "dataLoggerId", _station.id);
-            if (_row_current) {
-              _region_selected++;
-              _dots = _dots + " <i class=\"icon-circle\" style=\"color: " + _row_current.color + "\"></i>";
-            }
-          }
-          if (_region_selected > 0) {
-            r_color = "style=\"background-color: rgb(248,248,248)\"";
-            a_color = "style=\"font-weight: 700\"";
-          }
-          html = html + " <li class=\"subheader\" " + r_color + "> <a data-region=\"" + _region_name + "\" " + a_color + " href=\"#\"> <i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.name + " " + _dots + "</span></a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
-          ref2 = region.dataloggers;
-          for (k = 0, len2 = ref2.length; k < len2; k++) {
-            station = ref2[k];
-            _row_current = _.plotter.indexOfValue(_.getCurrent(plotId), "dataLoggerId", _station.id);
-            color = "";
-            if (_row_current) {
-              color = "style=\"color: " + _row_current.color + "\"";
-            }
+            station = ref1[j];
             id = "data-logger-" + station.id + "-plot-" + plotId;
-            _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" " + color + "></i>";
             _id = "add-station-" + plotId + "-" + station.id;
-            html = html + " <li class=\"station\" id=\"" + _id + "\" data-station-id=\"" + station.id + "\" data-plot-id=\"" + plotId + "\" data-region-parent=\"" + _region_name + "\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"\"> " + _prepend + " " + station.datalogger_name + " | " + station.elevation + " ft</li>";
+            html = html + " <li class=\"station\" id=\"" + _id + "\" data-station-id=\"" + station.id + "\" data-plot-id=\"" + plotId + "\" data-region-parent=\"" + _region_name + "\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"\"> <i id=\"" + id + "\" class=\"icon-circle\"></i> <span>" + station.datalogger_name + " | " + station.elevation + " ft</span></li>";
           }
           html = html + " </ul>";
         }
         html = html + " </ul> </li>";
+        _.updateStationStates(plotId);
         $(appendTarget).prepend(html);
-        ref3 = data.responseJSON.results;
-        for (l = 0, len3 = ref3.length; l < len3; l++) {
-          region = ref3[l];
-          ref4 = region.dataloggers;
-          for (m = 0, len4 = ref4.length; m < len4; m++) {
-            station = ref4[m];
-            _id = "add-station-" + plotId + "-" + station.id;
-            $("#" + _id).off("click").on("click", function(event) {
-              var _plotId, _stationId;
-              event.stopPropagation();
-              _plotId = $(this).attr("data-plot-id");
-              _stationId = $(this).attr("data-station-id");
-              return _.plotter.addStation(_plotId, _stationId);
-            });
-          }
-        }
         $('#' + uuid).dropdown();
-        _.bindSubMenuEvent(".subheader");
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
       return this.api.get(target, args, callback);
@@ -439,7 +422,36 @@
       }
     };
 
-    Controls.prototype.setRegionStations = function(plotId, current) {};
+    Controls.prototype.updateDropdownRegion = function(plotId) {
+      var _active, _active_count, _current, _stations, i, j, len, len1, ref, ref1, region, results1, station;
+      _stations = this.stations[plotId];
+      _current = this.current[plotId];
+      console.log("Building station dots (stations, current)", _stations, _current);
+      ref = this.stations[plotId];
+      results1 = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        region = ref[i];
+        _active_count = 0;
+        ref1 = region.dataloggers;
+        for (j = 0, len1 = ref1.length; j < len1; j++) {
+          station = ref1[j];
+          _active = this.plotter.indexOfValue(_current, "dataLoggerId", station.id);
+          console.log("station is shown (current, id)", _current, station.id, _active);
+          if (_active) {
+            _active_count++;
+          }
+        }
+        console.log("active count", _active_count);
+        if (_active_count > 0) {
+          results1.push($("[data-region=\"" + region.name + "\"]").css("background-color", "rgb(248, 248, 248)").css("font-weight", 700));
+        } else {
+          results1.push(void 0);
+        }
+      }
+      return results1;
+    };
+
+    Controls.prototype.updateDropdownStation = function(plotId) {};
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
       var _current, args, callback, target, uuid;
