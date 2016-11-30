@@ -140,7 +140,7 @@ window.Plotting.Controls = class Controls
 
       # Bind Dropdown & Submenu Click Event.
 
-      # _.bindSubMenuEvent(".subheader")
+      _.bindSubMenuEvent(".subheader")
 
       _.appendStationMap(plotId, appendTarget, data.responseJSON.results,
         current)
@@ -211,7 +211,9 @@ window.Plotting.Controls = class Controls
     for region in @stations[plotId]
       if region.displayed.length > 0
         # Update the Parent Header Weight.
-        $("[data-region=\"#{region.name}\"]")
+        console.log("Update region to active (region)", region)
+        _data_region = @__lcname(region.name)
+        $("[data-region=\"#{_data_region}\"]")
           .css("background-color", "rgb(248, 248, 248)")
           .css("font-weight", 700)
         for station in region.dataloggers

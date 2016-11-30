@@ -351,6 +351,7 @@
         $('#' + uuid).dropdown();
         _.updateStationStates(plotId);
         _.updateDropdownRegion(plotId);
+        _.bindSubMenuEvent(".subheader");
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
       return this.api.get(target, args, callback);
@@ -425,13 +426,15 @@
     };
 
     Controls.prototype.updateDropdownRegion = function(plotId) {
-      var i, len, ref, region, results1, station;
+      var _data_region, i, len, ref, region, results1, station;
       ref = this.stations[plotId];
       results1 = [];
       for (i = 0, len = ref.length; i < len; i++) {
         region = ref[i];
         if (region.displayed.length > 0) {
-          $("[data-region=\"" + region.name + "\"]").css("background-color", "rgb(248, 248, 248)").css("font-weight", 700);
+          console.log("Update region to active (region)", region);
+          _data_region = this.__lcname(region.name);
+          $("[data-region=\"" + _data_region + "\"]").css("background-color", "rgb(248, 248, 248)").css("font-weight", 700);
           results1.push((function() {
             var j, len1, ref1, results2;
             ref1 = region.dataloggers;
