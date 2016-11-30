@@ -487,7 +487,7 @@ window.Plotting.Handler = class Handler
         @template[plotId].proto.options.y3
       ]
       @controls.appendParameterDropdown(plotId, '#'+selector,
-        @template[plotId].proto.options.y.dataloggerid, current)
+        @template[plotId].proto.options.y.dataLoggerId, current)
     else if @template[plotId].type is "parameter"
       current = [
         @template[plotId].proto.options.y,
@@ -565,7 +565,7 @@ window.Plotting.Handler = class Handler
 
     _plot.dataParams[0].data_logger = dataLoggerId
     _plot.proto.options.dataParams = _plot.dataParams
-    _plot.proto.options.y.dataloggerid = dataLoggerId
+    _plot.proto.options.y.dataLoggerId = dataLoggerId
     @getAppendData(@uuid(), plotId, 0)
 
   setNewOptions: (plotId, variable, dataLoggerId) ->

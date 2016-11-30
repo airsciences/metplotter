@@ -25,18 +25,27 @@ window.Plotting.Controls = class Controls
 
     # Settings
     @current = []
+    @stations = []
+
     @maps = []
-    @stations = {}
     @markers = {}
     @listeners = {}
     @api = new window.Plotting.API access.token
 
   setCurrent: (plotId) ->
+    # Simplify essential control from the currently displayed plot data sets.
     @current[plotId] = []
-    for row in @plotter.template[plotId].proto.options.dataParams
-      @current[plotId].push(parseInt(row.data_logger))
+    for key in ["y", "y2", "y3"]
+      _row = @plotter.template[plotId].proto.options[key]
+      if _row.dataLoggerId != null
+        args =
+          dataLoggerId: parseInt(_row.dataLoggerId)
+          yTarget: key
+          color: _row.color
+        @current[plotId].push(args)
 
   getCurrent: (plotId) ->
+    # Return the full, or plot specific essential control data
     if plotId >= 0
       return @current[plotId]
     return @current
@@ -52,6 +61,9 @@ window.Plotting.Controls = class Controls
     @setCurrent(plotId)
 
     callback = (data) ->
+      _.stations[plotId] = data.responseJSON.results
+      console.log("Stations ", _.stations[plotId])
+
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
             role=\"button\"
@@ -60,14 +72,16 @@ window.Plotting.Controls = class Controls
         <ul id=\"station-dropdown-#{plotId}\"
           class=\"dropdown-menu pull-right\">"
 
-      _.stations[plotId] = data.responseJSON.results
-      for region in data.responseJSON.results
+      for region in _.stations[plotId]
         a_color = ""
         r_color = ""
         _dots = "<span class=\"station-dots\">"
         _region_selected = 0
+        _region_name = _.__lcname(region.name)
+
         for _station in region.dataloggers
-          _row_current = _.isCurrent(current, 'dataLoggerId', _station.id)
+          _row_current = _.plotter.indexOfValue(_.getCurrent(plotId),
+            "dataLoggerId", _station.id)
           if _row_current
             _region_selected++
             _dots = "#{_dots} <i class=\"icon-circle\"
@@ -77,14 +91,15 @@ window.Plotting.Controls = class Controls
           a_color = "style=\"font-weight: 700\""
         html = "#{html}
             <li class=\"subheader\" #{r_color}>
-              <a #{a_color} href=\"#\"><i class=\"icon-caret-down\"
-                style=\"margin-right: 6px\"></i>
-               #{region.name} #{_dots}</span></a>
+              <a data-region=\"#{_region_name}\" #{a_color} href=\"#\">
+                <i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i>
+                #{region.name} #{_dots}</span></a>
             </li>
             <ul class=\"list-group-item sublist\"
               style=\"display: none;\">"
         for station in region.dataloggers
-          _row_current = _.isCurrent(current, 'dataLoggerId', station.id)
+          _row_current = _.plotter.indexOfValue(_.getCurrent(plotId),
+            "dataLoggerId", _station.id)
           color = ""
           if _row_current
             color = "style=\"color: #{_row_current.color}\""
@@ -95,6 +110,7 @@ window.Plotting.Controls = class Controls
           html = "#{html}
             <li class=\"station\" id=\"#{_id}\"
               data-station-id=\"#{station.id}\" data-plot-id=\"#{plotId}\"
+              data-region-parent=\"#{_region_name}\"
               style=\"padding: 1px 5px; cursor: pointer;
               list-style-type: none\" onclick=\"\">
                #{_prepend} #{station.datalogger_name} |
@@ -151,14 +167,15 @@ window.Plotting.Controls = class Controls
     @resetStationDropdown(plotId)
 
     setActive = (key, dataLoggerId) ->
+      dataLoggerId = _options[key].dataLoggerId
       _color = _options[key].color
       _cid = "circle-plot#{plotId}-station#{dataLoggerId}"
       _append = " <i class=\"icon-circle\" id=\"#{_cid}\"
         style=\"color: #{_color}\"></i>"
       _id = "data-logger-#{dataLoggerId}-plot-#{plotId}"
 
-      console.log("(key) #{key} Variable active: (_id, _cid, dataLoggerId)",
-        _id, _cid, dataLoggerId)
+      # console.log("(key) #{key} Variable active: (_id, _cid, dataLoggerId)",
+      #   _id, _cid, dataLoggerId)
       if $("#" + _cid).length is 0
         $(_options.target).find("##{_id}")
           .css("color", _color)
@@ -183,12 +200,11 @@ window.Plotting.Controls = class Controls
         $("#"+_cir).remove()
       )
 
-    if _options.y.dataLoggerId != null
-      setActive("y", _options.y.dataLoggerId)
-    if _options.y2.variable != null
-      setActive("y2", _options.y2.dataLoggerId)
-    if _options.y3.variable != null
-      setActive("y3", _options.y3.dataLoggerId)
+    if _options.y.dataLoggerId != null then setActive("y")
+    if _options.y2.dataLoggerId != null then setActive("y2")
+    if _options.y3.dataLoggerId != null then setActive("y3")
+
+  setRegionStations: (plotId, current) ->
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
     # Append Parameter Dropdown.
@@ -335,7 +351,7 @@ window.Plotting.Controls = class Controls
           },
           id: _row_id,
           tooltip: "#{station.datalogger_name} - #{station.elevation} ft",
-          dataloggerid: station.id,
+          dataLoggerId: station.id,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: scale,
@@ -355,7 +371,7 @@ window.Plotting.Controls = class Controls
         )
 
         @listeners[plotId][_row_id] = marker.addListener('click', ->
-          _.plotter.addStation(plotId, @dataloggerid)
+          _.plotter.addStation(plotId, @dataLoggerId)
         )
 
         _len = @markers[plotId][_row_id] = marker
@@ -384,7 +400,7 @@ window.Plotting.Controls = class Controls
 
       _.listeners[plotId][_key].remove()
       _.listeners[plotId][_key] = _marker.addListener('click', ->
-        _dataLoggerId = this.get("dataloggerid")
+        _dataLoggerId = this.get("dataLoggerId")
         _.plotter.addStation(plotId, _dataLoggerId)
       )
 
@@ -408,7 +424,7 @@ window.Plotting.Controls = class Controls
       _.listeners[plotId][rowId].remove()
       _.listeners[plotId][rowId] = _.markers[plotId][rowId].addListener(
         'click', ->
-          _dataLoggerId = this.get("dataloggerid")
+          _dataLoggerId = this.get("dataLoggerId")
           _.plotter.removeStation(plotId, _dataLoggerId)
       )
 
@@ -519,6 +535,10 @@ window.Plotting.Controls = class Controls
     # $("#new-#{uuid}-station").on('click', ->
     #   _.plotter.add("station")
     # )
+
+  __lcname: (name) ->
+    # Return a lower case string with underscores
+    return name.replace(" ", "_").toLowerCase()
 
   uuid: ->
     return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)

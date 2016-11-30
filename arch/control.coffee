@@ -278,7 +278,7 @@ window.Plotting.Controls = class Controls
             lng: station.lon
           },
           tooltip: "#{station.datalogger_name} - #{station.elevation} ft",
-          dataloggerid: station.id,
+          dataLoggerId: station.id,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: scale,
@@ -298,7 +298,7 @@ window.Plotting.Controls = class Controls
         )
 
         marker.addListener('click', ->
-          _.plotter.addStation(plotId, @dataloggerid)
+          _.plotter.addStation(plotId, @dataLoggerId)
         )
 
         _len = @markers[uuid].push(marker)

@@ -45,21 +45,21 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Alpental", 
         "stations": [
             {
-                "dataloggerid": 0, 
+                "dataLoggerId": 0, 
                 "elevation": 3100.0, 
                 "name": "Alpental Base",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 1, 
+                "dataLoggerId": 1, 
                 "elevation": 4350.0, 
                 "name": "Alpental Mid",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 2, 
+                "dataLoggerId": 2, 
                 "elevation": 5470.0, 
                 "name": "Alpental Summit",
                 "lat": 47.606209,
@@ -71,7 +71,7 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Blewett Pass", 
         "stations": [
             {
-                "dataloggerid": 3, 
+                "dataLoggerId": 3, 
                 "elevation": 4100.0, 
                 "name": "Blewett Pass",
                 "lat": 47.606209,
@@ -83,14 +83,14 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Chinook Pass", 
         "stations": [
             {
-                "dataloggerid": 4, 
+                "dataLoggerId": 4, 
                 "elevation": 5500.0, 
                 "name": "Chinook Pass Base",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 5, 
+                "dataLoggerId": 5, 
                 "elevation": 6240.0, 
                 "name": "Chinook Pass Summit"
             }
@@ -100,21 +100,21 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Crystal", 
         "stations": [
             {
-                "dataloggerid": 6, 
+                "dataLoggerId": 6, 
                 "elevation": 4570.0, 
                 "name": "Crystal Base",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 7, 
+                "dataLoggerId": 7, 
                 "elevation": 6230.0, 
                 "name": "Green Valley",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 8, 
+                "dataLoggerId": 8, 
                 "elevation": 6830.0, 
                 "name": "Crystal Summit",
                 "lat": 47.606209,
@@ -126,21 +126,21 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Mission Ridge", 
         "stations": [
             {
-                "dataloggerid": 9, 
+                "dataLoggerId": 9, 
                 "elevation": 4610.0, 
                 "name": "Mission Ridge Base",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 10, 
+                "dataLoggerId": 10, 
                 "elevation": 5160.0, 
                 "name": "Mission Ridge Mid-Mountain",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 11, 
+                "dataLoggerId": 11, 
                 "elevation": 6730.0, 
                 "name": "Mission Ridge Summit",
                 "lat": 47.606209,
@@ -152,14 +152,14 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Mt Baker", 
         "stations": [
             {
-                "dataloggerid": 12, 
+                "dataLoggerId": 12, 
                 "elevation": 4210.0, 
                 "name": "Heather Meadow",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 13, 
+                "dataLoggerId": 13, 
                 "elevation": 5020.0, 
                 "name": "Pan Dome",
                 "lat": 47.606209,
@@ -171,21 +171,21 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Mt Hood Meadows", 
         "stations": [
             {
-                "dataloggerid": 14, 
+                "dataLoggerId": 14, 
                 "elevation": 5380.0, 
                 "name": "Mt Hood Meadows",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 15, 
+                "dataLoggerId": 15, 
                 "elevation": 6540.0, 
                 "name": "Mt Hood Meadows Blue",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 16, 
+                "dataLoggerId": 16, 
                 "elevation": 7300.0, 
                 "name": "Mt Hood Meadows Cascade Express",
                 "lat": 47.606209,
@@ -197,14 +197,14 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "None", 
         "stations": [
             {
-                "dataloggerid": 17, 
+                "dataLoggerId": 17, 
                 "elevation": 3260.0, 
                 "name": "Mt St Helens - Coldwater",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 18, 
+                "dataLoggerId": 18, 
                 "elevation": 4340.0, 
                 "name": "Mt Washington",
                 "lat": 47.606209,
@@ -216,7 +216,7 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Olympics", 
         "stations": [
             {
-                "dataloggerid": 19, 
+                "dataLoggerId": 19, 
                 "elevation": 5250.0, 
                 "name": "Hurricane Ridge",
                 "lat": 47.606209,
@@ -228,35 +228,35 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Rainier", 
         "stations": [
             {
-                "dataloggerid": 20, 
+                "dataLoggerId": 20, 
                 "elevation": 5380.0, 
                 "name": "Paradise Wind",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 21, 
+                "dataLoggerId": 21, 
                 "elevation": 5400.0, 
                 "name": "Paradise",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 22, 
+                "dataLoggerId": 22, 
                 "elevation": 6410.0, 
                 "name": "Sunrise Base",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 23, 
+                "dataLoggerId": 23, 
                 "elevation": 6880.0, 
                 "name": "Sunrise Upper",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 24, 
+                "dataLoggerId": 24, 
                 "elevation": 10110.0, 
                 "name": "Camp Muir",
                 "lat": 47.606209,
@@ -268,14 +268,14 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Ski Bowl", 
         "stations": [
             {
-                "dataloggerid": 25, 
+                "dataLoggerId": 25, 
                 "elevation": 3660.0, 
                 "name": "Ski Bowl Gov't Camp",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 26, 
+                "dataLoggerId": 26, 
                 "elevation": 5010.0, 
                 "name": "Ski Bowl Summit",
                 "lat": 47.606209,
@@ -287,21 +287,21 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Snoqualmie Pass", 
         "stations": [
             {
-                "dataloggerid": 27, 
+                "dataLoggerId": 27, 
                 "elevation": 3010.0, 
                 "name": "Snoqualmie Pass",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 28, 
+                "dataLoggerId": 28, 
                 "elevation": 3760.0, 
                 "name": "Dodge Ridge",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 29, 
+                "dataLoggerId": 29, 
                 "elevation": 3770.0, 
                 "name": "East Shed",
                 "lat": 47.606209,
@@ -313,42 +313,42 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Stevens Pass", 
         "stations": [
             {
-                "dataloggerid": 30, 
+                "dataLoggerId": 30, 
                 "elevation": 3950.0, 
                 "name": "Schmidt Haus",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 31, 
+                "dataLoggerId": 31, 
                 "elevation": 4800.0, 
                 "name": "Brooks",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 32, 
+                "dataLoggerId": 32, 
                 "elevation": 4800.0, 
                 "name": "Grace Lakes",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 33, 
+                "dataLoggerId": 33, 
                 "elevation": 4850.0, 
                 "name": "Brooks Wind",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 34, 
+                "dataLoggerId": 34, 
                 "elevation": 5180.0, 
                 "name": "Tye Mill",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 35, 
+                "dataLoggerId": 35, 
                 "elevation": 5250.0, 
                 "name": "Skyline Chair",
                 "lat": 47.606209,
@@ -360,28 +360,28 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Stevens Pass East to Leavenworth", 
         "stations": [
             {
-                "dataloggerid": 36, 
+                "dataLoggerId": 36, 
                 "elevation": 1930.0, 
                 "name": "Lake Wenatchee",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 37, 
+                "dataLoggerId": 37, 
                 "elevation": 2700.0, 
                 "name": "Berne Snow Camp",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 38, 
+                "dataLoggerId": 38, 
                 "elevation": 4180.0, 
                 "name": "Tumwater Mtn",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 39, 
+                "dataLoggerId": 39, 
                 "elevation": 5980.0, 
                 "name": "Dirty Face",
                 "lat": 47.606209,
@@ -393,14 +393,14 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Timberline", 
         "stations": [
             {
-                "dataloggerid": 40, 
+                "dataLoggerId": 40, 
                 "elevation": 5880.0, 
                 "name": "Timberline Lodge",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 41, 
+                "dataLoggerId": 41, 
                 "elevation": 6990.0, 
                 "name": "Timberline Ski Area - Magic Mile Chair",
                 "lat": 47.606209,
@@ -412,14 +412,14 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "Washington Pass", 
         "stations": [
             {
-                "dataloggerid": 42, 
+                "dataLoggerId": 42, 
                 "elevation": 2170.0, 
                 "name": "Mazama",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 43, 
+                "dataLoggerId": 43, 
                 "elevation": 6680.0, 
                 "name": "Washington Pass Upper",
                 "lat": 47.606209,
@@ -431,21 +431,21 @@ http://nwac.us/api/v5/stations?parameter=windspeed
         "region": "White Pass", 
         "stations": [
             {
-                "dataloggerid": 44, 
+                "dataLoggerId": 44, 
                 "elevation": 4470.0, 
                 "name": "White Pass Base",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 45, 
+                "dataLoggerId": 45, 
                 "elevation": 5800.0, 
                 "name": "White Pass Upper",
                 "lat": 47.606209,
                 "lon": -122.332071
             }, 
             {
-                "dataloggerid": 46, 
+                "dataLoggerId": 46, 
                 "elevation": 5970.0, 
                 "name": "Pigtail",
                 "lat": 47.606209,

@@ -261,21 +261,31 @@
       };
       access = Object.mergeDefaults(access, accessToken);
       this.current = [];
+      this.stations = [];
       this.maps = [];
-      this.stations = {};
       this.markers = {};
       this.listeners = {};
       this.api = new window.Plotting.API(access.token);
     }
 
     Controls.prototype.setCurrent = function(plotId) {
-      var i, len, ref, results1, row;
+      var _row, args, i, key, len, ref, results1;
       this.current[plotId] = [];
-      ref = this.plotter.template[plotId].proto.options.dataParams;
+      ref = ["y", "y2", "y3"];
       results1 = [];
       for (i = 0, len = ref.length; i < len; i++) {
-        row = ref[i];
-        results1.push(this.current[plotId].push(parseInt(row.data_logger)));
+        key = ref[i];
+        _row = this.plotter.template[plotId].proto.options[key];
+        if (_row.dataLoggerId !== null) {
+          args = {
+            dataLoggerId: parseInt(_row.dataLoggerId),
+            yTarget: key,
+            color: _row.color
+          };
+          results1.push(this.current[plotId].push(args));
+        } else {
+          results1.push(void 0);
+        }
       }
       return results1;
     };
@@ -295,20 +305,22 @@
       uuid = this.uuid();
       this.setCurrent(plotId);
       callback = function(data) {
-        var _dots, _id, _prepend, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
-        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
+        var _dots, _id, _prepend, _region_name, _region_selected, _row_current, _station, a_color, color, html, i, id, j, k, l, len, len1, len2, len3, len4, m, r_color, ref, ref1, ref2, ref3, ref4, region, station;
         _.stations[plotId] = data.responseJSON.results;
-        ref = data.responseJSON.results;
+        console.log("Stations ", _.stations[plotId]);
+        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
+        ref = _.stations[plotId];
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
           a_color = "";
           r_color = "";
           _dots = "<span class=\"station-dots\">";
           _region_selected = 0;
+          _region_name = _.__lcname(region.name);
           ref1 = region.dataloggers;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
             _station = ref1[j];
-            _row_current = _.isCurrent(current, 'dataLoggerId', _station.id);
+            _row_current = _.plotter.indexOfValue(_.getCurrent(plotId), "dataLoggerId", _station.id);
             if (_row_current) {
               _region_selected++;
               _dots = _dots + " <i class=\"icon-circle\" style=\"color: " + _row_current.color + "\"></i>";
@@ -318,11 +330,11 @@
             r_color = "style=\"background-color: rgb(248,248,248)\"";
             a_color = "style=\"font-weight: 700\"";
           }
-          html = html + " <li class=\"subheader\" " + r_color + "> <a " + a_color + " href=\"#\"><i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.name + " " + _dots + "</span></a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
+          html = html + " <li class=\"subheader\" " + r_color + "> <a data-region=\"" + _region_name + "\" " + a_color + " href=\"#\"> <i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> " + region.name + " " + _dots + "</span></a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
           ref2 = region.dataloggers;
           for (k = 0, len2 = ref2.length; k < len2; k++) {
             station = ref2[k];
-            _row_current = _.isCurrent(current, 'dataLoggerId', station.id);
+            _row_current = _.plotter.indexOfValue(_.getCurrent(plotId), "dataLoggerId", _station.id);
             color = "";
             if (_row_current) {
               color = "style=\"color: " + _row_current.color + "\"";
@@ -330,7 +342,7 @@
             id = "data-logger-" + station.id + "-plot-" + plotId;
             _prepend = "<i id=\"" + id + "\" class=\"icon-circle\" " + color + "></i>";
             _id = "add-station-" + plotId + "-" + station.id;
-            html = html + " <li class=\"station\" id=\"" + _id + "\" data-station-id=\"" + station.id + "\" data-plot-id=\"" + plotId + "\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"\"> " + _prepend + " " + station.datalogger_name + " | " + station.elevation + " ft</li>";
+            html = html + " <li class=\"station\" id=\"" + _id + "\" data-station-id=\"" + station.id + "\" data-plot-id=\"" + plotId + "\" data-region-parent=\"" + _region_name + "\" style=\"padding: 1px 5px; cursor: pointer; list-style-type: none\" onclick=\"\"> " + _prepend + " " + station.datalogger_name + " | " + station.elevation + " ft</li>";
           }
           html = html + " </ul>";
         }
@@ -396,11 +408,11 @@
       this.resetStationDropdown(plotId);
       setActive = function(key, dataLoggerId) {
         var _cid, _color, _id;
+        dataLoggerId = _options[key].dataLoggerId;
         _color = _options[key].color;
         _cid = "circle-plot" + plotId + "-station" + dataLoggerId;
         _append = " <i class=\"icon-circle\" id=\"" + _cid + "\" style=\"color: " + _color + "\"></i>";
         _id = "data-logger-" + dataLoggerId + "-plot-" + plotId;
-        console.log("(key) " + key + " Variable active: (_id, _cid, dataLoggerId)", _id, _cid, dataLoggerId);
         if ($("#" + _cid).length === 0) {
           $(_options.target).find("#" + _id).css("color", _color).parent().parent().prev().css("background-color", "rgb(248,248,248)").css("font-weight", 700);
           console.log("Station dots (dom)", $(_options.target).find("#" + _id).children(":first").find(".station-dots"));
@@ -417,15 +429,17 @@
         });
       };
       if (_options.y.dataLoggerId !== null) {
-        setActive("y", _options.y.dataLoggerId);
+        setActive("y");
       }
-      if (_options.y2.variable !== null) {
-        setActive("y2", _options.y2.dataLoggerId);
+      if (_options.y2.dataLoggerId !== null) {
+        setActive("y2");
       }
-      if (_options.y3.variable !== null) {
-        return setActive("y3", _options.y3.dataLoggerId);
+      if (_options.y3.dataLoggerId !== null) {
+        return setActive("y3");
       }
     };
+
+    Controls.prototype.setRegionStations = function(plotId, current) {};
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
       var _current, args, callback, target, uuid;
@@ -540,7 +554,7 @@
             },
             id: _row_id,
             tooltip: station.datalogger_name + " - " + station.elevation + " ft",
-            dataloggerid: station.id,
+            dataLoggerId: station.id,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: scale,
@@ -558,7 +572,7 @@
             return infowindow.close();
           });
           this.listeners[plotId][_row_id] = marker.addListener('click', function() {
-            return _.plotter.addStation(plotId, this.dataloggerid);
+            return _.plotter.addStation(plotId, this.dataLoggerId);
           });
           _len = this.markers[plotId][_row_id] = marker;
           this.markers[plotId][_row_id].setMap(this.maps[plotId]);
@@ -589,7 +603,7 @@
         _.listeners[plotId][_key].remove();
         results1.push(_.listeners[plotId][_key] = _marker.addListener('click', function() {
           var _dataLoggerId;
-          _dataLoggerId = this.get("dataloggerid");
+          _dataLoggerId = this.get("dataLoggerId");
           return _.plotter.addStation(plotId, _dataLoggerId);
         }));
       }
@@ -613,7 +627,7 @@
         _.listeners[plotId][rowId].remove();
         return _.listeners[plotId][rowId] = _.markers[plotId][rowId].addListener('click', function() {
           var _dataLoggerId;
-          _dataLoggerId = this.get("dataloggerid");
+          _dataLoggerId = this.get("dataLoggerId");
           return _.plotter.removeStation(plotId, _dataLoggerId);
         });
       };
@@ -709,6 +723,10 @@
       return $("#new-" + uuid).on('click', function() {
         return _.plotter.add("parameter");
       });
+    };
+
+    Controls.prototype.__lcname = function(name) {
+      return name.replace(" ", "_").toLowerCase();
     };
 
     Controls.prototype.uuid = function() {
@@ -2428,7 +2446,7 @@ Air Sciences Inc. - 2016
       this.controls.move(plotId, '#' + selector, 'down');
       if (this.template[plotId].type === "station") {
         current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
-        return this.controls.appendParameterDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.dataloggerid, current);
+        return this.controls.appendParameterDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.dataLoggerId, current);
       } else if (this.template[plotId].type === "parameter") {
         current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
         return this.controls.appendStationDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.variable, current);
@@ -2506,7 +2524,7 @@ Air Sciences Inc. - 2016
       _plot = this.template[plotId];
       _plot.dataParams[0].data_logger = dataLoggerId;
       _plot.proto.options.dataParams = _plot.dataParams;
-      _plot.proto.options.y.dataloggerid = dataLoggerId;
+      _plot.proto.options.y.dataLoggerId = dataLoggerId;
       return this.getAppendData(this.uuid(), plotId, 0);
     };
 
