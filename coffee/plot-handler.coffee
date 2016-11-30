@@ -315,7 +315,6 @@ window.Plotting.Handler = class Handler
       # Update Controls
       _.controls.removeSpinner(plotId)
       _.controls.updateStationDropdown(plotId)
-      _.controls.updateStationMap(plotId)
 
       # Update Request Readiness
       if dir is "min"
@@ -407,6 +406,7 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.dataParams[paramsKey].limit =
         state.length.data
       @getAppendData(uuid, plotId, paramsKey)
+      @controls.updateStationMap(plotId)
 
   removeStation: (plotId, dataLoggerId) ->
     # Remove the station from the plot & data.
@@ -440,10 +440,13 @@ window.Plotting.Handler = class Handler
       _plot.removeData(_key)
       _plot.update()
 
+    console.log("Pre-Remove (y2.dataLoggerId, y3.dataLoggerId)",
+      _plot.options.y2.dataLoggerId, _plot.options.y3.dataLoggerId)
     # Update The Controls After Remove
     @controls.removeSpinner(plotId)
     @controls.updateStationDropdown(plotId)
     @controls.updateStationMap(plotId)
+    console.log("Remove complete")
 
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.

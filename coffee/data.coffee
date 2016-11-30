@@ -19,11 +19,11 @@ window.Plotting.Data = class Data
     @data = $.extend(true, [], data)
     @sourceCount = 1
 
-    _len = @data.length-1
-    for i in [0.._len]
-      if @data[i] is undefined
-        console.log("#{preError} on construct, @data[i] is (i, row)",
-          i, @data[i])
+    #_len = @data.length-1
+    #for i in [0.._len]
+    #  if @data[i] is undefined
+    #    console.log("#{preError} on construct, @data[i] is (i, row)",
+    #      i, @data[i])
 
     @test = (row, joinRow, onKeys) ->
       # Test the row match

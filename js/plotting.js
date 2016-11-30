@@ -755,7 +755,7 @@
 
   window.Plotting.Data = Data = (function() {
     function Data(data) {
-      var _len, i, j, preError, ref;
+      var preError;
       this.preError = "Plotting.Data.";
       preError = this.preError + ".constructor(...)";
       if (!(data instanceof Array)) {
@@ -764,20 +764,14 @@
       }
       this.data = $.extend(true, [], data);
       this.sourceCount = 1;
-      _len = this.data.length - 1;
-      for (i = j = 0, ref = _len; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
-        if (this.data[i] === void 0) {
-          console.log(preError + " on construct, @data[i] is (i, row)", i, this.data[i]);
-        }
-      }
       this.test = function(row, joinRow, onKeys) {
-        var _calculated, _required, k, len, testResult, testRow;
+        var _calculated, _required, j, len, testResult, testRow;
         preError = this.preError + "test(...):";
         _required = onKeys.length;
         _calculated = 0;
         testResult = false;
-        for (k = 0, len = onKeys.length; k < len; k++) {
-          testRow = onKeys[k];
+        for (j = 0, len = onKeys.length; j < len; j++) {
+          testRow = onKeys[j];
           if (row[testRow] === void 0) {
             throw new Error(preError + " key '" + testRow + "' not found in primary data set.");
           }
@@ -2223,7 +2217,6 @@ Air Sciences Inc. - 2016
         }
         _.controls.removeSpinner(plotId);
         _.controls.updateStationDropdown(plotId);
-        _.controls.updateStationMap(plotId);
         if (dir === "min") {
           plot.proto.state.requested.min = false;
         } else if (dir === "max") {
@@ -2317,7 +2310,8 @@ Air Sciences Inc. - 2016
         params = ref[paramsKey];
         this.template[plotId].proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_max_datetime));
         this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
-        results.push(this.getAppendData(uuid, plotId, paramsKey));
+        this.getAppendData(uuid, plotId, paramsKey);
+        results.push(this.controls.updateStationMap(plotId));
       }
       return results;
     };
@@ -2352,9 +2346,11 @@ Air Sciences Inc. - 2016
         _plot.removeData(_key);
         _plot.update();
       }
+      console.log("Pre-Remove (y2.dataLoggerId, y3.dataLoggerId)", _plot.options.y2.dataLoggerId, _plot.options.y3.dataLoggerId);
       this.controls.removeSpinner(plotId);
       this.controls.updateStationDropdown(plotId);
-      return this.controls.updateStationMap(plotId);
+      this.controls.updateStationMap(plotId);
+      return console.log("Remove complete");
     };
 
     Handler.prototype.zoom = function(transform) {
