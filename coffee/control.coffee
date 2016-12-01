@@ -63,7 +63,6 @@ window.Plotting.Controls = class Controls
           _index = @plotter.indexOfValue(
             @current[plotId], "dataLoggerId", station.id)
           if _index > -1
-            console.log("Station active (plotId, station)", plotId, station)
             _color = @current[plotId][_index].color
             station.displayed = true
             station.color = _color
@@ -159,7 +158,6 @@ window.Plotting.Controls = class Controls
       if station.displayed
         $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]")
           .off("click").on("click", (event) ->
-            console.log("Remove Station")
             event.stopPropagation()
             _plotId = $(this).attr("data-plot-id")
             $(this).append("<i class=\"icon-spinner icon-spin\"
@@ -170,7 +168,6 @@ window.Plotting.Controls = class Controls
       else
         $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]")
           .off("click").on("click", (event) ->
-            console.log("Add Station")
             event.stopPropagation()
             _plotId = $(this).attr("data-plot-id")
             $(this).append("<i class=\"icon-spinner icon-spin\"
@@ -473,6 +470,9 @@ window.Plotting.Controls = class Controls
     # toggle the map div.
     __nwac_offset_left = 128
     __nwac_offset_top = 256
+
+    __nwac_offset_left = 0
+    __nwac_offset_top = 0
 
     _center = @plotter.controls.maps[plotId].getCenter()
     _zoom = @plotter.controls.maps[plotId].getZoom()

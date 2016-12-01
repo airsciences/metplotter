@@ -316,7 +316,6 @@
               station.color = "";
               _index = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id);
               if (_index > -1) {
-                console.log("Station active (plotId, station)", plotId, station);
                 _color = this.current[plotId][_index].color;
                 station.displayed = true;
                 station.color = _color;
@@ -386,7 +385,6 @@
         if (station.displayed) {
           return $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]").off("click").on("click", function(event) {
             var _plotId;
-            console.log("Remove Station");
             event.stopPropagation();
             _plotId = $(this).attr("data-plot-id");
             $(this).append("<i class=\"icon-spinner icon-spin\" data-plot-id=\"" + _plotId + "\"></i>");
@@ -395,7 +393,6 @@
         } else {
           return $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]").off("click").on("click", function(event) {
             var _plotId;
-            console.log("Add Station");
             event.stopPropagation();
             _plotId = $(this).attr("data-plot-id");
             $(this).append("<i class=\"icon-spinner icon-spin\" data-plot-id=\"" + _plotId + "\"></i>");
@@ -670,6 +667,8 @@
       var __nwac_offset_left, __nwac_offset_top, _center, _offset, _zoom;
       __nwac_offset_left = 128;
       __nwac_offset_top = 256;
+      __nwac_offset_left = 0;
+      __nwac_offset_top = 0;
       _center = this.plotter.controls.maps[plotId].getCenter();
       _zoom = this.plotter.controls.maps[plotId].getZoom();
       _offset = $("#map-control-" + plotId).parent().parent().prev().offset();
@@ -2302,7 +2301,6 @@ Air Sciences Inc. - 2016
       }
       if (this.template[plotId].proto.options.y.dataLoggerId && this.template[plotId].proto.options.y2.dataLoggerId && this.template[plotId].proto.options.y3.dataLoggerId) {
         this.controls.removeSpinner(plotId);
-        console.log("Maximum of 3 Plot selected.");
         return null;
       }
       state = this.template[plotId].proto.getState();
@@ -2354,11 +2352,9 @@ Air Sciences Inc. - 2016
         _plot.removeData(_key);
         _plot.update();
       }
-      console.log("Pre-Remove (y2.dataLoggerId, updateStationDropdown)", _plot.options.y2.dataLoggerId, this.controls.updateStationDropdown);
       this.controls.removeSpinner(plotId);
       this.controls.updateStationDropdown(plotId);
-      this.controls.updateStationMap(plotId);
-      return console.log("Remove complete");
+      return this.controls.updateStationMap(plotId);
     };
 
     Handler.prototype.zoom = function(transform) {

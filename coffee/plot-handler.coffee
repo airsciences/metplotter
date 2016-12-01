@@ -386,7 +386,7 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.y3.dataLoggerId
     )
       @controls.removeSpinner(plotId)
-      console.log("Maximum of 3 Plot selected.")
+      #console.log("Maximum of 3 Plot selected.")
       return null
 
     state = @template[plotId].proto.getState()
@@ -442,13 +442,10 @@ window.Plotting.Handler = class Handler
       _plot.removeData(_key)
       _plot.update()
 
-    console.log("Pre-Remove (y2.dataLoggerId, updateStationDropdown)",
-      _plot.options.y2.dataLoggerId, @controls.updateStationDropdown)
     # Update The Controls After Remove
     @controls.removeSpinner(plotId)
     @controls.updateStationDropdown(plotId)
     @controls.updateStationMap(plotId)
-    console.log("Remove complete")
 
   zoom: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
