@@ -2301,6 +2301,7 @@ Air Sciences Inc. - 2016
         return this.appendNew(plotId, dataLoggerId);
       }
       if (this.template[plotId].proto.options.y.dataLoggerId && this.template[plotId].proto.options.y2.dataLoggerId && this.template[plotId].proto.options.y3.dataLoggerId) {
+        this.controls.removeSpinner(plotId);
         console.log("Maximum of 3 Plot selected.");
         return null;
       }

@@ -385,6 +385,7 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.y2.dataLoggerId and
       @template[plotId].proto.options.y3.dataLoggerId
     )
+      @controls.removeSpinner(plotId)
       console.log("Maximum of 3 Plot selected.")
       return null
 
