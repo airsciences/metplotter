@@ -299,37 +299,41 @@
 
     Controls.prototype.updateStationStates = function(plotId) {
       var _color, _index, dot_append, i, len, ref, region, results1, station;
-      ref = this.stations[plotId];
-      results1 = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        region = ref[i];
-        region.displayed = [];
-        results1.push((function() {
-          var j, len1, ref1, results2;
-          ref1 = region.dataloggers;
-          results2 = [];
-          for (j = 0, len1 = ref1.length; j < len1; j++) {
-            station = ref1[j];
-            station.displayed = false;
-            station.color = null;
-            _index = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id);
-            if (_index > -1) {
-              _color = this.current[plotId][_index].color;
-              station.displayed = true;
-              station.color = _color;
-              dot_append = {
-                dataLoggerId: station.id,
-                color: _color
-              };
-              results2.push(region.displayed.push(dot_append));
-            } else {
-              results2.push(void 0);
+      this.setCurrent(plotId);
+      if (this.stations[plotId].length > 0) {
+        ref = this.stations[plotId];
+        results1 = [];
+        for (i = 0, len = ref.length; i < len; i++) {
+          region = ref[i];
+          region.displayed = [];
+          results1.push((function() {
+            var j, len1, ref1, results2;
+            ref1 = region.dataloggers;
+            results2 = [];
+            for (j = 0, len1 = ref1.length; j < len1; j++) {
+              station = ref1[j];
+              station.displayed = false;
+              station.color = "";
+              _index = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id);
+              if (_index > -1) {
+                console.log("Station active (plotId, station)", plotId, station);
+                _color = this.current[plotId][_index].color;
+                station.displayed = true;
+                station.color = _color;
+                dot_append = {
+                  dataLoggerId: station.id,
+                  color: _color
+                };
+                results2.push(region.displayed.push(dot_append));
+              } else {
+                results2.push(void 0);
+              }
             }
-          }
-          return results2;
-        }).call(this));
+            return results2;
+          }).call(this));
+        }
+        return results1;
       }
-      return results1;
     };
 
     Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter, current) {
@@ -366,7 +370,7 @@
     };
 
     Controls.prototype.updateStationDropdown = function(plotId) {
-      var _, __bindStationClicks, __buildDots, _data_region, _dots_html, i, j, len, len1, ref, ref1, region, results1, station;
+      var _, __bindStationClicks, __buildDots, _background_color, _data_region, _dots_html, _font_weight, i, j, len, len1, ref, ref1, region, results1, station;
       _ = this;
       this.updateStationStates(plotId);
       __buildDots = function(displayed) {
@@ -382,18 +386,20 @@
         if (station.displayed) {
           return $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]").off("click").on("click", function(event) {
             var _plotId;
+            console.log("Remove Station");
             event.stopPropagation();
             _plotId = $(this).attr("data-plot-id");
-            plotter.removeStation(_plotId, $(this).attr("data-station-id"));
-            return $(this).append("<i class=\"icon-spinner icon-spin\" data-plot-id=\"" + _plotId + "\"></i>");
+            $(this).append("<i class=\"icon-spinner icon-spin\" data-plot-id=\"" + _plotId + "\"></i>");
+            return plotter.removeStation(_plotId, $(this).attr("data-station-id"));
           });
         } else {
           return $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]").off("click").on("click", function(event) {
             var _plotId;
+            console.log("Add Station");
             event.stopPropagation();
             _plotId = $(this).attr("data-plot-id");
-            plotter.addStation(_plotId, $(this).attr("data-station-id"));
-            return $(this).append("<i class=\"icon-spinner icon-spin\" data-plot-id=\"" + _plotId + "\"></i>");
+            $(this).append("<i class=\"icon-spinner icon-spin\" data-plot-id=\"" + _plotId + "\"></i>");
+            return plotter.addStation(_plotId, $(this).attr("data-station-id"));
           });
         }
       };
@@ -403,8 +409,11 @@
         region = ref[i];
         _data_region = this.__lcname(region.name);
         _dots_html = "";
+        _font_weight = "";
+        _background_color = "";
         if (region.displayed.length > 0) {
-          $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"]").css("background-color", "rgb(248, 248, 248)").css("font-weight", 700);
+          _background_color = "rgb(248, 248, 248)";
+          _font_weight = 700;
           _dots_html = __buildDots(region.displayed);
         }
         ref1 = region.dataloggers;
@@ -413,6 +422,7 @@
           $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]> i.icon-circle").css("color", station.color);
           __bindStationClicks(plotId, _.plotter, station);
         }
+        $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"]").css("background-color", _background_color).css("font-weight", _font_weight);
         results1.push($("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"] > span.region-dots").html(_dots_html));
       }
       return results1;
@@ -595,7 +605,6 @@
       var _, _color, _id, _options, _row_id, updateMarker;
       _ = this;
       this.resetStationMap(plotId);
-      this.setCurrent(plotId);
       updateMarker = function(plotId, rowId, color) {
         _.markers[plotId][rowId].setIcon({
           path: google.maps.SymbolPath.CIRCLE,
@@ -2216,7 +2225,6 @@ Air Sciences Inc. - 2016
           delete plot.__data[call];
         }
         _.controls.removeSpinner(plotId);
-        _.controls.updateStationDropdown(plotId);
         if (dir === "min") {
           plot.proto.state.requested.min = false;
         } else if (dir === "max") {
@@ -2288,7 +2296,7 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.addStation = function(plotId, dataLoggerId) {
-      var _len, _max_datetime, _params, _variable, params, paramsKey, ref, results, state, uuid;
+      var _len, _max_datetime, _params, _variable, params, paramsKey, ref, state, uuid;
       if (!this.template[plotId].proto.initialized) {
         return this.appendNew(plotId, dataLoggerId);
       }
@@ -2305,15 +2313,14 @@ Air Sciences Inc. - 2016
       this.setNewOptions(plotId, _variable, dataLoggerId);
       uuid = this.uuid();
       ref = this.template[plotId].proto.options.dataParams;
-      results = [];
       for (paramsKey in ref) {
         params = ref[paramsKey];
         this.template[plotId].proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_max_datetime));
         this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
         this.getAppendData(uuid, plotId, paramsKey);
-        results.push(this.controls.updateStationMap(plotId));
       }
-      return results;
+      this.controls.updateStationDropdown(plotId);
+      return this.controls.updateStationMap(plotId);
     };
 
     Handler.prototype.removeStation = function(plotId, dataLoggerId) {
@@ -2346,7 +2353,7 @@ Air Sciences Inc. - 2016
         _plot.removeData(_key);
         _plot.update();
       }
-      console.log("Pre-Remove (y2.dataLoggerId, y3.dataLoggerId)", _plot.options.y2.dataLoggerId, _plot.options.y3.dataLoggerId);
+      console.log("Pre-Remove (y2.dataLoggerId, updateStationDropdown)", _plot.options.y2.dataLoggerId, this.controls.updateStationDropdown);
       this.controls.removeSpinner(plotId);
       this.controls.updateStationDropdown(plotId);
       this.controls.updateStationMap(plotId);

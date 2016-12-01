@@ -312,9 +312,8 @@ window.Plotting.Handler = class Handler
           plot.proto.append()
         delete plot.__data[call]
 
-      # Update Controls
+      # Remove Spinner
       _.controls.removeSpinner(plotId)
-      _.controls.updateStationDropdown(plotId)
 
       # Update Request Readiness
       if dir is "min"
@@ -406,7 +405,9 @@ window.Plotting.Handler = class Handler
       @template[plotId].proto.options.dataParams[paramsKey].limit =
         state.length.data
       @getAppendData(uuid, plotId, paramsKey)
-      @controls.updateStationMap(plotId)
+
+    @controls.updateStationDropdown(plotId)
+    @controls.updateStationMap(plotId)
 
   removeStation: (plotId, dataLoggerId) ->
     # Remove the station from the plot & data.
@@ -440,8 +441,8 @@ window.Plotting.Handler = class Handler
       _plot.removeData(_key)
       _plot.update()
 
-    console.log("Pre-Remove (y2.dataLoggerId, y3.dataLoggerId)",
-      _plot.options.y2.dataLoggerId, _plot.options.y3.dataLoggerId)
+    console.log("Pre-Remove (y2.dataLoggerId, updateStationDropdown)",
+      _plot.options.y2.dataLoggerId, @controls.updateStationDropdown)
     # Update The Controls After Remove
     @controls.removeSpinner(plotId)
     @controls.updateStationDropdown(plotId)

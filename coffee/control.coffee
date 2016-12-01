@@ -52,21 +52,25 @@ window.Plotting.Controls = class Controls
 
   updateStationStates: (plotId) ->
     # set displayed state.
-    for region in @stations[plotId]
-      region.displayed = []
-      for station in region.dataloggers
-        station.displayed = false
-        station.color = null
-        _index = @plotter.indexOfValue(
-          @current[plotId], "dataLoggerId", station.id)
-        if _index > -1
-          _color = @current[plotId][_index].color
-          station.displayed = true
-          station.color = _color
-          dot_append =
-            dataLoggerId: station.id
-            color: _color
-          region.displayed.push(dot_append)
+    @setCurrent(plotId)
+
+    if @stations[plotId].length > 0
+      for region in @stations[plotId]
+        region.displayed = []
+        for station in region.dataloggers
+          station.displayed = false
+          station.color = ""
+          _index = @plotter.indexOfValue(
+            @current[plotId], "dataLoggerId", station.id)
+          if _index > -1
+            console.log("Station active (plotId, station)", plotId, station)
+            _color = @current[plotId][_index].color
+            station.displayed = true
+            station.color = _color
+            dot_append =
+              dataLoggerId: station.id
+              color: _color
+            region.displayed.push(dot_append)
 
   appendStationDropdown: (plotId, appendTarget, parameter, current) ->
     # Append Station Dropdown.
@@ -155,22 +159,24 @@ window.Plotting.Controls = class Controls
       if station.displayed
         $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]")
           .off("click").on("click", (event) ->
+            console.log("Remove Station")
             event.stopPropagation()
             _plotId = $(this).attr("data-plot-id")
-            plotter.removeStation(_plotId,
-              $(this).attr("data-station-id"))
             $(this).append("<i class=\"icon-spinner icon-spin\"
             data-plot-id=\"#{_plotId}\"></i>")
+            plotter.removeStation(_plotId,
+              $(this).attr("data-station-id"))
           )
       else
         $("[data-station-id=\"#{station.id}\"][data-plot-id=\"#{plotId}\"]")
           .off("click").on("click", (event) ->
+            console.log("Add Station")
             event.stopPropagation()
             _plotId = $(this).attr("data-plot-id")
-            plotter.addStation(_plotId,
-              $(this).attr("data-station-id"))
             $(this).append("<i class=\"icon-spinner icon-spin\"
             data-plot-id=\"#{_plotId}\"></i>")
+            plotter.addStation(_plotId,
+              $(this).attr("data-station-id"))
           )
 
     # Set the appropriate styling and onclick events for a plot's dropdown.
@@ -178,11 +184,12 @@ window.Plotting.Controls = class Controls
       # Clear the Dots
       _data_region = @__lcname(region.name)
       _dots_html = ""
+      _font_weight = ""
+      _background_color = ""
       if region.displayed.length > 0
         # Update the Parent Header Weight.
-        $("[data-region=\"#{_data_region}\"][data-plot-id=\"#{plotId}\"]")
-          .css("background-color", "rgb(248, 248, 248)")
-          .css("font-weight", 700)
+        _background_color = "rgb(248, 248, 248)"
+        _font_weight = 700
         _dots_html = __buildDots(region.displayed)
       for station in region.dataloggers
         # Add Station Color States
@@ -191,11 +198,16 @@ window.Plotting.Controls = class Controls
           .css("color", station.color)
         __bindStationClicks(plotId, _.plotter, station)
 
+      $("[data-region=\"#{_data_region}\"][data-plot-id=\"#{plotId}\"]")
+        .css("background-color", _background_color)
+        .css("font-weight", _font_weight)
+
       $("[data-region=\"#{_data_region}\"][data-plot-id=\"#{plotId}\"] \
       > span.region-dots")
         .html(_dots_html)
 
   removeSpinner: (plotId) ->
+    # Remove all spinners associated with that plot
     $("i.icon-spinner[data-plot-id=\"#{plotId}\"]").remove()
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
@@ -401,7 +413,6 @@ window.Plotting.Controls = class Controls
     _ = @
 
     @resetStationMap(plotId)
-    @setCurrent(plotId)
 
     updateMarker = (plotId, rowId, color) ->
       _.markers[plotId][rowId].setIcon({
