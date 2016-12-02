@@ -271,23 +271,25 @@
     Controls.prototype.setCurrent = function(plotId) {
       var _row, args, i, key, len, ref, results1;
       this.current[plotId] = [];
-      ref = ["y", "y2", "y3"];
-      results1 = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        key = ref[i];
-        _row = this.plotter.template[plotId].proto.options[key];
-        if (_row.dataLoggerId !== null) {
-          args = {
-            dataLoggerId: parseInt(_row.dataLoggerId),
-            yTarget: key,
-            color: _row.color
-          };
-          results1.push(this.current[plotId].push(args));
-        } else {
-          results1.push(void 0);
+      if (this.plotter.template[plotId].proto.initialized) {
+        ref = ["y", "y2", "y3"];
+        results1 = [];
+        for (i = 0, len = ref.length; i < len; i++) {
+          key = ref[i];
+          _row = this.plotter.template[plotId].proto.options[key];
+          if (_row.dataLoggerId !== null) {
+            args = {
+              dataLoggerId: parseInt(_row.dataLoggerId),
+              yTarget: key,
+              color: _row.color
+            };
+            results1.push(this.current[plotId].push(args));
+          } else {
+            results1.push(void 0);
+          }
         }
+        return results1;
       }
-      return results1;
     };
 
     Controls.prototype.getCurrent = function(plotId) {
@@ -341,7 +343,6 @@
       _ = this;
       args = {};
       uuid = this.uuid();
-      this.setCurrent(plotId);
       callback = function(data) {
         var _region_name, html, i, j, len, len1, ref, ref1, region, station;
         _.stations[plotId] = data.responseJSON.results;
@@ -362,6 +363,7 @@
         $(appendTarget).prepend(html);
         $('#' + uuid).dropdown();
         _.bindSubMenuEvent(".subheader");
+        _.setCurrent(plotId);
         _.updateStationDropdown(plotId);
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
@@ -1538,6 +1540,7 @@
       }
       preError = this.preError + "append()";
       _ = this;
+      this.svg.select(".line-plot-axis-x").call(this.definition.xAxis);
       _y_title = "" + this.options.y.title;
       if (this.options.y.units) {
         _y_title = _y_title + " " + this.options.y.units;
@@ -2220,6 +2223,8 @@ Air Sciences Inc. - 2016
           } else {
             plot.proto.setData(plot.__data[call].get());
             plot.proto.append();
+            _.controls.updateStationDropdown(plotId);
+            _.controls.updateStationMap(plotId);
           }
           delete plot.__data[call];
         }
@@ -2297,7 +2302,10 @@ Air Sciences Inc. - 2016
     Handler.prototype.addStation = function(plotId, dataLoggerId) {
       var _len, _max_datetime, _params, _variable, params, paramsKey, ref, state, uuid;
       if (!this.template[plotId].proto.initialized) {
-        return this.appendNew(plotId, dataLoggerId);
+        this.appendNew(plotId, dataLoggerId);
+        this.controls.updateStationDropdown(plotId);
+        this.controls.updateStationMap(plotId);
+        return true;
       }
       if (this.template[plotId].proto.options.y.dataLoggerId && this.template[plotId].proto.options.y2.dataLoggerId && this.template[plotId].proto.options.y3.dataLoggerId) {
         this.controls.removeSpinner(plotId);
@@ -2466,8 +2474,10 @@ Air Sciences Inc. - 2016
 
     Handler.prototype.add = function(type) {
       var _key, _options, _plot, _target, html, instance;
-      if (this.template[this.template.length - 1].proto.initialized === false) {
-        return;
+      if (this.template[this.template.length - 1] !== null) {
+        if (this.template[this.template.length - 1].proto.initialized === false) {
+          return;
+        }
       }
       _target = this.utarget(this.options.target);
       _plot = {
@@ -2494,10 +2504,19 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.initVariable = function(plotId, variable, title) {
-      this.template[plotId].dataParams = [this.template[plotId - 1].dataParams[0]];
+      var j, len, ref, row;
+      ref = this.template;
+      for (j = 0, len = ref.length; j < len; j++) {
+        row = ref[j];
+        if (row !== null) {
+          this.template[plotId].dataParams = [row.dataParams[0]];
+          break;
+        }
+      }
       this.template[plotId].dataParams[0].data_logger = null;
       this.template[plotId].proto.options.y.variable = variable;
       this.template[plotId].proto.options.y.title = title;
+      this.setNewOptions(plotId, variable, null);
       this.appendControls(plotId);
       return this.template[plotId].proto.removeTemp();
     };
@@ -2515,7 +2534,7 @@ Air Sciences Inc. - 2016
       var _bounds, _info;
       _bounds = this.getVariableBounds(variable);
       _info = this.getVariableInfo(variable);
-      if (this.template[plotId].proto.options.y.variable === null) {
+      if (this.template[plotId].proto.options.y.variable === null || this.template[plotId].proto.options.y.dataLoggerId === null) {
         this.template[plotId].proto.options.y = {
           dataLoggerId: dataLoggerId,
           variable: variable,
@@ -2531,9 +2550,10 @@ Air Sciences Inc. - 2016
         }
         if (_bounds) {
           this.template[plotId].proto.options.y.min = _bounds.min;
-          return this.template[plotId].proto.options.y.max = _bounds.max;
+          this.template[plotId].proto.options.y.max = _bounds.max;
+          return this.template[plotId].proto.options.y.maxBarValue = _bounds.maxBar;
         }
-      } else if (this.template[plotId].proto.options.y2.variable === null) {
+      } else if (this.template[plotId].proto.options.y2.variable === null || this.template[plotId].proto.options.y2.dataLoggerId === null) {
         this.template[plotId].proto.options.y2 = {
           dataLoggerId: dataLoggerId,
           variable: variable,
@@ -2551,7 +2571,7 @@ Air Sciences Inc. - 2016
           this.template[plotId].proto.options.y2.min = _bounds.min;
           return this.template[plotId].proto.options.y2.max = _bounds.max;
         }
-      } else if (this.template[plotId].proto.options.y3.variable === null) {
+      } else if (this.template[plotId].proto.options.y3.variable === null || this.template[plotId].proto.options.y3.dataLoggerId === null) {
         this.template[plotId].proto.options.y3 = {
           dataLoggerId: dataLoggerId,
           variable: variable,
@@ -2577,35 +2597,43 @@ Air Sciences Inc. - 2016
       bounds = {
         battery_voltage: {
           min: 8,
-          max: 16
+          max: 16,
+          maxBar: null
         },
         net_solar: {
           min: 0,
-          max: 800
+          max: 800,
+          maxBar: null
         },
         relative_humidity: {
           min: 0,
-          max: 100
+          max: 102,
+          maxBar: null
         },
         snow_depth: {
           min: 0,
-          max: 40
+          max: 40,
+          maxBar: null
         },
         wind_direction: {
           min: 0,
-          max: 360
+          max: 360,
+          maxBar: null
         },
         precipitation: {
           min: 0,
-          max: 0.7
+          max: 0.7,
+          maxBar: null
         },
         temperature: {
           min: 0,
-          max: 60
+          max: 60,
+          maxBar: 32
         },
         wind_speed_average: {
           min: 0,
-          max: 60
+          max: 60,
+          maxBar: null
         }
       };
       return bounds[variable];
@@ -2674,9 +2702,11 @@ Air Sciences Inc. - 2016
     Handler.prototype.indexOfValue = function(array, key, value) {
       var i, index, j, ref;
       index = -1;
-      for (i = j = 0, ref = array.length - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
-        if (array[i][key] === value) {
-          index = i;
+      if (array.length > 0) {
+        for (i = j = 0, ref = array.length - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+          if (array[i][key] === value) {
+            index = i;
+          }
         }
       }
       return index;

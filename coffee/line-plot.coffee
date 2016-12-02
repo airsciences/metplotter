@@ -583,6 +583,10 @@ window.Plotting.LinePlot = class LinePlot
     preError = "#{@preError}append()"
     _ = @
 
+    # Update the X-Axis
+    @svg.select(".line-plot-axis-x")
+      .call(@definition.xAxis)
+
     # Append Axis Label
     _y_title = "#{@options.y.title}"
     if @options.y.units
