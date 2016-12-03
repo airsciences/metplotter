@@ -488,22 +488,22 @@ window.Plotting.Handler = class Handler
     @controls.remove(plotId, '#'+selector)
     @controls.move(plotId, '#'+selector, 'down')
 
-    if @template[plotId].type is "station"
-      current = [
-        @template[plotId].proto.options.y,
-        @template[plotId].proto.options.y2,
-        @template[plotId].proto.options.y3
-      ]
-      @controls.appendParameterDropdown(plotId, '#'+selector,
-        @template[plotId].proto.options.y.dataLoggerId, current)
-    else if @template[plotId].type is "parameter"
-      current = [
-        @template[plotId].proto.options.y,
-        @template[plotId].proto.options.y2,
-        @template[plotId].proto.options.y3
-      ]
-      @controls.appendStationDropdown(plotId, '#'+selector,
-        @template[plotId].proto.options.y.variable, current)
+    #if @template[plotId].type is "station"
+    #  current = [
+    #    @template[plotId].proto.options.y,
+    #    @template[plotId].proto.options.y2,
+    #    @template[plotId].proto.options.y3
+    #  ]
+    #  @controls.appendParameterDropdown(plotId, '#'+selector,
+    #    @template[plotId].proto.options.y.dataLoggerId, current)
+    #else if @template[plotId].type is "parameter"
+    #  current = [
+    #    @template[plotId].proto.options.y,
+    #    @template[plotId].proto.options.y2,
+    #    @template[plotId].proto.options.y3
+    #  ]
+    #  @controls.appendStationDropdown(plotId, '#'+selector,
+    #    @template[plotId].proto.options.y.variable, current)
 
   remove: (plotId) ->
     # Remove a plotId

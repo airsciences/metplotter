@@ -2418,7 +2418,7 @@ Air Sciences Inc. - 2016
     };
 
     Handler.prototype.appendControls = function(plotId) {
-      var _li_style, current, html, selector;
+      var _li_style, html, selector;
       selector = "plot-controls-" + plotId;
       _li_style = "";
       html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> </ul>";
@@ -2426,14 +2426,7 @@ Air Sciences Inc. - 2016
       this.controls.move(plotId, '#' + selector, 'up');
       this.controls["new"]('#' + selector, 'down');
       this.controls.remove(plotId, '#' + selector);
-      this.controls.move(plotId, '#' + selector, 'down');
-      if (this.template[plotId].type === "station") {
-        current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
-        return this.controls.appendParameterDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.dataLoggerId, current);
-      } else if (this.template[plotId].type === "parameter") {
-        current = [this.template[plotId].proto.options.y, this.template[plotId].proto.options.y2, this.template[plotId].proto.options.y3];
-        return this.controls.appendStationDropdown(plotId, '#' + selector, this.template[plotId].proto.options.y.variable, current);
-      }
+      return this.controls.move(plotId, '#' + selector, 'down');
     };
 
     Handler.prototype.remove = function(plotId) {
