@@ -1,16 +1,16 @@
 #
 #   Northwest Avalanche Center (NWAC)
-#   Plotting Tools - API XHR (GET/PUT/POST/DELETE) (api.coffee)
+#   Plotter Tools - API XHR (GET/PUT/POST/DELETE) (api.coffee)
 #
 #   Air Sciences Inc. - 2016
 #   Jacob Fielding
 #
 
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.API = class API
+window.Plotter.API = class API
   constructor: (accessToken, async) ->
-    @preError = "Plotting.API"
+    @preError = "Plotter.API"
     preError = "#{@preError}.constructor()"
 
     # Configurations
@@ -85,7 +85,7 @@ window.Plotting.API = class API
 
     return
 
-  put: () ->
+  put: (uri, args, callback) ->
     # Standard PUT Method
     preError = "#{@preError}.put(uri, params, callback)"
 
@@ -127,7 +127,7 @@ window.Plotting.API = class API
 
     return
 
-  post: () ->
+  post: (uri, args, callback) ->
     # Standard POST Method
     preError = "#{@preError}.post(uri, params, callback)"
 
@@ -169,7 +169,7 @@ window.Plotting.API = class API
 
     return
 
-  delete: () ->
+  delete: (uri, args, callback) ->
     # Standard DELETE Method
     preError = "#{@preError}.delete(uri, params, callback)"
 

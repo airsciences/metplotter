@@ -1,15 +1,15 @@
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.Handler = class Handler
+window.Plotter.Handler = class Handler
   constructor: (accessToken, options, plots) ->
-    @preError = "Plotting.Handler"
+    @preError = "Plotter.Handler"
 
     # Define the Library
     __libDateFormat = if options.dateFormat then options.dateFormat
     else "%Y-%m-%dT%H:%M:%SZ"
     __libOptions =
       dateFormat: __libDateFormat
-    @lib = new window.Plotting.Library(__libOptions)
+    @lib = new window.Plotter.Library(__libOptions)
 
     # Get the href Root.
     if location.origin is "http://localhost:5000"
@@ -38,13 +38,16 @@ window.Plotting.Handler = class Handler
 
     # Define the Interface (Sub-Method Handlers)
     @i =
-      api: new window.Plotting.API(access.token)
-      sapi: new window.Plotting.API(access.token, false)
-    @i.template = new window.Plotting.Template(@)
-    @i.controls = new window.Plotting.Controls(@)
+      api: new window.Plotter.API(access.token)
+      sapi: new window.Plotter.API(access.token, false)
+    @i.template = new window.Plotter.Template(@)
+    @i.controls = new window.Plotter.Controls(@)
+    @i.initialsync = new window.Plotter.InitialSync(@)
+    @i.livesync = new window.Plotter.LiveSync(@)
 
     @updates = 0
     @endpoint = null
 
   initialize: ->
     # Initialize the Plotter
+    @i.template.get()

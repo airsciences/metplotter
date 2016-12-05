@@ -1,16 +1,16 @@
 #
 #   Northwest Avalanche Center (NWAC)
-#   Plotting Tools - Data Process Tool (data.coffee)
+#   Plotter Tools - Data Process Tool (data.coffee)
 #
 #   Air Sciences Inc. - 2016
 #   Jacob Fielding
 #
 
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.Data = class Data
+window.Plotter.Data = class Data
   constructor: (data) ->
-    @preError = "Plotting.Data."
+    @preError = "Plotter.Data."
     preError = "#{@preError}.constructor(...)"
     if data not instanceof Array
       console.log("#{preError} data not of type array.")

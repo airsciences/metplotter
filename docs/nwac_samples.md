@@ -21,7 +21,7 @@ var access = {
     "token": "#{token.token}"
 };
 
-var plotter = new Plotting.Handler(access, options);
+var plotter = new Plotter.Handler(access, options);
 plotter.initialize();
 </script>
 ```

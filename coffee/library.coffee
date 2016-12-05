@@ -3,9 +3,9 @@
 #
 
 
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.Library = class Library
+window.Plotter.Library = class Library
   constructor: (options) ->
     # Define the Library Formatting Options
     defaults =
@@ -20,9 +20,28 @@ window.Plotting.Library = class Library
       return @format(new Date())
 
   mergeDefaults: (args, defaults) ->
+    # Merge Two Objects.
     merge = {}
     for key, val of defaults
       merge[key] = val
     for key1, val1 of args
       merge[key1] = val1
     return merge
+
+  indexOfValue: (array, key, value) ->
+    # Return the index of an assoc-object key->value
+    index = -1
+    if array.length > 0
+      for i in [0..(array.length-1)]
+        if array[i][key] is value
+          index = i
+    return index
+
+  uuid: ->
+    # Build a Unique Identifier String
+    return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
+
+  utarget: (prepend) ->
+    # Build a Unique HTML Target.
+    prepend = prepend.replace '#', ''
+    return "#{prepend}-#{@uuid()}"

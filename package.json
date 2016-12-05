@@ -1,7 +1,7 @@
 {
   "name": "nwac",
   "version": "1.0.0",
-  "description": "NWAC D3 Plotting Tools",
+  "description": "NWAC D3 Plotter Tools",
   "main": "index.js",
   "dependencies": {
     "body-parser": "^1.15.2",

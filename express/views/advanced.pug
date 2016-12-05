@@ -4,7 +4,7 @@ html(lang='en')
     meta(charset='utf-8')
     meta(http-equiv='X-UA-Compatible' content='IE=edge')
     meta(name='viewport' content='width=device-width, initial-scale=1')
-    title='NWAC Plotting Tool Demo'
+    title='NWAC Plotter Tool Demo'
     link(rel='stylesheet', href='/bootstrap.min.css')
     link(rel='stylesheet', href='/font-awesome.css')
   body
@@ -16,7 +16,7 @@ html(lang='en')
               a(href='/')='Single'
             li(role="presentation")
               a(href='/multi')='Multiple'
-        h1='NWAC Plotting Tool'
+        h1='NWAC Plotter Tool'
         h5=title
         div(id='d3-dropdown-test-target')
         div(id='d3-plot-target')
@@ -36,9 +36,8 @@ html(lang='en')
 
       var access = {
           "token": "#{token.token}",
-          "expires": "#{token.expires}",
-          "admin": false
+          "admin": true
       };
 
-      var plotter214 = new Plotting.Handler(access, options);
+      var plotter214 = new Plotter.Handler(access, options);
       plotter214.initialize();

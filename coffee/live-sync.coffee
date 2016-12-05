@@ -1,13 +1,11 @@
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.LiveSync = class LiveSync
+window.Plotter.LiveSync = class LiveSync
   constructor: (plotter) ->
-    @preError = "Plotting.LiveSync"
+    @preError = "Plotter.LiveSync"
     @plotter = plotter
 
-
     @_buildRequest = () ->
-
 
 
   get: () ->
@@ -17,4 +15,3 @@ window.Plotting.LiveSync = class LiveSync
 
 
   prepend: () ->
-    

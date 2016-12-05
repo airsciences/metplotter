@@ -1,22 +1,22 @@
 #
 #   Northwest Avalanche Center (NWAC)
-#   Plotting Tools - Template Manager
+#   Plotter Tools - Template Manager
 #
 #   Air Sciences Inc. - 2016
 #   Jacob Fielding
 #
 
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.Template = class Template
+window.Plotter.Template = class Template
   constructor: (plotter) ->
-    @preError = "Plotting.Template."
+    @preError = "Plotter.Template."
     @plotter = plotter
-    console.log("#{@preError} (plotter.i)", plotter.i)
     @api = @plotter.i.api
     @sapi = @plotter.i.sapi
 
     @template = null
+    @dataSets = 0
 
     __isValid = (template) ->
       # JSON Format Validity Test
@@ -39,52 +39,73 @@ window.Plotting.Template = class Template
       # Parse the string format
       __json = JSON.parse(templateData).templateData
       if __isValid(__json)
+        for row in __json
+          row.x.min =
+            new window.Plotter.Now(@plotter.lib.format, row.x.min).get()
+          row.x.max =
+            new window.Plotter.Now(@plotter.lib.format, row.x.max).get()
         return __json
       else
-        throw new Error("Plotting template format is invalid. Reference a
+        throw new Error("Plotter template format is invalid. Reference a
           working example.")
         return null
 
     @stringify = ->
       # Return the String Template
-      return JSON.stringify(@template)
+      __prepared =
+        templateData: @template
+      return JSON.stringify(__prepared)
 
     @endpoint = ->
       # Get the Template Engine Endpoint
-      return "#{@plotter.options.href}/api/v5/plothandler/\
-        #{@plotter.options.templateId}"
+      return "#{@plotter.options.href}/api/v5/plothandler/"
 
   get: ->
     # GET a template from the server
     preError = "#{@preError}get()"
-    target = @endpoint()
+    target = @endpoint() + @plotter.options.templateId
     args = null
     _ = @
 
     callback = (data) ->
       if data.responseJSON == null || data.responseJSON.error
-        console.log("#{preError}.callback(data) error detected (data)", data)
+        throw new Error("#{preError}.callback(data) error retrieving template.")
         return
       _.template = _.parse(data.responseJSON.template_data)
 
-    @api.get(target, args, callback)
+    @sapi.get(target, args, callback)
 
   put: ->
     # PUT a template onto the server
-    if @plotter.isAdmin() is false
-      return
     preError = "#{@preError}put()"
+    if @plotter.isAdmin() is false
+      throw new Error("#{preError}, not authorized for PUT requests.")
+      return false
     target = @endpoint()
     args =
       id: @plotter.options.templateId
-      template_data:
-        templateData: @stringify(@template)
+      template_data: @stringify(@template)
     _ = @
 
     callback = (data) ->
-      if data.responseJSON == null || data.responseJSON.console.error
-        console.log("#{preError}.callback(data) error detected (data)", data)
-        return
-      _.template = data.responseJSON.templateData
+      console.log("Template PUT completed (data)", data)
 
     @api.put(target, args, callback)
+
+  dataSetCount: (plotId) ->
+    # Return the number of data sets for the plot.
+    return @template[plotId].y.length
+
+  forSync: (plotId, lineId, maxDatetime, limit) ->
+    # Prepare the template for an API request.
+    result =
+      data_logger: @template[plotId].y[lineId].dataLoggerId
+      max_datetime: maxDatetime
+      limit: maxDatetime
+    return result
+
+  forControls: () ->
+    # Prepare the template for building controls.
+
+  forPlot: () ->
+    # Prepare the template for building a plot.

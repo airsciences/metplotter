@@ -1,14 +1,14 @@
 #
 #   Northwest Avalanche Center (NWAC)
-#   Plotting Tools - D3 V.4 Line Plot (line-plot.coffee)
+#   Plotter Tools - D3 V.4 Line Plot (line-plot.coffee)
 #
 #   Air Sciences Inc. - 2016
 #   Jacob Fielding
 #
 
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.LinePlot = class LinePlot
+window.Plotter.LinePlot = class LinePlot
   constructor: (plotter, data, options) ->
     @preError = "LinePlot."
     @plotter = plotter
@@ -187,7 +187,7 @@ window.Plotting.LinePlot = class LinePlot
         result[key].y3Min = row[@options.y3Band.minVariable]
         result[key].y3Max = row[@options.y3Band.maxVariable]
 
-    _result = new Plotting.Data(result)
+    _result = new Plotter.Data(result)
     result = _result._clean(_result.get())
 
     return result.sort(@sortDatetimeAsc)
@@ -215,7 +215,7 @@ window.Plotting.LinePlot = class LinePlot
   appendData: (data) ->
     # Append the full data set.
     _data = @processData(data)
-    _full = new Plotting.Data(@data)
+    _full = new Plotter.Data(@data)
     _full.append(_data, ["x"])
     @data = _full._clean(_full.get())
     @data = @data.sort(@sortDatetimeAsc)
@@ -234,7 +234,7 @@ window.Plotting.LinePlot = class LinePlot
       delete _row[key + "Min"]
       delete _row[key + "Max"]
       result[_key] = _row
-    _full = new Plotting.Data(result)
+    _full = new Plotter.Data(result)
     @data = _full.get()
     @data = @data.sort(@sortDatetimeAsc)
 

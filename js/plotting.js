@@ -1,12 +1,12 @@
 (function() {
   var API;
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.API = API = (function() {
+  window.Plotter.API = API = (function() {
     function API(accessToken, async) {
       var preError;
-      this.preError = "Plotting.API";
+      this.preError = "Plotter.API";
       preError = this.preError + ".constructor()";
       this.async = true;
       if (typeof async !== "undefined") {
@@ -85,8 +85,8 @@
       }
     };
 
-    API.prototype.put = function() {
-      var args, error, error1, preError, xhr;
+    API.prototype.put = function(uri, args, callback) {
+      var error, error1, preError, xhr;
       preError = this.preError + ".put(uri, params, callback)";
       xhr = this.build();
       if (typeof callback !== 'undefined') {
@@ -126,8 +126,8 @@
       }
     };
 
-    API.prototype.post = function() {
-      var args, error, error1, preError, xhr;
+    API.prototype.post = function(uri, args, callback) {
+      var error, error1, preError, xhr;
       preError = this.preError + ".post(uri, params, callback)";
       xhr = build();
       if (typeof callback !== 'undefined') {
@@ -167,8 +167,8 @@
       }
     };
 
-    API.prototype["delete"] = function() {
-      var args, error, error1, preError, xhr;
+    API.prototype["delete"] = function(uri, args, callback) {
+      var error, error1, preError, xhr;
       preError = this.preError + ".delete(uri, params, callback)";
       xhr = this.build();
       if (typeof callback !== 'undefined') {
@@ -245,9 +245,9 @@
 (function() {
   var Color;
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.Color = Color = (function() {
+  window.Plotter.Color = Color = (function() {
     function Color(initial) {
       var __colors;
       __colors = {
@@ -269,12 +269,12 @@
   var Controls,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.Controls = Controls = (function() {
+  window.Plotter.Controls = Controls = (function() {
     function Controls(plotter, options) {
       var defaults;
-      this.preError = "Plotting.Dropdown";
+      this.preError = "Plotter.Dropdown";
       this.plotter = plotter;
       defaults = {
         target: null
@@ -780,12 +780,12 @@
   var Data,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.Data = Data = (function() {
+  window.Plotter.Data = Data = (function() {
     function Data(data) {
       var preError;
-      this.preError = "Plotting.Data.";
+      this.preError = "Plotter.Data.";
       preError = this.preError + ".constructor(...)";
       if (!(data instanceof Array)) {
         console.log(preError + " data not of type array.");
@@ -979,18 +979,36 @@
 }).call(this);
 
 (function() {
-  var Interface;
+  var InitialSync;
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.Interface = Interface = (function() {
-    function Interface(plotter, access) {
-      this.api = new window.Plotting.API(access.token);
-      this.syncronousapi = new window.Plotting.API(access.token, false);
-      this.controls = new window.Plotting.Controls(plotter, access.token);
+  window.Plotter.InitialSync = InitialSync = (function() {
+    function InitialSync(plotter) {
+      this.preError = "Plotter.InitialSync";
+      this.plotter = plotter;
+      this.requests = [];
     }
 
-    return Interface;
+    InitialSync.prototype.stage = function(plotId) {
+      var args, i, j, maxDatetime, ref, results, uuid;
+      maxDatetime = this.plotter.i.template[plotId].x.max;
+      results = [];
+      for (i = j = 0, ref = this.plotter.i.template.dataSetCount() - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+        args = this.plotter.i.template.forSync(plotId, i);
+        uuid = this.plotter.lib.uuid();
+        results.push(console.log("Request id (uuid)", uuid));
+      }
+      return results;
+    };
+
+    InitialSync.prototype.get = function(uuid) {};
+
+    InitialSync.prototype.append = function(plotId) {};
+
+    InitialSync.prototype.prepend = function(plotId) {};
+
+    return InitialSync;
 
   })();
 
@@ -999,9 +1017,9 @@
 (function() {
   var Library;
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.Library = Library = (function() {
+  window.Plotter.Library = Library = (function() {
     function Library(options) {
       var __options, defaults;
       defaults = {
@@ -1029,6 +1047,28 @@
       return merge;
     };
 
+    Library.prototype.indexOfValue = function(array, key, value) {
+      var i, index, j, ref;
+      index = -1;
+      if (array.length > 0) {
+        for (i = j = 0, ref = array.length - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+          if (array[i][key] === value) {
+            index = i;
+          }
+        }
+      }
+      return index;
+    };
+
+    Library.prototype.uuid = function() {
+      return (((1 + Math.random()) * 0x100000000) | 0).toString(16).substring(1);
+    };
+
+    Library.prototype.utarget = function(prepend) {
+      prepend = prepend.replace('#', '');
+      return prepend + "-" + (this.uuid());
+    };
+
     return Library;
 
   })();
@@ -1039,9 +1079,9 @@
   var LinePlot,
     slice = [].slice;
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.LinePlot = LinePlot = (function() {
+  window.Plotter.LinePlot = LinePlot = (function() {
     function LinePlot(plotter, data, options) {
       var _domainMean, _domainScale;
       this.preError = "LinePlot.";
@@ -1270,7 +1310,7 @@
           result[key].y3Max = row[this.options.y3Band.maxVariable];
         }
       }
-      _result = new Plotting.Data(result);
+      _result = new Plotter.Data(result);
       result = _result._clean(_result.get());
       return result.sort(this.sortDatetimeAsc);
     };
@@ -1297,7 +1337,7 @@
     LinePlot.prototype.appendData = function(data) {
       var _data, _full;
       _data = this.processData(data);
-      _full = new Plotting.Data(this.data);
+      _full = new Plotter.Data(this.data);
       _full.append(_data, ["x"]);
       this.data = _full._clean(_full.get());
       this.data = this.data.sort(this.sortDatetimeAsc);
@@ -1319,7 +1359,7 @@
         delete _row[key + "Max"];
         result[_key] = _row;
       }
-      _full = new Plotting.Data(result);
+      _full = new Plotter.Data(result);
       this.data = _full.get();
       this.data = this.data.sort(this.sortDatetimeAsc);
       if (this.initialized) {
@@ -1942,11 +1982,11 @@
 (function() {
   var LiveSync;
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.LiveSync = LiveSync = (function() {
+  window.Plotter.LiveSync = LiveSync = (function() {
     function LiveSync(plotter) {
-      this.preError = "Plotting.LiveSync";
+      this.preError = "Plotter.LiveSync";
       this.plotter = plotter;
       this._buildRequest = function() {};
     }
@@ -1964,19 +2004,57 @@
 }).call(this);
 
 (function() {
+  var Now;
+
+  window.Plotter || (window.Plotter = {});
+
+  window.Plotter.Now = Now = (function() {
+    function Now(format, datetime) {
+      this.parse = function(datetime) {
+        var _offset, newDatetime;
+        if (datetime.includes("now")) {
+          newDatetime = new Date();
+          if (datetime.includes("(")) {
+            _offset = parseInt(datetime.replace("(", "").replace(")", "").replace("now", ""));
+            newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000));
+          }
+          datetime = format(newDatetime);
+        }
+        return datetime;
+      };
+      this.datetime = this.parse(datetime);
+      return this.datetime;
+    }
+
+    Now.prototype.set = function(datetime) {
+      this.datetime = this.parse(datetime);
+      return true;
+    };
+
+    Now.prototype.get = function() {
+      return this.datetime;
+    };
+
+    return Now;
+
+  })();
+
+}).call(this);
+
+(function() {
   var Handler;
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.Handler = Handler = (function() {
+  window.Plotter.Handler = Handler = (function() {
     function Handler(accessToken, options, plots) {
       var __accessToken, __href, __libDateFormat, __libOptions, access, defaults;
-      this.preError = "Plotting.Handler";
+      this.preError = "Plotter.Handler";
       __libDateFormat = options.dateFormat ? options.dateFormat : "%Y-%m-%dT%H:%M:%SZ";
       __libOptions = {
         dateFormat: __libDateFormat
       };
-      this.lib = new window.Plotting.Library(__libOptions);
+      this.lib = new window.Plotter.Library(__libOptions);
       if (location.origin === "http://localhost:5000") {
         __href = "http://dev.nwac.us";
       } else {
@@ -2000,16 +2078,20 @@
         return access.admin;
       };
       this.i = {
-        api: new window.Plotting.API(access.token),
-        sapi: new window.Plotting.API(access.token, false)
+        api: new window.Plotter.API(access.token),
+        sapi: new window.Plotter.API(access.token, false)
       };
-      this.i.template = new window.Plotting.Template(this);
-      this.i.controls = new window.Plotting.Controls(this);
+      this.i.template = new window.Plotter.Template(this);
+      this.i.controls = new window.Plotter.Controls(this);
+      this.i.initialsync = new window.Plotter.InitialSync(this);
+      this.i.livesync = new window.Plotter.LiveSync(this);
       this.updates = 0;
       this.endpoint = null;
     }
 
-    Handler.prototype.initialize = function() {};
+    Handler.prototype.initialize = function() {
+      return this.i.template.get();
+    };
 
     return Handler;
 
@@ -2020,17 +2102,17 @@
 (function() {
   var Template;
 
-  window.Plotting || (window.Plotting = {});
+  window.Plotter || (window.Plotter = {});
 
-  window.Plotting.Template = Template = (function() {
+  window.Plotter.Template = Template = (function() {
     function Template(plotter) {
       var __isValid;
-      this.preError = "Plotting.Template.";
+      this.preError = "Plotter.Template.";
       this.plotter = plotter;
-      console.log(this.preError + " (plotter.i)", plotter.i);
       this.api = this.plotter.i.api;
       this.sapi = this.plotter.i.sapi;
       this.template = null;
+      this.dataSets = 0;
       __isValid = function(template) {
         var i, j, len, len1, ref, row, y;
         for (i = 0, len = template.length; i < len; i++) {
@@ -2076,62 +2158,84 @@
         return true;
       };
       this.parse = function(templateData) {
-        var __json;
+        var __json, i, len, row;
         __json = JSON.parse(templateData).templateData;
         if (__isValid(__json)) {
+          for (i = 0, len = __json.length; i < len; i++) {
+            row = __json[i];
+            row.x.min = new window.Plotter.Now(this.plotter.lib.format, row.x.min).get();
+            row.x.max = new window.Plotter.Now(this.plotter.lib.format, row.x.max).get();
+          }
           return __json;
         } else {
-          throw new Error("Plotting template format is invalid. Reference a working example.");
+          throw new Error("Plotter template format is invalid. Reference a working example.");
           return null;
         }
       };
       this.stringify = function() {
-        return JSON.stringify(this.template);
+        var __prepared;
+        __prepared = {
+          templateData: this.template
+        };
+        return JSON.stringify(__prepared);
       };
       this.endpoint = function() {
-        return this.plotter.options.href + "/api/v5/plothandler/" + this.plotter.options.templateId;
+        return this.plotter.options.href + "/api/v5/plothandler/";
       };
     }
 
     Template.prototype.get = function() {
       var _, args, callback, preError, target;
       preError = this.preError + "get()";
-      target = this.endpoint();
+      target = this.endpoint() + this.plotter.options.templateId;
       args = null;
       _ = this;
       callback = function(data) {
         if (data.responseJSON === null || data.responseJSON.error) {
-          console.log(preError + ".callback(data) error detected (data)", data);
+          throw new Error(preError + ".callback(data) error retrieving template.");
           return;
         }
         return _.template = _.parse(data.responseJSON.template_data);
       };
-      return this.api.get(target, args, callback);
+      return this.sapi.get(target, args, callback);
     };
 
     Template.prototype.put = function() {
       var _, args, callback, preError, target;
-      if (this.plotter.isAdmin() === false) {
-        return;
-      }
       preError = this.preError + "put()";
+      if (this.plotter.isAdmin() === false) {
+        throw new Error(preError + ", not authorized for PUT requests.");
+        return false;
+      }
       target = this.endpoint();
       args = {
         id: this.plotter.options.templateId,
-        template_data: {
-          templateData: this.stringify(this.template)
-        }
+        template_data: this.stringify(this.template)
       };
       _ = this;
       callback = function(data) {
-        if (data.responseJSON === null || data.responseJSON.console.error) {
-          console.log(preError + ".callback(data) error detected (data)", data);
-          return;
-        }
-        return _.template = data.responseJSON.templateData;
+        return console.log("Template PUT completed (data)", data);
       };
       return this.api.put(target, args, callback);
     };
+
+    Template.prototype.dataSetCount = function(plotId) {
+      return this.template[plotId].y.length;
+    };
+
+    Template.prototype.forSync = function(plotId, lineId, maxDatetime, limit) {
+      var result;
+      result = {
+        data_logger: this.template[plotId].y[lineId].dataLoggerId,
+        max_datetime: maxDatetime,
+        limit: maxDatetime
+      };
+      return result;
+    };
+
+    Template.prototype.forControls = function() {};
+
+    Template.prototype.forPlot = function() {};
 
     return Template;
 

@@ -1,14 +1,14 @@
 #
 #   Northwest Avalanche Center (NWAC)
-#   Plotting Tools - Template Manager
+#   Plotter Tools - Template Manager
 #
 #   Air Sciences Inc. - 2016
 #   Jacob Fielding
 #
 
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.Color = class Color
+window.Plotter.Color = class Color
   constructor: (initial) ->
     __colors =
       light: [

@@ -1,23 +1,23 @@
 ###
 Northwest Avalanche Center (NWAC)
-Plotting Tools - (plotter.js) - v0.9
+Plotter Tools - (plotter.js) - v0.9
 
 Air Sciences Inc. - 2016
 ###
 
 #
 #   Northwest Avalanche Center (NWAC)
-#   Plotting Tools - Plot Template & API Manager (plot-handler.coffee)
+#   Plotter Tools - Plot Template & API Manager (plot-handler.coffee)
 #
 #   Air Sciences Inc. - 2016
 #   Jacob Fielding
 #
 
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.Handler = class Handler
+window.Plotter.Handler = class Handler
   constructor: (access, options, plots) ->
-    @preError = "Plotting.Handler"
+    @preError = "Plotter.Handler"
 
     defaults =
       templateId: null
@@ -66,9 +66,9 @@ window.Plotting.Handler = class Handler
       admin: false
     access = Object.mergeDefaults access, accessToken
 
-    @api = new window.Plotting.API(access.token)
-    @syncronousapi = new window.Plotting.API(access.token, false)
-    @controls = new window.Plotting.Controls(@, access)
+    @api = new window.Plotter.API(access.token)
+    @syncronousapi = new window.Plotter.API(access.token, false)
+    @controls = new window.Plotter.Controls(@, access)
     @parseDate = d3.timeParse(@options.dateFormat)
 
     @format = d3.utcFormat(@options.dateFormat)
@@ -109,7 +109,7 @@ window.Plotting.Handler = class Handler
             plot.proto.state.requested.max = true
             @appendData(key)
 
-    setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
+    setTimeout(Plotter.Handler.prototype.listen.bind(@), @options.refresh)
 
   listenTest: ->
     key = 0
@@ -243,14 +243,14 @@ window.Plotting.Handler = class Handler
         plot.options.y.maxBarValue = 32
 
       # Join Multi-Station Data
-      __data = new window.Plotting.Data(plot.data[0])
+      __data = new window.Plotter.Data(plot.data[0])
       _len = plot.data.length-1
       if _len > 0
         for i in [1.._len]
           __data.join(plot.data[i], [plot.options.x.variable])
 
       title = @getTitle(plot)
-      instance = new window.Plotting.LinePlot(@, __data.get(), plot.options)
+      instance = new window.Plotter.LinePlot(@, __data.get(), plot.options)
       instance.preAppend()
       instance.append()
       #instance.appendTitle(title.title, title.subtitle)
@@ -293,7 +293,7 @@ window.Plotting.Handler = class Handler
       if plot.__data is undefined
         plot.__data = []
       if plot.__data[call] is undefined
-        plot.__data[call] = new window.Plotting.Data(data.responseJSON.results)
+        plot.__data[call] = new window.Plotter.Data(data.responseJSON.results)
       else
         if args.data_logger is plot.options.y2.dataLoggerId
           data.responseJSON.results =
@@ -555,7 +555,7 @@ window.Plotting.Handler = class Handler
 
     _key = @template.push(_plot)-1
 
-    instance = new window.Plotting.LinePlot(@, [], _options)
+    instance = new window.Plotter.LinePlot(@, [], _options)
     instance.preAppend()
     @template[_key].proto = instance
     @template[_key].proto.options.plotId = _key

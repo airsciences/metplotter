@@ -1,16 +1,16 @@
 #
 #   Northwest Avalanche Center (NWAC)
-#   Plotting Tools - Plot Controls (control.coffee)
+#   Plotter Tools - Plot Controls (control.coffee)
 #
 #   Air Sciences Inc. - 2016
 #   Jacob Fielding
 #
 
-window.Plotting ||= {}
+window.Plotter ||= {}
 
-window.Plotting.Controls = class Controls
+window.Plotter.Controls = class Controls
   constructor: (plotter, options) ->
-    @preError = "Plotting.Dropdown"
+    @preError = "Plotter.Dropdown"
     @plotter = plotter
 
     defaults =
