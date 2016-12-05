@@ -240,32 +240,49 @@
 }).call(this);
 
 (function() {
+  var Color;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.Color = Color = (function() {
+    function Color(initial) {
+      var __colors;
+      __colors = {
+        light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
+        dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
+      };
+      this.getColor = function(shade, key) {
+        return this.options.colors[shade][key];
+      };
+    }
+
+    return Color;
+
+  })();
+
+}).call(this);
+
+(function() {
   var Controls,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.Controls = Controls = (function() {
-    function Controls(plotter, access, options) {
-      var accessToken, defaults;
+    function Controls(plotter, token, options) {
+      var defaults;
       this.preError = "Plotting.Dropdown";
       this.plotter = plotter;
+      this.api = new window.Plotting.API(token);
       defaults = {
         target: null
       };
       this.options = Object.mergeDefaults(options, defaults);
-      accessToken = {
-        token: null,
-        expires: null,
-        expired: true
-      };
-      access = Object.mergeDefaults(access, accessToken);
       this.current = [];
       this.stations = [];
       this.maps = [];
       this.markers = {};
       this.listeners = {};
-      this.api = new window.Plotting.API(access.token);
     }
 
     Controls.prototype.setCurrent = function(plotId) {
@@ -958,8 +975,43 @@
 }).call(this);
 
 (function() {
-  if (!Object.mergeDefaults) {
-    Object.mergeDefaults = function(args, defaults) {
+  var Interface;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.Interface = Interface = (function() {
+    function Interface(plotter, access) {
+      this.api = new window.Plotting.API(access.token);
+      this.syncronousapi = new window.Plotting.API(access.token, false);
+      this.controls = new window.Plotting.Controls(plotter, access.token);
+    }
+
+    return Interface;
+
+  })();
+
+}).call(this);
+
+(function() {
+  var Library;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.Library = Library = (function() {
+    function Library(options) {
+      var __options, defaults;
+      defaults = {
+        dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+      };
+      __options = this.mergeDefaults(defaults, options);
+      this.parseDate = d3.timeParse(__options.dateFormat);
+      this.format = d3.utcFormat(__options.dateFormat);
+      this.getNow = function() {
+        return this.format(new Date());
+      };
+    }
+
+    Library.prototype.mergeDefaults = function(args, defaults) {
       var key, key1, merge, val, val1;
       merge = {};
       for (key in defaults) {
@@ -972,7 +1024,10 @@
       }
       return merge;
     };
-  }
+
+    return Library;
+
+  })();
 
 }).call(this);
 
@@ -1879,14 +1934,6 @@
 
 }).call(this);
 
-
-/*
-Northwest Avalanche Center (NWAC)
-Plotting Tools - (plotter.js) - v0.9
-
-Air Sciences Inc. - 2016
- */
-
 (function() {
   var Handler;
 
@@ -1896,20 +1943,16 @@ Air Sciences Inc. - 2016
     function Handler(access, options, plots) {
       var accessToken, defaults;
       this.preError = "Plotting.Handler";
+      this["interface"] = new window.Plotting.Interface();
       defaults = {
         templateId: null,
         href: location.origin,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
-        updateLength: 168,
-        colors: {
-          light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
-          dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
-        }
+        updateLength: 168
       };
       this.options = Object.mergeDefaults(options, defaults);
-      this.now = new Date();
       this.updates = 0;
       if (this.options.href === "http://localhost:5000") {
         this.options.href = "http://dev.nwac.us";
@@ -1917,774 +1960,41 @@ Air Sciences Inc. - 2016
       this.endpoint = null;
       accessToken = {
         token: null,
-        expires: null,
-        expired: true,
         admin: false
       };
       access = Object.mergeDefaults(access, accessToken);
       this.api = new window.Plotting.API(access.token);
       this.syncronousapi = new window.Plotting.API(access.token, false);
       this.controls = new window.Plotting.Controls(this, access);
-      this.parseDate = d3.timeParse(this.options.dateFormat);
-      this.format = d3.utcFormat(this.options.dateFormat);
       this.getNow = function() {
         return this.format(this.now);
       };
       this.isAdmin = function() {
         return access.admin;
       };
-      this.hasAccess = function() {
-        if (this.parseDate(access.expires) > new Date) {
-          access.expired = true;
-        }
-        if (access.expired) {
-          return false;
-        } else {
-          return true;
-        }
-      };
     }
 
-    Handler.prototype.initialize = function() {
-      this.getTemplate();
-      this.getTemplatePlotData();
-      this.append();
-      return this.listen();
-    };
-
-    Handler.prototype.listen = function() {
-      var key, plot, ref, state;
-      ref = this.template;
-      for (key in ref) {
-        plot = ref[key];
-        if (plot) {
-          if (plot.proto.initialized) {
-            state = plot.proto.getState();
-            if (state.request.data.min && this.updates < 7 && !state.requested.min) {
-              this.updates++;
-              plot.proto.state.requested.min = true;
-              this.prependData(key);
-            }
-            if (state.request.data.max && this.updates < 7 && !state.requested.max) {
-              this.updates++;
-              plot.proto.state.requested.max = true;
-              this.appendData(key);
-            }
-          }
-        }
-      }
-      return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
-    };
-
-    Handler.prototype.listenTest = function() {
-      var key, plot, state;
-      key = 0;
-      plot = this.template[key];
-      state = plot.proto.getState();
-      if (state.request.data.min) {
-        this.prependData(key);
-      }
-      if (state.request.data.max) {
-        return this.appendData(key);
-      }
-    };
-
-    Handler.prototype.listenTestLoop = function() {
-      var key, plot, ref, results, state;
-      ref = this.template;
-      results = [];
-      for (key in ref) {
-        plot = ref[key];
-        state = plot.proto.getState();
-        if (state.request.data.min) {
-          this.prependData(key);
-        }
-        if (state.request.data.max) {
-          results.push(this.appendData(key));
-        } else {
-          results.push(void 0);
-        }
-      }
-      return results;
-    };
-
-    Handler.prototype.getTemplate = function(template_uri) {
-      var _, args, callback, preError, target;
-      preError = this.preError + ".getTemplate(...)";
-      target = this.options.href + "/api/v5/plothandler/" + this.options.plotHandlerId;
-      args = null;
-      _ = this;
-      callback = function(data) {
-        var _parsed, error, error1;
-        if (data.responseJSON === null || data.responseJSON.error) {
-          console.log(preError + ".callback(...) error detected (data)", data);
-          return;
-        }
-        try {
-          _parsed = JSON.parse(data.responseJSON.template_data);
-          _.template = _parsed.templateData;
-        } catch (error1) {
-          error = error1;
-          console.log(preError + ".callback(...) JSON.parse error", error);
-        }
-        return _.parseDates(_.template);
-      };
-      return this.syncronousapi.get(target, args, callback);
-    };
-
-    Handler.prototype.parseDates = function(template) {
-      var _, j, k, len, len1, parse, ref, results, row, sub;
-      _ = this;
-      parse = function(datetime) {
-        var _offset, newDatetime;
-        if (datetime.includes("now")) {
-          newDatetime = new Date();
-          if (datetime.includes("(")) {
-            _offset = parseInt(datetime.replace("(", "").replace(")", "").replace("now", ""));
-            newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000));
-          }
-          datetime = _.format(newDatetime);
-        }
-        return datetime;
-      };
-      results = [];
-      for (j = 0, len = template.length; j < len; j++) {
-        row = template[j];
-        ref = row.dataParams;
-        for (k = 0, len1 = ref.length; k < len1; k++) {
-          sub = ref[k];
-          sub.max_datetime = parse(sub.max_datetime);
-        }
-        row.options.x.min = parse(row.options.x.min);
-        results.push(row.options.x.max = parse(row.options.x.max));
-      }
-      return results;
-    };
-
-    Handler.prototype.putTemplate = function() {
-      var _, args, callback, preError, target;
-      if (this.isAdmin() === false) {
-        return;
-      }
-      preError = this.preError + ".putTemplate()";
-      target = this.options.href + "/api/v5/plothandler/";
-      args = {
-        id: this.options.templateId,
-        template_data: {
-          templateData: this.template
-        }
-      };
-      _ = this;
-      callback = function(data) {
-        if (data.responseJSON === null || data.responseJSON.error) {
-          console.log(preError + ".callback(...) error detected (data)", data);
-          return;
-        }
-        return console.log(preError + ".callback() successfully saved template.");
-      };
-      return this.api.put(target, args, callback);
-    };
-
-    Handler.prototype.getStationParamData = function(plotId, paramsKey) {
-      var _, args, callback, preError, target;
-      preError = this.preError + ".getStationParamData()";
-      target = this.options.href + "/api/v5/measurement";
-      _ = this;
-      args = this.template[plotId].dataParams[paramsKey];
-      callback = function(data) {
-        if (_.template[plotId].data === void 0) {
-          return _.template[plotId].data = [data.responseJSON.results];
-        } else {
-          return _.template[plotId].data.push(data.responseJSON.results);
-        }
-      };
-      return this.syncronousapi.get(target, args, callback);
-    };
-
-    Handler.prototype.getTemplatePlotData = function() {
-      var key, params, plot, preError, ref, results, subKey;
-      preError = this.preError + ".getPlotData()";
-      ref = this.template;
-      results = [];
-      for (key in ref) {
-        plot = ref[key];
-        results.push((function() {
-          var ref1, results1;
-          ref1 = this.template[key].dataParams;
-          results1 = [];
-          for (subKey in ref1) {
-            params = ref1[subKey];
-            results1.push(this.getStationParamData(key, subKey));
-          }
-          return results1;
-        }).call(this));
-      }
-      return results;
-    };
-
-    Handler.prototype.append = function() {
-      var _, __data, _bounds, _len, i, instance, j, key, plot, preError, ref, ref1, target, title;
-      preError = this.preError + ".append()";
-      _ = this;
-      ref = this.template;
-      for (key in ref) {
-        plot = ref[key];
-        target = this.utarget(this.options.target);
-        $(this.options.target).append("<div id='" + target + "'></div>");
-        this.mergeTemplateOption(key);
-        if (plot.options.y2 === void 0) {
-          plot.options.y2 = {};
-        }
-        if (plot.options.y3 === void 0) {
-          plot.options.y3 = {};
-        }
-        plot.options.plotId = key;
-        plot.options.uuid = this.uuid();
-        plot.options.target = "\#" + target;
-        plot.options.y.color = this.getColor('light', key);
-        plot.options.y2.color = this.getColor('light', parseInt(key + 4 % 7));
-        plot.options.y3.color = this.getColor('light', parseInt(key + 6 % 7));
-        _bounds = this.getVariableBounds(plot.options.y.variable);
-        if (_bounds) {
-          plot.options.y.min = _bounds.min;
-          plot.options.y.max = _bounds.max;
-        }
-        if (plot.options.y.variable === 'temperature') {
-          plot.options.y.maxBarValue = 32;
-        }
-        __data = new window.Plotting.Data(plot.data[0]);
-        _len = plot.data.length - 1;
-        if (_len > 0) {
-          for (i = j = 1, ref1 = _len; 1 <= ref1 ? j <= ref1 : j >= ref1; i = 1 <= ref1 ? ++j : --j) {
-            __data.join(plot.data[i], [plot.options.x.variable]);
-          }
-        }
-        title = this.getTitle(plot);
-        instance = new window.Plotting.LinePlot(this, __data.get(), plot.options);
-        instance.preAppend();
-        instance.append();
-        this.template[key].proto = instance;
-        this.appendControls(key);
-      }
-      if (this.isAdmin()) {
-        $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + target + "\">Save Template</a></small>");
-        return $("#save-" + target).on("click", function(event) {
-          return _.putTemplate();
-        });
-      }
-    };
-
-    Handler.prototype.mergeTemplateOption = function(plotId) {
-      var _params, plot;
-      plot = this.template[plotId];
-      plot.options.dataParams = plot.dataParams;
-      _params = plot.options.dataParams.length;
-      if (_params > 0) {
-        plot.options.y.dataLoggerId = plot.options.dataParams[0].data_logger;
-      }
-      if (_params > 1) {
-        plot.options.y2.dataLoggerId = plot.options.dataParams[1].data_logger;
-      }
-      if (_params > 2) {
-        return plot.options.y2.dataLoggerId = plot.options.dataParams[2].data_logger;
-      }
-    };
-
-    Handler.prototype.getAppendData = function(call, plotId, paramsKey, dir) {
-      var _, _length, args, callback, preError, target;
-      preError = this.preError + ".getAppendData(key, dataParams)";
-      target = this.options.href + "/api/v5/measurement";
-      _ = this;
-      args = this.template[plotId].proto.options.dataParams[paramsKey];
-      _length = this.template[plotId].proto.options.dataParams.length;
-      callback = function(data) {
-        var plot;
-        plot = _.template[plotId];
-        if (plot.__data === void 0) {
-          plot.__data = [];
-        }
-        if (plot.__data[call] === void 0) {
-          plot.__data[call] = new window.Plotting.Data(data.responseJSON.results);
-        } else {
-          if (args.data_logger === plot.options.y2.dataLoggerId) {
-            data.responseJSON.results = plot.__data.appendKeys(data.responseJSON.results, "_2");
-          } else if (args.data_logger === plot.options.y3.dataLoggerId) {
-            data.responseJSON.results = plot.__data.appendKeys(data.responseJSON.results, "_3");
-          }
-          plot.__data[call].join(data.responseJSON.results, [plot.proto.options.x.variable]);
-        }
-        if (plot.__data[call].getSourceCount() === _length) {
-          if (plot.proto.initialized) {
-            plot.proto.appendData(plot.__data[call].get());
-            plot.proto.update();
-          } else {
-            plot.proto.setData(plot.__data[call].get());
-            plot.proto.append();
-          }
-          delete plot.__data[call];
-        }
-        _.controls.removeSpinner(plotId);
-        if (dir === "min") {
-          plot.proto.state.requested.min = false;
-        } else if (dir === "max") {
-          plot.proto.state.requested.max = false;
-        }
-        _.updates--;
-        if (_.updates < 0) {
-          return _.updates = 0;
-        }
-      };
-      return this.api.get(target, args, callback);
-    };
-
-    Handler.prototype.prependData = function(plotId) {
-      var call, params, paramsKey, plot, preError, ref, results, state;
-      preError = this.preError + ".prependData()";
-      plot = this.template[plotId];
-      state = plot.proto.getState();
-      call = this.uuid();
-      ref = plot.proto.options.dataParams;
-      results = [];
-      for (paramsKey in ref) {
-        params = ref[paramsKey];
-        plot.proto.options.dataParams[paramsKey].max_datetime = this.format(state.range.data.min);
-        plot.proto.options.dataParams[paramsKey].limit = this.options.updateLength;
-        results.push(this.getAppendData(call, plotId, paramsKey, "min"));
-      }
-      return results;
-    };
-
-    Handler.prototype.appendData = function(plotId) {
-      var _max_datetime, _new_max_datetime, _now, call, params, paramsKey, plot, preError, ref, results, state;
-      preError = this.preError + ".appendData()";
-      plot = this.template[plotId];
-      state = plot.proto.getState();
-      _now = new Date();
-      if (state.range.data.max >= _now) {
-        return;
-      }
-      _max_datetime = state.range.data.max.getTime();
-      _new_max_datetime = _max_datetime + (this.options.updateLength * 3600000);
-      call = this.uuid();
-      ref = plot.proto.options.dataParams;
-      results = [];
-      for (paramsKey in ref) {
-        params = ref[paramsKey];
-        plot.proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_new_max_datetime));
-        plot.proto.options.dataParams[paramsKey].limit = this.options.updateLength;
-        results.push(this.getAppendData(call, plotId, paramsKey, "max"));
-      }
-      return results;
-    };
-
-    Handler.prototype.addVariable = function(plotId, variable) {
-      var _max_datetime, params, paramsKey, ref, results, state, uuid;
-      state = this.template[plotId].proto.getState();
-      _max_datetime = state.range.data.max.getTime();
-      this.setNewOptions(plotId, variable);
-      uuid = this.uuid();
-      ref = this.template[plotId].proto.options.dataParams;
-      results = [];
-      for (paramsKey in ref) {
-        params = ref[paramsKey];
-        this.template[plotId].proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_max_datetime));
-        this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
-        results.push(this.getAppendData(uuid, plotId, paramsKey));
-      }
-      return results;
-    };
-
-    Handler.prototype.addStation = function(plotId, dataLoggerId) {
-      var _len, _max_datetime, _params, _variable, params, paramsKey, ref, state, uuid;
-      if (!this.template[plotId].proto.initialized) {
-        return this.appendNew(plotId, dataLoggerId);
-      }
-      if (this.template[plotId].proto.options.y.dataLoggerId && this.template[plotId].proto.options.y2.dataLoggerId && this.template[plotId].proto.options.y3.dataLoggerId) {
-        this.controls.removeSpinner(plotId);
-        return null;
-      }
-      state = this.template[plotId].proto.getState();
-      _variable = this.template[plotId].proto.options.y.variable;
-      _max_datetime = state.range.data.max.getTime();
-      _params = $.extend(true, {}, this.template[plotId].proto.options.dataParams[0]);
-      _params.data_logger = dataLoggerId;
-      _len = this.template[plotId].proto.options.dataParams.push(_params);
-      this.setNewOptions(plotId, _variable, dataLoggerId);
-      uuid = this.uuid();
-      ref = this.template[plotId].proto.options.dataParams;
-      for (paramsKey in ref) {
-        params = ref[paramsKey];
-        this.template[plotId].proto.options.dataParams[paramsKey].max_datetime = this.format(new Date(_max_datetime));
-        this.template[plotId].proto.options.dataParams[paramsKey].limit = state.length.data;
-        this.getAppendData(uuid, plotId, paramsKey);
-      }
-      this.controls.updateStationDropdown(plotId);
-      return this.controls.updateStationMap(plotId);
-    };
-
-    Handler.prototype.removeStation = function(plotId, dataLoggerId) {
-      var _key, _paramKey, _plot, _template;
-      _key = null;
-      _template = this.template[plotId];
-      _plot = this.template[plotId].proto;
-      _paramKey = this.indexOfValue(_template.dataParams, "data_logger", dataLoggerId);
-      if (_plot.options.y.dataLoggerId === dataLoggerId) {
-        _key = "y";
-      } else if (_plot.options.y2.dataLoggerId === dataLoggerId) {
-        _key = "y2";
-      } else if (_plot.options.y3.dataLoggerId === dataLoggerId) {
-        _key = "y3";
-      }
-      if (_paramKey > -1) {
-        _template.dataParams.splice(_paramKey, 1);
-        _plot.options[_key] = null;
-        _plot.appendData();
-        if (_key === "y") {
-          _plot.options.y = Object.mergeDefaults(_plot.options.y, _plot.defaults.y);
-        }
-        if (_key === "y2") {
-          _plot.options.y2 = Object.mergeDefaults(_plot.options.y2, _plot.defaults.y2);
-        }
-        if (_key === "y3") {
-          _plot.options.y3 = Object.mergeDefaults(_plot.options.y3, _plot.defaults.y3);
-        }
-        _plot.getDefinition();
-        _plot.removeData(_key);
-        _plot.update();
-      }
-      this.controls.removeSpinner(plotId);
-      this.controls.updateStationDropdown(plotId);
-      return this.controls.updateStationMap(plotId);
-    };
-
-    Handler.prototype.zoom = function(transform) {
-      var j, len, plot, ref, results;
-      ref = this.template;
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        plot = ref[j];
-        if (plot) {
-          results.push(plot.proto.setZoomTransform(transform));
-        } else {
-          results.push(void 0);
-        }
-      }
-      return results;
-    };
-
-    Handler.prototype.crosshair = function(transform, mouse) {
-      var j, len, plot, ref, results;
-      ref = this.template;
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        plot = ref[j];
-        if (plot) {
-          results.push(plot.proto.setCrosshair(transform, mouse));
-        } else {
-          results.push(void 0);
-        }
-      }
-      return results;
-    };
-
-    Handler.prototype.showCrosshairs = function() {
-      var j, len, plot, ref, results;
-      ref = this.template;
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        plot = ref[j];
-        if (plot) {
-          results.push(plot.proto.showCrosshair());
-        } else {
-          results.push(void 0);
-        }
-      }
-      return results;
-    };
-
-    Handler.prototype.hideCrosshairs = function() {
-      var j, len, plot, ref, results;
-      ref = this.template;
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        plot = ref[j];
-        if (plot) {
-          results.push(plot.proto.hideCrosshair());
-        } else {
-          results.push(void 0);
-        }
-      }
-      return results;
-    };
-
-    Handler.prototype.appendControls = function(plotId) {
-      var _li_style, html, selector;
-      selector = "plot-controls-" + plotId;
-      _li_style = "";
-      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> </ul>";
-      $(this.template[plotId].proto.options.target).find(".line-plot-controls").append(html);
-      this.controls.move(plotId, '#' + selector, 'up');
-      this.controls["new"]('#' + selector, 'down');
-      this.controls.remove(plotId, '#' + selector);
-      return this.controls.move(plotId, '#' + selector, 'down');
-    };
-
-    Handler.prototype.remove = function(plotId) {
-      $(this.template[plotId].proto.options.target).fadeOut(500, function() {
-        return $(this).remove();
-      });
-      return this.template[plotId] = null;
-    };
-
-    Handler.prototype.move = function(plotId, direction) {
-      var _pageOrder, _tradeKey, selected;
-      _pageOrder = this.template[plotId].pageOrder;
-      selected = $(this.template[plotId].proto.options.target);
-      if (direction === 'up') {
-        if (_pageOrder > 1) {
-          _tradeKey = this.indexOfValue(this.template, "pageOrder", _pageOrder - 1);
-          this.template[plotId].pageOrder--;
-          this.template[_tradeKey].pageOrder++;
-          return selected.prev().insertAfter(selected);
-        }
-      } else if (direction === 'down') {
-        if (_pageOrder < this.template.length) {
-          _tradeKey = this.indexOfValue(this.template, "pageOrder", _pageOrder + 1);
-          this.template[plotId].pageOrder++;
-          this.template[_tradeKey].pageOrder--;
-          return selected.next().insertBefore(selected);
-        }
-      }
-    };
-
-    Handler.prototype.add = function(type) {
-      var _key, _options, _plot, _target, html, instance;
-      if (this.template[this.template.length - 1].proto.initialized === false) {
-        return;
-      }
-      _target = this.utarget(this.options.target);
-      _plot = {
-        plotOrder: this.template.length,
-        type: type
-      };
-      _options = {
-        target: '#' + _target,
-        type: type,
-        x: {
-          variable: "datetime"
-        }
-      };
-      html = "<div id=\"" + _target + "\"></div>";
-      $(this.options.target).append(html);
-      _key = this.template.push(_plot) - 1;
-      instance = new window.Plotting.LinePlot(this, [], _options);
-      instance.preAppend();
-      this.template[_key].proto = instance;
-      this.template[_key].proto.options.plotId = _key;
-      if (this.template[_key].proto.initialized) {
-        return this.appendControls(_key);
-      }
-    };
-
-    Handler.prototype.initVariable = function(plotId, variable, title) {
-      this.template[plotId].dataParams = [this.template[plotId - 1].dataParams[0]];
-      this.template[plotId].dataParams[0].data_logger = null;
-      this.template[plotId].proto.options.y.variable = variable;
-      this.template[plotId].proto.options.y.title = title;
-      this.appendControls(plotId);
-      return this.template[plotId].proto.removeTemp();
-    };
-
-    Handler.prototype.appendNew = function(plotId, dataLoggerId) {
-      var _plot;
-      _plot = this.template[plotId];
-      _plot.dataParams[0].data_logger = dataLoggerId;
-      _plot.proto.options.dataParams = _plot.dataParams;
-      _plot.proto.options.y.dataLoggerId = dataLoggerId;
-      return this.getAppendData(this.uuid(), plotId, 0);
-    };
-
-    Handler.prototype.setNewOptions = function(plotId, variable, dataLoggerId) {
-      var _bounds, _info;
-      _bounds = this.getVariableBounds(variable);
-      _info = this.getVariableInfo(variable);
-      if (this.template[plotId].proto.options.y.variable === null) {
-        this.template[plotId].proto.options.y = {
-          dataLoggerId: dataLoggerId,
-          variable: variable,
-          color: this.getColor('light', parseInt(plotId))
-        };
-        if (variable === "wind_speed_average") {
-          this.template[plotId].proto.options.yBand.minVariable = "wind_speed_minimum";
-          this.template[plotId].proto.options.yBand.maxVariable = "wind_speed_maximum";
-        }
-        if (_info) {
-          this.template[plotId].proto.options.y.title = _info.title;
-          this.template[plotId].proto.options.y.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y.min = _bounds.min;
-          return this.template[plotId].proto.options.y.max = _bounds.max;
-        }
-      } else if (this.template[plotId].proto.options.y2.variable === null) {
-        this.template[plotId].proto.options.y2 = {
-          dataLoggerId: dataLoggerId,
-          variable: variable,
-          color: this.getColor('light', parseInt(plotId) + 4 % 7)
-        };
-        if (variable === "wind_speed_average") {
-          this.template[plotId].proto.options.y2Band.minVariable = "wind_speed_minimum_2";
-          this.template[plotId].proto.options.y2Band.maxVariable = "wind_speed_maximum_2";
-        }
-        if (_info) {
-          this.template[plotId].proto.options.y2.title = _info.title;
-          this.template[plotId].proto.options.y2.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y2.min = _bounds.min;
-          return this.template[plotId].proto.options.y2.max = _bounds.max;
-        }
-      } else if (this.template[plotId].proto.options.y3.variable === null) {
-        this.template[plotId].proto.options.y3 = {
-          dataLoggerId: dataLoggerId,
-          variable: variable,
-          color: this.getColor('light', parseInt(plotId) + 6 % 7)
-        };
-        if (variable === "wind_speed_average") {
-          this.template[plotId].proto.options.y3Band.minVariable = "wind_speed_minimum_3";
-          this.template[plotId].proto.options.y3Band.maxVariable = "wind_speed_maximum_3";
-        }
-        if (_info) {
-          this.template[plotId].proto.options.y3.title = _info.title;
-          this.template[plotId].proto.options.y3.units = _info.units;
-        }
-        if (_bounds) {
-          this.template[plotId].proto.options.y3.min = _bounds.min;
-          return this.template[plotId].proto.options.y3.max = _bounds.max;
-        }
-      }
-    };
-
-    Handler.prototype.getVariableBounds = function(variable) {
-      var bounds;
-      bounds = {
-        battery_voltage: {
-          min: 8,
-          max: 16
-        },
-        net_solar: {
-          min: 0,
-          max: 800
-        },
-        relative_humidity: {
-          min: 0,
-          max: 100
-        },
-        snow_depth: {
-          min: 0,
-          max: 40
-        },
-        wind_direction: {
-          min: 0,
-          max: 360
-        },
-        precipitation: {
-          min: 0,
-          max: 0.7
-        },
-        temperature: {
-          min: 0,
-          max: 60
-        },
-        wind_speed_average: {
-          min: 0,
-          max: 60
-        }
-      };
-      return bounds[variable];
-    };
-
-    Handler.prototype.getVariableInfo = function(variable) {
-      var info;
-      info = {
-        battery_voltage: {
-          title: "Battery Voltage",
-          units: "V"
-        },
-        net_solar: {
-          title: "Solar Radiation",
-          units: "W/m2"
-        },
-        relative_humidity: {
-          title: "Relative Humidity",
-          units: "%"
-        },
-        barometric_pressure: {
-          title: "Barometric Pressure",
-          units: "atm"
-        },
-        snow_depth: {
-          title: "Snow Depth",
-          units: "\""
-        },
-        wind_direction: {
-          title: "Wind Direction",
-          units: "°"
-        },
-        precipitation: {
-          title: "Precipitation",
-          units: "\""
-        },
-        temperature: {
-          title: "Temperature",
-          units: "°F"
-        },
-        wind_speed_average: {
-          title: "Wind Speed",
-          units: "mph"
-        }
-      };
-      return info[variable];
-    };
-
-    Handler.prototype.getColor = function(shade, key) {
-      return this.options.colors[shade][key];
-    };
-
-    Handler.prototype.getTitle = function(plot) {
-      var result;
-      result = {};
-      if (plot.type === 'station') {
-        result.title = plot.station.station;
-        result.subtitle = "";
-      } else if (plot.type === 'parameter') {
-        result.title = plot.options.y.title;
-        result.subtitle = "";
-      }
-      return result;
-    };
-
-    Handler.prototype.indexOfValue = function(array, key, value) {
-      var i, index, j, ref;
-      index = -1;
-      for (i = j = 0, ref = array.length - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
-        if (array[i][key] === value) {
-          index = i;
-        }
-      }
-      return index;
-    };
-
-    Handler.prototype.uuid = function() {
-      return (((1 + Math.random()) * 0x100000000) | 0).toString(16).substring(1);
-    };
-
-    Handler.prototype.utarget = function(prepend) {
-      prepend = prepend.replace('#', '');
-      return prepend + "-" + (this.uuid());
-    };
-
     return Handler;
+
+  })();
+
+}).call(this);
+
+(function() {
+  var Template;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.Template = Template = (function() {
+    function Template(templateId) {
+      this.endpoint;
+    }
+
+    Template.prototype.get = function() {};
+
+    Template.prototype.put = function() {};
+
+    return Template;
 
   })();
 

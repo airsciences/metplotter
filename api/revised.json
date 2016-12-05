@@ -1,0 +1,54 @@
+{
+  "templateData": [
+    {
+      "pageOrder": 1,
+      "type": "parameter",
+      "title": null,
+      "subTitle": null,
+      "x": {
+        "variable": "datetime",
+        "min": "now(-168)",
+        "max": "now"
+      },
+      "y": [
+        {
+          "dataLoggerId": 43,
+          "variable": "temperature",
+          "title": "Temperature",
+          "units": "°F"
+        },
+        {
+          "dataLoggerId": 40,
+          "variable": "temperature",
+          "title": "Temperature",
+          "units": "°F"
+        }
+      ]
+    },
+    {
+      "pageOrder": 2,
+      "type": "parameter",
+      "title": null,
+      "subTitle": null,
+      "x": {
+        "variable": "datetime",
+        "min": "now(-168)",
+        "max": "now"
+      },
+      "y": [
+        {
+          "dataLoggerId": 43,
+          "variable": "wind_speed_average",
+          "title": "Wind Speed",
+          "units": "mph"
+        },
+        {
+          "dataLoggerId": 40,
+          "variable": "wind_speed_average",
+          "title": "Wind Speed",
+          "units": "mph"
+        }
+      ]
+    }
+  ]
+}

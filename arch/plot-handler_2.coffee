@@ -280,7 +280,7 @@ window.Plotting.Handler = class Handler
     if _params > 2
       plot.options.y2.dataLoggerId = plot.options.dataParams[2].data_logger
 
-  getAppendData: (call, plotId, paramsKey, dir) ->
+  getAppendData: (call, plotId, paramsKey, dir, replace) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getAppendData(key, dataParams)"
     target = "#{@options.href}/api/v5/measurement"
@@ -294,22 +294,27 @@ window.Plotting.Handler = class Handler
         plot.__data = []
       if plot.__data[call] is undefined
         plot.__data[call] = new window.Plotting.Data(data.responseJSON.results)
-      else
-        if args.data_logger is plot.options.y2.dataLoggerId
-          data.responseJSON.results =
-            plot.__data.appendKeys(data.responseJSON.results, "_2")
-        else if args.data_logger is plot.options.y3.dataLoggerId
-          data.responseJSON.results =
-            plot.__data.appendKeys(data.responseJSON.results, "_3")
-        plot.__data[call].join(data.responseJSON.results,
-          [plot.proto.options.x.variable])
+      #else
+      #  if args.data_logger is plot.options.y2.dataLoggerId
+      #    data.responseJSON.results =
+      #      plot.__data.appendKeys(data.responseJSON.results, "_2")
+      #  else if args.data_logger is plot.options.y3.dataLoggerId
+      #    data.responseJSON.results =
+      #      plot.__data.appendKeys(data.responseJSON.results, "_3")
+      #  plot.__data[call].join(data.responseJSON.results,
+      #    [plot.proto.options.x.variable])
       if plot.__data[call].getSourceCount() is _length
-        if plot.proto.initialized
-          plot.proto.appendData(plot.__data[call].get())
+        if replace == true
+          plot.proto.data = []
+          plot.proto.setData(plot.__data[call].get())
           plot.proto.update()
         else
-          plot.proto.setData(plot.__data[call].get())
-          plot.proto.append()
+          if plot.proto.initialized
+            plot.proto.appendData(plot.__data[call].get())
+            plot.proto.update()
+          else
+            plot.proto.setData(plot.__data[call].get())
+            plot.proto.append()
         delete plot.__data[call]
 
       # Remove Spinner
@@ -380,14 +385,14 @@ window.Plotting.Handler = class Handler
     if !@template[plotId].proto.initialized
       return @appendNew(plotId, dataLoggerId)
 
-    if (
-      @template[plotId].proto.options.y.dataLoggerId and
-      @template[plotId].proto.options.y2.dataLoggerId and
-      @template[plotId].proto.options.y3.dataLoggerId
-    )
-      @controls.removeSpinner(plotId)
-      #console.log("Maximum of 3 Plot selected.")
-      return null
+    #if (
+    #  @template[plotId].proto.options.y.dataLoggerId and
+    #  @template[plotId].proto.options.y2.dataLoggerId and
+    #  @template[plotId].proto.options.y3.dataLoggerId
+    #)
+    #  @controls.removeSpinner(plotId)
+    #  #console.log("Maximum of 3 Plot selected.")
+    #  return null
 
     state = @template[plotId].proto.getState()
     _variable = @template[plotId].proto.options.y.variable
@@ -400,12 +405,13 @@ window.Plotting.Handler = class Handler
     @setNewOptions(plotId, _variable, dataLoggerId)
 
     uuid = @uuid()
-    for paramsKey, params of @template[plotId].proto.options.dataParams
-      @template[plotId].proto.options.dataParams[paramsKey].max_datetime =
-        @format(new Date(_max_datetime))
-      @template[plotId].proto.options.dataParams[paramsKey].limit =
-        state.length.data
-      @getAppendData(uuid, plotId, paramsKey)
+    #for paramsKey, params of @template[plotId].proto.options.dataParams
+    paramsKey = 0
+    @template[plotId].proto.options.dataParams[paramsKey].max_datetime =
+      @format(new Date(_max_datetime))
+    @template[plotId].proto.options.dataParams[paramsKey].limit =
+      state.length.data
+    @getAppendData(uuid, plotId, paramsKey, null, true)
 
     @controls.updateStationDropdown(plotId)
     @controls.updateStationMap(plotId)
@@ -488,22 +494,22 @@ window.Plotting.Handler = class Handler
     @controls.remove(plotId, '#'+selector)
     @controls.move(plotId, '#'+selector, 'down')
 
-    #if @template[plotId].type is "station"
-    #  current = [
-    #    @template[plotId].proto.options.y,
-    #    @template[plotId].proto.options.y2,
-    #    @template[plotId].proto.options.y3
-    #  ]
-    #  @controls.appendParameterDropdown(plotId, '#'+selector,
-    #    @template[plotId].proto.options.y.dataLoggerId, current)
-    #else if @template[plotId].type is "parameter"
-    #  current = [
-    #    @template[plotId].proto.options.y,
-    #    @template[plotId].proto.options.y2,
-    #    @template[plotId].proto.options.y3
-    #  ]
-    #  @controls.appendStationDropdown(plotId, '#'+selector,
-    #    @template[plotId].proto.options.y.variable, current)
+    if @template[plotId].type is "station"
+      current = [
+        @template[plotId].proto.options.y,
+        @template[plotId].proto.options.y2,
+        @template[plotId].proto.options.y3
+      ]
+      @controls.appendParameterDropdown(plotId, '#'+selector,
+        @template[plotId].proto.options.y.dataLoggerId, current)
+    else if @template[plotId].type is "parameter"
+      current = [
+        @template[plotId].proto.options.y,
+        @template[plotId].proto.options.y2,
+        @template[plotId].proto.options.y3
+      ]
+      @controls.appendStationDropdown(plotId, '#'+selector,
+        @template[plotId].proto.options.y.variable, current)
 
   remove: (plotId) ->
     # Remove a plotId
@@ -581,54 +587,54 @@ window.Plotting.Handler = class Handler
     _bounds = @getVariableBounds(variable)
     _info = @getVariableInfo(variable)
 
-    if @template[plotId].proto.options.y.variable == null
-      @template[plotId].proto.options.y =
-        dataLoggerId: dataLoggerId
-        variable: variable
-        color: @getColor('light', parseInt(plotId))
-      if variable is "wind_speed_average"
-        @template[plotId].proto.options.yBand.minVariable =
-          "wind_speed_minimum"
-        @template[plotId].proto.options.yBand.maxVariable =
-          "wind_speed_maximum"
-      if _info
-        @template[plotId].proto.options.y.title = _info.title
-        @template[plotId].proto.options.y.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y.min = _bounds.min
-        @template[plotId].proto.options.y.max = _bounds.max
-    else if  @template[plotId].proto.options.y2.variable == null
-      @template[plotId].proto.options.y2 =
-        dataLoggerId: dataLoggerId
-        variable: variable
-        color: @getColor('light', (parseInt(plotId)+4%7))
-      if variable is "wind_speed_average"
-        @template[plotId].proto.options.y2Band.minVariable =
-          "wind_speed_minimum_2"
-        @template[plotId].proto.options.y2Band.maxVariable =
-          "wind_speed_maximum_2"
-      if _info
-        @template[plotId].proto.options.y2.title = _info.title
-        @template[plotId].proto.options.y2.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y2.min = _bounds.min
-        @template[plotId].proto.options.y2.max = _bounds.max
-    else if  @template[plotId].proto.options.y3.variable == null
-      @template[plotId].proto.options.y3 =
-        dataLoggerId: dataLoggerId
-        variable: variable
-        color: @getColor('light', (parseInt(plotId)+6%7))
-      if variable is "wind_speed_average"
-        @template[plotId].proto.options.y3Band.minVariable =
-          "wind_speed_minimum_3"
-        @template[plotId].proto.options.y3Band.maxVariable =
-          "wind_speed_maximum_3"
-      if _info
-        @template[plotId].proto.options.y3.title = _info.title
-        @template[plotId].proto.options.y3.units = _info.units
-      if _bounds
-        @template[plotId].proto.options.y3.min = _bounds.min
-        @template[plotId].proto.options.y3.max = _bounds.max
+    #if @template[plotId].proto.options.y.variable == null
+    @template[plotId].proto.options.y =
+      dataLoggerId: dataLoggerId
+      variable: variable
+      #color: @getColor('light', parseInt(plotId))
+    if variable is "wind_speed_average"
+      @template[plotId].proto.options.yBand.minVariable =
+        "wind_speed_minimum"
+      @template[plotId].proto.options.yBand.maxVariable =
+        "wind_speed_maximum"
+    if _info
+      @template[plotId].proto.options.y.title = _info.title
+      @template[plotId].proto.options.y.units = _info.units
+    if _bounds
+      @template[plotId].proto.options.y.min = _bounds.min
+      @template[plotId].proto.options.y.max = _bounds.max
+    #else if  @template[plotId].proto.options.y2.variable == null
+    #  @template[plotId].proto.options.y2 =
+    #    dataLoggerId: dataLoggerId
+    #    variable: variable
+    #    color: @getColor('light', (parseInt(plotId)+4%7))
+    #  if variable is "wind_speed_average"
+    #    @template[plotId].proto.options.y2Band.minVariable =
+    #      "wind_speed_minimum_2"
+    #    @template[plotId].proto.options.y2Band.maxVariable =
+    #      "wind_speed_maximum_2"
+    #  if _info
+    #    @template[plotId].proto.options.y2.title = _info.title
+    #    @template[plotId].proto.options.y2.units = _info.units
+    #  if _bounds
+    #    @template[plotId].proto.options.y2.min = _bounds.min
+    #    @template[plotId].proto.options.y2.max = _bounds.max
+    #else if  @template[plotId].proto.options.y3.variable == null
+    #  @template[plotId].proto.options.y3 =
+    #    dataLoggerId: dataLoggerId
+    #    variable: variable
+    #    color: @getColor('light', (parseInt(plotId)+6%7))
+    #  if variable is "wind_speed_average"
+    #    @template[plotId].proto.options.y3Band.minVariable =
+    #      "wind_speed_minimum_3"
+    #    @template[plotId].proto.options.y3Band.maxVariable =
+    #      "wind_speed_maximum_3"
+    #  if _info
+    #    @template[plotId].proto.options.y3.title = _info.title
+    #    @template[plotId].proto.options.y3.units = _info.units
+    #  if _bounds
+    #    @template[plotId].proto.options.y3.min = _bounds.min
+    #    @template[plotId].proto.options.y3.max = _bounds.max
 
   getVariableBounds: (variable) ->
     bounds =

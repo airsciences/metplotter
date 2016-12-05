@@ -9,28 +9,26 @@
 window.Plotting ||= {}
 
 window.Plotting.Controls = class Controls
-  constructor: (plotter, access, options) ->
+  constructor: (plotter, token, options) ->
     @preError = "Plotting.Dropdown"
+
+    # Methods
     @plotter = plotter
+    @api = new window.Plotting.API token
 
     defaults =
       target: null
     @options = Object.mergeDefaults options, defaults
 
-    accessToken =
-      token: null
-      expires: null
-      expired: true
-    access = Object.mergeDefaults access, accessToken
-
-    # Settings
+    # State Objects
     @current = []
     @stations = []
 
+    # Reference Container Objects
     @maps = []
     @markers = {}
     @listeners = {}
-    @api = new window.Plotting.API access.token
+
 
   setCurrent: (plotId) ->
     # Simplify essential control from the currently displayed plot data sets.
