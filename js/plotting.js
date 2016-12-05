@@ -288,23 +288,25 @@
     Controls.prototype.setCurrent = function(plotId) {
       var _row, args, i, key, len, ref, results1;
       this.current[plotId] = [];
-      ref = ["y", "y2", "y3"];
-      results1 = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        key = ref[i];
-        _row = this.plotter.template[plotId].proto.options[key];
-        if (_row.dataLoggerId !== null) {
-          args = {
-            dataLoggerId: parseInt(_row.dataLoggerId),
-            yTarget: key,
-            color: _row.color
-          };
-          results1.push(this.current[plotId].push(args));
-        } else {
-          results1.push(void 0);
+      if (this.plotter.template[plotId].proto.initialized) {
+        ref = ["y", "y2", "y3"];
+        results1 = [];
+        for (i = 0, len = ref.length; i < len; i++) {
+          key = ref[i];
+          _row = this.plotter.template[plotId].proto.options[key];
+          if (_row.dataLoggerId !== null) {
+            args = {
+              dataLoggerId: parseInt(_row.dataLoggerId),
+              yTarget: key,
+              color: _row.color
+            };
+            results1.push(this.current[plotId].push(args));
+          } else {
+            results1.push(void 0);
+          }
         }
+        return results1;
       }
-      return results1;
     };
 
     Controls.prototype.getCurrent = function(plotId) {
@@ -358,7 +360,6 @@
       _ = this;
       args = {};
       uuid = this.uuid();
-      this.setCurrent(plotId);
       callback = function(data) {
         var _region_name, html, i, j, len, len1, ref, ref1, region, station;
         _.stations[plotId] = data.responseJSON.results;
@@ -379,6 +380,7 @@
         $(appendTarget).prepend(html);
         $('#' + uuid).dropdown();
         _.bindSubMenuEvent(".subheader");
+        _.setCurrent(plotId);
         _.updateStationDropdown(plotId);
         return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
       };
@@ -1593,6 +1595,7 @@
       }
       preError = this.preError + "append()";
       _ = this;
+      this.svg.select(".line-plot-axis-x").call(this.definition.xAxis);
       _y_title = "" + this.options.y.title;
       if (this.options.y.units) {
         _y_title = _y_title + " " + this.options.y.units;
@@ -1935,43 +1938,69 @@
 }).call(this);
 
 (function() {
+  var LiveSync;
+
+  window.Plotting || (window.Plotting = {});
+
+  window.Plotting.LiveSync = LiveSync = (function() {
+    function LiveSync(plotter) {
+      this.preError = "Plotting.LiveSync";
+      this.plotter = plotter;
+      this._buildRequest = function() {};
+    }
+
+    LiveSync.prototype.get = function() {};
+
+    LiveSync.prototype.append = function() {};
+
+    LiveSync.prototype.prepend = function() {};
+
+    return LiveSync;
+
+  })();
+
+}).call(this);
+
+(function() {
   var Handler;
 
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.Handler = Handler = (function() {
     function Handler(access, options, plots) {
-      var accessToken, defaults;
+      var __href, __libDateFormat, __libOptions, accessToken, defaults;
       this.preError = "Plotting.Handler";
-      this["interface"] = new window.Plotting.Interface();
+      __libDateFormat = options.dateFormat ? options.dateFormat : "%Y-%m-%dT%H:%M:%SZ";
+      __libOptions = {
+        dateFormat: __libDateFormat
+      };
+      this.lib = new window.Plotting.Library(__libOptions);
+      if (location.href === "http://localhost:5000") {
+        __href = "http://dev.nwac.us";
+      } else {
+        __href = location.href;
+      }
       defaults = {
         templateId: null,
-        href: location.origin,
+        href: __href,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
         updateLength: 168
       };
-      this.options = Object.mergeDefaults(options, defaults);
-      this.updates = 0;
-      if (this.options.href === "http://localhost:5000") {
-        this.options.href = "http://dev.nwac.us";
-      }
-      this.endpoint = null;
+      this.options = this.lib.mergeDefaults(options, defaults);
       accessToken = {
         token: null,
         admin: false
       };
-      access = Object.mergeDefaults(access, accessToken);
-      this.api = new window.Plotting.API(access.token);
-      this.syncronousapi = new window.Plotting.API(access.token, false);
-      this.controls = new window.Plotting.Controls(this, access);
-      this.getNow = function() {
-        return this.format(this.now);
+      access = this.lib.mergeDefaults(options, defaults);
+      this.i = {
+        api: new window.Plotting.API(access.token),
+        sapi: new window.Plotting.API(access.token, false),
+        controls: new window.Plotting.Controls(this, access)
       };
-      this.isAdmin = function() {
-        return access.admin;
-      };
+      this.updates = 0;
+      this.endpoint = null;
     }
 
     return Handler;
@@ -1986,13 +2015,59 @@
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.Template = Template = (function() {
-    function Template(templateId) {
-      this.endpoint;
+    function Template(plotter) {
+      this.preError = "Plotting.Template.";
+      this.plotter = plotter;
+      this.api = this.plotter.i.api;
+      this.sapi = this.plotter.i.sapi;
+      this.template = null;
+      this.stringify = function() {
+        return JSON.stringify(this.template);
+      };
+      this.endpoint = function() {
+        return this.plotter.options.href + "/api/v5/plothandler/" + this.plotter.options.templateId;
+      };
     }
 
-    Template.prototype.get = function() {};
+    Template.prototype.get = function() {
+      var _, args, callback, preError, target;
+      preError = this.preError + "get()";
+      target = this.endpoint();
+      args = null;
+      _ = this;
+      callback = function(data) {
+        if (data.responseJSON === null || data.responseJSON.console.error) {
+          console.log(preError + ".callback(data) error detected (data)", data);
+          return;
+        }
+        return _.template = data.responseJSON.templateData;
+      };
+      return this.api.get(target, args, callback);
+    };
 
-    Template.prototype.put = function() {};
+    Template.prototype.put = function() {
+      var _, args, callback, preError, target;
+      if (this.plotter.isAdmin() === false) {
+        return;
+      }
+      preError = this.preError + "put()";
+      target = this.endpoint();
+      args = {
+        id: this.plotter.options.templateId,
+        template_data: {
+          templateData: this.template
+        }
+      };
+      _ = this;
+      callback = function(data) {
+        if (data.responseJSON === null || data.responseJSON.console.error) {
+          console.log(preError + ".callback(data) error detected (data)", data);
+          return;
+        }
+        return _.template = data.responseJSON.templateData;
+      };
+      return this.api.put(target, args, callback);
+    };
 
     return Template;
 

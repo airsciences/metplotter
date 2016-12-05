@@ -310,6 +310,8 @@ window.Plotting.Handler = class Handler
         else
           plot.proto.setData(plot.__data[call].get())
           plot.proto.append()
+          _.controls.updateStationDropdown(plotId)
+          _.controls.updateStationMap(plotId)
         delete plot.__data[call]
 
       # Remove Spinner
@@ -378,7 +380,10 @@ window.Plotting.Handler = class Handler
   addStation: (plotId, dataLoggerId) ->
     # Add another data logger to the plot.
     if !@template[plotId].proto.initialized
-      return @appendNew(plotId, dataLoggerId)
+      @appendNew(plotId, dataLoggerId)
+      @controls.updateStationDropdown(plotId)
+      @controls.updateStationMap(plotId)
+      return true
 
     if (
       @template[plotId].proto.options.y.dataLoggerId and
@@ -530,8 +535,9 @@ window.Plotting.Handler = class Handler
 
   add: (type) ->
     # Add a new plot.
-    if @template[@template.length-1].proto.initialized is false
-      return
+    if @template[@template.length-1] != null
+      if @template[@template.length-1].proto.initialized is false
+        return
 
     _target = @utarget(@options.target)
     _plot =
@@ -555,15 +561,22 @@ window.Plotting.Handler = class Handler
     @template[_key].proto.options.plotId = _key
     if @template[_key].proto.initialized
       @appendControls(_key)
+      #@updateStationMap(_key)
+      #@controls.updateStationDropdown(_key)
 
   initVariable: (plotId, variable, title) ->
     # Initialize the Variable on a new Plot
-    @template[plotId].dataParams = [
-      @template[plotId-1].dataParams[0]
-    ]
+    for row in @template
+      if row != null
+        @template[plotId].dataParams = [
+          row.dataParams[0]
+        ]
+        break
     @template[plotId].dataParams[0].data_logger = null
     @template[plotId].proto.options.y.variable = variable
     @template[plotId].proto.options.y.title = title
+    @setNewOptions(plotId, variable, null)
+
     @appendControls(plotId)
     @template[plotId].proto.removeTemp()
 
@@ -581,7 +594,10 @@ window.Plotting.Handler = class Handler
     _bounds = @getVariableBounds(variable)
     _info = @getVariableInfo(variable)
 
-    if @template[plotId].proto.options.y.variable == null
+    if (
+      @template[plotId].proto.options.y.variable == null or
+      @template[plotId].proto.options.y.dataLoggerId == null
+    )
       @template[plotId].proto.options.y =
         dataLoggerId: dataLoggerId
         variable: variable
@@ -597,7 +613,11 @@ window.Plotting.Handler = class Handler
       if _bounds
         @template[plotId].proto.options.y.min = _bounds.min
         @template[plotId].proto.options.y.max = _bounds.max
-    else if  @template[plotId].proto.options.y2.variable == null
+        @template[plotId].proto.options.y.maxBarValue = _bounds.maxBar
+    else if (
+      @template[plotId].proto.options.y2.variable == null or
+      @template[plotId].proto.options.y2.dataLoggerId == null
+    )
       @template[plotId].proto.options.y2 =
         dataLoggerId: dataLoggerId
         variable: variable
@@ -613,7 +633,10 @@ window.Plotting.Handler = class Handler
       if _bounds
         @template[plotId].proto.options.y2.min = _bounds.min
         @template[plotId].proto.options.y2.max = _bounds.max
-    else if  @template[plotId].proto.options.y3.variable == null
+    else if (
+      @template[plotId].proto.options.y3.variable == null or
+      @template[plotId].proto.options.y3.dataLoggerId == null
+    )
       @template[plotId].proto.options.y3 =
         dataLoggerId: dataLoggerId
         variable: variable
@@ -635,27 +658,35 @@ window.Plotting.Handler = class Handler
       battery_voltage:
         min: 8
         max: 16
+        maxBar: null
       net_solar:
         min: 0
         max: 800
+        maxBar: null
       relative_humidity:
         min: 0
-        max: 100
+        max: 102
+        maxBar: null
       snow_depth:
         min: 0
         max: 40
+        maxBar: null
       wind_direction:
         min: 0
         max: 360
+        maxBar: null
       precipitation:
         min: 0
         max: 0.7
+        maxBar: null
       temperature:
         min: 0
         max: 60
+        maxBar: 32
       wind_speed_average:
         min: 0
         max: 60
+        maxBar: null
      return bounds[variable]
 
   getVariableInfo: (variable) ->
@@ -710,9 +741,10 @@ window.Plotting.Handler = class Handler
   indexOfValue: (array, key, value) ->
     # Return the index of an assoc-object key->value
     index = -1
-    for i in [0..(array.length-1)]
-      if array[i][key] is value
-        index = i
+    if array.length > 0
+      for i in [0..(array.length-1)]
+        if array[i][key] is value
+          index = i
     return index
 
   uuid: ->

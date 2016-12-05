@@ -33,14 +33,15 @@ window.Plotting.Controls = class Controls
   setCurrent: (plotId) ->
     # Simplify essential control from the currently displayed plot data sets.
     @current[plotId] = []
-    for key in ["y", "y2", "y3"]
-      _row = @plotter.template[plotId].proto.options[key]
-      if _row.dataLoggerId != null
-        args =
-          dataLoggerId: parseInt(_row.dataLoggerId)
-          yTarget: key
-          color: _row.color
-        @current[plotId].push(args)
+    if @plotter.template[plotId].proto.initialized
+      for key in ["y", "y2", "y3"]
+        _row = @plotter.template[plotId].proto.options[key]
+        if _row.dataLoggerId != null
+          args =
+            dataLoggerId: parseInt(_row.dataLoggerId)
+            yTarget: key
+            color: _row.color
+          @current[plotId].push(args)
 
   getCurrent: (plotId) ->
     # Return the full, or plot specific essential control data
@@ -52,7 +53,9 @@ window.Plotting.Controls = class Controls
     # set displayed state.
     @setCurrent(plotId)
 
-    if @stations[plotId].length > 0
+    if (
+      @stations[plotId].length > 0
+    )
       for region in @stations[plotId]
         region.displayed = []
         for station in region.dataloggers
@@ -76,8 +79,6 @@ window.Plotting.Controls = class Controls
     _ = @
     args = {}
     uuid = @uuid()
-
-    @setCurrent(plotId)
 
     callback = (data) ->
       _.stations[plotId] = data.responseJSON.results
@@ -128,6 +129,8 @@ window.Plotting.Controls = class Controls
       _.bindSubMenuEvent(".subheader")
 
       # Update Dropdown Highlighting & Events.
+      #if _.plotter.template[plotId].proto.initialized
+      _.setCurrent(plotId)
       _.updateStationDropdown(plotId)
 
       # Append the Station Map (Move)
