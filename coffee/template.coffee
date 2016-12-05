@@ -92,6 +92,10 @@ window.Plotter.Template = class Template
 
     @api.put(target, args, callback)
 
+  plotCount: ->
+    # Return the number of plots
+    return @template.length
+
   dataSetCount: (plotId) ->
     # Return the number of data sets for the plot.
     return @template[plotId].y.length

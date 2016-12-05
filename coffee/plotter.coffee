@@ -51,3 +51,4 @@ window.Plotter.Handler = class Handler
   initialize: ->
     # Initialize the Plotter
     @i.template.get()
+    @i.initialsync.stageAll()

@@ -990,12 +990,22 @@
       this.requests = [];
     }
 
+    InitialSync.prototype.stageAll = function() {
+      var j, plotId, ref, results;
+      results = [];
+      for (plotId = j = 0, ref = this.plotter.i.template.plotCount() - 1; 0 <= ref ? j <= ref : j >= ref; plotId = 0 <= ref ? ++j : --j) {
+        console.log("Staging plot (id)", plotId);
+        results.push(this.stage(plotId));
+      }
+      return results;
+    };
+
     InitialSync.prototype.stage = function(plotId) {
       var args, i, j, maxDatetime, ref, results, uuid;
-      maxDatetime = this.plotter.i.template[plotId].x.max;
+      maxDatetime = this.plotter.i.template.template[plotId].x.max;
       results = [];
       for (i = j = 0, ref = this.plotter.i.template.dataSetCount() - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
-        args = this.plotter.i.template.forSync(plotId, i);
+        args = this.plotter.i.template.forSync(plotId, i, maxDatetime, 504);
         uuid = this.plotter.lib.uuid();
         results.push(console.log("Request id (uuid)", uuid));
       }
@@ -2090,7 +2100,8 @@
     }
 
     Handler.prototype.initialize = function() {
-      return this.i.template.get();
+      this.i.template.get();
+      return this.i.initialsync.stageAll();
     };
 
     return Handler;
@@ -2217,6 +2228,10 @@
         return console.log("Template PUT completed (data)", data);
       };
       return this.api.put(target, args, callback);
+    };
+
+    Template.prototype.plotCount = function() {
+      return this.template.length;
     };
 
     Template.prototype.dataSetCount = function(plotId) {
