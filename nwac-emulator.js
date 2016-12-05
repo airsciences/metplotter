@@ -24,35 +24,35 @@ app.get('/', function (req, res) {
             token: access,
             expires: expires
         },
-        plotTemplateId: 1
+        templateId: 1
     };
 
     res.render('advanced', data);
 });
 
-app.get('/plots/:plotTemplateId', function (req, res) {
-    var plotTemplateId = parseInt(req.params.plotTemplateId);
+app.get('/plots/:templateId', function (req, res) {
+    var templateId = parseInt(req.params.templateId);
     var minutes = 60;
     var access = process.env.NWAC_TOKEN;
     var date = new Date();
     var expires = new Date(date.getTime() + minutes*60000);
 
     var data = {
-        title: "Testing Dev Template ID: " + plotTemplateId,
+        title: "Testing Dev Template ID: " + templateId,
         token: {
             token: access,
             expires: expires
         },
-        plotTemplateId: plotTemplateId
+        templateId: templateId
     };
 
     res.render('advanced', data);
 });
 
 /** Routing API Calls */
-app.get('/template/:plotTemplateId', function(req, res) {
+app.get('/template/:templateId', function(req, res) {
     /** Get a Template */
-    var plotTemplateId = parseInt(req.params.plotTemplateId);
+    var plotTemplateId = parseInt(req.params.templateId);
     var max_datetime = new Date();
     var result = {
         "error": true,
@@ -287,5 +287,5 @@ app.get('/template/:plotTemplateId', function(req, res) {
 var server = app.listen(app.get('port'), function () {
     var port = app.get('port');
     console.log("NWAC Development Emulator Listening (http://localhost:"+port+")...");
-    console.log("__dirname: ", __dirname);
+    console.log("Dir: ", __dirname);
 });

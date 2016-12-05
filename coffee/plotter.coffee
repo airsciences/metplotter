@@ -1,7 +1,7 @@
 window.Plotting ||= {}
 
 window.Plotting.Handler = class Handler
-  constructor: (access, options, plots) ->
+  constructor: (accessToken, options, plots) ->
     @preError = "Plotting.Handler"
 
     # Define the Library
@@ -12,10 +12,10 @@ window.Plotting.Handler = class Handler
     @lib = new window.Plotting.Library(__libOptions)
 
     # Get the href Root.
-    if location.href is "http://localhost:5000"
+    if location.origin is "http://localhost:5000"
       __href = "http://dev.nwac.us"
     else
-      __href = location.href
+      __href = location.origin
 
     # Defaults
     defaults =
@@ -27,17 +27,24 @@ window.Plotting.Handler = class Handler
       updateLength: 168
     @options = @lib.mergeDefaults(options, defaults)
 
-    # Access Token
-    accessToken =
+    # Access Token & Admin
+    __accessToken =
       token: null
       admin: false
-    access = @lib.mergeDefaults(options, defaults)
+    access = @lib.mergeDefaults(accessToken, __accessToken)
+
+    @isAdmin = ->
+      return access.admin
 
     # Define the Interface (Sub-Method Handlers)
     @i =
       api: new window.Plotting.API(access.token)
       sapi: new window.Plotting.API(access.token, false)
-      controls: new window.Plotting.Controls(@, access)
+    @i.template = new window.Plotting.Template(@)
+    @i.controls = new window.Plotting.Controls(@)
 
     @updates = 0
     @endpoint = null
+
+  initialize: ->
+    # Initialize the Plotter

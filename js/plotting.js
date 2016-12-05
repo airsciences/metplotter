@@ -16,6 +16,9 @@
         return accessToken;
       };
       this.getAccessTokenValue = function() {
+        if (accessToken === void 0) {
+          throw new Error(preError + " Access token is not defined.");
+        }
         return "Token " + accessToken;
       };
     }
@@ -78,7 +81,7 @@
         xhr.send(null);
       } catch (error1) {
         error = error1;
-        console.log(preError + 'catch(error).', error);
+        throw new Error(preError + ", " + error);
       }
     };
 
@@ -269,15 +272,14 @@
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.Controls = Controls = (function() {
-    function Controls(plotter, token, options) {
+    function Controls(plotter, options) {
       var defaults;
       this.preError = "Plotting.Dropdown";
       this.plotter = plotter;
-      this.api = new window.Plotting.API(token);
       defaults = {
         target: null
       };
-      this.options = Object.mergeDefaults(options, defaults);
+      this.options = this.plotter.lib.mergeDefaults(options, defaults);
       this.current = [];
       this.stations = [];
       this.maps = [];
@@ -1967,18 +1969,18 @@
   window.Plotting || (window.Plotting = {});
 
   window.Plotting.Handler = Handler = (function() {
-    function Handler(access, options, plots) {
-      var __href, __libDateFormat, __libOptions, accessToken, defaults;
+    function Handler(accessToken, options, plots) {
+      var __accessToken, __href, __libDateFormat, __libOptions, access, defaults;
       this.preError = "Plotting.Handler";
       __libDateFormat = options.dateFormat ? options.dateFormat : "%Y-%m-%dT%H:%M:%SZ";
       __libOptions = {
         dateFormat: __libDateFormat
       };
       this.lib = new window.Plotting.Library(__libOptions);
-      if (location.href === "http://localhost:5000") {
+      if (location.origin === "http://localhost:5000") {
         __href = "http://dev.nwac.us";
       } else {
-        __href = location.href;
+        __href = location.origin;
       }
       defaults = {
         templateId: null,
@@ -1989,19 +1991,25 @@
         updateLength: 168
       };
       this.options = this.lib.mergeDefaults(options, defaults);
-      accessToken = {
+      __accessToken = {
         token: null,
         admin: false
       };
-      access = this.lib.mergeDefaults(options, defaults);
+      access = this.lib.mergeDefaults(accessToken, __accessToken);
+      this.isAdmin = function() {
+        return access.admin;
+      };
       this.i = {
         api: new window.Plotting.API(access.token),
-        sapi: new window.Plotting.API(access.token, false),
-        controls: new window.Plotting.Controls(this, access)
+        sapi: new window.Plotting.API(access.token, false)
       };
+      this.i.template = new window.Plotting.Template(this);
+      this.i.controls = new window.Plotting.Controls(this);
       this.updates = 0;
       this.endpoint = null;
     }
+
+    Handler.prototype.initialize = function() {};
 
     return Handler;
 
@@ -2016,11 +2024,67 @@
 
   window.Plotting.Template = Template = (function() {
     function Template(plotter) {
+      var __isValid;
       this.preError = "Plotting.Template.";
       this.plotter = plotter;
+      console.log(this.preError + " (plotter.i)", plotter.i);
       this.api = this.plotter.i.api;
       this.sapi = this.plotter.i.sapi;
       this.template = null;
+      __isValid = function(template) {
+        var i, j, len, len1, ref, row, y;
+        for (i = 0, len = template.length; i < len; i++) {
+          row = template[i];
+          if (row.type === void 0) {
+            return false;
+          }
+          if (row.x === void 0) {
+            return false;
+          }
+          if (row.y === void 0) {
+            return false;
+          }
+          if (row.x.variable === void 0) {
+            return false;
+          }
+          if (row.x.min === void 0) {
+            return false;
+          }
+          if (row.x.max === void 0) {
+            return false;
+          }
+          if (row.y[0] === void 0) {
+            return false;
+          }
+          ref = row.y;
+          for (j = 0, len1 = ref.length; j < len1; j++) {
+            y = ref[j];
+            if (y.dataLoggerId === void 0) {
+              return false;
+            }
+            if (y.variable === void 0) {
+              return false;
+            }
+            if (y.title === void 0) {
+              return false;
+            }
+            if (y.units === void 0) {
+              return false;
+            }
+          }
+        }
+        return true;
+      };
+      this.parse = function(templateData) {
+        var __json;
+        __json = JSON.parse(templateData).templateData;
+        if (__isValid(__json)) {
+          return __json;
+        } else {
+          throw new Error("Plotting template format is invalid. Reference a working example.");
+          return null;
+        }
+      };
       this.stringify = function() {
         return JSON.stringify(this.template);
       };
@@ -2036,11 +2100,11 @@
       args = null;
       _ = this;
       callback = function(data) {
-        if (data.responseJSON === null || data.responseJSON.console.error) {
+        if (data.responseJSON === null || data.responseJSON.error) {
           console.log(preError + ".callback(data) error detected (data)", data);
           return;
         }
-        return _.template = data.responseJSON.templateData;
+        return _.template = _.parse(data.responseJSON.template_data);
       };
       return this.api.get(target, args, callback);
     };
@@ -2055,7 +2119,7 @@
       args = {
         id: this.plotter.options.templateId,
         template_data: {
-          templateData: this.template
+          templateData: this.stringify(this.template)
         }
       };
       _ = this;

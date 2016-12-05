@@ -9,16 +9,13 @@
 window.Plotting ||= {}
 
 window.Plotting.Controls = class Controls
-  constructor: (plotter, token, options) ->
+  constructor: (plotter, options) ->
     @preError = "Plotting.Dropdown"
-
-    # Methods
     @plotter = plotter
-    @api = new window.Plotting.API token
 
     defaults =
       target: null
-    @options = Object.mergeDefaults options, defaults
+    @options = @plotter.lib.mergeDefaults(options, defaults)
 
     # State Objects
     @current = []

@@ -12,7 +12,7 @@ window.Plotting.API = class API
   constructor: (accessToken, async) ->
     @preError = "Plotting.API"
     preError = "#{@preError}.constructor()"
-    
+
     # Configurations
     @async = true
     if typeof async != "undefined"
@@ -21,10 +21,12 @@ window.Plotting.API = class API
     # Attach Authentication
     @getAccessToken = () ->
       accessToken
-      
+
     @getAccessTokenValue = () ->
+      if accessToken is undefined
+        throw new Error("#{preError} Access token is not defined.")
       "Token #{accessToken}"
-    
+
   build: () ->
     # Build the XHR Class
     preError = "#{@preError}.build()"
@@ -45,10 +47,10 @@ window.Plotting.API = class API
   get: (uri, args, callback) ->
     # Standard GET Method
     preError = "#{@preError}.get(uri, params, callback)"
-    
+
     # Initialize the Object
     xhr = @build()
-    
+
     if typeof callback != 'undefined'
       xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
@@ -57,7 +59,7 @@ window.Plotting.API = class API
           console.log "#{preError} HTTP error, (status): #{xhr.status}"
           xhr = null
           return
-        
+
         # Set the Result
         result =
           response: xhr.response
@@ -67,7 +69,7 @@ window.Plotting.API = class API
           result.responseJSON = JSON.parse result.responseText
         catch error
           result.responseJSON = null
-        
+
         # Run the Callback
         callback result
 
@@ -79,17 +81,17 @@ window.Plotting.API = class API
       xhr.setRequestHeader "Authorization", @getAccessTokenValue()
       xhr.send null
     catch error
-      console.log preError + 'catch(error).', error
+      throw new Error(preError + ", " + error)
 
     return
-      
+
   put: () ->
     # Standard PUT Method
     preError = "#{@preError}.put(uri, params, callback)"
-        
+
     # Initialize the Object
     xhr = @build()
-        
+
     if typeof callback != 'undefined'
       xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
@@ -98,7 +100,7 @@ window.Plotting.API = class API
           console.log "#{preError} HTTP error, (status): #{xhr.status}"
           xhr = null
           return
-        
+
         # Set the Result
         result =
           response: xhr.response
@@ -108,7 +110,7 @@ window.Plotting.API = class API
           result.responseJSON = JSON.parse result.responseText
         catch error
           result.responseJSON = null
-        
+
         # Run the Callback
         callback result
 
@@ -124,14 +126,14 @@ window.Plotting.API = class API
       console.log preError + 'catch(error).', error
 
     return
-    
+
   post: () ->
     # Standard POST Method
     preError = "#{@preError}.post(uri, params, callback)"
-        
+
     # Initialize the Object
     xhr = build()
-        
+
     if typeof callback != 'undefined'
       xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
@@ -140,7 +142,7 @@ window.Plotting.API = class API
           console.log "#{preError} HTTP error, (status): #{xhr.status}"
           xhr = null
           return
-        
+
         # Set the Result
         result =
           response: xhr.response
@@ -150,7 +152,7 @@ window.Plotting.API = class API
           result.responseJSON = JSON.parse result.responseText
         catch error
           result.responseJSON = null
-        
+
         # Run the Callback
         callback result
 
@@ -166,14 +168,14 @@ window.Plotting.API = class API
       console.log preError + 'catch(error).', error
 
     return
-      
+
   delete: () ->
     # Standard DELETE Method
     preError = "#{@preError}.delete(uri, params, callback)"
-        
+
     # Initialize the Object
     xhr = @build()
-        
+
     if typeof callback != 'undefined'
       xhr.onreadystatechange = () ->
         # Handle Waiting & Error Cases
@@ -182,7 +184,7 @@ window.Plotting.API = class API
           console.log "#{preError} HTTP error, (status): #{xhr.status}"
           xhr = null
           return
-        
+
         # Set the Result
         result =
           response: xhr.response
@@ -192,7 +194,7 @@ window.Plotting.API = class API
           result.responseJSON = JSON.parse result.responseText
         catch error
           result.responseJSON = null
-        
+
         # Close the Object & Run the Callback
         callback result
 
@@ -221,7 +223,7 @@ window.Plotting.API = class API
         json_args = JSON.parse(json_args)
       catch error
         console.log(preError + 'catch(error).', error)
-    
+
     # Prepare for the XHR method action
     if type == 'POST' || type == 'PUT'
       argStr = JSON.stringify json_args

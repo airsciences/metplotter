@@ -1,0 +1,88 @@
+{
+    "templateData": [{
+        "pageOrder": 1,
+        "type": "parameter",
+        "station": {
+            "station": "White Pass Base & Upper",
+            "region": "West Slopes South",
+            "elevation": 4470
+        },
+        "dataParams": [{
+            "data_logger": 43,
+            "max_datetime": "2016-02-28T00:00:00Z",
+            "limit": 504
+        }],
+        "options": {
+            "x": {
+                "variable": "datetime",
+                "format": "%Y-%m-%dT%H:%M:%SZ",
+                "min": "2016-02-19T00:00:00Z",
+                "max": "2016-02-26T00:00:00Z"
+            },
+            "y": {
+                "dataLoggerId": 43,
+                "variable": "temperature",
+                "title": "Temperature",
+                "units": "°F"
+            }
+        }
+    }, {
+        "pageOrder": 2,
+        "type": "parameter",
+        "station": {
+            "station": "White Pass Pigtail",
+            "region": "West Slopes South",
+            "elevation": 5970
+        },
+        "dataParams": [{
+            "data_logger": 40,
+            "max_datetime": "2016-02-28T00:00:00Z",
+            "limit": 504
+        }],
+        "options": {
+            "x": {
+                "variable": "datetime",
+                "format": "%Y-%m-%dT%H:%M:%SZ",
+                "min": "2016-02-19T00:00:00Z",
+                "max": "2016-02-26T00:00:00Z"
+            },
+            "y": {
+                "dataLoggerId": 40,
+                "variable": "wind_speed_average",
+                "title": "Wind Speed",
+                "units": "mph"
+            },
+            "yBand": {
+                "minVariable": "wind_speed_minimum",
+                "maxVariable": "wind_speed_maximum"
+            }
+        }
+    }, {
+        "pageOrder": 3,
+        "type": "parameter",
+        "station": {
+            "station": "White Pass Base & Upper",
+            "region": "West Slopes South",
+            "elevation": 4470
+        },
+        "dataParams": [{
+            "data_logger": 42,
+            "max_datetime": "2016-02-28T00:00:00Z",
+            "limit": 504
+        }],
+        "options": {
+            "x": {
+                "variable": "datetime",
+                "format": "%Y-%m-%dT%H:%M:%SZ",
+                "min": "2016-02-19T00:00:00Z",
+                "max": "2016-02-26T00:00:00Z"
+            },
+            "y": {
+                "dataLoggerId": 42,
+                "variable": "wind_direction",
+                "title": "Wind Direction",
+                "units": "°"
+            }
+        }
+    }]
+}
