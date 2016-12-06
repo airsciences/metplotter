@@ -44,6 +44,8 @@ window.Plotter.Handler = class Handler
     @i.controls = new window.Plotter.Controls(@)
     @i.initialsync = new window.Plotter.InitialSync(@)
     @i.livesync = new window.Plotter.LiveSync(@)
+    @i.zoom = new window.Plotter.Zoom(@)
+    @i.crosshairs = new window.Plotter.Crosshairs(@)
     @i.colors = new window.Plotter.Colors()
 
     # Define the Plots

@@ -96,7 +96,7 @@ window.Plotter.LinePlot = class LinePlot
 
     @bands = []
     @lines = []
-    @focusCircles = []
+    @focusCircle = []
     @focusText = []
 
     # Initialize the State
@@ -108,37 +108,38 @@ window.Plotter.LinePlot = class LinePlot
 
     @state =
       range:
-        data: null
+        data: []
         scale: _domainScale
       length:
-        data: null
+        data: []
       interval:
-        data: null
+        data: []
       zoom: 1
       request:
-        data: null
+        data: []
       requested:
-        data:
-          min: false
-          max: false
+        data: []
       mean:
         scale: _domainMean
 
-    #if data.length > 0
-    #  @setDataState()
-    #  @setIntervalState()
-    #  @setDataRequirement()
+    if data[0].length > 0
+      @setDataState()
+      @setIntervalState()
+      @setDataRequirement()
 
   processData: (data) ->
     # Process a data set.
     result = []
+    _result = []
 
     for setId, set of data
       result[setId] = []
       _yOptions = @options.y[setId]
       for key, row of set
         result[setId][key] =
-          x: row[@options.x.variable]
+          #x: row[@options.x.variable]
+          x: new Date(
+            @parseDate(row[@options.x.variable]).getTime() - 8*3600000)
           y: row[_yOptions.variable]
         if _yOptions.band?
           if _yOptions.band.minVariable
@@ -146,9 +147,10 @@ window.Plotter.LinePlot = class LinePlot
           if _yOptions.band.maxVariable
             result[setId][key].yMax = row[_yOptions.band.maxVariable]
 
-    _result = new Plotter.Data(result)
-    result = _result._clean(_result.get())
-    return result.sort(@sortDatetimeAsc)
+      _result[setId] = new Plotter.Data(result[setId])
+      result[setId] = _result[setId]._clean(_result[setId].get())
+      result[setId].sort(@sortDatetimeAsc)
+    return result
 
   setData: (data) ->
     # Set the initial data.
@@ -207,20 +209,22 @@ window.Plotter.LinePlot = class LinePlot
     for i in [0.._len]
       if @data[i] is undefined
         console.log("data[i] is (i, row)", i, @data[i])
-    @state.range.data =
-      min: d3.min(@data, (d)-> d.x)
-      max: d3.max(@data, (d)-> d.x)
+    for key, row of @data
+      @state.range.data[key] =
+        min: d3.min(@data[key], (d)-> d.x)
+        max: d3.max(@data[key], (d)-> d.x)
 
-    # Set Data Length States
-    @state.length.data = @data.length
+      # Set Data Length States
+      @state.length.data[key] = @data[key].length
 
   setIntervalState: ->
     # Set the Data Collection Padding Intervals in Hours
-    @state.interval.data =
-      min: ((@state.range.scale.min.getTime() -
-        @state.range.data.min.getTime())/3600000)
-      max: ((@state.range.data.max.getTime() -
-        @state.range.scale.max.getTime())/3600000)
+    for key, row of @data
+      @state.interval.data[key] =
+        min: ((@state.range.scale.min.getTime() -
+          @state.range.data[key].min.getTime())/3600000)
+        max: ((@state.range.data[key].max.getTime() -
+          @state.range.scale.max.getTime())/3600000)
 
   setDataRequirement: ->
     # Calculate how necessary a download, in what direction, and/or data
@@ -257,8 +261,7 @@ window.Plotter.LinePlot = class LinePlot
     _ = @
 
     # Define the Definition
-    @definition =
-      colorScale: d3.schemeCategory20
+    @definition = {}
     @calculateChartDims()
     @calculateAxisDims(@data)
 
@@ -283,7 +286,7 @@ window.Plotter.LinePlot = class LinePlot
       .translateExtent(_extent)
       .on("zoom", () ->
         transform = _.setZoomTransform()
-        _.plotter.zoom(transform)
+        _.plotter.i.zoom.set(transform)
       )
 
     @definition.line = d3.line()
@@ -363,16 +366,19 @@ window.Plotter.LinePlot = class LinePlot
 
   calculateXAxisDims: (data) ->
     # Calculate Min & Max X Values
-    @definition.x.min = if @options.x.min is null then d3.min(data, (d)-> d.x)
+    @definition.x.min = if @options.x.min is null then d3.min(data[0],
+      (d)-> d.x)
     else @parseDate(@options.x.min)
-    @definition.x.max = if @options.x.max is null then d3.max(data, (d)-> d.x)
+    @definition.x.max = if @options.x.max is null then d3.max(data[0],
+      (d)-> d.x)
     else @parseDate(@options.x.max)
 
   calculateYAxisDims: (data) ->
     # Calculate Min & Max Y Values
     @definition.y.min = 0
     @definition.y.max = 0
-    for subId, set in data
+
+    for subId, set of data
       _setMin = d3.min([
         d3.min(set, (d)-> d.y)
         d3.min(set, (d)-> d.yMin)
@@ -386,19 +392,16 @@ window.Plotter.LinePlot = class LinePlot
       if _setMax > @definition.y.max
         @definition.y.max = _setMax
 
-    console.log("yAxis Dims (data, min, max)",
-      data, @definition.y.min, @definition.y.max)
-
     # Restore Viewability if Y-Min = Y-Max
     if @definition.y.min == @definition.y.max
       @definition.y.min = @definition.y.min * 0.8
       @definition.y.max = @definition.y.min * 1.2
 
     # Revert to Options
-    @definition.y.min = if @options.y.min is null then @definition.y.min
-    else @options.y.min
-    @definition.y.max = if @options.y.max is null then @definition.y.max
-    else @options.y.max
+    @definition.y.min = if @options.y[0].min? then @options.y.min
+    else @definition.y.min
+    @definition.y.max = if @options.y[0].max? then @options.y.max
+    else @definition.y.max
 
   preAppend: ->
     preError = "#{@preError}preAppend()"
@@ -539,14 +542,12 @@ window.Plotter.LinePlot = class LinePlot
 
     # Append Bands & Line Path
     for key, row of @data
-      console.log("Appending for (key, @data[key][0])", key, row[0],
-        _.options.y[key])
       @bands[key] = @svg.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
         .append("path")
         .datum(row)
         .attr("d", @definition.area)
-        .attr("class", "line-plot-area")
+        .attr("class", "line-plot-area-#{key}")
         .style("fill", @options.y[key].color)
         .style("opacity", 0.15)
         .style("stroke", () ->
@@ -558,13 +559,13 @@ window.Plotter.LinePlot = class LinePlot
         .append("path")
         .datum(row)
         .attr("d", @definition.line)
-        .attr("class", "line-plot-path")
+        .attr("class", "line-plot-path-#{key}")
         .style("stroke", @options.y[key].color)
         .style("stroke-width",
             Math.round(Math.pow(@definition.dimensions.width, 0.1)))
         .style("fill", "none")
 
-    if @options.y.maxBarValue != null
+    if @options.y[0].maxBarValue?
       @svg.append("rect")
         .attr("class", "line-plot-max-bar")
         .attr("x", @definition.dimensions.leftPadding)
@@ -593,21 +594,16 @@ window.Plotter.LinePlot = class LinePlot
       .style("opacity", 0.1)
 
     for key, row of @data
-      console.log("Appending focus for (key, @data[key][0])", key, row[0],
-        _.options.y[key])
-
       # Create Focus Circles and Labels
-      @focusCircles[key] = @svg.append("circle")
+      @focusCircle[key] = @svg.append("circle")
         .attr("r", 4)
-        .attr("id", "focus-circle-1")
-        .attr("class", "focus-circle")
+        .attr("class", "focus-circle-#{key}")
         .attr("fill", @options.y[key].color)
         .attr("transform", "translate(-10, -10)")
         .style("display", "none")
 
       @focusText[key] = @svg.append("text")
-        .attr("id", "focus-text-1")
-        .attr("class", "focus-text")
+        .attr("class", "focus-text-#{key}")
         .attr("x", 9)
         .attr("y", 7)
         .style("display", "none")
@@ -637,42 +633,10 @@ window.Plotter.LinePlot = class LinePlot
         return d3.rgb(_.options.y.color).darker(1)
       )
 
-    @svg.select(".line-plot-area2")
-      .datum(@data)
-      .attr("d", @definition.area2)
-      .style("fill", @options.y2.color)
-      .style("stroke", () ->
-        return d3.rgb(_.options.y2.color).darker(1)
-      )
-
-    @svg.select(".line-plot-area3")
-      .datum(@data)
-      .attr("d", @definition.area3)
-      .style("fill", @options.y3.color)
-      .style("stroke", () ->
-        return d3.rgb(_.options.y3.color).darker(1)
-      )
-
     @svg.select(".line-plot-path")
       .datum(@data)
       .attr("d", @definition.line)
       .style("stroke", @options.y.color)
-      .style("stroke-width",
-        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-      .style("fill", "none")
-
-    @svg.select(".line-plot-path2")
-      .datum(@data)
-      .attr("d", @definition.line2)
-      .style("stroke", @options.y2.color)
-      .style("stroke-width",
-        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-      .style("fill", "none")
-
-    @svg.select(".line-plot-path3")
-      .datum(@data)
-      .attr("d", @definition.line3)
-      .style("stroke", @options.y3.color)
       .style("stroke-width",
         Math.round(Math.pow(@definition.dimensions.width, 0.1)))
       .style("fill", "none")
@@ -687,26 +651,10 @@ window.Plotter.LinePlot = class LinePlot
       .datum(@data)
       .attr("d", @definition.area)
 
-    @svg.select(".line-plot-area2")
-      .datum(@data)
-      .attr("d", @definition.area2)
-
-    @svg.select(".line-plot-area3")
-      .datum(@data)
-      .attr("d", @definition.area3)
-
     # Redraw the Line Paths
     @svg.select(".line-plot-path")
       .datum(@data)
       .attr("d", @definition.line)
-
-    @svg.select(".line-plot-path2")
-      .datum(@data)
-      .attr("d", @definition.line2)
-
-    @svg.select(".line-plot-path3")
-      .datum(@data)
-      .attr("d", @definition.line3)
 
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
@@ -732,11 +680,11 @@ window.Plotter.LinePlot = class LinePlot
       )
       .style("fill", "none")
       .style("pointer-events", "all")
-      .on("mouseover", () -> _.plotter.showCrosshairs())
-      .on("mouseout", () -> _.plotter.hideCrosshairs())
+      .on("mouseover", () -> _.plotter.i.crosshairs.show())
+      .on("mouseout", () -> _.plotter.i.crosshairs.hide())
       .on("mousemove", () ->
         mouse = _.setCrosshair(transform)
-        _.plotter.crosshair(transform, mouse)
+        _.plotter.i.crosshairs.set(transform, mouse)
       )
 
   appendZoomTarget: ->
@@ -790,9 +738,6 @@ window.Plotter.LinePlot = class LinePlot
       .y0((d) -> _.definition.y(d.yMin))
       .y1((d) -> _.definition.y(d.yMax))
 
-    @svg.select(".line-plot-area")
-      .attr("d", @definition.area)
-
     # Redefine & Redraw the Line Path
     @definition.line = d3.line()
       .defined((d)->
@@ -801,24 +746,11 @@ window.Plotter.LinePlot = class LinePlot
       .x((d) -> _transform.applyX(_.definition.x(d.x)))
       .y((d) -> _.definition.y(d.y))
 
-    @svg.select(".line-plot-path")
-      .attr("d", @definition.line)
-
-    # Redefine & Redraw the Area2
-    @svg.select(".line-plot-area2")
-      .attr("d", @definition.area)
-
-    # Redefine & Redraw the Line2 Path
-    @svg.select(".line-plot-path2")
-      .attr("d", @definition.line)
-
-    # Redefine & Redraw the Area3
-    @svg.select(".line-plot-area3")
-      .attr("d", @definition.area)
-
-    # Redefine & Redraw the Line2 Path
-    @svg.select(".line-plot-path3")
-      .attr("d", @definition.line)
+    for key, row of @data
+      @svg.select(".line-plot-area-#{key}")
+        .attr("d", @definition.area)
+      @svg.select(".line-plot-path-#{key}")
+        .attr("d", @definition.line)
 
     @appendCrosshairTarget(_transform)
     return _transform
@@ -840,33 +772,26 @@ window.Plotter.LinePlot = class LinePlot
       x0 = @definition.x.invert(
         transform.invertX(mouse[0] + _dims.leftPadding)
       )
-    i = _.bisectDate(_datum, x0, 1)
-    d = if x0.getMinutes() >= 30 then _datum[i] else _datum[i - 1]
-    if x0.getTime() < @state.range.data.min.getTime()
-      d = _datum[i - 1]
-    if x0.getTime() > @state.range.data.max.getTime()
-      d = _datum[i - 1]
 
-    dx = if transform then transform.applyX(@definition.x(d.x)) else
-      @definition.x(d.x)
-    if @options.y.variable != null
-      dy = @definition.y(d.y)
-      if !isNaN(dy)
-        @focusCircle.attr("transform", "translate(0, 0)")
-    if @options.y2.variable != null
-      dy2 = @definition.y(d.y2)
-      if !isNaN(dy2)
-        @focusCircle2.attr("transform", "translate(0, 0)")
-    if @options.y3.variable != null
-      dy3 = @definition.y(d.y3)
-      if !isNaN(dy3)
-        @focusCircle3.attr("transform", "translate(0, 0)")
+    i = _.bisectDate(_datum[0], x0, 1) - 1
+    if x0.getTime() < @state.range.data[0].min.getTime()
+      i = i - 1
+    if x0.getTime() > @state.range.data[0].max.getTime()
+      i = i - 1
+    i = if x0.getMinutes() >= 30 then i else (i - 1)
 
-    if d is null or d is undefined
-      console.log("d is broken (d)", d)
+    dx = if transform then transform.applyX(@definition.x(_datum[0][i].x)) else
+      @definition.x(_datum[0][i].x)
+    dy = []
+    _value = []
+    for key, row of @data
+      if @options.y[key].variable != null
+        _value[key] = _datum[key][i-1]
+        dy[key] = @definition.y(_value[key].y)
+        if !isNaN(dy[key])
+          @focusCircle[key].attr("transform", "translate(0, 0)")
 
     cx = dx - _dims.leftPadding
-
     if cx >= 0
       @crosshairs.select(".crosshair-x")
         .attr("x1", cx)
@@ -882,65 +807,47 @@ window.Plotter.LinePlot = class LinePlot
         .attr("height", _dims.innerHeight)
         .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-    if @options.y.variable != null and !isNaN(dy)
-      @focusCircle
-        .attr("cx", dx)
-        .attr("cy", dy)
+    for key, row of @data
+      if @options.y[key].variable != null and !isNaN(dy[key])
+        @focusCircle[key]
+          .attr("cx", dx)
+          .attr("cy", dy[key])
 
-      @focusText
-        .attr("x", dx + _dims.leftPadding / 10)
-        .attr("y", dy - _dims.topPadding / 10)
-        .text(if d.y then d.y.toFixed(1) + " " + @options.y.units)
-
-    if @options.y2.variable != null and !isNaN(dy2)
-      @focusCircle2
-        .attr("cx", dx)
-        .attr("cy", dy2)
-
-      @focusText2
-        .attr("x", dx + _dims.leftPadding / 10)
-        .attr("y", dy2 - _dims.topPadding / 10)
-        .text(if d.y2 then d.y2.toFixed(1) + " " + @options.y2.units)
-
-    if @options.y3.variable != null and !isNaN(dy3)
-      @focusCircle3
-        .attr("cx", dx)
-        .attr("cy", dy3)
-
-      @focusText3
-        .attr("x", dx + _dims.leftPadding / 10)
-        .attr("y", dy3 - _dims.topPadding / 10)
-        .text(if d.y3 then d.y3.toFixed(1) + " " + @options.y3.units)
+        @focusText[key]
+          .attr("x", dx + _dims.leftPadding / 10)
+          .attr("y", dy[key] - _dims.topPadding / 10)
+          .text(if _value[key].y then _value[key].y.toFixed(1) +
+            " " + @options.y[key].units)
 
     # Tooltip Overlap Prevention
-    if (
-      @options.y.variable != null and
-      @options.y2.variable != null and
-      @options.y3.variable != null
-    )
-      ypos = []
-      @svg.selectAll('.focus-text')
-        .attr("transform", (d, i) ->
-          row =
-            ind: i
-            y: parseInt(d3.select(@).attr("y"))
-            offset: 0
-          ypos.push(row)
-          return ""
-        )
-        .call((sel) ->
-          ypos.sort((a, b) -> a.y - b.y)
-          ypos.forEach ((p, i) ->
-            if i > 0
-              offset = Math.max(0, (ypos[i-1].y + 18) - ypos[i].y)
-              if ypos[i].ind == 0
-                offset = -offset
-              ypos[i].offset = offset
-          )
-        )
-        .attr("transform", (d, i) ->
-          return "translate (0, #{ypos[i].offset})"
-        )
+    #if (
+    #  @options.y.variable != null and
+    #  @options.y2.variable != null and
+    #  @options.y3.variable != null
+    #)
+    #  ypos = []
+    #  @svg.selectAll('.focus-text')
+    #    .attr("transform", (d, i) ->
+    #      row =
+    #        ind: i
+    #        y: parseInt(d3.select(@).attr("y"))
+    #        offset: 0
+    #      ypos.push(row)
+    #      return ""
+    #    )
+    #    .call((sel) ->
+    #      ypos.sort((a, b) -> a.y - b.y)
+    #      ypos.forEach ((p, i) ->
+    #        if i > 0
+    #          offset = Math.max(0, (ypos[i-1].y + 18) - ypos[i].y)
+    #          if ypos[i].ind == 0
+    #            offset = -offset
+    #          ypos[i].offset = offset
+    #      )
+    #    )
+    #    .attr("transform", (d, i) ->
+    #      return "translate (0, #{ypos[i].offset})"
+    #    )
 
     return mouse
 

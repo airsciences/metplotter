@@ -21,7 +21,7 @@ window.Plotter.InitialSync = class InitialSync
     for i in [0..(@plotter.i.template.dataSetCount(plotId)-1)]
       args = @plotter.i.template.forSync(plotId, i, maxDatetime, 504)
       uuid = @plotter.lib.uuid()
-      console.log("Request id (args, uuid)", args, uuid)
+
       @requests[uuid] =
         plot: plotId
         ready: false
@@ -35,14 +35,20 @@ window.Plotter.InitialSync = class InitialSync
     _ = @
 
     callback = (data) ->
-      if data.responseJSON == null or data.responseJSON.results.length is 0
-        throw new Error("#{preError} no data found.")
+      if !(data.responseJSON?)
+        throw new Error("#{preError} error requesting data.")
         return null
-      # Correct Data. Stage into Plotter.
-      _.requests[uuid].ready = true
+
       if _.plotter.plots[plotId].__data__ is undefined
         _.plotter.plots[plotId].__data__ = []
-      _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results
+      _result = data.responseJSON.results
+
+      if data.responseJSON.results.length is 0
+        throw new Error("#{preError} no set found.")
+        _result = []
+      # Correct Data. Stage into Plotter.
+      _.requests[uuid].ready = true
+      _.plotter.plots[plotId].__data__[dataSetId] = _result
 
     @sapi.get(target, args, callback)
     return true
