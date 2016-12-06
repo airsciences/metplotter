@@ -773,11 +773,11 @@ window.Plotter.LinePlot = class LinePlot
         transform.invertX(mouse[0] + _dims.leftPadding)
       )
 
-    i = _.bisectDate(_datum[0], x0, 1) - 1
+    i = _.bisectDate(_datum[0], x0, 1)
     if x0.getTime() < @state.range.data[0].min.getTime()
-      i = i - 1
+      i--
     if x0.getTime() > @state.range.data[0].max.getTime()
-      i = i - 1
+      i--
     i = if x0.getMinutes() >= 30 then i else (i - 1)
 
     dx = if transform then transform.applyX(@definition.x(_datum[0][i].x)) else
@@ -786,7 +786,7 @@ window.Plotter.LinePlot = class LinePlot
     _value = []
     for key, row of @data
       if @options.y[key].variable != null
-        _value[key] = _datum[key][i-1]
+        _value[key] = _datum[key][i]
         dy[key] = @definition.y(_value[key].y)
         if !isNaN(dy[key])
           @focusCircle[key].attr("transform", "translate(0, 0)")

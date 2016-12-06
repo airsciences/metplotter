@@ -1826,12 +1826,12 @@
       if (transform) {
         x0 = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
       }
-      i = _.bisectDate(_datum[0], x0, 1) - 1;
+      i = _.bisectDate(_datum[0], x0, 1);
       if (x0.getTime() < this.state.range.data[0].min.getTime()) {
-        i = i - 1;
+        i--;
       }
       if (x0.getTime() > this.state.range.data[0].max.getTime()) {
-        i = i - 1;
+        i--;
       }
       i = x0.getMinutes() >= 30 ? i : i - 1;
       dx = transform ? transform.applyX(this.definition.x(_datum[0][i].x)) : this.definition.x(_datum[0][i].x);
@@ -1841,7 +1841,7 @@
       for (key in ref) {
         row = ref[key];
         if (this.options.y[key].variable !== null) {
-          _value[key] = _datum[key][i - 1];
+          _value[key] = _datum[key][i];
           dy[key] = this.definition.y(_value[key].y);
           if (!isNaN(dy[key])) {
             this.focusCircle[key].attr("transform", "translate(0, 0)");
