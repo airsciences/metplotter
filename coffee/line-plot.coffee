@@ -14,13 +14,25 @@ window.Plotter.LinePlot = class LinePlot
     @plotter = plotter
     @initialized = false
 
+    _y = [
+      dataLoggerId: null
+      variable: null
+      ticks: 5
+      min: null
+      max: null
+      maxBarValue: null
+      color: "rgb(41, 128, 185)"
+      band:
+        minVariable: null
+        maxVariable: null
+    ]
+
     # Default Configuration
     @defaults =
       plotId: null
       uuid: ''
       debug: true
       target: null
-      dataParams: null
       merge: false
       x:
         variable: null
@@ -28,37 +40,7 @@ window.Plotter.LinePlot = class LinePlot
         min: null
         max: null
         ticks: 7
-      y:
-        dataLoggerId: null
-        variable: null
-        ticks: 5
-        min: null
-        max: null
-        maxBarValue: null
-        color: "rgb(41, 128, 185)"
-      yBand:
-        minVariable: null
-        maxVariable: null
-      y2:
-        dataLoggerId: null
-        variable: null
-        ticks: 5
-        min: null
-        max: null
-        color: "rgb(39, 174, 96)"
-      y2Band:
-        minVariable: null
-        maxVariable: null
-      y3:
-        dataLoggerId: null
-        variable: null
-        ticks: 5
-        min: null
-        max: null
-        color: "rgb(142, 68, 173)"
-      y3Band:
-        minVariable: null
-        maxVariable: null
+      y: _y
       zoom:
         scale:
           min: 0.05
@@ -76,14 +58,10 @@ window.Plotter.LinePlot = class LinePlot
       requestInterval:
         data: 336
     if options.x
-      options.x = Object.mergeDefaults(options.x, @defaults.x)
+      options.x = @plotter.lib.mergeDefaults(options.x, @defaults.x)
     if options.y
-      options.y = Object.mergeDefaults(options.y, @defaults.y)
-    if options.y2
-      options.y2 = Object.mergeDefaults(options.y2, @defaults.y2)
-    if options.y3
-      options.y3 = Object.mergeDefaults(options.y3, @defaults.y3)
-    @options = Object.mergeDefaults options, @defaults
+      options.y = @plotter.lib.mergeDefaults(options.y, @defaults.y)
+    @options = @plotter.lib.mergeDefaults options, @defaults
     @device = 'full'
 
     @links = [
@@ -116,6 +94,11 @@ window.Plotter.LinePlot = class LinePlot
     @data = @processData(data)
     @getDefinition()
 
+    @bands = []
+    @lines = []
+    @focusCircles = []
+    @focusText = []
+
     # Initialize the State
     _domainScale = null
     _domainMean = null
@@ -141,55 +124,30 @@ window.Plotter.LinePlot = class LinePlot
       mean:
         scale: _domainMean
 
-    if data.length > 0
-      @setDataState()
-      @setIntervalState()
-      @setDataRequirement()
+    #if data.length > 0
+    #  @setDataState()
+    #  @setIntervalState()
+    #  @setDataRequirement()
 
   processData: (data) ->
     # Process a data set.
     result = []
-    #console.log("Process Data (data)", data)
-    for key, row of data
-      result[key] =
-        #x: @parseDate(row[@options.x.variable])
-        x: new Date(@parseDate(row[@options.x.variable]).getTime() - 8*3600000)
-        y: row[@options.y.variable]
-      if @options.y2.variable != null
-        if @options.y.variable == @options.y2.variable
-          result[key].y2 = row[@options.y2.variable+"_2"]
-        else
-          result[key].y2 = row[@options.y2.variable]
-      if @options.y3.variable != null
-        if (
-          @options.y.variable == @options.y3.variable or
-          @options.y2.variable == @options.y3.variable
-        )
-          result[key].y3 = row[@options.y3.variable+"_3"]
-        else
-          result[key].y3 = row[@options.y3.variable]
-      if (
-        @options.yBand.minVariable != null and
-        @options.yBand.maxVariable != null
-      )
-        result[key].yMin = row[@options.yBand.minVariable]
-        result[key].yMax = row[@options.yBand.maxVariable]
-      if (
-        @options.y2Band.minVariable != null and
-        @options.y2Band.maxVariable != null
-      )
-        result[key].y2Min = row[@options.y2Band.minVariable]
-        result[key].y2Max = row[@options.y2Band.maxVariable]
-      if (
-        @options.y3Band.minVariable != null and
-        @options.y3Band.maxVariable != null
-      )
-        result[key].y3Min = row[@options.y3Band.minVariable]
-        result[key].y3Max = row[@options.y3Band.maxVariable]
+
+    for setId, set of data
+      result[setId] = []
+      _yOptions = @options.y[setId]
+      for key, row of set
+        result[setId][key] =
+          x: row[@options.x.variable]
+          y: row[_yOptions.variable]
+        if _yOptions.band?
+          if _yOptions.band.minVariable
+            result[setId][key].yMin = row[_yOptions.band.minVariable]
+          if _yOptions.band.maxVariable
+            result[setId][key].yMax = row[_yOptions.band.maxVariable]
 
     _result = new Plotter.Data(result)
     result = _result._clean(_result.get())
-
     return result.sort(@sortDatetimeAsc)
 
   setData: (data) ->
@@ -335,20 +293,6 @@ window.Plotter.LinePlot = class LinePlot
       .x((d) -> _.definition.x(d.x))
       .y((d) -> _.definition.y(d.y))
 
-    @definition.line2 = d3.line()
-      .defined((d)->
-        !isNaN(d.y2) and d.y2 isnt null
-      )
-      .x((d) -> _.definition.x(d.x))
-      .y((d) -> _.definition.y(d.y2))
-
-    @definition.line3 = d3.line()
-      .defined((d)->
-        !isNaN(d.y3) and d.y3 isnt null
-      )
-      .x((d) -> _.definition.x(d.x))
-      .y((d) -> _.definition.y(d.y3))
-
     @definition.area = d3.area()
       .defined((d)->
         !isNaN(d.yMin) and d.yMin isnt null and
@@ -357,24 +301,6 @@ window.Plotter.LinePlot = class LinePlot
       .x((d) -> _.definition.x(d.x))
       .y0((d) -> _.definition.y(d.yMin))
       .y1((d) -> _.definition.y(d.yMax))
-
-    @definition.area2 = d3.area()
-      .defined((d)->
-        !isNaN(d.y2Min) and d.y2Min isnt null and
-        !isNaN(d.y2Max) and d.y2Max isnt null
-      )
-      .x((d) -> _.definition.x(d.x))
-      .y0((d) -> _.definition.y(d.y2Min))
-      .y1((d) -> _.definition.y(d.y2Max))
-
-    @definition.area3 = d3.area()
-      .defined((d)->
-        !isNaN(d.y3Min) and d.y3Min isnt null and
-        !isNaN(d.y3Max) and d.y3Max isnt null
-      )
-      .x((d) -> _.definition.x(d.x))
-      .y0((d) -> _.definition.y(d.y3Min))
-      .y1((d) -> _.definition.y(d.y3Max))
 
   calculateChartDims: ->
     # Calculate Basic DOM & SVG Dimensions
@@ -444,23 +370,24 @@ window.Plotter.LinePlot = class LinePlot
 
   calculateYAxisDims: (data) ->
     # Calculate Min & Max Y Values
-    @definition.y.min = d3.min([
-      d3.min(data, (d)-> d.y)
-      d3.min(data, (d)-> d.y2)
-      d3.min(data, (d)-> d.y2)
-      d3.min(data, (d)-> d.yMin)
-      d3.min(data, (d)-> d.y2Min)
-      d3.min(data, (d)-> d.y3Min)
-    ])
+    @definition.y.min = 0
+    @definition.y.max = 0
+    for subId, set in data
+      _setMin = d3.min([
+        d3.min(set, (d)-> d.y)
+        d3.min(set, (d)-> d.yMin)
+      ])
+      _setMax = d3.max([
+        d3.max(set, (d)-> d.y)
+        d3.max(set, (d)-> d.yMax)
+      ])
+      if _setMin < @definition.y.min
+        @definition.y.min = _setMin
+      if _setMax > @definition.y.max
+        @definition.y.max = _setMax
 
-    @definition.y.max = d3.max([
-      d3.max(data, (d)-> d.y)
-      d3.max(data, (d)-> d.y2)
-      d3.max(data, (d)-> d.y3)
-      d3.max(data, (d)-> d.yMax)
-      d3.max(data, (d)-> d.y2Max)
-      d3.max(data, (d)-> d.y3Max)
-    ])
+    console.log("yAxis Dims (data, min, max)",
+      data, @definition.y.min, @definition.y.max)
 
     # Restore Viewability if Y-Min = Y-Max
     if @definition.y.min == @definition.y.max
@@ -588,9 +515,9 @@ window.Plotter.LinePlot = class LinePlot
       .call(@definition.xAxis)
 
     # Append Axis Label
-    _y_title = "#{@options.y.title}"
-    if @options.y.units
-      _y_title = "#{_y_title} #{@options.y.units}"
+    _y_title = "#{@options.y[0].title}"
+    if @options.y[0].units
+      _y_title = "#{_y_title} #{@options.y[0].units}"
 
     _y_vert = -15
     _y_offset = -52
@@ -610,94 +537,32 @@ window.Plotter.LinePlot = class LinePlot
       .style("font-size", @options.font.size)
       .style("font-weight", @options.font.weight)
 
-    if @options.y2.title
-      _y2_title = "#{_y2_title} #{@options.y2.title}"
+    # Append Bands & Line Path
+    for key, row of @data
+      console.log("Appending for (key, @data[key][0])", key, row[0],
+        _.options.y[key])
+      @bands[key] = @svg.append("g")
+        .attr("clip-path", "url(\##{@options.target}_clip)")
+        .append("path")
+        .datum(row)
+        .attr("d", @definition.area)
+        .attr("class", "line-plot-area")
+        .style("fill", @options.y[key].color)
+        .style("opacity", 0.15)
+        .style("stroke", () ->
+          return d3.color(_.options.y[key].color).darker(1)
+        )
 
-    if @options.y3.units
-      _y3_title = "#{_y3_title} #{@options.y3.units}"
-
-    # Append Bands
-    #if (
-    #  @options.yBand.minVariable != null and
-    #  @options.yBand.maxVariable != null
-    #)
-    @lineband = @svg.append("g")
-      .attr("clip-path", "url(\##{@options.target}_clip)")
-      .append("path")
-      .datum(@data)
-      .attr("d", @definition.area)
-      .attr("class", "line-plot-area")
-      .style("fill", @options.y.color)
-      .style("opacity", 0.15)
-      .style("stroke", () ->
-        return d3.color(_.options.y.color).darker(1)
-      )
-
-    #if (
-    #  @options.y2Band.minVariable != null and
-    #  @options.y2Band.maxVariable != null
-    #)
-    @lineband2 = @svg.append("g")
-      .attr("clip-path", "url(\##{@options.target}_clip)")
-      .append("path")
-      .datum(@data)
-      .attr("d", @definition.area2)
-      .attr("class", "line-plot-area2")
-      .style("fill", @options.y2.color)
-      .style("opacity", 0.25)
-      .style("stroke", () ->
-        return d3.rgb(_.options.y2.color).darker(1)
-      )
-
-    #if (
-    #  @options.y3Band.minVariable != null and
-    #  @options.y3Band.maxVariable != null
-    #)
-    @lineband3 = @svg.append("g")
-      .attr("clip-path", "url(\##{@options.target}_clip)")
-      .append("path")
-      .datum(@data)
-      .attr("d", @definition.area3)
-      .attr("class", "line-plot-area3")
-      .style("fill", @options.y3.color)
-      .style("opacity", 0.25)
-      .style("stroke", () ->
-        return d3.rgb(_.options.y3.color).darker(1)
-      )
-
-    # Append the Line Paths
-    @svg.append("g")
-      .attr("clip-path", "url(\##{@options.target}_clip)")
-      .append("path")
-      .datum(@data)
-      .attr("d", @definition.line)
-      .attr("class", "line-plot-path")
-      .style("stroke", @options.y.color)
-      .style("stroke-width",
-          Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-      .style("fill", "none")
-
-    @svg.append("g")
-      .attr("clip-path", "url(\##{@options.target}_clip)")
-      .append("path")
-      .datum(@data)
-      .attr("d", @definition.line2)
-      .attr("class", "line-plot-path2")
-      .style("stroke", @options.y2.color)
-      .style("stroke-width",
-        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-      .style("fill", "none")
-
-    @svg.append("g")
-      .attr("clip-path", "url(\##{@options.target}_clip)")
-      .append("path")
-      .datum(@data)
-      .attr("d", @definition.line3)
-      .attr("class", "line-plot-path3")
-      .style("stroke", @options.y3.color)
-      .style("stroke-width",
-        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-      .style("fill", "none")
+      @lines[key] = @svg.append("g")
+        .attr("clip-path", "url(\##{@options.target}_clip)")
+        .append("path")
+        .datum(row)
+        .attr("d", @definition.line)
+        .attr("class", "line-plot-path")
+        .style("stroke", @options.y[key].color)
+        .style("stroke-width",
+            Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+        .style("fill", "none")
 
     if @options.y.maxBarValue != null
       @svg.append("rect")
@@ -727,63 +592,29 @@ window.Plotter.LinePlot = class LinePlot
       .style("fill", "rgb(255,255,255)")
       .style("opacity", 0.1)
 
-    # Create Focus Circles and Labels
-    @focusCircle = @svg.append("circle")
-      .attr("r", 4)
-      .attr("id", "focus-circle-1")
-      .attr("class", "focus-circle")
-      .attr("fill", @options.y.color)
-      .attr("transform", "translate(-10, -10)")
-      .style("display", "none")
+    for key, row of @data
+      console.log("Appending focus for (key, @data[key][0])", key, row[0],
+        _.options.y[key])
 
-    @focusText = @svg.append("text")
-      .attr("id", "focus-text-1")
-      .attr("class", "focus-text")
-      .attr("x", 9)
-      .attr("y", 7)
-      .style("display", "none")
-      .style("fill", @options.y.color)
-      .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
-        2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
-        2px 2px 0 rgb(255,255,255)")
+      # Create Focus Circles and Labels
+      @focusCircles[key] = @svg.append("circle")
+        .attr("r", 4)
+        .attr("id", "focus-circle-1")
+        .attr("class", "focus-circle")
+        .attr("fill", @options.y[key].color)
+        .attr("transform", "translate(-10, -10)")
+        .style("display", "none")
 
-    @focusCircle2 = @svg.append("circle")
-      .attr("r", 4)
-      .attr("id", "focus-circle-2")
-      .attr("class", "focus-circle")
-      .attr("fill", @options.y2.color)
-      .attr("transform", "translate(-10, -10)")
-      .style("display", "none")
-
-    @focusText2 = @svg.append("text")
-      .attr("id", "focus-text-2")
-      .attr("class", "focus-text")
-      .attr("x", 9)
-      .attr("y", 7)
-      .style("display", "none")
-      .style("fill", @options.y2.color)
-      .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
-        2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
-        2px 2px 0 rgb(255,255,255)")
-
-    @focusCircle3 = @svg.append("circle")
-      .attr("r", 4)
-      .attr("id", "focus-circle-3")
-      .attr("class", "focus-circle")
-      .attr("fill", @options.y3.color)
-      .attr("transform", "translate(-10, -10)")
-      .style("display", "none")
-
-    @focusText3 = @svg.append("text")
-      .attr("id", "focus-text-3")
-      .attr("class", "focus-text")
-      .attr("x", 9)
-      .attr("y", 7)
-      .style("display", "none")
-      .style("fill", @options.y3.color)
-      .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
-        2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
-        2px 2px 0 rgb(255,255,255)")
+      @focusText[key] = @svg.append("text")
+        .attr("id", "focus-text-1")
+        .attr("class", "focus-text")
+        .attr("x", 9)
+        .attr("y", 7)
+        .style("display", "none")
+        .style("fill", @options.y[key].color)
+        .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+          2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+          2px 2px 0 rgb(255,255,255)")
 
     # Append the Crosshair & Zoom Event Rectangle
     @overlay = @svg.append("rect")
@@ -974,52 +805,20 @@ window.Plotter.LinePlot = class LinePlot
       .attr("d", @definition.line)
 
     # Redefine & Redraw the Area2
-    @definition.area2 = d3.area()
-      .defined((d)->
-        !isNaN(d.y2Min) and d.y2Min isnt null and
-        !isNaN(d.y2Max) and d.y2Max isnt null
-      )
-      .x((d) -> _transform.applyX(_.definition.x(d.x)))
-      .y0((d) -> _.definition.y(d.y2Min))
-      .y1((d) -> _.definition.y(d.y2Max))
-
     @svg.select(".line-plot-area2")
-      .attr("d", @definition.area2)
+      .attr("d", @definition.area)
 
     # Redefine & Redraw the Line2 Path
-    @definition.line2 = d3.line()
-      .defined((d)->
-        !isNaN(d.y2) and d.y2 isnt null
-      )
-      .x((d) -> _transform.applyX(_.definition.x(d.x)))
-      .y((d) -> _.definition.y(d.y2))
-
     @svg.select(".line-plot-path2")
-      .attr("d", @definition.line2)
+      .attr("d", @definition.line)
 
     # Redefine & Redraw the Area3
-    @definition.area3 = d3.area()
-      .defined((d)->
-        !isNaN(d.y3Min) and d.y3Min isnt null and
-        !isNaN(d.y3Max) and d.y3Max isnt null
-      )
-      .x((d) -> _transform.applyX(_.definition.x(d.x)))
-      .y0((d) -> _.definition.y(d.y3Min))
-      .y1((d) -> _.definition.y(d.y3Max))
-
     @svg.select(".line-plot-area3")
-      .attr("d", @definition.area3)
+      .attr("d", @definition.area)
 
     # Redefine & Redraw the Line2 Path
-    @definition.line3 = d3.line()
-      .defined((d)->
-        !isNaN(d.y3) and d.y3 isnt null
-      )
-      .x((d) -> _transform.applyX(_.definition.x(d.x)))
-      .y((d) -> _.definition.y(d.y3))
-
     @svg.select(".line-plot-path3")
-      .attr("d", @definition.line3)
+      .attr("d", @definition.line)
 
     @appendCrosshairTarget(_transform)
     return _transform
@@ -1149,54 +948,34 @@ window.Plotter.LinePlot = class LinePlot
     # Show the Crosshair
     if !@initialized
       return
+
     @crosshairs.select(".crosshair-x")
       .style("display", null)
-
     @crosshairs.select(".crosshair-x-under")
       .style("display", null)
 
-    if @options.y.variable != null
-      @focusCircle.style("display", null)
-        .attr("fill", @options.y.color)
-      @focusText.style("display", null)
-        .style("color", @options.y.color)
-        .style("fill", @options.y.color)
-
-    if @options.y2.variable != null
-      @focusCircle2.style("display", null)
-        .attr("fill", @options.y2.color)
-      @focusText2.style("display", null)
-        .style("color", @options.y2.color)
-        .style("fill", @options.y2.color)
-
-    if @options.y3.variable != null
-      @focusCircle3.style("display", null)
-        .attr("fill", @options.y3.color)
-      @focusText3.style("display", null)
-        .style("color", @options.y3.color)
-        .style("fill", @options.y3.color)
+    for setId, row of @options.y
+      if row.variable != null
+        @focusCircle[setId].style("display", null)
+          .attr("fill", row.color)
+        @focusText[setId].style("display", null)
+          .style("color", row.color)
+          .style("fill", row.color)
 
   hideCrosshair: () ->
     # Hide the Crosshair
     if !@initialized
       return
+
     @crosshairs.select(".crosshair-x")
       .style("display", "none")
-
     @crosshairs.select(".crosshair-x-under")
       .style("display", "none")
 
-    if @options.y.variable != null
-      @focusCircle.style("display", "none")
-      @focusText.style("display", "none")
-
-    if @options.y2.variable != null
-      @focusCircle2.style("display", "none")
-      @focusText2.style("display", "none")
-
-    if @options.y3.variable != null
-      @focusCircle3.style("display", "none")
-      @focusText3.style("display", "none")
+    for setId, row of @options.y
+      if row.variable != null
+        @focusCircle[setId].style("display", "none")
+        @focusText[setId].style("display", "none")
 
   appendTitle: (title, subtitle) ->
     # Append a Plot Title

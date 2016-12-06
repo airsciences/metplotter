@@ -44,11 +44,46 @@ window.Plotter.Handler = class Handler
     @i.controls = new window.Plotter.Controls(@)
     @i.initialsync = new window.Plotter.InitialSync(@)
     @i.livesync = new window.Plotter.LiveSync(@)
+    @i.colors = new window.Plotter.Colors()
 
+    # Define the Plots
+    @plots = []
+
+    ###### Pending Usage:
     @updates = 0
     @endpoint = null
 
   initialize: ->
     # Initialize the Plotter
     @i.template.get()
+    @initializePlots()
     @i.initialsync.stageAll()
+    @append()
+
+  initializePlots: ->
+    # Initialize the Plot Arrays
+    _template = @i.template.full()
+    for key, row of _template
+      _plotRow =
+        proto: null
+        __data__: []
+      @plots[key] = _plotRow
+
+  append: ->
+    # Append the Plots
+    for key, row of @plots
+      row.uuid = @lib.uuid()
+      $(@options.target).append("<div id=\"outer-#{row.uuid}\"></div>")
+
+      # Build the Options
+      _options = @i.template.forPlots(key)
+      _options = @i.colors.getInitial(_options)
+      _options.target = "\#outer-#{row.uuid}"
+      _options.uuid = row.uuid
+
+      console.log("Appending w/ options", _options)
+
+      # Initialize the Line Plot
+      row.proto = new window.Plotter.LinePlot(@, row.__data__, _options)
+      row.proto.preAppend()
+      row.proto.append()

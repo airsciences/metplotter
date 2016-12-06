@@ -100,16 +100,34 @@ window.Plotter.Template = class Template
     # Return the number of data sets for the plot.
     return @template[plotId].y.length
 
+  full: ->
+    # Return the full template.
+    return @template
+
   forSync: (plotId, lineId, maxDatetime, limit) ->
     # Prepare the template for an API request.
     result =
       data_logger: @template[plotId].y[lineId].dataLoggerId
       max_datetime: maxDatetime
-      limit: maxDatetime
+      limit: limit
     return result
 
   forControls: () ->
     # Prepare the template for building controls.
 
-  forPlot: () ->
+  forPlots: (plotId) ->
     # Prepare the template for building a plot.
+    _x = @template[plotId].x
+    _y = @template[plotId].y
+    for _row in _y
+      if _row.variable is "wind_speed_average"
+        _row.band =
+          minVariable: "wind_speed_minimum"
+          maxVariable: "wind_speed_maximum"
+
+    result =
+      plotId: plotId
+      x: _x
+      y: _y
+
+    return result

@@ -8,8 +8,8 @@
 
 window.Plotter ||= {}
 
-window.Plotter.Color = class Color
-  constructor: (initial) ->
+window.Plotter.Colors = class Colors
+  constructor: ->
     __colors =
       light: [
         "rgb(53, 152, 219)",
@@ -34,6 +34,21 @@ window.Plotter.Color = class Color
         "rgb(23, 160, 134)"
       ]
 
-    @getColor = (shade, key) ->
-      # Return the Color from the ordered list.
-      return @options.colors[shade][key]
+    @color = (shade, key) ->
+      return __colors[shade][key]
+
+    @templateColors = {}
+
+  getInitial: (options) ->
+    # Set the initial option colors
+    for key, row of options.y
+      row.color = @get(row.dataLoggerId)
+    return options
+
+  get: (dataLoggerId) ->
+    # Return the Color from the ordered list.
+    _length = Object.keys(@templateColors).length
+    _offset = (_length*2)%7
+    if (@templateColors[dataLoggerId]?) is false
+      @templateColors[dataLoggerId] = @color("light", _offset)
+    return @templateColors[dataLoggerId]

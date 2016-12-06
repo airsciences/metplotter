@@ -26,7 +26,6 @@ window.Plotter.Controls = class Controls
     @markers = {}
     @listeners = {}
 
-
   setCurrent: (plotId) ->
     # Simplify essential control from the currently displayed plot data sets.
     @current[plotId] = []

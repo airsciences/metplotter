@@ -243,23 +243,44 @@
 }).call(this);
 
 (function() {
-  var Color;
+  var Colors;
 
   window.Plotter || (window.Plotter = {});
 
-  window.Plotter.Color = Color = (function() {
-    function Color(initial) {
+  window.Plotter.Colors = Colors = (function() {
+    function Colors() {
       var __colors;
       __colors = {
         light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
         dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
       };
-      this.getColor = function(shade, key) {
-        return this.options.colors[shade][key];
+      this.color = function(shade, key) {
+        return __colors[shade][key];
       };
+      this.templateColors = {};
     }
 
-    return Color;
+    Colors.prototype.getInitial = function(options) {
+      var key, ref, row;
+      ref = options.y;
+      for (key in ref) {
+        row = ref[key];
+        row.color = this.get(row.dataLoggerId);
+      }
+      return options;
+    };
+
+    Colors.prototype.get = function(dataLoggerId) {
+      var _length, _offset;
+      _length = Object.keys(this.templateColors).length;
+      _offset = (_length * 2) % 7;
+      if ((this.templateColors[dataLoggerId] != null) === false) {
+        this.templateColors[dataLoggerId] = this.color("light", _offset);
+      }
+      return this.templateColors[dataLoggerId];
+    };
+
+    return Colors;
 
   })();
 
@@ -987,36 +1008,60 @@
     function InitialSync(plotter) {
       this.preError = "Plotter.InitialSync";
       this.plotter = plotter;
-      this.requests = [];
+      this.sapi = this.plotter.i.sapi;
+      this.requests = {};
+      this.endpoint = function() {
+        return this.plotter.options.href + "/api/v5/measurement";
+      };
     }
 
     InitialSync.prototype.stageAll = function() {
       var j, plotId, ref, results;
       results = [];
       for (plotId = j = 0, ref = this.plotter.i.template.plotCount() - 1; 0 <= ref ? j <= ref : j >= ref; plotId = 0 <= ref ? ++j : --j) {
-        console.log("Staging plot (id)", plotId);
         results.push(this.stage(plotId));
       }
       return results;
     };
 
     InitialSync.prototype.stage = function(plotId) {
-      var args, i, j, maxDatetime, ref, results, uuid;
-      maxDatetime = this.plotter.i.template.template[plotId].x.max;
+      var _plotTemplate, args, i, j, maxDatetime, ref, results, uuid;
+      _plotTemplate = this.plotter.i.template.template[plotId];
+      maxDatetime = _plotTemplate.x.max;
       results = [];
-      for (i = j = 0, ref = this.plotter.i.template.dataSetCount() - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+      for (i = j = 0, ref = this.plotter.i.template.dataSetCount(plotId) - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
         args = this.plotter.i.template.forSync(plotId, i, maxDatetime, 504);
         uuid = this.plotter.lib.uuid();
-        results.push(console.log("Request id (uuid)", uuid));
+        console.log("Request id (args, uuid)", args, uuid);
+        this.requests[uuid] = {
+          plot: plotId,
+          ready: false,
+          requested: false
+        };
+        results.push(this.requests[uuid]['requested'] = this.get(plotId, i, uuid, args));
       }
       return results;
     };
 
-    InitialSync.prototype.get = function(uuid) {};
-
-    InitialSync.prototype.append = function(plotId) {};
-
-    InitialSync.prototype.prepend = function(plotId) {};
+    InitialSync.prototype.get = function(plotId, dataSetId, uuid, args) {
+      var _, callback, preError, target;
+      preError = this.preError + ".get()";
+      target = this.endpoint();
+      _ = this;
+      callback = function(data) {
+        if (data.responseJSON === null || data.responseJSON.results.length === 0) {
+          throw new Error(preError + " no data found.");
+          return null;
+        }
+        _.requests[uuid].ready = true;
+        if (_.plotter.plots[plotId].__data__ === void 0) {
+          _.plotter.plots[plotId].__data__ = [];
+        }
+        return _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
+      };
+      this.sapi.get(target, args, callback);
+      return true;
+    };
 
     return InitialSync;
 
@@ -1093,16 +1138,30 @@
 
   window.Plotter.LinePlot = LinePlot = (function() {
     function LinePlot(plotter, data, options) {
-      var _domainMean, _domainScale;
+      var _domainMean, _domainScale, _y;
       this.preError = "LinePlot.";
       this.plotter = plotter;
       this.initialized = false;
+      _y = [
+        {
+          dataLoggerId: null,
+          variable: null,
+          ticks: 5,
+          min: null,
+          max: null,
+          maxBarValue: null,
+          color: "rgb(41, 128, 185)",
+          band: {
+            minVariable: null,
+            maxVariable: null
+          }
+        }
+      ];
       this.defaults = {
         plotId: null,
         uuid: '',
         debug: true,
         target: null,
-        dataParams: null,
         merge: false,
         x: {
           variable: null,
@@ -1111,43 +1170,7 @@
           max: null,
           ticks: 7
         },
-        y: {
-          dataLoggerId: null,
-          variable: null,
-          ticks: 5,
-          min: null,
-          max: null,
-          maxBarValue: null,
-          color: "rgb(41, 128, 185)"
-        },
-        yBand: {
-          minVariable: null,
-          maxVariable: null
-        },
-        y2: {
-          dataLoggerId: null,
-          variable: null,
-          ticks: 5,
-          min: null,
-          max: null,
-          color: "rgb(39, 174, 96)"
-        },
-        y2Band: {
-          minVariable: null,
-          maxVariable: null
-        },
-        y3: {
-          dataLoggerId: null,
-          variable: null,
-          ticks: 5,
-          min: null,
-          max: null,
-          color: "rgb(142, 68, 173)"
-        },
-        y3Band: {
-          minVariable: null,
-          maxVariable: null
-        },
+        y: _y,
         zoom: {
           scale: {
             min: 0.05,
@@ -1171,18 +1194,12 @@
         }
       };
       if (options.x) {
-        options.x = Object.mergeDefaults(options.x, this.defaults.x);
+        options.x = this.plotter.lib.mergeDefaults(options.x, this.defaults.x);
       }
       if (options.y) {
-        options.y = Object.mergeDefaults(options.y, this.defaults.y);
+        options.y = this.plotter.lib.mergeDefaults(options.y, this.defaults.y);
       }
-      if (options.y2) {
-        options.y2 = Object.mergeDefaults(options.y2, this.defaults.y2);
-      }
-      if (options.y3) {
-        options.y3 = Object.mergeDefaults(options.y3, this.defaults.y3);
-      }
-      this.options = Object.mergeDefaults(options, this.defaults);
+      this.options = this.plotter.lib.mergeDefaults(options, this.defaults);
       this.device = 'full';
       this.links = [
         {
@@ -1246,6 +1263,10 @@
       };
       this.data = this.processData(data);
       this.getDefinition();
+      this.bands = [];
+      this.lines = [];
+      this.focusCircles = [];
+      this.focusText = [];
       _domainScale = null;
       _domainMean = null;
       if (data.length > 0) {
@@ -1277,47 +1298,29 @@
           scale: _domainMean
         }
       };
-      if (data.length > 0) {
-        this.setDataState();
-        this.setIntervalState();
-        this.setDataRequirement();
-      }
     }
 
     LinePlot.prototype.processData = function(data) {
-      var _result, key, result, row;
+      var _result, _yOptions, key, result, row, set, setId;
       result = [];
-      for (key in data) {
-        row = data[key];
-        result[key] = {
-          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
-          y: row[this.options.y.variable]
-        };
-        if (this.options.y2.variable !== null) {
-          if (this.options.y.variable === this.options.y2.variable) {
-            result[key].y2 = row[this.options.y2.variable + "_2"];
-          } else {
-            result[key].y2 = row[this.options.y2.variable];
+      for (setId in data) {
+        set = data[setId];
+        result[setId] = [];
+        _yOptions = this.options.y[setId];
+        for (key in set) {
+          row = set[key];
+          result[setId][key] = {
+            x: row[this.options.x.variable],
+            y: row[_yOptions.variable]
+          };
+          if (_yOptions.band != null) {
+            if (_yOptions.band.minVariable) {
+              result[setId][key].yMin = row[_yOptions.band.minVariable];
+            }
+            if (_yOptions.band.maxVariable) {
+              result[setId][key].yMax = row[_yOptions.band.maxVariable];
+            }
           }
-        }
-        if (this.options.y3.variable !== null) {
-          if (this.options.y.variable === this.options.y3.variable || this.options.y2.variable === this.options.y3.variable) {
-            result[key].y3 = row[this.options.y3.variable + "_3"];
-          } else {
-            result[key].y3 = row[this.options.y3.variable];
-          }
-        }
-        if (this.options.yBand.minVariable !== null && this.options.yBand.maxVariable !== null) {
-          result[key].yMin = row[this.options.yBand.minVariable];
-          result[key].yMax = row[this.options.yBand.maxVariable];
-        }
-        if (this.options.y2Band.minVariable !== null && this.options.y2Band.maxVariable !== null) {
-          result[key].y2Min = row[this.options.y2Band.minVariable];
-          result[key].y2Max = row[this.options.y2Band.maxVariable];
-        }
-        if (this.options.y3Band.minVariable !== null && this.options.y3Band.maxVariable !== null) {
-          result[key].y3Min = row[this.options.y3Band.minVariable];
-          result[key].y3Max = row[this.options.y3Band.maxVariable];
         }
       }
       _result = new Plotter.Data(result);
@@ -1466,21 +1469,7 @@
       }).y(function(d) {
         return _.definition.y(d.y);
       });
-      this.definition.line2 = d3.line().defined(function(d) {
-        return !isNaN(d.y2) && d.y2 !== null;
-      }).x(function(d) {
-        return _.definition.x(d.x);
-      }).y(function(d) {
-        return _.definition.y(d.y2);
-      });
-      this.definition.line3 = d3.line().defined(function(d) {
-        return !isNaN(d.y3) && d.y3 !== null;
-      }).x(function(d) {
-        return _.definition.x(d.x);
-      }).y(function(d) {
-        return _.definition.y(d.y3);
-      });
-      this.definition.area = d3.area().defined(function(d) {
+      return this.definition.area = d3.area().defined(function(d) {
         return !isNaN(d.yMin) && d.yMin !== null && !isNaN(d.yMax) && d.yMax !== null;
       }).x(function(d) {
         return _.definition.x(d.x);
@@ -1488,24 +1477,6 @@
         return _.definition.y(d.yMin);
       }).y1(function(d) {
         return _.definition.y(d.yMax);
-      });
-      this.definition.area2 = d3.area().defined(function(d) {
-        return !isNaN(d.y2Min) && d.y2Min !== null && !isNaN(d.y2Max) && d.y2Max !== null;
-      }).x(function(d) {
-        return _.definition.x(d.x);
-      }).y0(function(d) {
-        return _.definition.y(d.y2Min);
-      }).y1(function(d) {
-        return _.definition.y(d.y2Max);
-      });
-      return this.definition.area3 = d3.area().defined(function(d) {
-        return !isNaN(d.y3Min) && d.y3Min !== null && !isNaN(d.y3Max) && d.y3Max !== null;
-      }).x(function(d) {
-        return _.definition.x(d.x);
-      }).y0(function(d) {
-        return _.definition.y(d.y3Min);
-      }).y1(function(d) {
-        return _.definition.y(d.y3Max);
       });
     };
 
@@ -1570,36 +1541,33 @@
     };
 
     LinePlot.prototype.calculateYAxisDims = function(data) {
-      this.definition.y.min = d3.min([
-        d3.min(data, function(d) {
-          return d.y;
-        }), d3.min(data, function(d) {
-          return d.y2;
-        }), d3.min(data, function(d) {
-          return d.y2;
-        }), d3.min(data, function(d) {
-          return d.yMin;
-        }), d3.min(data, function(d) {
-          return d.y2Min;
-        }), d3.min(data, function(d) {
-          return d.y3Min;
-        })
-      ]);
-      this.definition.y.max = d3.max([
-        d3.max(data, function(d) {
-          return d.y;
-        }), d3.max(data, function(d) {
-          return d.y2;
-        }), d3.max(data, function(d) {
-          return d.y3;
-        }), d3.max(data, function(d) {
-          return d.yMax;
-        }), d3.max(data, function(d) {
-          return d.y2Max;
-        }), d3.max(data, function(d) {
-          return d.y3Max;
-        })
-      ]);
+      var _setMax, _setMin, j, len, set, subId;
+      this.definition.y.min = 0;
+      this.definition.y.max = 0;
+      for (set = j = 0, len = data.length; j < len; set = ++j) {
+        subId = data[set];
+        _setMin = d3.min([
+          d3.min(set, function(d) {
+            return d.y;
+          }), d3.min(set, function(d) {
+            return d.yMin;
+          })
+        ]);
+        _setMax = d3.max([
+          d3.max(set, function(d) {
+            return d.y;
+          }), d3.max(set, function(d) {
+            return d.yMax;
+          })
+        ]);
+        if (_setMin < this.definition.y.min) {
+          this.definition.y.min = _setMin;
+        }
+        if (_setMax > this.definition.y.max) {
+          this.definition.y.max = _setMax;
+        }
+      }
+      console.log("yAxis Dims (data, min, max)", data, this.definition.y.min, this.definition.y.max);
       if (this.definition.y.min === this.definition.y.max) {
         this.definition.y.min = this.definition.y.min * 0.8;
         this.definition.y.max = this.definition.y.min * 1.2;
@@ -1640,7 +1608,7 @@
     };
 
     LinePlot.prototype.append = function() {
-      var _, _y2_title, _y3_title, _y_offset, _y_title, _y_vert, preError;
+      var _, _y_offset, _y_title, _y_vert, key, preError, ref, ref1, row;
       this.initialized = true;
       if (!this.initialized) {
         return;
@@ -1648,9 +1616,9 @@
       preError = this.preError + "append()";
       _ = this;
       this.svg.select(".line-plot-axis-x").call(this.definition.xAxis);
-      _y_title = "" + this.options.y.title;
-      if (this.options.y.units) {
-        _y_title = _y_title + " " + this.options.y.units;
+      _y_title = "" + this.options.y[0].title;
+      if (this.options.y[0].units) {
+        _y_title = _y_title + " " + this.options.y[0].units;
       }
       _y_vert = -15;
       _y_offset = -52;
@@ -1659,36 +1627,28 @@
         _y_offset = -30;
       }
       this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
-      if (this.options.y2.title) {
-        _y2_title = _y2_title + " " + this.options.y2.title;
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        console.log("Appending for (key, @data[key][0])", key, row[0], _.options.y[key]);
+        this.bands[key] = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
+          return d3.color(_.options.y[key].color).darker(1);
+        });
+        this.lines[key] = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       }
-      if (this.options.y3.units) {
-        _y3_title = _y3_title + " " + this.options.y3.units;
-      }
-      this.lineband = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area).attr("class", "line-plot-area").style("fill", this.options.y.color).style("opacity", 0.15).style("stroke", function() {
-        return d3.color(_.options.y.color).darker(1);
-      });
-      this.lineband2 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area2).attr("class", "line-plot-area2").style("fill", this.options.y2.color).style("opacity", 0.25).style("stroke", function() {
-        return d3.rgb(_.options.y2.color).darker(1);
-      });
-      this.lineband3 = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.area3).attr("class", "line-plot-area3").style("fill", this.options.y3.color).style("opacity", 0.25).style("stroke", function() {
-        return d3.rgb(_.options.y3.color).darker(1);
-      });
-      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line).attr("class", "line-plot-path").style("stroke", this.options.y.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
-      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line2).attr("class", "line-plot-path2").style("stroke", this.options.y2.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
-      this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(this.data).attr("d", this.definition.line3).attr("class", "line-plot-path3").style("stroke", this.options.y3.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       if (this.options.y.maxBarValue !== null) {
         this.svg.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(32)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
       }
       this.crosshairs = this.svg.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
-      this.focusCircle = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-1").attr("class", "focus-circle").attr("fill", this.options.y.color).attr("transform", "translate(-10, -10)").style("display", "none");
-      this.focusText = this.svg.append("text").attr("id", "focus-text-1").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y.color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
-      this.focusCircle2 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-2").attr("class", "focus-circle").attr("fill", this.options.y2.color).attr("transform", "translate(-10, -10)").style("display", "none");
-      this.focusText2 = this.svg.append("text").attr("id", "focus-text-2").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y2.color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
-      this.focusCircle3 = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-3").attr("class", "focus-circle").attr("fill", this.options.y3.color).attr("transform", "translate(-10, -10)").style("display", "none");
-      this.focusText3 = this.svg.append("text").attr("id", "focus-text-3").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y3.color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+      ref1 = this.data;
+      for (key in ref1) {
+        row = ref1[key];
+        console.log("Appending focus for (key, @data[key][0])", key, row[0], _.options.y[key]);
+        this.focusCircles[key] = this.svg.append("circle").attr("r", 4).attr("id", "focus-circle-1").attr("class", "focus-circle").attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
+        this.focusText[key] = this.svg.append("text").attr("id", "focus-text-1").attr("class", "focus-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+      }
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget();
       return this.appendZoomTarget();
@@ -1788,42 +1748,10 @@
         return _.definition.y(d.y);
       });
       this.svg.select(".line-plot-path").attr("d", this.definition.line);
-      this.definition.area2 = d3.area().defined(function(d) {
-        return !isNaN(d.y2Min) && d.y2Min !== null && !isNaN(d.y2Max) && d.y2Max !== null;
-      }).x(function(d) {
-        return _transform.applyX(_.definition.x(d.x));
-      }).y0(function(d) {
-        return _.definition.y(d.y2Min);
-      }).y1(function(d) {
-        return _.definition.y(d.y2Max);
-      });
-      this.svg.select(".line-plot-area2").attr("d", this.definition.area2);
-      this.definition.line2 = d3.line().defined(function(d) {
-        return !isNaN(d.y2) && d.y2 !== null;
-      }).x(function(d) {
-        return _transform.applyX(_.definition.x(d.x));
-      }).y(function(d) {
-        return _.definition.y(d.y2);
-      });
-      this.svg.select(".line-plot-path2").attr("d", this.definition.line2);
-      this.definition.area3 = d3.area().defined(function(d) {
-        return !isNaN(d.y3Min) && d.y3Min !== null && !isNaN(d.y3Max) && d.y3Max !== null;
-      }).x(function(d) {
-        return _transform.applyX(_.definition.x(d.x));
-      }).y0(function(d) {
-        return _.definition.y(d.y3Min);
-      }).y1(function(d) {
-        return _.definition.y(d.y3Max);
-      });
-      this.svg.select(".line-plot-area3").attr("d", this.definition.area3);
-      this.definition.line3 = d3.line().defined(function(d) {
-        return !isNaN(d.y3) && d.y3 !== null;
-      }).x(function(d) {
-        return _transform.applyX(_.definition.x(d.x));
-      }).y(function(d) {
-        return _.definition.y(d.y3);
-      });
-      this.svg.select(".line-plot-path3").attr("d", this.definition.line3);
+      this.svg.select(".line-plot-area2").attr("d", this.definition.area);
+      this.svg.select(".line-plot-path2").attr("d", this.definition.line);
+      this.svg.select(".line-plot-area3").attr("d", this.definition.area);
+      this.svg.select(".line-plot-path3").attr("d", this.definition.line);
       this.appendCrosshairTarget(_transform);
       return _transform;
     };
@@ -1923,43 +1851,45 @@
     };
 
     LinePlot.prototype.showCrosshair = function() {
+      var ref, results, row, setId;
       if (!this.initialized) {
         return;
       }
       this.crosshairs.select(".crosshair-x").style("display", null);
       this.crosshairs.select(".crosshair-x-under").style("display", null);
-      if (this.options.y.variable !== null) {
-        this.focusCircle.style("display", null).attr("fill", this.options.y.color);
-        this.focusText.style("display", null).style("color", this.options.y.color).style("fill", this.options.y.color);
+      ref = this.options.y;
+      results = [];
+      for (setId in ref) {
+        row = ref[setId];
+        if (row.variable !== null) {
+          this.focusCircle[setId].style("display", null).attr("fill", row.color);
+          results.push(this.focusText[setId].style("display", null).style("color", row.color).style("fill", row.color));
+        } else {
+          results.push(void 0);
+        }
       }
-      if (this.options.y2.variable !== null) {
-        this.focusCircle2.style("display", null).attr("fill", this.options.y2.color);
-        this.focusText2.style("display", null).style("color", this.options.y2.color).style("fill", this.options.y2.color);
-      }
-      if (this.options.y3.variable !== null) {
-        this.focusCircle3.style("display", null).attr("fill", this.options.y3.color);
-        return this.focusText3.style("display", null).style("color", this.options.y3.color).style("fill", this.options.y3.color);
-      }
+      return results;
     };
 
     LinePlot.prototype.hideCrosshair = function() {
+      var ref, results, row, setId;
       if (!this.initialized) {
         return;
       }
       this.crosshairs.select(".crosshair-x").style("display", "none");
       this.crosshairs.select(".crosshair-x-under").style("display", "none");
-      if (this.options.y.variable !== null) {
-        this.focusCircle.style("display", "none");
-        this.focusText.style("display", "none");
+      ref = this.options.y;
+      results = [];
+      for (setId in ref) {
+        row = ref[setId];
+        if (row.variable !== null) {
+          this.focusCircle[setId].style("display", "none");
+          results.push(this.focusText[setId].style("display", "none"));
+        } else {
+          results.push(void 0);
+        }
       }
-      if (this.options.y2.variable !== null) {
-        this.focusCircle2.style("display", "none");
-        this.focusText2.style("display", "none");
-      }
-      if (this.options.y3.variable !== null) {
-        this.focusCircle3.style("display", "none");
-        return this.focusText3.style("display", "none");
-      }
+      return results;
     };
 
     LinePlot.prototype.appendTitle = function(title, subtitle) {
@@ -2095,13 +2025,52 @@
       this.i.controls = new window.Plotter.Controls(this);
       this.i.initialsync = new window.Plotter.InitialSync(this);
       this.i.livesync = new window.Plotter.LiveSync(this);
+      this.i.colors = new window.Plotter.Colors();
+      this.plots = [];
       this.updates = 0;
       this.endpoint = null;
     }
 
     Handler.prototype.initialize = function() {
       this.i.template.get();
-      return this.i.initialsync.stageAll();
+      this.initializePlots();
+      this.i.initialsync.stageAll();
+      return this.append();
+    };
+
+    Handler.prototype.initializePlots = function() {
+      var _plotRow, _template, key, results, row;
+      _template = this.i.template.full();
+      results = [];
+      for (key in _template) {
+        row = _template[key];
+        _plotRow = {
+          proto: null,
+          __data__: []
+        };
+        results.push(this.plots[key] = _plotRow);
+      }
+      return results;
+    };
+
+    Handler.prototype.append = function() {
+      var _options, key, ref, results, row;
+      ref = this.plots;
+      results = [];
+      for (key in ref) {
+        row = ref[key];
+        row.uuid = this.lib.uuid();
+        $(this.options.target).append("<div id=\"outer-" + row.uuid + "\"></div>");
+        _options = this.i.template.forPlots(key);
+        _options = this.i.colors.getInitial(_options);
+        _options.target = "\#outer-" + row.uuid;
+        _options.uuid = row.uuid;
+        console.log("Appending w/ options", _options);
+        row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
+        row.proto.preAppend();
+        results.push(row.proto.append());
+      }
+      return results;
     };
 
     return Handler;
@@ -2238,19 +2207,42 @@
       return this.template[plotId].y.length;
     };
 
+    Template.prototype.full = function() {
+      return this.template;
+    };
+
     Template.prototype.forSync = function(plotId, lineId, maxDatetime, limit) {
       var result;
       result = {
         data_logger: this.template[plotId].y[lineId].dataLoggerId,
         max_datetime: maxDatetime,
-        limit: maxDatetime
+        limit: limit
       };
       return result;
     };
 
     Template.prototype.forControls = function() {};
 
-    Template.prototype.forPlot = function() {};
+    Template.prototype.forPlots = function(plotId) {
+      var _row, _x, _y, i, len, result;
+      _x = this.template[plotId].x;
+      _y = this.template[plotId].y;
+      for (i = 0, len = _y.length; i < len; i++) {
+        _row = _y[i];
+        if (_row.variable === "wind_speed_average") {
+          _row.band = {
+            minVariable: "wind_speed_minimum",
+            maxVariable: "wind_speed_maximum"
+          };
+        }
+      }
+      result = {
+        plotId: plotId,
+        x: _x,
+        y: _y
+      };
+      return result;
+    };
 
     return Template;
 

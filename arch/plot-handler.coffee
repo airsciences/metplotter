@@ -131,7 +131,7 @@ window.Plotter.Handler = class Handler
       if state.request.data.max
         @appendData(key)
 
-  getTemplate: (template_uri) ->
+  #getTemplate: (template_uri) ->
     # Request the Template
     preError = "#{@preError}.getTemplate(...)"
     target = "#{@options.href}/api/v5/plothandler/#{@options.plotHandlerId}"
@@ -151,7 +151,7 @@ window.Plotter.Handler = class Handler
 
     @syncronousapi.get(target, args, callback)
 
-  parseDates: (template) ->
+  #parseDates: (template) ->
     _ = @
 
     parse = (datetime) ->
@@ -170,7 +170,7 @@ window.Plotter.Handler = class Handler
       row.options.x.min = parse(row.options.x.min)
       row.options.x.max = parse(row.options.x.max)
 
-  putTemplate: ->
+  #putTemplate: ->
     # Request the Template
     if @isAdmin() is false
       return
@@ -190,7 +190,7 @@ window.Plotter.Handler = class Handler
 
     @api.put(target, args, callback)
 
-  getStationParamData: (plotId, paramsKey) ->
+  #getStationParamData: (plotId, paramsKey) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.getStationParamData()"
     target = "#{@options.href}/api/v5/measurement"
@@ -205,7 +205,7 @@ window.Plotter.Handler = class Handler
 
     @syncronousapi.get(target, args, callback)
 
-  getTemplatePlotData: ->
+  #getTemplatePlotData: ->
     preError = "#{@preError}.getPlotData()"
     for key, plot of @template
       for subKey, params of @template[key].dataParams
