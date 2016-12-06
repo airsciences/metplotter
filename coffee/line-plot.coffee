@@ -788,7 +788,7 @@ window.Plotter.LinePlot = class LinePlot
       if @options.y[key].variable != null
         _value[key] = _datum[key][i]
         dy[key] = @definition.y(_value[key].y)
-        if !isNaN(dy[key])
+        if !isNaN(dy[key]) and _value[key].y?
           @focusCircle[key].attr("transform", "translate(0, 0)")
 
     cx = dx - _dims.leftPadding
@@ -808,7 +808,8 @@ window.Plotter.LinePlot = class LinePlot
         .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
     for key, row of @data
-      if @options.y[key].variable != null and !isNaN(dy[key])
+      if @options.y[key].variable != null and !isNaN(dy[key]) and _value[key].y?
+        console.log("Focus (dy)", dy[key], _value[key])
         @focusCircle[key]
           .attr("cx", dx)
           .attr("cy", dy[key])

@@ -1843,7 +1843,7 @@
         if (this.options.y[key].variable !== null) {
           _value[key] = _datum[key][i];
           dy[key] = this.definition.y(_value[key].y);
-          if (!isNaN(dy[key])) {
+          if (!isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusCircle[key].attr("transform", "translate(0, 0)");
           }
         }
@@ -1856,7 +1856,8 @@
       ref1 = this.data;
       for (key in ref1) {
         row = ref1[key];
-        if (this.options.y[key].variable !== null && !isNaN(dy[key])) {
+        if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
+          console.log("Focus (dy)", dy[key], _value[key]);
           this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
           this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
         }
