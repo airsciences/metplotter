@@ -867,6 +867,10 @@
       this.test = function(row, joinRow, onKeys) {
         var _calculated, _required, j, len, testResult, testRow;
         preError = this.preError + "test(...):";
+        if (!(onKeys != null)) {
+          throw new Error(preError + " Missing onKeys (required)");
+          return false;
+        }
         _required = onKeys.length;
         _calculated = 0;
         testResult = false;
@@ -1098,21 +1102,16 @@
       target = this.endpoint();
       _ = this;
       callback = function(data) {
-        var _result;
         if (!(data.responseJSON != null)) {
           throw new Error(preError + " error requesting data.");
           return null;
         }
-        if (_.plotter.plots[plotId].__data__ === void 0) {
-          _.plotter.plots[plotId].__data__ = [];
-        }
-        _result = data.responseJSON.results;
         if (data.responseJSON.results.length === 0) {
           throw new Error(preError + " no set found.");
-          _result = [];
+          return null;
         }
         _.requests[uuid].ready = true;
-        return _.plotter.plots[plotId].__data__[dataSetId] = _result;
+        return _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
       };
       this.sapi.get(target, args, callback);
       return true;
@@ -1350,7 +1349,7 @@
           scale: _domainMean
         }
       };
-      if (data[0].length > 0) {
+      if (this.data[0].length > 0) {
         this.setDataState();
         this.setIntervalState();
         this.setDataRequirement();
@@ -1358,33 +1357,37 @@
     }
 
     LinePlot.prototype.processData = function(data) {
-      var _result, _yOptions, key, result, row, set, setId;
+      var result, set, setId;
       result = [];
-      _result = [];
       for (setId in data) {
         set = data[setId];
-        result[setId] = [];
-        _yOptions = this.options.y[setId];
-        for (key in set) {
-          row = set[key];
-          result[setId][key] = {
-            x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
-            y: row[_yOptions.variable]
-          };
-          if (_yOptions.band != null) {
-            if (_yOptions.band.minVariable) {
-              result[setId][key].yMin = row[_yOptions.band.minVariable];
-            }
-            if (_yOptions.band.maxVariable) {
-              result[setId][key].yMax = row[_yOptions.band.maxVariable];
-            }
-          }
-        }
-        _result[setId] = new Plotter.Data(result[setId]);
-        result[setId] = _result[setId]._clean(_result[setId].get());
-        result[setId].sort(this.sortDatetimeAsc);
+        result[setId] = this.processDataSet(set, setId);
       }
       return result;
+    };
+
+    LinePlot.prototype.processDataSet = function(data, dataSetId) {
+      var _result, _yOptions, key, result, row;
+      _yOptions = this.options.y[dataSetId];
+      result = [];
+      for (key in data) {
+        row = data[key];
+        result[key] = {
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
+          y: row[_yOptions.variable]
+        };
+        if (_yOptions.band != null) {
+          if (_yOptions.band.minVariable) {
+            result[key].yMin = row[_yOptions.band.minVariable];
+          }
+          if (_yOptions.band.maxVariable) {
+            result[key].yMax = row[_yOptions.band.maxVariable];
+          }
+        }
+      }
+      _result = new Plotter.Data(result);
+      result = _result._clean(_result.get());
+      return result.sort(this.sortDatetimeAsc);
     };
 
     LinePlot.prototype.setData = function(data) {
@@ -1406,13 +1409,15 @@
       }
     };
 
-    LinePlot.prototype.appendData = function(data) {
-      var _data, _full;
-      _data = this.processData(data);
-      _full = new Plotter.Data(this.data);
-      _full.append(_data, ["x"]);
-      this.data = _full._clean(_full.get());
-      this.data = this.data.sort(this.sortDatetimeAsc);
+    LinePlot.prototype.appendData = function(data, dataSetId) {
+      var _data, _set;
+      _data = this.processDataSet(data, dataSetId);
+      _set = new window.Plotter.Data(this.data[dataSetId]);
+      console.log("Appending data to LinePlot (set, _data)", _set.get()[_set.get().length - 1], _data[_data.length - 1]);
+      _set.append(_data, ["x"]);
+      console.log("Appended data to LinePlot (result)", _set.get()[_set.get().length - 1]);
+      this.data[dataSetId] = _set._clean(_set.get());
+      this.data[dataSetId] = this.data[dataSetId].sort(this.sortDatetimeAsc);
       if (this.initialized) {
         this.setDataState();
         this.setIntervalState();
@@ -1481,16 +1486,22 @@
     };
 
     LinePlot.prototype.setDataRequirement = function() {
-      var _data_max, _now;
+      var _data_max, _now, key, ref, results, row;
       _now = new Date();
-      _data_max = false;
-      if (this.state.range.data.max < _now) {
-        _data_max = this.state.interval.data.max < this.options.requestInterval.data;
+      ref = this.data;
+      results = [];
+      for (key in ref) {
+        row = ref[key];
+        _data_max = false;
+        if (this.state.range.data[key].max < _now) {
+          _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
+        }
+        results.push(this.state.request.data[key] = {
+          min: this.state.interval.data[key].min < this.options.requestInterval.data,
+          max: _data_max
+        });
       }
-      return this.state.request.data = {
-        min: this.state.interval.data.min < this.options.requestInterval.data,
-        max: _data_max
-      };
+      return results;
     };
 
     LinePlot.prototype.setZoomState = function(k) {
@@ -1722,18 +1733,26 @@
     };
 
     LinePlot.prototype.update = function() {
-      var _, preError;
+      var _, key, preError, ref, ref1, row;
       preError = this.preError + "update()";
       _ = this;
-      this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area).style("fill", this.options.y.color).style("stroke", function() {
-        return d3.rgb(_.options.y.color).darker(1);
-      });
-      this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line).style("stroke", this.options.y.color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area).style("fill", this.options.y[key].color).style("stroke", function() {
+          return d3.rgb(_.options.y[key].color).darker(1);
+        });
+        this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      }
       this.overlay.datum(this.data);
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      this.svg.select(".line-plot-area").datum(this.data).attr("d", this.definition.area);
-      this.svg.select(".line-plot-path").datum(this.data).attr("d", this.definition.line);
+      ref1 = this.data;
+      for (key in ref1) {
+        row = ref1[key];
+        this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area);
+        this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line);
+      }
       return this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
     };
 
@@ -1857,7 +1876,6 @@
       for (key in ref1) {
         row = ref1[key];
         if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
-          console.log("Focus (dy)", dy[key], _value[key]);
           this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
           this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
         }
@@ -1943,14 +1961,80 @@
     function LiveSync(plotter) {
       this.preError = "Plotter.LiveSync";
       this.plotter = plotter;
-      this._buildRequest = function() {};
+      this.api = this.plotter.i.api;
+      this.requests = {};
+      this.endpoint = function() {
+        return this.plotter.options.href + "/api/v5/measurement";
+      };
     }
 
-    LiveSync.prototype.get = function() {};
+    LiveSync.prototype.append = function(plotId, dataSetId, state) {
+      var _now, args, currentMax, limit, maxDatetime, newMax, uuid;
+      _now = new Date();
+      if (state.range.data[dataSetId].max >= _now) {
+        return true;
+      }
+      currentMax = state.range.data[dataSetId].max.getTime();
+      newMax = new Date(currentMax + (this.plotter.options.updateLength * 3600000));
+      newMax = newMax > _now ? _now : newMax;
+      maxDatetime = this.plotter.lib.format(new Date(newMax));
+      limit = this.plotter.options.updateLength;
+      args = this.plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit);
+      uuid = this.plotter.lib.uuid();
+      console.log("Appending (args)", args);
+      this.requests[uuid] = {
+        ready: false,
+        requested: false
+      };
+      return this.requests[uuid]['requested'] = this.get(plotId, dataSetId, uuid, args, "max");
+    };
 
-    LiveSync.prototype.append = function() {};
+    LiveSync.prototype.prepend = function(plotId, dataSetId, state) {
+      var args, limit, maxDatetime, uuid;
+      maxDatetime = this.plotter.lib.format(state.range.data[dataSetId].min);
+      limit = this.plotter.options.updateLength;
+      args = this.plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit);
+      uuid = this.plotter.lib.uuid();
+      console.log("Prepending (args)", args);
+      this.requests[uuid] = {
+        ready: false,
+        requested: false
+      };
+      return this.requests[uuid]['requested'] = this.get(plotId, dataSetId, uuid, args, "min");
+    };
 
-    LiveSync.prototype.prepend = function() {};
+    LiveSync.prototype.get = function(plotId, dataSetId, uuid, args, direction) {
+      var _, callback, preError, target;
+      preError = this.preError + ".get()";
+      target = this.endpoint();
+      _ = this;
+      callback = function(data) {
+        var _proto, _result;
+        _proto = _.plotter.plots[plotId].proto;
+        if (!(data.responseJSON != null)) {
+          throw new Error(preError + " error requesting data.");
+          return null;
+        }
+        _result = data.responseJSON.results;
+        if (_.plotter.plots[plotId].__data__ === void 0) {
+          throw new Error(preError + " appending to empty data set.");
+          _.plotter.plots[plotId].__data__ = new window.Plotter.Data([]);
+        }
+        if (data.responseJSON.results.length === 0) {
+          throw new Error(preError + " no new data found.");
+          _result = [];
+        }
+        _proto.appendData(_result, dataSetId);
+        _proto.update();
+        _.requests[uuid].ready = true;
+        console.log("Plotter updates number", _.plotter.updates);
+        _proto.state.requested.data[dataSetId][direction] = false;
+        _.plotter.updates = _.plotter.updates < 0 ? 0 : _.plotter.updates - 1;
+        return console.log("Plotter updates number", _.plotter.updates);
+      };
+      this.api.get(target, args, callback);
+      return true;
+    };
 
     return LiveSync;
 
@@ -2021,7 +2105,8 @@
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
-        updateLength: 168
+        updateLength: 168,
+        updateLimit: 12
       };
       this.options = this.lib.mergeDefaults(options, defaults);
       __accessToken = {
@@ -2045,14 +2130,17 @@
       this.i.colors = new window.Plotter.Colors();
       this.plots = [];
       this.updates = 0;
-      this.endpoint = null;
+      this.isReady = function() {
+        return this.updates <= this.options.updateLimit;
+      };
     }
 
     Handler.prototype.initialize = function() {
       this.i.template.get();
       this.initializePlots();
       this.i.initialsync.stageAll();
-      return this.append();
+      this.append();
+      return this.listen(true);
     };
 
     Handler.prototype.initializePlots = function() {
@@ -2082,12 +2170,42 @@
         _options = this.i.colors.getInitial(_options);
         _options.target = "\#outer-" + row.uuid;
         _options.uuid = row.uuid;
-        console.log("Appending w/ options", _options);
         row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
         row.proto.preAppend();
         results.push(row.proto.append());
       }
       return results;
+    };
+
+    Handler.prototype.listen = function(test) {
+      var dataSetId, plot, plotId, ref, ref1, request, state;
+      ref = this.plots;
+      for (plotId in ref) {
+        plot = ref[plotId];
+        if (plot.proto.initialized) {
+          state = plot.proto.getState();
+          ref1 = state.request.data;
+          for (dataSetId in ref1) {
+            request = ref1[dataSetId];
+            if (plot.proto.state.requested.data[dataSetId] != null) {
+              plot.proto.state.requested.data[dataSetId] = {};
+            }
+            if (request.min === true && this.isReady() && plot.proto.state.requested.data[dataSetId].min === false) {
+              this.updates++;
+              plot.proto.state.requested.data[dataSetId].min = true;
+              this.i.livesync.prepend(plotId, dataSetId, state);
+            }
+            if (request.max === true && this.isReady() && plot.proto.state.requested.data[dataSetId].max === false) {
+              this.updates++;
+              plot.proto.state.requested.data[dataSetId].max = true;
+              this.i.livesync.append(plotId, dataSetId, state);
+            }
+          }
+        }
+      }
+      if (!test) {
+        return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
+      }
     };
 
     return Handler;

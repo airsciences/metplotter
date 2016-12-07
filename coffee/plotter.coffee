@@ -25,6 +25,7 @@ window.Plotter.Handler = class Handler
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       refresh: 500
       updateLength: 168
+      updateLimit: 12
     @options = @lib.mergeDefaults(options, defaults)
 
     # Access Token & Admin
@@ -50,10 +51,10 @@ window.Plotter.Handler = class Handler
 
     # Define the Plots
     @plots = []
-
-    ###### Pending Usage:
     @updates = 0
-    @endpoint = null
+
+    @isReady = ->
+      return @updates <= @options.updateLimit
 
   initialize: ->
     # Initialize the Plotter
@@ -61,6 +62,7 @@ window.Plotter.Handler = class Handler
     @initializePlots()
     @i.initialsync.stageAll()
     @append()
+    @listen(true)
 
   initializePlots: ->
     # Initialize the Plot Arrays
@@ -83,9 +85,34 @@ window.Plotter.Handler = class Handler
       _options.target = "\#outer-#{row.uuid}"
       _options.uuid = row.uuid
 
-      console.log("Appending w/ options", _options)
-
       # Initialize the Line Plot
       row.proto = new window.Plotter.LinePlot(@, row.__data__, _options)
       row.proto.preAppend()
       row.proto.append()
+
+  listen: (test) ->
+    for plotId, plot of @plots
+      if plot.proto.initialized
+        state = plot.proto.getState()
+        for dataSetId, request of state.request.data
+          # Min-Sided Events
+          if plot.proto.state.requested.data[dataSetId]?
+            plot.proto.state.requested.data[dataSetId] = {}
+          if (
+            request.min is true and @isReady() and
+            plot.proto.state.requested.data[dataSetId].min is false
+          )
+            @updates++
+            plot.proto.state.requested.data[dataSetId].min = true
+            @i.livesync.prepend(plotId, dataSetId, state)
+          # Max-Sided Events
+          if (
+            request.max is true and @isReady() and
+            plot.proto.state.requested.data[dataSetId].max is false
+          )
+            @updates++
+            plot.proto.state.requested.data[dataSetId].max = true
+            @i.livesync.append(plotId, dataSetId, state)
+
+    if !test
+      setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)

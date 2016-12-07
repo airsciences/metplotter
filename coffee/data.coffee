@@ -28,6 +28,9 @@ window.Plotter.Data = class Data
     @test = (row, joinRow, onKeys) ->
       # Test the row match
       preError = "#{@preError}test(...):"
+      if !(onKeys?)
+        throw new Error("#{preError} Missing onKeys (required)")
+        return false
       _required = onKeys.length
       _calculated = 0
       testResult = false

@@ -39,16 +39,13 @@ window.Plotter.InitialSync = class InitialSync
         throw new Error("#{preError} error requesting data.")
         return null
 
-      if _.plotter.plots[plotId].__data__ is undefined
-        _.plotter.plots[plotId].__data__ = []
-      _result = data.responseJSON.results
-
       if data.responseJSON.results.length is 0
         throw new Error("#{preError} no set found.")
-        _result = []
+        return null
+
       # Correct Data. Stage into Plotter.
       _.requests[uuid].ready = true
-      _.plotter.plots[plotId].__data__[dataSetId] = _result
+      _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results
 
     @sapi.get(target, args, callback)
     return true

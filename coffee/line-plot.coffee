@@ -122,7 +122,7 @@ window.Plotter.LinePlot = class LinePlot
       mean:
         scale: _domainMean
 
-    if data[0].length > 0
+    if @data[0].length > 0
       @setDataState()
       @setIntervalState()
       @setDataRequirement()
@@ -130,27 +130,31 @@ window.Plotter.LinePlot = class LinePlot
   processData: (data) ->
     # Process a data set.
     result = []
-    _result = []
 
     for setId, set of data
-      result[setId] = []
-      _yOptions = @options.y[setId]
-      for key, row of set
-        result[setId][key] =
-          #x: row[@options.x.variable]
-          x: new Date(
-            @parseDate(row[@options.x.variable]).getTime() - 8*3600000)
-          y: row[_yOptions.variable]
-        if _yOptions.band?
-          if _yOptions.band.minVariable
-            result[setId][key].yMin = row[_yOptions.band.minVariable]
-          if _yOptions.band.maxVariable
-            result[setId][key].yMax = row[_yOptions.band.maxVariable]
-
-      _result[setId] = new Plotter.Data(result[setId])
-      result[setId] = _result[setId]._clean(_result[setId].get())
-      result[setId].sort(@sortDatetimeAsc)
+      result[setId] = @processDataSet(set, setId)
     return result
+
+  processDataSet: (data, dataSetId) ->
+    # Process a single set of data (Flat, versus 2-Level in processData)
+    _yOptions = @options.y[dataSetId]
+    result = []
+
+    for key, row of data
+      result[key] =
+        #x: row[@options.x.variable]
+        x: new Date(
+          @parseDate(row[@options.x.variable]).getTime() - 8*3600000)
+        y: row[_yOptions.variable]
+      if _yOptions.band?
+        if _yOptions.band.minVariable
+          result[key].yMin = row[_yOptions.band.minVariable]
+        if _yOptions.band.maxVariable
+          result[key].yMax = row[_yOptions.band.maxVariable]
+
+    _result = new Plotter.Data(result)
+    result = _result._clean(_result.get())
+    return result.sort(@sortDatetimeAsc)
 
   setData: (data) ->
     # Set the initial data.
@@ -172,13 +176,17 @@ window.Plotter.LinePlot = class LinePlot
       @setIntervalState()
       @setDataRequirement()
 
-  appendData: (data) ->
+  appendData: (data, dataSetId) ->
     # Append the full data set.
-    _data = @processData(data)
-    _full = new Plotter.Data(@data)
-    _full.append(_data, ["x"])
-    @data = _full._clean(_full.get())
-    @data = @data.sort(@sortDatetimeAsc)
+    _data = @processDataSet(data, dataSetId)
+    _set = new window.Plotter.Data(@data[dataSetId])
+    console.log("Appending data to LinePlot (set, _data)",
+      _set.get()[_set.get().length-1], _data[_data.length-1])
+    _set.append(_data, ["x"])
+    console.log("Appended data to LinePlot (result)",
+      _set.get()[_set.get().length-1])
+    @data[dataSetId] = _set._clean(_set.get())
+    @data[dataSetId] = @data[dataSetId].sort(@sortDatetimeAsc)
 
     # Reset the Data Range
     if @initialized
@@ -229,14 +237,16 @@ window.Plotter.LinePlot = class LinePlot
   setDataRequirement: ->
     # Calculate how necessary a download, in what direction, and/or data
     _now = new Date()
-    _data_max = false
 
-    if @state.range.data.max < _now
-      _data_max = @state.interval.data.max < @options.requestInterval.data
+    for key, row of @data
+      _data_max = false
+      if @state.range.data[key].max < _now
+        _data_max = @state.interval.data[key].max <
+          @options.requestInterval.data
 
-    @state.request.data =
-      min: @state.interval.data.min < @options.requestInterval.data
-      max: _data_max
+      @state.request.data[key] =
+        min: @state.interval.data[key].min < @options.requestInterval.data
+        max: _data_max
 
   setZoomState: (k)->
     @state.zoom = k
@@ -625,36 +635,38 @@ window.Plotter.LinePlot = class LinePlot
     _ = @
 
     # Pre-Append Data For Smooth transform
-    @svg.select(".line-plot-area")
-      .datum(@data)
-      .attr("d", @definition.area)
-      .style("fill", @options.y.color)
-      .style("stroke", () ->
-        return d3.rgb(_.options.y.color).darker(1)
-      )
+    for key, row of @data
+      @svg.select(".line-plot-area-#{key}")
+        .datum(row)
+        .attr("d", @definition.area)
+        .style("fill", @options.y[key].color)
+        .style("stroke", () ->
+          return d3.rgb(_.options.y[key].color).darker(1)
+        )
 
-    @svg.select(".line-plot-path")
-      .datum(@data)
-      .attr("d", @definition.line)
-      .style("stroke", @options.y.color)
-      .style("stroke-width",
-        Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-      .style("fill", "none")
+      @svg.select(".line-plot-path-#{key}")
+        .datum(row)
+        .attr("d", @definition.line)
+        .style("stroke", @options.y[key].color)
+        .style("stroke-width",
+          Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+        .style("fill", "none")
 
     @overlay.datum(@data)
 
-    @calculateYAxisDims @data
+    @calculateYAxisDims(@data)
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
-    # Redraw the Bands
-    @svg.select(".line-plot-area")
-      .datum(@data)
-      .attr("d", @definition.area)
+    for key, row of @data
+      # Redraw the Bands
+      @svg.select(".line-plot-area-#{key}")
+        .datum(row)
+        .attr("d", @definition.area)
 
-    # Redraw the Line Paths
-    @svg.select(".line-plot-path")
-      .datum(@data)
-      .attr("d", @definition.line)
+      # Redraw the Line Paths
+      @svg.select(".line-plot-path-#{key}")
+        .datum(row)
+        .attr("d", @definition.line)
 
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
@@ -809,7 +821,6 @@ window.Plotter.LinePlot = class LinePlot
 
     for key, row of @data
       if @options.y[key].variable != null and !isNaN(dy[key]) and _value[key].y?
-        console.log("Focus (dy)", dy[key], _value[key])
         @focusCircle[key]
           .attr("cx", dx)
           .attr("cy", dy[key])
