@@ -12,6 +12,7 @@ window.Plotter.Controls = class Controls
   constructor: (plotter, options) ->
     @preError = "Plotter.Dropdown"
     @plotter = plotter
+    @api = @plotter.i.api
 
     defaults =
       target: null
@@ -26,17 +27,44 @@ window.Plotter.Controls = class Controls
     @markers = {}
     @listeners = {}
 
+  append: (plotId) ->
+    # Append controls to the plot.
+    _template = @plotter.i.template.full()[plotId]
+    _proto = @plotter.plots[plotId].proto
+
+    selector = "plot-controls-#{plotId}"
+    _li_style = ""
+
+    html = "<ul id=\"#{selector}\" class=\"unstyled\"
+        style=\"list-style-type: none; padding-left: 6px;\">
+      </ul>"
+
+    $(_proto.options.target)
+      .find(".line-plot-controls").append(html)
+
+    @move(plotId, '#'+selector, 'up')
+    @new('#'+selector, 'down')
+    @remove(plotId, '#'+selector)
+    @move(plotId, '#'+selector, 'down')
+
+    if _template.type is "station"
+      @appendParameterDropdown(plotId, '#'+selector,
+        _proto.options.y.dataloggerid)
+    else if _template.type is "parameter"
+      @appendStationDropdown(plotId, '#'+selector,
+        _proto.options.y[0].variable)
+
   setCurrent: (plotId) ->
     # Simplify essential control from the currently displayed plot data sets.
+    _proto = @plotter.plots[plotId].proto
     @current[plotId] = []
-    if @plotter.template[plotId].proto.initialized
-      for key in ["y", "y2", "y3"]
-        _row = @plotter.template[plotId].proto.options[key]
-        if _row.dataLoggerId != null
+    if _proto.initialized
+      for key, row of _proto.options.y
+        if row.dataLoggerId != null
           args =
-            dataLoggerId: parseInt(_row.dataLoggerId)
+            dataLoggerId: parseInt(row.dataLoggerId)
             yTarget: key
-            color: _row.color
+            color: row.color
           @current[plotId].push(args)
 
   getCurrent: (plotId) ->
@@ -57,7 +85,7 @@ window.Plotter.Controls = class Controls
         for station in region.dataloggers
           station.displayed = false
           station.color = ""
-          _index = @plotter.indexOfValue(
+          _index = @plotter.lib.indexOfValue(
             @current[plotId], "dataLoggerId", station.id)
           if _index > -1
             _color = @current[plotId][_index].color
@@ -68,13 +96,14 @@ window.Plotter.Controls = class Controls
               color: _color
             region.displayed.push(dot_append)
 
-  appendStationDropdown: (plotId, appendTarget, parameter, current) ->
+  appendStationDropdown: (plotId, appendTarget, parameter) ->
     # Append Station Dropdown.
     target = "#{location.protocol}//dev.nwac.us/api/v5/dataloggerregion?\
       sensor_name=#{parameter}"
     _ = @
     args = {}
-    uuid = @uuid()
+    current = @getCurrent(plotId)
+    uuid = @plotter.lib.uuid()
 
     callback = (data) ->
       _.stations[plotId] = data.responseJSON.results
@@ -88,7 +117,7 @@ window.Plotter.Controls = class Controls
           class=\"dropdown-menu pull-right\">"
 
       for region in _.stations[plotId]
-        _region_name = _.__lcname(region.name)
+        _region_name = _.plotter.lib.toLower(region.name)
         html = "#{html}
             <li class=\"subheader\">
               <a data-region=\"#{_region_name}\" data-plot-id=\"#{plotId}\"
@@ -176,7 +205,7 @@ window.Plotter.Controls = class Controls
     # Set the appropriate styling and onclick events for a plot's dropdown.
     for region in @stations[plotId]
       # Clear the Dots
-      _data_region = @__lcname(region.name)
+      _data_region = @plotter.lib.toLower(region.name)
       _dots_html = ""
       _font_weight = ""
       _background_color = ""
@@ -204,12 +233,13 @@ window.Plotter.Controls = class Controls
     # Remove all spinners associated with that plot
     $("i.icon-spinner[data-plot-id=\"#{plotId}\"]").remove()
 
-  appendParameterDropdown: (plotId, appendTarget, dataLoggerId, current) ->
+  appendParameterDropdown: (plotId, appendTarget, dataLoggerId) ->
     # Append Parameter Dropdown.
     target = "#{location.protocol}//dev.nwac.us/api/v5/\
       sensortype?sensors__data_logger=#{dataLoggerId}"
     args = {}
-    uuid = @uuid()
+    current = @getCurrent(plotId)
+    uuid = @plotter.lib.uuid()
 
     _current = []
 
@@ -282,11 +312,13 @@ window.Plotter.Controls = class Controls
       $(_options.target).find("\##{id}")
         .css("color", _options.y3.color)
 
-  appendStationMap: (plotId, appendTarget, results, current) ->
+  appendStationMap: (plotId, appendTarget, results) ->
     # Append a google maps popover.
     _ = @
-    uuid = @uuid()
+    current = @getCurrent(plotId)
+    uuid = @plotter.lib.uuid()
     dom_uuid = "map-control-" + plotId
+
     html = "<li data-toggle=\"popover\" data-placement=\"left\">
           <i id=\"map-#{plotId}\" class=\"icon-map-marker\"
           style=\"cursor: pointer\"></i>
@@ -300,7 +332,7 @@ window.Plotter.Controls = class Controls
         </div>"
     $(appendTarget).prepend(html)
     $("#map-#{plotId}").on('click', ->
-      _.plotter.controls.toggleMap(plotId)
+      _.plotter.i.controls.toggleMap(plotId)
     )
 
     @maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
@@ -471,17 +503,17 @@ window.Plotter.Controls = class Controls
     __nwac_offset_left = 0
     __nwac_offset_top = 0
 
-    _center = @plotter.controls.maps[plotId].getCenter()
-    _zoom = @plotter.controls.maps[plotId].getZoom()
+    _center = @plotter.i.controls.maps[plotId].getCenter()
+    _zoom = @plotter.i.controls.maps[plotId].getZoom()
 
     _offset = $("#map-control-#{plotId}").parent().parent().prev().offset()
     $("#map-control-#{plotId}").parent().parent().toggle()
       .css("left", _offset.left - 356 - __nwac_offset_left)
       .css("top", _offset.top - __nwac_offset_top)
 
-    google.maps.event.trigger(@plotter.controls.maps[plotId], 'resize')
-    @plotter.controls.maps[plotId].setCenter(_center)
-    @plotter.controls.maps[plotId].setZoom(_zoom)
+    google.maps.event.trigger(@plotter.i.controls.maps[plotId], 'resize')
+    @plotter.i.controls.maps[plotId].setCenter(_center)
+    @plotter.i.controls.maps[plotId].setZoom(_zoom)
 
   toggle: (selector) ->
     # Toggle the plotId's station down.
@@ -507,7 +539,7 @@ window.Plotter.Controls = class Controls
 
   new: (appendTarget) ->
     _ = @
-    uuid = @uuid()
+    uuid = @plotter.lib.uuid()
 
     _ul = "<ul id=\"new-#{uuid}-dropdown\"
         class=\"dropdown-menu pull-right\" role=\"menu\"
@@ -535,13 +567,6 @@ window.Plotter.Controls = class Controls
     # $("#new-#{uuid}-station").on('click', ->
     #   _.plotter.add("station")
     # )
-
-  __lcname: (name) ->
-    # Return a lower case string with underscores
-    return name.replace(" ", "_").toLowerCase()
-
-  uuid: ->
-    return (((1+Math.random())*0x100000000)|0).toString(16).substring(1)
 
   isCurrent: (current, key, value) ->
     for cKey, cValue of current

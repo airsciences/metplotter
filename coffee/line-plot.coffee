@@ -793,44 +793,51 @@ window.Plotter.LinePlot = class LinePlot
       i--
     i = if x0.getMinutes() >= 30 then i else (i - 1)
 
-    dx = if transform then transform.applyX(@definition.x(_datum[0][i].x)) else
-      @definition.x(_datum[0][i].x)
-    dy = []
-    _value = []
-    for key, row of @data
-      if @options.y[key].variable != null
-        _value[key] = _datum[key][i]
-        dy[key] = @definition.y(_value[key].y)
-        if !isNaN(dy[key]) and _value[key].y?
-          @focusCircle[key].attr("transform", "translate(0, 0)")
+    if _datum[0][i]?
+      if transform
+        dx = transform.applyX(@definition.x(_datum[0][i].x))
+      else
+        dx = @definition.x(_datum[0][i].x)
+      dy = []
+      _value = []
+      for key, row of @data
+        if @options.y[key].variable != null
+          _value[key] = _datum[key][i]
+          if _value[key]?
+            dy[key] = @definition.y(_value[key].y)
+            if !isNaN(dy[key]) and _value[key].y?
+              @focusCircle[key].attr("transform", "translate(0, 0)")
 
-    cx = dx - _dims.leftPadding
-    if cx >= 0
-      @crosshairs.select(".crosshair-x")
-        .attr("x1", cx)
-        .attr("y1", _dims.topPadding)
-        .attr("x2", cx)
-        .attr("y2", _dims.innerHeight + _dims.topPadding)
-        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+      cx = dx - _dims.leftPadding
+      if cx >= 0
+        @crosshairs.select(".crosshair-x")
+          .attr("x1", cx)
+          .attr("y1", _dims.topPadding)
+          .attr("x2", cx)
+          .attr("y2", _dims.innerHeight + _dims.topPadding)
+          .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-      @crosshairs.select(".crosshair-x-under")
-        .attr("x", cx)
-        .attr("y", _dims.topPadding)
-        .attr("width", (_dims.innerWidth - cx))
-        .attr("height", _dims.innerHeight)
-        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+        @crosshairs.select(".crosshair-x-under")
+          .attr("x", cx)
+          .attr("y", _dims.topPadding)
+          .attr("width", (_dims.innerWidth - cx))
+          .attr("height", _dims.innerHeight)
+          .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-    for key, row of @data
-      if @options.y[key].variable != null and !isNaN(dy[key]) and _value[key].y?
-        @focusCircle[key]
-          .attr("cx", dx)
-          .attr("cy", dy[key])
+      for key, row of @data
+        if (
+          @options.y[key].variable != null and !isNaN(dy[key]) and
+          _value[key].y?
+        )
+          @focusCircle[key]
+            .attr("cx", dx)
+            .attr("cy", dy[key])
 
-        @focusText[key]
-          .attr("x", dx + _dims.leftPadding / 10)
-          .attr("y", dy[key] - _dims.topPadding / 10)
-          .text(if _value[key].y then _value[key].y.toFixed(1) +
-            " " + @options.y[key].units)
+          @focusText[key]
+            .attr("x", dx + _dims.leftPadding / 10)
+            .attr("y", dy[key] - _dims.topPadding / 10)
+            .text(if _value[key].y then _value[key].y.toFixed(1) +
+              " " + @options.y[key].units)
 
     # Tooltip Overlap Prevention
     #if (

@@ -45,3 +45,7 @@ window.Plotter.Library = class Library
     # Build a Unique HTML Target.
     prepend = prepend.replace '#', ''
     return "#{prepend}-#{@uuid()}"
+
+  toLower: (string) ->
+    # Return a lower case string with underscores
+    return string.replace(" ", "_").toLowerCase()

@@ -74,6 +74,34 @@ window.Plotter.Handler = class Handler
         __data__: []
       @plots[key] = _plotRow
 
+
+
+  listen: (test) ->
+    for plotId, plot of @plots
+      if plot?
+        if plot.proto.initialized
+          state = plot.proto.getState()
+          for dataSetId, request of state.request.data
+            # Min-Sided Events
+            if (
+              request.min is true and @isReady() and
+              plot.proto.state.requested.data[dataSetId].min is false
+            )
+              @updates++
+              plot.proto.state.requested.data[dataSetId].min = true
+              @i.livesync.prepend(plotId, dataSetId, state)
+            # Max-Sided Events
+            if (
+              request.max is true and @isReady() and
+              plot.proto.state.requested.data[dataSetId].max is false
+            )
+              @updates++
+              plot.proto.state.requested.data[dataSetId].max = true
+              @i.livesync.append(plotId, dataSetId, state)
+
+    if !test
+      setTimeout(Plotter.Handler.prototype.listen.bind(@), @options.refresh)
+
   append: ->
     # Append the Plots
     for key, row of @plots
@@ -91,27 +119,59 @@ window.Plotter.Handler = class Handler
       row.proto.preAppend()
       row.proto.append()
 
-  listen: (test) ->
-    for plotId, plot of @plots
-      if plot.proto.initialized
-        state = plot.proto.getState()
-        for dataSetId, request of state.request.data
-          # Min-Sided Events
-          if (
-            request.min is true and @isReady() and
-            plot.proto.state.requested.data[dataSetId].min is false
-          )
-            @updates++
-            plot.proto.state.requested.data[dataSetId].min = true
-            @i.livesync.prepend(plotId, dataSetId, state)
-          # Max-Sided Events
-          if (
-            request.max is true and @isReady() and
-            plot.proto.state.requested.data[dataSetId].max is false
-          )
-            @updates++
-            plot.proto.state.requested.data[dataSetId].max = true
-            @i.livesync.append(plotId, dataSetId, state)
+      # Append controls
+      @i.controls.append(key)
 
-    if !test
-      setTimeout(Plotter.Handler.prototype.listen.bind(@), @options.refresh)
+  remove: (plotId) ->
+    # Remove a plotId
+    $(@plots[plotId].proto.options.target).fadeOut(500, ->
+      $(this).remove())
+    @i.template.removePlot(plotId)
+    delete @plots[plotId]
+
+  move: (plotId, direction) ->
+    # Move the plotId.
+    _template = @i.template.template
+    _primary = _template[plotId]
+    _pageOrder = _primary.pageOrder
+    selected = $(@plots[plotId].proto.options.target)
+    console.log("Move selected (selected)", selected)
+    if direction is 'up'
+      if _pageOrder > 1
+        _tradeKey = @lib.indexOfValue(
+          _template, "pageOrder", _pageOrder-1)
+        _swap = _template[_tradeKey]
+        _primary.pageOrder--
+        _swap.pageOrder++
+        selected.prev().insertAfter(selected)
+    else if direction is 'down'
+      if _pageOrder < _template.length
+        _tradeKey = @lib.indexOfValue(
+          _template, "pageOrder", _pageOrder+1)
+        _swap = _template[_tradeKey]
+        _primary.pageOrder++
+        _swap.pageOrder--
+        selected.next().insertBefore(selected)
+
+  add: (type) ->
+    # Add a new plot.
+    console.log("Adding (type)", type, @template)
+    _target = @utarget(@options.target)
+    _plot =
+      plotOrder: @template.length
+      type: type
+      options:
+        type: type
+        target: '#' + _target
+
+    html = "<div id=\"#{_target}\"></div>"
+    $(@options.target).append(html)
+
+    _key = @template.push(_plot)-1
+
+    instance = new window.Plotting.LinePlot(@, [], _plot.options)
+    console.log("Instance ready for preAppend (instance)", instance)
+    instance.preAppend()
+    @template[_key].proto = instance
+    @template[_key].proto.options.plotId = _key
+    @appendControls(_key)

@@ -131,3 +131,7 @@ window.Plotter.Template = class Template
       y: _y
 
     return result
+
+  removePlot: (plotId) ->
+    # Remove the plot from the template
+    delete @template[plotId]

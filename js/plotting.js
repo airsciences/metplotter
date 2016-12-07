@@ -297,6 +297,7 @@
       var defaults;
       this.preError = "Plotter.Dropdown";
       this.plotter = plotter;
+      this.api = this.plotter.i.api;
       defaults = {
         target: null
       };
@@ -308,20 +309,39 @@
       this.listeners = {};
     }
 
+    Controls.prototype.append = function(plotId) {
+      var _li_style, _proto, _template, html, selector;
+      _template = this.plotter.i.template.full()[plotId];
+      _proto = this.plotter.plots[plotId].proto;
+      selector = "plot-controls-" + plotId;
+      _li_style = "";
+      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> </ul>";
+      $(_proto.options.target).find(".line-plot-controls").append(html);
+      this.move(plotId, '#' + selector, 'up');
+      this["new"]('#' + selector, 'down');
+      this.remove(plotId, '#' + selector);
+      this.move(plotId, '#' + selector, 'down');
+      if (_template.type === "station") {
+        return this.appendParameterDropdown(plotId, '#' + selector, _proto.options.y.dataloggerid);
+      } else if (_template.type === "parameter") {
+        return this.appendStationDropdown(plotId, '#' + selector, _proto.options.y[0].variable);
+      }
+    };
+
     Controls.prototype.setCurrent = function(plotId) {
-      var _row, args, i, key, len, ref, results1;
+      var _proto, args, key, ref, results1, row;
+      _proto = this.plotter.plots[plotId].proto;
       this.current[plotId] = [];
-      if (this.plotter.template[plotId].proto.initialized) {
-        ref = ["y", "y2", "y3"];
+      if (_proto.initialized) {
+        ref = _proto.options.y;
         results1 = [];
-        for (i = 0, len = ref.length; i < len; i++) {
-          key = ref[i];
-          _row = this.plotter.template[plotId].proto.options[key];
-          if (_row.dataLoggerId !== null) {
+        for (key in ref) {
+          row = ref[key];
+          if (row.dataLoggerId !== null) {
             args = {
-              dataLoggerId: parseInt(_row.dataLoggerId),
+              dataLoggerId: parseInt(row.dataLoggerId),
               yTarget: key,
-              color: _row.color
+              color: row.color
             };
             results1.push(this.current[plotId].push(args));
           } else {
@@ -356,7 +376,7 @@
               station = ref1[j];
               station.displayed = false;
               station.color = "";
-              _index = this.plotter.indexOfValue(this.current[plotId], "dataLoggerId", station.id);
+              _index = this.plotter.lib.indexOfValue(this.current[plotId], "dataLoggerId", station.id);
               if (_index > -1) {
                 _color = this.current[plotId][_index].color;
                 station.displayed = true;
@@ -377,12 +397,13 @@
       }
     };
 
-    Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter, current) {
-      var _, args, callback, target, uuid;
+    Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
+      var _, args, callback, current, target, uuid;
       target = location.protocol + "//dev.nwac.us/api/v5/dataloggerregion?sensor_name=" + parameter;
       _ = this;
       args = {};
-      uuid = this.uuid();
+      current = this.getCurrent(plotId);
+      uuid = this.plotter.lib.uuid();
       callback = function(data) {
         var _region_name, html, i, j, len, len1, ref, ref1, region, station;
         _.stations[plotId] = data.responseJSON.results;
@@ -390,7 +411,7 @@
         ref = _.stations[plotId];
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
-          _region_name = _.__lcname(region.name);
+          _region_name = _.plotter.lib.toLower(region.name);
           html = html + " <li class=\"subheader\"> <a data-region=\"" + _region_name + "\" data-plot-id=\"" + plotId + "\" href=\"\"> <i class=\"icon-caret-down\" style=\"margin-right: 6px\"></i> <span class=\"region-name\">" + region.name + "</span> <span class=\"region-dots\"></span> </a> </li> <ul class=\"list-group-item sublist\" style=\"display: none;\">";
           ref1 = region.dataloggers;
           for (j = 0, len1 = ref1.length; j < len1; j++) {
@@ -446,7 +467,7 @@
       results1 = [];
       for (i = 0, len = ref.length; i < len; i++) {
         region = ref[i];
-        _data_region = this.__lcname(region.name);
+        _data_region = this.plotter.lib.toLower(region.name);
         _dots_html = "";
         _font_weight = "";
         _background_color = "";
@@ -471,11 +492,12 @@
       return $("i.icon-spinner[data-plot-id=\"" + plotId + "\"]").remove();
     };
 
-    Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId, current) {
-      var _current, args, callback, target, uuid;
+    Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId) {
+      var _current, args, callback, current, target, uuid;
       target = location.protocol + "//dev.nwac.us/api/v5/sensortype?sensors__data_logger=" + dataLoggerId;
       args = {};
-      uuid = this.uuid();
+      current = this.getCurrent(plotId);
+      uuid = this.plotter.lib.uuid();
       _current = [];
       callback = function(data) {
         var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
@@ -531,15 +553,16 @@
       }
     };
 
-    Controls.prototype.appendStationMap = function(plotId, appendTarget, results, current) {
-      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, color, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station, uuid;
+    Controls.prototype.appendStationMap = function(plotId, appendTarget, results) {
+      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, color, current, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station, uuid;
       _ = this;
-      uuid = this.uuid();
+      current = this.getCurrent(plotId);
+      uuid = this.plotter.lib.uuid();
       dom_uuid = "map-control-" + plotId;
       html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
       $("#map-" + plotId).on('click', function() {
-        return _.plotter.controls.toggleMap(plotId);
+        return _.plotter.i.controls.toggleMap(plotId);
       });
       this.maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
         center: new google.maps.LatLng(46.980, -121.980),
@@ -711,13 +734,13 @@
       __nwac_offset_top = 256;
       __nwac_offset_left = 0;
       __nwac_offset_top = 0;
-      _center = this.plotter.controls.maps[plotId].getCenter();
-      _zoom = this.plotter.controls.maps[plotId].getZoom();
+      _center = this.plotter.i.controls.maps[plotId].getCenter();
+      _zoom = this.plotter.i.controls.maps[plotId].getZoom();
       _offset = $("#map-control-" + plotId).parent().parent().prev().offset();
       $("#map-control-" + plotId).parent().parent().toggle().css("left", _offset.left - 356 - __nwac_offset_left).css("top", _offset.top - __nwac_offset_top);
-      google.maps.event.trigger(this.plotter.controls.maps[plotId], 'resize');
-      this.plotter.controls.maps[plotId].setCenter(_center);
-      return this.plotter.controls.maps[plotId].setZoom(_zoom);
+      google.maps.event.trigger(this.plotter.i.controls.maps[plotId], 'resize');
+      this.plotter.i.controls.maps[plotId].setCenter(_center);
+      return this.plotter.i.controls.maps[plotId].setZoom(_zoom);
     };
 
     Controls.prototype.toggle = function(selector) {
@@ -747,21 +770,13 @@
     Controls.prototype["new"] = function(appendTarget) {
       var _, _ul, html, uuid;
       _ = this;
-      uuid = this.uuid();
+      uuid = this.plotter.lib.uuid();
       _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
       html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i> </a></li> </div>";
       $(appendTarget).append(html);
       return $("#new-" + uuid).on('click', function() {
         return _.plotter.add("parameter");
       });
-    };
-
-    Controls.prototype.__lcname = function(name) {
-      return name.replace(" ", "_").toLowerCase();
-    };
-
-    Controls.prototype.uuid = function() {
-      return (((1 + Math.random()) * 0x100000000) | 0).toString(16).substring(1);
     };
 
     Controls.prototype.isCurrent = function(current, key, value) {
@@ -814,7 +829,11 @@
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        results.push(plot.proto.setCrosshair(transform, mouse));
+        if (plot != null) {
+          results.push(plot.proto.setCrosshair(transform, mouse));
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -825,7 +844,11 @@
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        results.push(plot.proto.showCrosshair());
+        if (plot != null) {
+          results.push(plot.proto.showCrosshair());
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -836,7 +859,11 @@
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        results.push(plot.proto.hideCrosshair());
+        if (plot != null) {
+          results.push(plot.proto.hideCrosshair());
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -1176,6 +1203,10 @@
     Library.prototype.utarget = function(prepend) {
       prepend = prepend.replace('#', '');
       return prepend + "-" + (this.uuid());
+    };
+
+    Library.prototype.toLower = function(string) {
+      return string.replace(" ", "_").toLowerCase();
     };
 
     return Library;
@@ -1859,31 +1890,39 @@
         i--;
       }
       i = x0.getMinutes() >= 30 ? i : i - 1;
-      dx = transform ? transform.applyX(this.definition.x(_datum[0][i].x)) : this.definition.x(_datum[0][i].x);
-      dy = [];
-      _value = [];
-      ref = this.data;
-      for (key in ref) {
-        row = ref[key];
-        if (this.options.y[key].variable !== null) {
-          _value[key] = _datum[key][i];
-          dy[key] = this.definition.y(_value[key].y);
-          if (!isNaN(dy[key]) && (_value[key].y != null)) {
-            this.focusCircle[key].attr("transform", "translate(0, 0)");
+      if (_datum[0][i] != null) {
+        if (transform) {
+          dx = transform.applyX(this.definition.x(_datum[0][i].x));
+        } else {
+          dx = this.definition.x(_datum[0][i].x);
+        }
+        dy = [];
+        _value = [];
+        ref = this.data;
+        for (key in ref) {
+          row = ref[key];
+          if (this.options.y[key].variable !== null) {
+            _value[key] = _datum[key][i];
+            if (_value[key] != null) {
+              dy[key] = this.definition.y(_value[key].y);
+              if (!isNaN(dy[key]) && (_value[key].y != null)) {
+                this.focusCircle[key].attr("transform", "translate(0, 0)");
+              }
+            }
           }
         }
-      }
-      cx = dx - _dims.leftPadding;
-      if (cx >= 0) {
-        this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-        this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-      }
-      ref1 = this.data;
-      for (key in ref1) {
-        row = ref1[key];
-        if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
-          this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
-          this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
+        cx = dx - _dims.leftPadding;
+        if (cx >= 0) {
+          this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+          this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+        }
+        ref1 = this.data;
+        for (key in ref1) {
+          row = ref1[key];
+          if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
+            this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
+            this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
+          }
         }
       }
       return mouse;
@@ -2160,6 +2199,36 @@
       return results;
     };
 
+    Handler.prototype.listen = function(test) {
+      var dataSetId, plot, plotId, ref, ref1, request, state;
+      ref = this.plots;
+      for (plotId in ref) {
+        plot = ref[plotId];
+        if (plot != null) {
+          if (plot.proto.initialized) {
+            state = plot.proto.getState();
+            ref1 = state.request.data;
+            for (dataSetId in ref1) {
+              request = ref1[dataSetId];
+              if (request.min === true && this.isReady() && plot.proto.state.requested.data[dataSetId].min === false) {
+                this.updates++;
+                plot.proto.state.requested.data[dataSetId].min = true;
+                this.i.livesync.prepend(plotId, dataSetId, state);
+              }
+              if (request.max === true && this.isReady() && plot.proto.state.requested.data[dataSetId].max === false) {
+                this.updates++;
+                plot.proto.state.requested.data[dataSetId].max = true;
+                this.i.livesync.append(plotId, dataSetId, state);
+              }
+            }
+          }
+        }
+      }
+      if (!test) {
+        return setTimeout(Plotter.Handler.prototype.listen.bind(this), this.options.refresh);
+      }
+    };
+
     Handler.prototype.append = function() {
       var _options, key, ref, results, row;
       ref = this.plots;
@@ -2174,40 +2243,88 @@
         _options.uuid = row.uuid;
         row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
         row.proto.preAppend();
-        results.push(row.proto.append());
+        row.proto.append();
+        results.push(this.i.controls.append(key));
       }
       return results;
     };
 
-    Handler.prototype.listen = function(test) {
-      var dataSetId, plot, plotId, ref, ref1, request, state;
-      ref = this.plots;
-      for (plotId in ref) {
-        plot = ref[plotId];
-        if (plot.proto.initialized) {
-          state = plot.proto.getState();
-          ref1 = state.request.data;
-          for (dataSetId in ref1) {
-            request = ref1[dataSetId];
-            if (request.min === true && this.isReady() && plot.proto.state.requested.data[dataSetId].min === false) {
-              this.updates++;
-              plot.proto.state.requested.data[dataSetId].min = true;
-              this.i.livesync.prepend(plotId, dataSetId, state);
-            }
-            if (request.max === true && this.isReady() && plot.proto.state.requested.data[dataSetId].max === false) {
-              this.updates++;
-              plot.proto.state.requested.data[dataSetId].max = true;
-              this.i.livesync.append(plotId, dataSetId, state);
-            }
-          }
+    Handler.prototype.remove = function(plotId) {
+      $(this.plots[plotId].proto.options.target).fadeOut(500, function() {
+        return $(this).remove();
+      });
+      this.i.template.removePlot(plotId);
+      return delete this.plots[plotId];
+    };
+
+    Handler.prototype.move = function(plotId, direction) {
+      var _pageOrder, _primary, _swap, _template, _tradeKey, selected;
+      _template = this.i.template.template;
+      _primary = _template[plotId];
+      _pageOrder = _primary.pageOrder;
+      selected = $(this.plots[plotId].proto.options.target);
+      console.log("Move selected (selected)", selected);
+      if (direction === 'up') {
+        if (_pageOrder > 1) {
+          _tradeKey = this.lib.indexOfValue(_template, "pageOrder", _pageOrder - 1);
+          _swap = _template[_tradeKey];
+          _primary.pageOrder--;
+          _swap.pageOrder++;
+          return selected.prev().insertAfter(selected);
         }
-      }
-      if (!test) {
-        return setTimeout(Plotter.Handler.prototype.listen.bind(this), this.options.refresh);
+      } else if (direction === 'down') {
+        if (_pageOrder < _template.length) {
+          _tradeKey = this.lib.indexOfValue(_template, "pageOrder", _pageOrder + 1);
+          _swap = _template[_tradeKey];
+          _primary.pageOrder++;
+          _swap.pageOrder--;
+          return selected.next().insertBefore(selected);
+        }
       }
     };
 
+    Handler.prototype.add = function(type) {
+      var _key, _plot, _target, html, instance;
+      console.log("Adding (type)", type, this.template);
+      _target = this.utarget(this.options.target);
+      _plot = {
+        plotOrder: this.template.length,
+        type: type,
+        options: {
+          type: type,
+          target: '#' + _target
+        }
+      };
+      html = "<div id=\"" + _target + "\"></div>";
+      $(this.options.target).append(html);
+      _key = this.template.push(_plot) - 1;
+      instance = new window.Plotting.LinePlot(this, [], _plot.options);
+      console.log("Instance ready for preAppend (instance)", instance);
+      instance.preAppend();
+      this.template[_key].proto = instance;
+      this.template[_key].proto.options.plotId = _key;
+      return this.appendControls(_key);
+    };
+
     return Handler;
+
+  })();
+
+}).call(this);
+
+(function() {
+  var Specs;
+
+  window.Plotter || (window.Plotter = {});
+
+  window.Plotter.Specs = Specs = (function() {
+    function Specs() {}
+
+    Specs.prototype.getVariableBounds = function(variable) {};
+
+    Specs.prototype.getVariableInfo = function(variable) {};
+
+    return Specs;
 
   })();
 
@@ -2378,6 +2495,10 @@
       return result;
     };
 
+    Template.prototype.removePlot = function(plotId) {
+      return delete this.template[plotId];
+    };
+
     return Template;
 
   })();
@@ -2401,7 +2522,11 @@
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         plot = ref[i];
-        results.push(plot.proto.setZoomTransform(transform));
+        if (plot != null) {
+          results.push(plot.proto.setZoomTransform(transform));
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
