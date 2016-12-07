@@ -28,8 +28,6 @@ window.Plotter.LiveSync = class LiveSync
     args = @plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit)
     uuid = @plotter.lib.uuid()
 
-    console.log("Appending (args)", args)
-
     @requests[uuid] =
       ready: false
       requested: false
@@ -42,8 +40,6 @@ window.Plotter.LiveSync = class LiveSync
 
     args = @plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit)
     uuid = @plotter.lib.uuid()
-
-    console.log("Prepending (args)", args)
 
     @requests[uuid] =
       ready: false
@@ -77,11 +73,9 @@ window.Plotter.LiveSync = class LiveSync
 
       # Reset the current request count and status
       _.requests[uuid].ready = true
-      console.log("Plotter updates number", _.plotter.updates)
       _proto.state.requested.data[dataSetId][direction] = false
       _.plotter.updates = if _.plotter.updates < 0 then 0 else
         _.plotter.updates - 1
-      console.log("Plotter updates number", _.plotter.updates)
 
     @api.get(target, args, callback)
     return true

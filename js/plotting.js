@@ -1349,7 +1349,7 @@
           scale: _domainMean
         }
       };
-      if (this.data[0].length > 0) {
+      if (data[0].length > 0) {
         this.setDataState();
         this.setIntervalState();
         this.setDataRequirement();
@@ -1413,9 +1413,7 @@
       var _data, _set;
       _data = this.processDataSet(data, dataSetId);
       _set = new window.Plotter.Data(this.data[dataSetId]);
-      console.log("Appending data to LinePlot (set, _data)", _set.get()[_set.get().length - 1], _data[_data.length - 1]);
       _set.append(_data, ["x"]);
-      console.log("Appended data to LinePlot (result)", _set.get()[_set.get().length - 1]);
       this.data[dataSetId] = _set._clean(_set.get());
       this.data[dataSetId] = this.data[dataSetId].sort(this.sortDatetimeAsc);
       if (this.initialized) {
@@ -1496,10 +1494,18 @@
         if (this.state.range.data[key].max < _now) {
           _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
         }
-        results.push(this.state.request.data[key] = {
+        this.state.request.data[key] = {
           min: this.state.interval.data[key].min < this.options.requestInterval.data,
           max: _data_max
-        });
+        };
+        if (!(this.state.requested.data[key] != null)) {
+          results.push(this.state.requested.data[key] = {
+            min: false,
+            max: false
+          });
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -1981,7 +1987,6 @@
       limit = this.plotter.options.updateLength;
       args = this.plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit);
       uuid = this.plotter.lib.uuid();
-      console.log("Appending (args)", args);
       this.requests[uuid] = {
         ready: false,
         requested: false
@@ -1995,7 +2000,6 @@
       limit = this.plotter.options.updateLength;
       args = this.plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit);
       uuid = this.plotter.lib.uuid();
-      console.log("Prepending (args)", args);
       this.requests[uuid] = {
         ready: false,
         requested: false
@@ -2027,10 +2031,8 @@
         _proto.appendData(_result, dataSetId);
         _proto.update();
         _.requests[uuid].ready = true;
-        console.log("Plotter updates number", _.plotter.updates);
         _proto.state.requested.data[dataSetId][direction] = false;
-        _.plotter.updates = _.plotter.updates < 0 ? 0 : _.plotter.updates - 1;
-        return console.log("Plotter updates number", _.plotter.updates);
+        return _.plotter.updates = _.plotter.updates < 0 ? 0 : _.plotter.updates - 1;
       };
       this.api.get(target, args, callback);
       return true;
@@ -2140,7 +2142,7 @@
       this.initializePlots();
       this.i.initialsync.stageAll();
       this.append();
-      return this.listen(true);
+      return this.listen();
     };
 
     Handler.prototype.initializePlots = function() {
@@ -2187,9 +2189,6 @@
           ref1 = state.request.data;
           for (dataSetId in ref1) {
             request = ref1[dataSetId];
-            if (plot.proto.state.requested.data[dataSetId] != null) {
-              plot.proto.state.requested.data[dataSetId] = {};
-            }
             if (request.min === true && this.isReady() && plot.proto.state.requested.data[dataSetId].min === false) {
               this.updates++;
               plot.proto.state.requested.data[dataSetId].min = true;
@@ -2204,7 +2203,7 @@
         }
       }
       if (!test) {
-        return setTimeout(Plotting.Handler.prototype.listen.bind(this), this.options.refresh);
+        return setTimeout(Plotter.Handler.prototype.listen.bind(this), this.options.refresh);
       }
     };
 

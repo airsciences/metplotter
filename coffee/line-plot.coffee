@@ -122,7 +122,7 @@ window.Plotter.LinePlot = class LinePlot
       mean:
         scale: _domainMean
 
-    if @data[0].length > 0
+    if data[0].length > 0
       @setDataState()
       @setIntervalState()
       @setDataRequirement()
@@ -180,11 +180,7 @@ window.Plotter.LinePlot = class LinePlot
     # Append the full data set.
     _data = @processDataSet(data, dataSetId)
     _set = new window.Plotter.Data(@data[dataSetId])
-    console.log("Appending data to LinePlot (set, _data)",
-      _set.get()[_set.get().length-1], _data[_data.length-1])
     _set.append(_data, ["x"])
-    console.log("Appended data to LinePlot (result)",
-      _set.get()[_set.get().length-1])
     @data[dataSetId] = _set._clean(_set.get())
     @data[dataSetId] = @data[dataSetId].sort(@sortDatetimeAsc)
 
@@ -247,6 +243,11 @@ window.Plotter.LinePlot = class LinePlot
       @state.request.data[key] =
         min: @state.interval.data[key].min < @options.requestInterval.data
         max: _data_max
+
+      if !(@state.requested.data[key]?)
+        @state.requested.data[key] =
+          min: false
+          max: false
 
   setZoomState: (k)->
     @state.zoom = k

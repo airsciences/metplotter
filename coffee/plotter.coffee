@@ -62,7 +62,8 @@ window.Plotter.Handler = class Handler
     @initializePlots()
     @i.initialsync.stageAll()
     @append()
-    @listen(true)
+    #@listen(true)
+    @listen()
 
   initializePlots: ->
     # Initialize the Plot Arrays
@@ -96,8 +97,6 @@ window.Plotter.Handler = class Handler
         state = plot.proto.getState()
         for dataSetId, request of state.request.data
           # Min-Sided Events
-          if plot.proto.state.requested.data[dataSetId]?
-            plot.proto.state.requested.data[dataSetId] = {}
           if (
             request.min is true and @isReady() and
             plot.proto.state.requested.data[dataSetId].min is false
@@ -115,4 +114,4 @@ window.Plotter.Handler = class Handler
             @i.livesync.append(plotId, dataSetId, state)
 
     if !test
-      setTimeout(Plotting.Handler.prototype.listen.bind(@), @options.refresh)
+      setTimeout(Plotter.Handler.prototype.listen.bind(@), @options.refresh)
