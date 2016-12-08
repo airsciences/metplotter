@@ -1699,7 +1699,7 @@
       _ = this;
       this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
       this.ctls = d3.select(this.options.target).append("div").attr("class", "line-plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
-      if (this.data.length === 0) {
+      if (this.data[0].length === 0) {
         if (this.options.type === "station") {
           add_text = "Select the Plot's Station";
           sub_text = "Station type plots allow comparison of different variables from the same station.";
@@ -2263,7 +2263,6 @@
       _primary = _template[plotId];
       _pageOrder = _primary.pageOrder;
       selected = $(this.plots[plotId].proto.options.target);
-      console.log("Move selected (selected)", selected);
       if (direction === 'up') {
         if (_pageOrder > 1) {
           _tradeKey = this.lib.indexOfValue(_template, "pageOrder", _pageOrder - 1);
@@ -2284,11 +2283,12 @@
     };
 
     Handler.prototype.add = function(type) {
-      var _key, _plot, _target, html, instance;
-      console.log("Adding (type)", type, this.template);
-      _target = this.utarget(this.options.target);
-      _plot = {
-        plotOrder: this.template.length,
+      var _key, _target, html, plot, uuid;
+      console.log("Adding (type)", type);
+      uuid = this.lib.uuid();
+      _target = "outer-" + uuid;
+      plot = {
+        plotOrder: this.i.template.plotCount(),
         type: type,
         options: {
           type: type,
@@ -2297,13 +2297,11 @@
       };
       html = "<div id=\"" + _target + "\"></div>";
       $(this.options.target).append(html);
-      _key = this.template.push(_plot) - 1;
-      instance = new window.Plotting.LinePlot(this, [], _plot.options);
-      console.log("Instance ready for preAppend (instance)", instance);
-      instance.preAppend();
-      this.template[_key].proto = instance;
-      this.template[_key].proto.options.plotId = _key;
-      return this.appendControls(_key);
+      _key = this.i.template.add(plot);
+      this.plots[_key] = {};
+      this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot.options);
+      this.plots[_key].proto.preAppend();
+      return this.plots[_key].proto.options.plotId = _key;
     };
 
     return Handler;
@@ -2337,14 +2335,13 @@
 
   window.Plotter.Template = Template = (function() {
     function Template(plotter) {
-      var __isValid;
       this.preError = "Plotter.Template.";
       this.plotter = plotter;
       this.api = this.plotter.i.api;
       this.sapi = this.plotter.i.sapi;
       this.template = null;
       this.dataSets = 0;
-      __isValid = function(template) {
+      this.isValid = function(template) {
         var i, j, len, len1, ref, row, y;
         for (i = 0, len = template.length; i < len; i++) {
           row = template[i];
@@ -2388,10 +2385,20 @@
         }
         return true;
       };
+      this.newIsValid = function(template) {
+        var i, len, row;
+        for (i = 0, len = template.length; i < len; i++) {
+          row = template[i];
+          if (row.type === void 0) {
+            return false;
+          }
+        }
+        return true;
+      };
       this.parse = function(templateData) {
         var __json, i, len, row;
         __json = JSON.parse(templateData).templateData;
-        if (__isValid(__json)) {
+        if (this.isValid(__json)) {
           for (i = 0, len = __json.length; i < len; i++) {
             row = __json[i];
             row.x.min = new window.Plotter.Now(this.plotter.lib.format, row.x.min).get();
@@ -2448,6 +2455,18 @@
         return console.log("Template PUT completed (data)", data);
       };
       return this.api.put(target, args, callback);
+    };
+
+    Template.prototype.add = function(options) {
+      var _valid, key, preError;
+      preError = this.preError + "add(options)";
+      key = this.template.push(options) - 1;
+      _valid = (function() {
+        if (!this.newIsValid(this.template)) {
+          throw new Error(preError + " template invalid after adding new plot.");
+        }
+      }).call(this);
+      return key;
     };
 
     Template.prototype.plotCount = function() {

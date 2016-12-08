@@ -135,7 +135,6 @@ window.Plotter.Handler = class Handler
     _primary = _template[plotId]
     _pageOrder = _primary.pageOrder
     selected = $(@plots[plotId].proto.options.target)
-    console.log("Move selected (selected)", selected)
     if direction is 'up'
       if _pageOrder > 1
         _tradeKey = @lib.indexOfValue(
@@ -155,10 +154,11 @@ window.Plotter.Handler = class Handler
 
   add: (type) ->
     # Add a new plot.
-    console.log("Adding (type)", type, @template)
-    _target = @utarget(@options.target)
-    _plot =
-      plotOrder: @template.length
+    console.log("Adding (type)", type)
+    uuid = @lib.uuid()
+    _target = "outer-#{uuid}"
+    plot =
+      plotOrder: @i.template.plotCount()
       type: type
       options:
         type: type
@@ -167,11 +167,9 @@ window.Plotter.Handler = class Handler
     html = "<div id=\"#{_target}\"></div>"
     $(@options.target).append(html)
 
-    _key = @template.push(_plot)-1
+    _key = @i.template.add(plot)
+    @plots[_key] = {}
 
-    instance = new window.Plotting.LinePlot(@, [], _plot.options)
-    console.log("Instance ready for preAppend (instance)", instance)
-    instance.preAppend()
-    @template[_key].proto = instance
-    @template[_key].proto.options.plotId = _key
-    @appendControls(_key)
+    @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot.options)
+    @plots[_key].proto.preAppend()
+    @plots[_key].proto.options.plotId = _key

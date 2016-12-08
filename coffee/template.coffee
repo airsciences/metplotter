@@ -18,7 +18,7 @@ window.Plotter.Template = class Template
     @template = null
     @dataSets = 0
 
-    __isValid = (template) ->
+    @isValid = (template) ->
       # JSON Format Validity Test
       for row in template
         if row.type is undefined then return false
@@ -35,10 +35,16 @@ window.Plotter.Template = class Template
           if y.units is undefined then return false
       return true
 
+    @newIsValid = (template) ->
+      # JSON Format Validity Test
+      for row in template
+        if row.type is undefined then return false
+      return true
+
     @parse = (templateData) ->
       # Parse the string format
       __json = JSON.parse(templateData).templateData
-      if __isValid(__json)
+      if @isValid(__json)
         for row in __json
           row.x.min =
             new window.Plotter.Now(@plotter.lib.format, row.x.min).get()
@@ -91,6 +97,15 @@ window.Plotter.Template = class Template
       console.log("Template PUT completed (data)", data)
 
     @api.put(target, args, callback)
+
+  add: (options) ->
+    # Add a new plot to the template
+    preError = "#{@preError}add(options)"
+    key = @template.push(options) - 1
+    _valid =
+    if !@newIsValid(@template)
+      throw new Error("#{preError} template invalid after adding new plot.")
+    return key
 
   plotCount: ->
     # Return the number of plots

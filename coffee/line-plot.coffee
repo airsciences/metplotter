@@ -433,7 +433,7 @@ window.Plotter.LinePlot = class LinePlot
       .style("display", "inline-block")
       .style("vertical-align", "top")
 
-    if @data.length == 0
+    if @data[0].length == 0
       if @options.type is "station"
         add_text = "Select the Plot's Station"
         sub_text = "Station type plots allow comparison of different variab\
