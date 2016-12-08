@@ -80,14 +80,19 @@ window.Plotter.InitialSync = class InitialSync
         throw new Error("#{preError} no set found.")
         return null
 
+      # Set __data__ if Undefined
+      if !(_.plotter.plots[plotId].__data__?)
+        _.plotter.plots[plotId].__data__ = []
+
       # Correct Data. Stage into Plotter.
       _.requests[uuid].ready = true
       _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results
 
       # Set Data and Append the Plot.
-      _.plotter.plots[plotId].setData(
+      _.plotter.plots[plotId].proto.setData(
         _.plotter.plots[plotId].__data__[dataSetId])
-      _.plotter.plots[plotId].append()
+      _.plotter.plots[plotId].proto.append()
+      _.plotter.i.controls.removeSpinner(plotId)
 
     @sapi.get(target, args, callback)
     return true

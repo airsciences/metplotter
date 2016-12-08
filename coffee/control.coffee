@@ -9,14 +9,10 @@
 window.Plotter ||= {}
 
 window.Plotter.Controls = class Controls
-  constructor: (plotter, options) ->
+  constructor: (plotter) ->
     @preError = "Plotter.Dropdown"
     @plotter = plotter
     @api = @plotter.i.api
-
-    defaults =
-      target: null
-    @options = @plotter.lib.mergeDefaults(options, defaults)
 
     # State Objects
     @current = []
@@ -31,8 +27,9 @@ window.Plotter.Controls = class Controls
     # Append controls to the plot.
     _template = @plotter.i.template.full()[plotId]
     _proto = @plotter.plots[plotId].proto
+    _uuid = _proto.options.uuid
 
-    selector = "plot-controls-#{plotId}"
+    selector = "plot-controls-#{_uuid}"
     _li_style = ""
 
     html = "<ul id=\"#{selector}\" class=\"unstyled\"
@@ -159,8 +156,7 @@ window.Plotter.Controls = class Controls
       _.updateStationDropdown(plotId)
 
       # Append the Station Map (Move)
-      _.appendStationMap(plotId, appendTarget, data.responseJSON.results,
-        current)
+      _.appendStationMap(plotId, appendTarget, data.responseJSON.results)
 
     @api.get(target, args, callback)
 
@@ -294,30 +290,29 @@ window.Plotter.Controls = class Controls
 
     @api.get(target, args, callback)
 
-  updateParameterDropdown: (plotId) ->
-    _options = @plotter.template[plotId].proto.options
-    if _options.y.variable != null
-      _id = _options.y.variable.replace('_', '-')
-      id = "#{_id}-plot-#{plotId}"
-      $(_options.target).find("\##{id}")
-        .css("color", _options.y.color)
-    if _options.y2.variable != null
-      _id = _options.y2.variable.replace('_', '-')
-      id = "#{_id}-plot-#{plotId}"
-      $(_options.target).find("\##{id}")
-        .css("color", _options.y2.color)
-    if _options.y3.variable != null
-      _id = _options.y3.variable.replace('_', '-')
-      id = "#{_id}-plot-#{plotId}"
-      $(_options.target).find("\##{id}")
-        .css("color", _options.y3.color)
+  # updateParameterDropdown: (plotId) ->
+  #   _options = @plotter.template[plotId].proto.options
+  #   if _options.y.variable != null
+  #     _id = _options.y.variable.replace('_', '-')
+  #     id = "#{_id}-plot-#{plotId}"
+  #     $(_options.target).find("\##{id}")
+  #       .css("color", _options.y.color)
+  #   if _options.y2.variable != null
+  #     _id = _options.y2.variable.replace('_', '-')
+  #     id = "#{_id}-plot-#{plotId}"
+  #     $(_options.target).find("\##{id}")
+  #       .css("color", _options.y2.color)
+  #   if _options.y3.variable != null
+  #     _id = _options.y3.variable.replace('_', '-')
+  #     id = "#{_id}-plot-#{plotId}"
+  #     $(_options.target).find("\##{id}")
+  #       .css("color", _options.y3.color)
 
   appendStationMap: (plotId, appendTarget, results) ->
     # Append a google maps popover.
     _ = @
     current = @getCurrent(plotId)
-    uuid = @plotter.lib.uuid()
-    dom_uuid = "map-control-" + plotId
+    dom_uuid = "map-control-" + @plotter.plots[plotId].proto.options.uuid
 
     html = "<li data-toggle=\"popover\" data-placement=\"left\">
           <i id=\"map-#{plotId}\" class=\"icon-map-marker\"
@@ -331,6 +326,7 @@ window.Plotter.Controls = class Controls
           </div>
         </div>"
     $(appendTarget).prepend(html)
+    console.log("Append Map (target)", appendTarget)
     $("#map-#{plotId}").on('click', ->
       _.plotter.i.controls.toggleMap(plotId)
     )
@@ -488,19 +484,22 @@ window.Plotter.Controls = class Controls
 
   toggleMap: (plotId) ->
     # toggle the map div.
-    __nwac_offset_left = 128
-    __nwac_offset_top = 256
+    _uuid = @plotter.plots[plotId].proto.options.uuid
+    _nwac_offset_left = 128
+    _nwac_offset_top = 256
 
-    __nwac_offset_left = 0
-    __nwac_offset_top = 0
+    # Localhost (Emulator) Specific Styling Offset
+    if location.origin is "http://localhost:5000"
+      _nwac_offset_left = 0
+      _nwac_offset_top = 0
 
     _center = @plotter.i.controls.maps[plotId].getCenter()
     _zoom = @plotter.i.controls.maps[plotId].getZoom()
 
-    _offset = $("#map-control-#{plotId}").parent().parent().prev().offset()
-    $("#map-control-#{plotId}").parent().parent().toggle()
-      .css("left", _offset.left - 356 - __nwac_offset_left)
-      .css("top", _offset.top - __nwac_offset_top)
+    _offset = $("#map-control-#{_uuid}").parent().parent().prev().offset()
+    $("#map-control-#{_uuid}").parent().parent().toggle()
+      .css("left", _offset.left - 356 - _nwac_offset_left)
+      .css("top", _offset.top - _nwac_offset_top)
 
     google.maps.event.trigger(@plotter.i.controls.maps[plotId], 'resize')
     @plotter.i.controls.maps[plotId].setCenter(_center)

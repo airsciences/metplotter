@@ -293,15 +293,10 @@
   window.Plotter || (window.Plotter = {});
 
   window.Plotter.Controls = Controls = (function() {
-    function Controls(plotter, options) {
-      var defaults;
+    function Controls(plotter) {
       this.preError = "Plotter.Dropdown";
       this.plotter = plotter;
       this.api = this.plotter.i.api;
-      defaults = {
-        target: null
-      };
-      this.options = this.plotter.lib.mergeDefaults(options, defaults);
       this.current = [];
       this.stations = [];
       this.maps = [];
@@ -310,10 +305,11 @@
     }
 
     Controls.prototype.append = function(plotId) {
-      var _li_style, _proto, _template, html, selector;
+      var _li_style, _proto, _template, _uuid, html, selector;
       _template = this.plotter.i.template.full()[plotId];
       _proto = this.plotter.plots[plotId].proto;
-      selector = "plot-controls-" + plotId;
+      _uuid = _proto.options.uuid;
+      selector = "plot-controls-" + _uuid;
       _li_style = "";
       html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> </ul>";
       $(_proto.options.target).find(".line-plot-controls").append(html);
@@ -426,7 +422,7 @@
         _.bindSubMenuEvent(".subheader");
         _.setCurrent(plotId);
         _.updateStationDropdown(plotId);
-        return _.appendStationMap(plotId, appendTarget, data.responseJSON.results, current);
+        return _.appendStationMap(plotId, appendTarget, data.responseJSON.results);
       };
       return this.api.get(target, args, callback);
     };
@@ -533,34 +529,14 @@
       return this.api.get(target, args, callback);
     };
 
-    Controls.prototype.updateParameterDropdown = function(plotId) {
-      var _id, _options, id;
-      _options = this.plotter.template[plotId].proto.options;
-      if (_options.y.variable !== null) {
-        _id = _options.y.variable.replace('_', '-');
-        id = _id + "-plot-" + plotId;
-        $(_options.target).find("\#" + id).css("color", _options.y.color);
-      }
-      if (_options.y2.variable !== null) {
-        _id = _options.y2.variable.replace('_', '-');
-        id = _id + "-plot-" + plotId;
-        $(_options.target).find("\#" + id).css("color", _options.y2.color);
-      }
-      if (_options.y3.variable !== null) {
-        _id = _options.y3.variable.replace('_', '-');
-        id = _id + "-plot-" + plotId;
-        return $(_options.target).find("\#" + id).css("color", _options.y3.color);
-      }
-    };
-
     Controls.prototype.appendStationMap = function(plotId, appendTarget, results) {
-      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, color, current, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station, uuid;
+      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, color, current, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station;
       _ = this;
       current = this.getCurrent(plotId);
-      uuid = this.plotter.lib.uuid();
-      dom_uuid = "map-control-" + plotId;
+      dom_uuid = "map-control-" + this.plotter.plots[plotId].proto.options.uuid;
       html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
+      console.log("Append Map (target)", appendTarget);
       $("#map-" + plotId).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);
       });
@@ -720,15 +696,18 @@
     };
 
     Controls.prototype.toggleMap = function(plotId) {
-      var __nwac_offset_left, __nwac_offset_top, _center, _offset, _zoom;
-      __nwac_offset_left = 128;
-      __nwac_offset_top = 256;
-      __nwac_offset_left = 0;
-      __nwac_offset_top = 0;
+      var _center, _nwac_offset_left, _nwac_offset_top, _offset, _uuid, _zoom;
+      _uuid = this.plotter.plots[plotId].proto.options.uuid;
+      _nwac_offset_left = 128;
+      _nwac_offset_top = 256;
+      if (location.origin === "http://localhost:5000") {
+        _nwac_offset_left = 0;
+        _nwac_offset_top = 0;
+      }
       _center = this.plotter.i.controls.maps[plotId].getCenter();
       _zoom = this.plotter.i.controls.maps[plotId].getZoom();
-      _offset = $("#map-control-" + plotId).parent().parent().prev().offset();
-      $("#map-control-" + plotId).parent().parent().toggle().css("left", _offset.left - 356 - __nwac_offset_left).css("top", _offset.top - __nwac_offset_top);
+      _offset = $("#map-control-" + _uuid).parent().parent().prev().offset();
+      $("#map-control-" + _uuid).parent().parent().toggle().css("left", _offset.left - 356 - _nwac_offset_left).css("top", _offset.top - _nwac_offset_top);
       google.maps.event.trigger(this.plotter.i.controls.maps[plotId], 'resize');
       this.plotter.i.controls.maps[plotId].setCenter(_center);
       return this.plotter.i.controls.maps[plotId].setZoom(_zoom);
@@ -1165,10 +1144,14 @@
           throw new Error(preError + " no set found.");
           return null;
         }
+        if (!(_.plotter.plots[plotId].__data__ != null)) {
+          _.plotter.plots[plotId].__data__ = [];
+        }
         _.requests[uuid].ready = true;
         _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
-        _.plotter.plots[plotId].setData(_.plotter.plots[plotId].__data__[dataSetId]);
-        return _.plotter.plots[plotId].append();
+        _.plotter.plots[plotId].proto.setData(_.plotter.plots[plotId].__data__[dataSetId]);
+        _.plotter.plots[plotId].proto.append();
+        return _.plotter.i.controls.removeSpinner(plotId);
       };
       this.sapi.get(target, args, callback);
       return true;
@@ -1311,9 +1294,7 @@
       if (options.x) {
         options.x = this.plotter.lib.mergeDefaults(options.x, this.defaults.x);
       }
-      if (options.y) {
-        options.y = this.plotter.lib.mergeDefaults(options.y, this.defaults.y);
-      }
+      options.y[0] = this.plotter.lib.mergeDefaults(options.y[0], this.defaults.y[0]);
       this.options = this.plotter.lib.mergeDefaults(options, this.defaults);
       this.device = 'full';
       this.links = [
@@ -1327,7 +1308,7 @@
           "variable": "relative_humidity",
           "title": "Relative Humidity"
         }, {
-          "variable": "precitation",
+          "variable": "precipitation",
           "title": "Precipitation"
         }, {
           "variable": "snow_depth",
@@ -1453,7 +1434,26 @@
 
     LinePlot.prototype.setData = function(data) {
       var _domainMean, _domainScale;
-      this.data = this.processData(data);
+      this.data = [this.processDataSet(data, 0)];
+      this.getDefinition();
+      _domainScale = null;
+      _domainMean = null;
+      if (data.length > 0) {
+        _domainScale = this.getDomainScale(this.definition.x);
+        _domainMean = this.getDomainMean(this.definition.x);
+      }
+      this.state.range.scale = _domainScale;
+      this.state.mean.scale = _domainMean;
+      if (data.length > 0) {
+        this.setDataState();
+        this.setIntervalState();
+        return this.setDataRequirement();
+      }
+    };
+
+    LinePlot.prototype.addData = function(data, dataSetId) {
+      var _domainMean, _domainScale;
+      this.data[dataSetId] = this.processDataSet(data, dataSetId);
       this.getDefinition();
       _domainScale = null;
       _domainMean = null;
@@ -1485,19 +1485,12 @@
     };
 
     LinePlot.prototype.removeData = function(key) {
-      var _full, _key, _row, ref, result;
-      result = [];
-      ref = this.data;
-      for (_key in ref) {
-        _row = ref[_key];
-        delete _row[key];
-        delete _row[key + "Min"];
-        delete _row[key + "Max"];
-        result[_key] = _row;
-      }
-      _full = new Plotter.Data(result);
-      this.data = _full.get();
-      this.data = this.data.sort(this.sortDatetimeAsc);
+      this.data.splice(key, 1);
+      this.options.y.splice(key, 1);
+      this.svg.select(".line-plot-area-" + key).remove();
+      this.svg.select(".line-plot-path-" + key).remove();
+      this.svg.select(".focus-circle-" + key).remove();
+      this.svg.select(".focus-text-" + key).remove();
       if (this.initialized) {
         this.setDataState();
         this.setIntervalState();
@@ -1552,7 +1545,7 @@
       for (key in ref) {
         row = ref[key];
         _data_max = false;
-        if (this.state.range.data[key].max < _now) {
+        if (this.state.range.data[key].max.getTime() < (_now.getTime() - (3600000 * 2.5))) {
           _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
         }
         this.state.request.data[key] = {
@@ -1601,7 +1594,7 @@
       this.calculateChartDims();
       this.calculateAxisDims(this.data);
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
-      this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y.ticks);
+      this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y[0].ticks);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
@@ -1680,12 +1673,20 @@
     };
 
     LinePlot.prototype.calculateXAxisDims = function(data) {
-      this.definition.x.min = this.options.x.min === null ? d3.min(data[0], function(d) {
-        return d.x;
-      }) : this.parseDate(this.options.x.min);
-      return this.definition.x.max = this.options.x.max === null ? d3.max(data[0], function(d) {
-        return d.x;
-      }) : this.parseDate(this.options.x.max);
+      if (this.options.x.min === null) {
+        this.definition.x.min = d3.min(data[0], function(d) {
+          return d.x;
+        });
+      } else {
+        this.definition.x.min = this.parseDate(this.options.x.min);
+      }
+      if (this.options.x.max === null) {
+        return this.definition.x.max = d3.max(data[0], function(d) {
+          return d.x;
+        });
+      } else {
+        return this.definition.x.max = this.parseDate(this.options.x.max);
+      }
     };
 
     LinePlot.prototype.calculateYAxisDims = function(data) {
@@ -1708,10 +1709,10 @@
             return d.yMax;
           })
         ]);
-        if (_setMin < this.definition.y.min) {
+        if (_setMin < this.definition.y.min || this.definition.y.min === void 0) {
           this.definition.y.min = _setMin;
         }
-        if (_setMax > this.definition.y.max) {
+        if (_setMax > this.definition.y.max || this.definition.y.max === void 0) {
           this.definition.y.max = _setMax;
         }
       }
@@ -1719,8 +1720,12 @@
         this.definition.y.min = this.definition.y.min * 0.8;
         this.definition.y.max = this.definition.y.min * 1.2;
       }
-      this.definition.y.min = this.options.y[0].min != null ? this.options.y.min : this.definition.y.min;
-      return this.definition.y.max = this.options.y[0].max != null ? this.options.y.max : this.definition.y.max;
+      if (this.options.y[0].min != null) {
+        this.definition.y.min = this.options.y[0].min;
+      }
+      if (this.options.y[0].max != null) {
+        return this.definition.y.max = this.options.y[0].max;
+      }
     };
 
     LinePlot.prototype.preAppend = function() {
@@ -1763,6 +1768,7 @@
       preError = this.preError + "append()";
       _ = this;
       this.svg.select(".line-plot-axis-x").call(this.definition.xAxis);
+      this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
       _y_title = "" + this.options.y[0].title;
       if (this.options.y[0].units) {
         _y_title = _y_title + " " + this.options.y[0].units;
@@ -1806,10 +1812,22 @@
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area).style("fill", this.options.y[key].color).style("stroke", function() {
-          return d3.rgb(_.options.y[key].color).darker(1);
-        });
-        this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+        if (this.svg.select(".line-plot-area-" + key).node() === null) {
+          this.bands[key] = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
+            return d3.color(_.options.y[key].color).darker(1);
+          });
+        } else {
+          this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area).style("fill", this.options.y[key].color).style("stroke", function() {
+            return d3.rgb(_.options.y[key].color).darker(1);
+          });
+        }
+        if (this.svg.select(".line-plot-path-" + key).node() === null) {
+          this.lines[key] = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+          this.focusCircle[key] = this.svg.append("circle").attr("r", 4).attr("class", "focus-circle-" + key).attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
+          this.focusText[key] = this.svg.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+        } else {
+          this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+        }
       }
       this.overlay.datum(this.data);
       this.calculateYAxisDims(this.data);
@@ -2051,7 +2069,6 @@
       }
       currentMax = state.range.data[dataSetId].max.getTime();
       newMax = new Date(currentMax + (this.plotter.options.updateLength * 3600000));
-      newMax = newMax > _now ? _now : newMax;
       maxDatetime = this.plotter.lib.format(new Date(newMax));
       limit = this.plotter.options.updateLength;
       args = this.plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit);
@@ -2074,6 +2091,24 @@
         requested: false
       };
       return this.requests[uuid]['requested'] = this.get(plotId, dataSetId, uuid, args, "min");
+    };
+
+    LiveSync.prototype.add = function(plotId, dataSetId, state) {
+      var _now, args, limit, maxDatetime, uuid;
+      _now = new Date();
+      if (state.range.data[0].max >= _now) {
+        return true;
+      }
+      maxDatetime = this.plotter.lib.format(state.range.data[0].max);
+      limit = state.length.data[0];
+      args = this.plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit);
+      uuid = this.plotter.lib.uuid();
+      console.log("Adding line (plotId, dataSetId, args)", plotId, dataSetId, args);
+      this.requests[uuid] = {
+        ready: false,
+        requested: false
+      };
+      return this.requests[uuid]['requested'] = this.getNew(plotId, dataSetId, uuid, args);
     };
 
     LiveSync.prototype.get = function(plotId, dataSetId, uuid, args, direction) {
@@ -2101,6 +2136,38 @@
         _proto.update();
         _.requests[uuid].ready = true;
         _proto.state.requested.data[dataSetId][direction] = false;
+        return _.plotter.updates = _.plotter.updates < 0 ? 0 : _.plotter.updates - 1;
+      };
+      this.api.get(target, args, callback);
+      return true;
+    };
+
+    LiveSync.prototype.getNew = function(plotId, dataSetId, uuid, args) {
+      var _, callback, preError, target;
+      preError = this.preError + ".getNew()";
+      target = this.endpoint();
+      _ = this;
+      callback = function(data) {
+        var _proto, _result;
+        _proto = _.plotter.plots[plotId].proto;
+        if (!(data.responseJSON != null)) {
+          throw new Error(preError + " error requesting data.");
+          return null;
+        }
+        _result = data.responseJSON.results;
+        if (_.plotter.plots[plotId].__data__ === void 0) {
+          throw new Error(preError + " appending to empty data set.");
+          _.plotter.plots[plotId].__data__ = new window.Plotter.Data([]);
+        }
+        if (data.responseJSON.results.length === 0) {
+          throw new Error(preError + " no new data found.");
+          _result = [];
+        }
+        console.log("Adding data to plot (_result, dataSetId)", _result, dataSetId);
+        _proto.addData(_result, dataSetId);
+        _proto.update();
+        _.requests[uuid].ready = true;
+        _.plotter.i.controls.removeSpinner(plotId);
         return _.plotter.updates = _.plotter.updates < 0 ? 0 : _.plotter.updates - 1;
       };
       this.api.get(target, args, callback);
@@ -2177,7 +2244,7 @@
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
         updateLength: 168,
-        updateLimit: 12
+        updateLimit: 6
       };
       this.options = this.lib.mergeDefaults(options, defaults);
       __accessToken = {
@@ -2272,9 +2339,11 @@
         _options = this.i.colors.getInitial(_options);
         _options.target = "\#outer-" + row.uuid;
         _options.uuid = row.uuid;
+        console.log("Options.y", _options.y);
         row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
         row.proto.preAppend();
         row.proto.append();
+        console.log("Options.y", _options.y);
         results.push(this.i.controls.append(key));
       }
       return results;
@@ -2315,52 +2384,68 @@
 
     Handler.prototype.add = function(type) {
       var _key, _target, html, plot, uuid;
-      console.log("Adding (type)", type);
       uuid = this.lib.uuid();
       _target = "outer-" + uuid;
       plot = {
         plotOrder: this.i.template.plotCount() + 1,
         type: type,
-        options: {
-          type: type,
-          target: '#' + _target
-        }
+        target: '#' + _target
       };
       html = "<div id=\"" + _target + "\"></div>";
       $(this.options.target).append(html);
       _key = this.i.template.add(plot);
       this.plots[_key] = {};
-      this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot.options);
+      this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot);
       this.plots[_key].proto.preAppend();
-      return this.plots[_key].proto.options.plotId = _key;
+      this.plots[_key].proto.options.plotId = _key;
+      return this.plots[_key].proto.options.uuid = uuid;
     };
 
     Handler.prototype.initializePlot = function(plotId, variable, title) {
-      var _options;
-      _options = this.i.specs.getOptions(variable, null);
+      var _revisedOptions, _yOptions;
+      _yOptions = this.i.specs.getOptions(variable, null);
       this.i.template.template[plotId].x = $.extend(true, {}, this.i.template.template[0].x);
       this.i.template.template[plotId].y = [_options];
-      this.plots[plotId].proto.options = this.i.template.forPlots(plotId);
+      _revisedOptions = this.i.template.forPlots(plotId);
+      this.plots[plotId].proto.options.x = _revisedOptions.x;
+      this.plots[plotId].proto.options.y = _revisedOptions.y;
       console.log("Initialize Plot Options (template, plot)", this.i.template.full(plotId), this.plots[plotId].proto.options);
       this.i.controls.append(plotId);
       return this.plots[plotId].proto.removeTemp();
     };
 
     Handler.prototype.addStation = function(plotId, dataLoggerId) {
-      var _state, _yOptions, maxDatetime;
+      var _state, _yOptions, dataSetId, maxDatetime;
       if (!this.plots[plotId].proto.initialized) {
         this.plots[plotId].proto.options.y[0].dataLoggerId = dataLoggerId;
+        this.plots[plotId].proto.options.y[0].color = this.i.colors.get(dataLoggerId);
+        this.i.initialsync.add(plotId);
         this.i.controls.updateStationDropdown(plotId);
         this.i.controls.updateStationMap(plotId);
-        this.i.initialsync.add(plotId);
         return true;
       }
-      _state = this.template[plotId].proto.getState();
-      maxDatetime = state.range.data.max.getTime();
-      _yOptions = this.i.getOptions(variable, dataLoggerId);
-      this.plots[plotId].options.y.push(_yOptions);
+      _state = this.plots[plotId].proto.getState();
+      maxDatetime = _state.range.data[0].max.getTime();
+      _yOptions = $.extend(true, {}, this.plots[plotId].proto.options.y[0]);
+      _yOptions.dataLoggerId = dataLoggerId;
+      _yOptions.color = this.i.colors.get(dataLoggerId);
+      dataSetId = this.plots[plotId].proto.options.y.push(_yOptions) - 1;
       this.i.controls.updateStationDropdown(plotId);
-      return this.i.controls.updateStationMap(plotId);
+      this.i.controls.updateStationMap(plotId);
+      this.i.livesync.add(plotId, dataSetId, _state);
+      return true;
+    };
+
+    Handler.prototype.removeStation = function(plotId, dataLoggerId) {
+      var _key;
+      _key = this.lib.indexOfValue(this.plots[plotId].proto.options.y, "dataLoggerId", dataLoggerId);
+      this.i.template.template[plotId].y.splice(_key, 1);
+      this.plots[plotId].proto.getDefinition();
+      this.plots[plotId].proto.removeData(_key);
+      this.plots[plotId].proto.update();
+      this.i.controls.updateStationDropdown(plotId);
+      this.i.controls.updateStationMap(plotId);
+      return this.i.controls.removeSpinner(plotId);
     };
 
     return Handler;

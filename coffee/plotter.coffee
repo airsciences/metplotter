@@ -25,7 +25,7 @@ window.Plotter.Handler = class Handler
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       refresh: 500
       updateLength: 168
-      updateLimit: 12
+      updateLimit: 6
     @options = @lib.mergeDefaults(options, defaults)
 
     # Access Token & Admin
@@ -113,10 +113,14 @@ window.Plotter.Handler = class Handler
       _options.target = "\#outer-#{row.uuid}"
       _options.uuid = row.uuid
 
+      console.log("Options.y", _options.y)
+
       # Initialize the Line Plot
       row.proto = new window.Plotter.LinePlot(@, row.__data__, _options)
       row.proto.preAppend()
       row.proto.append()
+
+      console.log("Options.y", _options.y)
 
       # Append controls
       @i.controls.append(key)
@@ -153,15 +157,12 @@ window.Plotter.Handler = class Handler
 
   add: (type) ->
     # Add a new plot.
-    console.log("Adding (type)", type)
     uuid = @lib.uuid()
     _target = "outer-#{uuid}"
     plot =
       plotOrder: @i.template.plotCount() + 1
       type: type
-      options:
-        type: type
-        target: '#' + _target
+      target: '#' + _target
 
     html = "<div id=\"#{_target}\"></div>"
     $(@options.target).append(html)
@@ -169,17 +170,20 @@ window.Plotter.Handler = class Handler
     _key = @i.template.add(plot)
     @plots[_key] = {}
 
-    @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot.options)
+    @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot)
     @plots[_key].proto.preAppend()
     @plots[_key].proto.options.plotId = _key
+    @plots[_key].proto.options.uuid = uuid
 
   initializePlot: (plotId, variable, title) ->
     # Initialize the Plot Variable.
-    _options = @i.specs.getOptions(variable, null)
+    _yOptions = @i.specs.getOptions(variable, null)
     @i.template.template[plotId].x = $.extend(
       true, {}, @i.template.template[0].x)
     @i.template.template[plotId].y = [_options]
-    @plots[plotId].proto.options = @i.template.forPlots(plotId)
+    _revisedOptions =  @i.template.forPlots(plotId)
+    @plots[plotId].proto.options.x = _revisedOptions.x
+    @plots[plotId].proto.options.y = _revisedOptions.y
     console.log("Initialize Plot Options (template, plot)",
       @i.template.full(plotId), @plots[plotId].proto.options)
 
@@ -194,17 +198,37 @@ window.Plotter.Handler = class Handler
     if !@plots[plotId].proto.initialized
       # Add to an empty plot.
       @plots[plotId].proto.options.y[0].dataLoggerId = dataLoggerId
+      @plots[plotId].proto.options.y[0].color = @i.colors.get(dataLoggerId)
+      @i.initialsync.add(plotId)
       @i.controls.updateStationDropdown(plotId)
       @i.controls.updateStationMap(plotId)
-      @i.initialsync.add(plotId)
       return true
 
     # Add another station.
-    _state = @template[plotId].proto.getState()
-    maxDatetime = state.range.data.max.getTime()
+    _state = @plots[plotId].proto.getState()
+    maxDatetime = _state.range.data[0].max.getTime()
 
-    _yOptions = @i.getOptions(variable, dataLoggerId)
-    @plots[plotId].options.y.push(_yOptions)
+    # Build Options
+    _yOptions = $.extend(true, {}, @plots[plotId].proto.options.y[0])
+    _yOptions.dataLoggerId = dataLoggerId
+    _yOptions.color = @i.colors.get(dataLoggerId)
+    dataSetId = @plots[plotId].proto.options.y.push(_yOptions) - 1
+
+    # Update Controls.
+    @i.controls.updateStationDropdown(plotId)
+    @i.controls.updateStationMap(plotId)
+    @i.livesync.add(plotId, dataSetId, _state)
+    return true
+
+  removeStation: (plotId, dataLoggerId) ->
+    _key = @lib.indexOfValue(@plots[plotId].proto.options.y, "dataLoggerId",
+      dataLoggerId)
+
+    @i.template.template[plotId].y.splice(_key, 1)
+    @plots[plotId].proto.getDefinition()
+    @plots[plotId].proto.removeData(_key)
+    @plots[plotId].proto.update()
 
     @i.controls.updateStationDropdown(plotId)
     @i.controls.updateStationMap(plotId)
+    @i.controls.removeSpinner(plotId)

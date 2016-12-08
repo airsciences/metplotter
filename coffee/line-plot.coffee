@@ -59,16 +59,15 @@ window.Plotter.LinePlot = class LinePlot
         data: 336
     if options.x
       options.x = @plotter.lib.mergeDefaults(options.x, @defaults.x)
-    if options.y
-      options.y = @plotter.lib.mergeDefaults(options.y, @defaults.y)
-    @options = @plotter.lib.mergeDefaults options, @defaults
+    options.y[0] = @plotter.lib.mergeDefaults(options.y[0], @defaults.y[0])
+    @options = @plotter.lib.mergeDefaults(options, @defaults)
     @device = 'full'
 
     @links = [
       {"variable": "battery_voltage", "title": "Battery Voltage"},
       {"variable": "temperature", "title": "Temperature"},
       {"variable": "relative_humidity", "title": "Relative Humidity"},
-      {"variable": "precitation", "title": "Precipitation"},
+      {"variable": "precipitation", "title": "Precipitation"},
       {"variable": "snow_depth", "title": "Snow Depth"},
       {"variable": "wind_direction", "title": "Wind Direction"},
       {"variable": "wind_speed_average", "title": "Wind Speed"},
@@ -158,7 +157,27 @@ window.Plotter.LinePlot = class LinePlot
 
   setData: (data) ->
     # Set the initial data.
-    @data = @processData(data)
+    @data = [@processDataSet(data, 0)]
+    @getDefinition()
+
+    # Initialize the State
+    _domainScale = null
+    _domainMean = null
+    if data.length > 0
+      _domainScale = @getDomainScale(@definition.x)
+      _domainMean = @getDomainMean(@definition.x)
+
+    @state.range.scale = _domainScale
+    @state.mean.scale = _domainMean
+
+    if data.length > 0
+      @setDataState()
+      @setIntervalState()
+      @setDataRequirement()
+
+  addData: (data, dataSetId) ->
+    # Set the initial data.
+    @data[dataSetId] = @processDataSet(data, dataSetId)
     @getDefinition()
 
     # Initialize the State
@@ -192,15 +211,13 @@ window.Plotter.LinePlot = class LinePlot
 
   removeData: (key) ->
     # Removing sub key from data.
-    result = []
-    for _key, _row of @data
-      delete _row[key]
-      delete _row[key + "Min"]
-      delete _row[key + "Max"]
-      result[_key] = _row
-    _full = new Plotter.Data(result)
-    @data = _full.get()
-    @data = @data.sort(@sortDatetimeAsc)
+    @data.splice(key, 1)
+    @options.y.splice(key, 1)
+
+    @svg.select(".line-plot-area-#{key}").remove()
+    @svg.select(".line-plot-path-#{key}").remove()
+    @svg.select(".focus-circle-#{key}").remove()
+    @svg.select(".focus-text-#{key}").remove()
 
     if @initialized
       @setDataState()
@@ -236,7 +253,7 @@ window.Plotter.LinePlot = class LinePlot
 
     for key, row of @data
       _data_max = false
-      if @state.range.data[key].max < _now
+      if @state.range.data[key].max.getTime() < (_now.getTime() - (3600000*2.5))
         _data_max = @state.interval.data[key].max <
           @options.requestInterval.data
 
@@ -280,7 +297,7 @@ window.Plotter.LinePlot = class LinePlot
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
       .ticks(Math.round($(@options.target).width() / 100))
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
-      .ticks(@options.y.ticks)
+      .ticks(@options.y[0].ticks)
 
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
@@ -377,12 +394,14 @@ window.Plotter.LinePlot = class LinePlot
 
   calculateXAxisDims: (data) ->
     # Calculate Min & Max X Values
-    @definition.x.min = if @options.x.min is null then d3.min(data[0],
-      (d)-> d.x)
-    else @parseDate(@options.x.min)
-    @definition.x.max = if @options.x.max is null then d3.max(data[0],
-      (d)-> d.x)
-    else @parseDate(@options.x.max)
+    if @options.x.min is null
+      @definition.x.min = d3.min(data[0], (d)-> d.x)
+    else
+      @definition.x.min = @parseDate(@options.x.min)
+    if @options.x.max is null
+      @definition.x.max = d3.max(data[0], (d)-> d.x)
+    else
+      @definition.x.max = @parseDate(@options.x.max)
 
   calculateYAxisDims: (data) ->
     # Calculate Min & Max Y Values
@@ -398,9 +417,9 @@ window.Plotter.LinePlot = class LinePlot
         d3.max(set, (d)-> d.y)
         d3.max(set, (d)-> d.yMax)
       ])
-      if _setMin < @definition.y.min
+      if _setMin < @definition.y.min or @definition.y.min is undefined
         @definition.y.min = _setMin
-      if _setMax > @definition.y.max
+      if _setMax > @definition.y.max or @definition.y.max is undefined
         @definition.y.max = _setMax
 
     # Restore Viewability if Y-Min = Y-Max
@@ -409,10 +428,10 @@ window.Plotter.LinePlot = class LinePlot
       @definition.y.max = @definition.y.min * 1.2
 
     # Revert to Options
-    @definition.y.min = if @options.y[0].min? then @options.y.min
-    else @definition.y.min
-    @definition.y.max = if @options.y[0].max? then @options.y.max
-    else @definition.y.max
+    if @options.y[0].min?
+      @definition.y.min = @options.y[0].min
+    if @options.y[0].max?
+      @definition.y.max = @options.y[0].max
 
   preAppend: ->
     preError = "#{@preError}preAppend()"
@@ -528,6 +547,9 @@ window.Plotter.LinePlot = class LinePlot
     @svg.select(".line-plot-axis-x")
       .call(@definition.xAxis)
 
+    @svg.select(".line-plot-axis-y")
+      .call(@definition.yAxis)
+
     # Append Axis Label
     _y_title = "#{@options.y[0].title}"
     if @options.y[0].units
@@ -637,21 +659,63 @@ window.Plotter.LinePlot = class LinePlot
 
     # Pre-Append Data For Smooth transform
     for key, row of @data
-      @svg.select(".line-plot-area-#{key}")
-        .datum(row)
-        .attr("d", @definition.area)
-        .style("fill", @options.y[key].color)
-        .style("stroke", () ->
-          return d3.rgb(_.options.y[key].color).darker(1)
-        )
+      if @svg.select(".line-plot-area-#{key}").node() is null
+        @bands[key] = @svg.append("g")
+          .attr("clip-path", "url(\##{@options.target}_clip)")
+          .append("path")
+          .datum(row)
+          .attr("d", @definition.area)
+          .attr("class", "line-plot-area-#{key}")
+          .style("fill", @options.y[key].color)
+          .style("opacity", 0.15)
+          .style("stroke", () ->
+            return d3.color(_.options.y[key].color).darker(1)
+          )
+      else
+        @svg.select(".line-plot-area-#{key}")
+          .datum(row)
+          .attr("d", @definition.area)
+          .style("fill", @options.y[key].color)
+          .style("stroke", () ->
+            return d3.rgb(_.options.y[key].color).darker(1)
+          )
+      if @svg.select(".line-plot-path-#{key}").node() is null
+        @lines[key] = @svg.append("g")
+          .attr("clip-path", "url(\##{@options.target}_clip)")
+          .append("path")
+          .datum(row)
+          .attr("d", @definition.line)
+          .attr("class", "line-plot-path-#{key}")
+          .style("stroke", @options.y[key].color)
+          .style("stroke-width",
+              Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+          .style("fill", "none")
 
-      @svg.select(".line-plot-path-#{key}")
-        .datum(row)
-        .attr("d", @definition.line)
-        .style("stroke", @options.y[key].color)
-        .style("stroke-width",
-          Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-        .style("fill", "none")
+        # Create Focus Circles and Labels
+        @focusCircle[key] = @svg.append("circle")
+          .attr("r", 4)
+          .attr("class", "focus-circle-#{key}")
+          .attr("fill", @options.y[key].color)
+          .attr("transform", "translate(-10, -10)")
+          .style("display", "none")
+
+        @focusText[key] = @svg.append("text")
+          .attr("class", "focus-text-#{key}")
+          .attr("x", 9)
+          .attr("y", 7)
+          .style("display", "none")
+          .style("fill", @options.y[key].color)
+          .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+            2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+            2px 2px 0 rgb(255,255,255)")
+      else
+        @svg.select(".line-plot-path-#{key}")
+          .datum(row)
+          .attr("d", @definition.line)
+          .style("stroke", @options.y[key].color)
+          .style("stroke-width",
+            Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+          .style("fill", "none")
 
     @overlay.datum(@data)
 
