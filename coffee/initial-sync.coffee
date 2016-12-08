@@ -28,6 +28,21 @@ window.Plotter.InitialSync = class InitialSync
         requested: false
       @requests[uuid]['requested'] = @get(plotId, i, uuid, args)
 
+  add: (plotId) ->
+    _plotTemplate = @plotter.i.template.template[plotId]
+    _state = @plotter.plots[0].proto.getState()
+    maxDatetime = @plotter.lib.format(_state.range.data[0].max)
+    limit = _state.length.data[0]
+
+    args = @plotter.i.template.forSync(plotId, 0, maxDatetime, limit)
+    uuid = @plotter.lib.uuid()
+
+    @requests[uuid] =
+      plotId: plotId
+      ready: false
+      requested: false
+    @requests[uuid]['requested'] = @getAppend(plotId, 0, uuid, args)
+
   get: (plotId, dataSetId, uuid, args) ->
     # Request a station's dataset (param specific)
     preError = "#{@preError}.get()"
@@ -46,6 +61,33 @@ window.Plotter.InitialSync = class InitialSync
       # Correct Data. Stage into Plotter.
       _.requests[uuid].ready = true
       _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results
+
+    @sapi.get(target, args, callback)
+    return true
+
+  getAppend: (plotId, dataSetId, uuid, args) ->
+    # Request a station's dataset (param specific)
+    preError = "#{@preError}.get()"
+    target = @endpoint()
+    _ = @
+
+    callback = (data) ->
+      if !(data.responseJSON?)
+        throw new Error("#{preError} error requesting data.")
+        return null
+
+      if data.responseJSON.results.length is 0
+        throw new Error("#{preError} no set found.")
+        return null
+
+      # Correct Data. Stage into Plotter.
+      _.requests[uuid].ready = true
+      _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results
+
+      # Set Data and Append the Plot.
+      _.plotter.plots[plotId].setData(
+        _.plotter.plots[plotId].__data__[dataSetId])
+      _.plotter.plots[plotId].append()
 
     @sapi.get(target, args, callback)
     return true

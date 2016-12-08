@@ -457,22 +457,13 @@ window.Plotter.Controls = class Controls
           _.plotter.removeStation(plotId, _dataLoggerId)
       )
 
-    _options = @plotter.template[plotId].proto.options
-    if _options.y.variable != null
-      _id = _options.y.variable.replace('_', '-')
-      _row_id = "map-plot-#{plotId}-station-#{_options.y.dataLoggerId}"
-      _color = _options.y.color
-      updateMarker(plotId, _row_id, _color)
-    if _options.y2.variable != null
-      _id = _options.y2.variable.replace('_', '-')
-      _row_id = "map-plot-#{plotId}-station-#{_options.y2.dataLoggerId}"
-      _color = _options.y2.color
-      updateMarker(plotId, _row_id, _color)
-    if _options.y3.variable != null
-      _id = _options.y3.variable.replace('_', '-')
-      _row_id = "map-plot-#{plotId}-station-#{_options.y3.dataLoggerId}"
-      _color = _options.y3.color
-      updateMarker(plotId, _row_id, _color)
+    # Update the markers.
+    _options = @plotter.plots[plotId].proto.options
+    for key, row of _options.y
+      if row.variable != null
+        _id = row.variable.replace('_', '-')
+        _row_id = "map-plot-#{plotId}-station-#{row.dataLoggerId}"
+        updateMarker(plotId, _row_id, row.color)
 
     @boundOnSelected(plotId)
 

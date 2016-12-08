@@ -47,6 +47,7 @@ window.Plotter.Handler = class Handler
     @i.livesync = new window.Plotter.LiveSync(@)
     @i.zoom = new window.Plotter.Zoom(@)
     @i.crosshairs = new window.Plotter.Crosshairs(@)
+    @i.specs = new window.Plotter.Specs()
     @i.colors = new window.Plotter.Colors()
 
     # Define the Plots
@@ -73,8 +74,6 @@ window.Plotter.Handler = class Handler
         proto: null
         __data__: []
       @plots[key] = _plotRow
-
-
 
   listen: (test) ->
     for plotId, plot of @plots
@@ -158,7 +157,7 @@ window.Plotter.Handler = class Handler
     uuid = @lib.uuid()
     _target = "outer-#{uuid}"
     plot =
-      plotOrder: @i.template.plotCount()
+      plotOrder: @i.template.plotCount() + 1
       type: type
       options:
         type: type
@@ -173,3 +172,39 @@ window.Plotter.Handler = class Handler
     @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot.options)
     @plots[_key].proto.preAppend()
     @plots[_key].proto.options.plotId = _key
+
+  initializePlot: (plotId, variable, title) ->
+    # Initialize the Plot Variable.
+    _options = @i.specs.getOptions(variable, null)
+    @i.template.template[plotId].x = $.extend(
+      true, {}, @i.template.template[0].x)
+    @i.template.template[plotId].y = [_options]
+    @plots[plotId].proto.options = @i.template.forPlots(plotId)
+    console.log("Initialize Plot Options (template, plot)",
+      @i.template.full(plotId), @plots[plotId].proto.options)
+
+    # Append Controls on the New Plot
+    @i.controls.append(plotId)
+
+    # Remove the Temp Methods
+    @plots[plotId].proto.removeTemp()
+
+  addStation: (plotId, dataLoggerId) ->
+    # Add another data logger to the plot.
+    if !@plots[plotId].proto.initialized
+      # Add to an empty plot.
+      @plots[plotId].proto.options.y[0].dataLoggerId = dataLoggerId
+      @i.controls.updateStationDropdown(plotId)
+      @i.controls.updateStationMap(plotId)
+      @i.initialsync.add(plotId)
+      return true
+
+    # Add another station.
+    _state = @template[plotId].proto.getState()
+    maxDatetime = state.range.data.max.getTime()
+
+    _yOptions = @i.getOptions(variable, dataLoggerId)
+    @plots[plotId].options.y.push(_yOptions)
+
+    @i.controls.updateStationDropdown(plotId)
+    @i.controls.updateStationMap(plotId)

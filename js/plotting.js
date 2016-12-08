@@ -664,7 +664,7 @@
     };
 
     Controls.prototype.updateStationMap = function(plotId) {
-      var _, _color, _id, _options, _row_id, updateMarker;
+      var _, _id, _options, _row_id, key, ref, row, updateMarker;
       _ = this;
       this.resetStationMap(plotId);
       updateMarker = function(plotId, rowId, color) {
@@ -683,24 +683,15 @@
           return _.plotter.removeStation(plotId, _dataLoggerId);
         });
       };
-      _options = this.plotter.template[plotId].proto.options;
-      if (_options.y.variable !== null) {
-        _id = _options.y.variable.replace('_', '-');
-        _row_id = "map-plot-" + plotId + "-station-" + _options.y.dataLoggerId;
-        _color = _options.y.color;
-        updateMarker(plotId, _row_id, _color);
-      }
-      if (_options.y2.variable !== null) {
-        _id = _options.y2.variable.replace('_', '-');
-        _row_id = "map-plot-" + plotId + "-station-" + _options.y2.dataLoggerId;
-        _color = _options.y2.color;
-        updateMarker(plotId, _row_id, _color);
-      }
-      if (_options.y3.variable !== null) {
-        _id = _options.y3.variable.replace('_', '-');
-        _row_id = "map-plot-" + plotId + "-station-" + _options.y3.dataLoggerId;
-        _color = _options.y3.color;
-        updateMarker(plotId, _row_id, _color);
+      _options = this.plotter.plots[plotId].proto.options;
+      ref = _options.y;
+      for (key in ref) {
+        row = ref[key];
+        if (row.variable !== null) {
+          _id = row.variable.replace('_', '-');
+          _row_id = "map-plot-" + plotId + "-station-" + row.dataLoggerId;
+          updateMarker(plotId, _row_id, row.color);
+        }
       }
       return this.boundOnSelected(plotId);
     };
@@ -1123,6 +1114,22 @@
       return results;
     };
 
+    InitialSync.prototype.add = function(plotId) {
+      var _plotTemplate, _state, args, limit, maxDatetime, uuid;
+      _plotTemplate = this.plotter.i.template.template[plotId];
+      _state = this.plotter.plots[0].proto.getState();
+      maxDatetime = this.plotter.lib.format(_state.range.data[0].max);
+      limit = _state.length.data[0];
+      args = this.plotter.i.template.forSync(plotId, 0, maxDatetime, limit);
+      uuid = this.plotter.lib.uuid();
+      this.requests[uuid] = {
+        plotId: plotId,
+        ready: false,
+        requested: false
+      };
+      return this.requests[uuid]['requested'] = this.getAppend(plotId, 0, uuid, args);
+    };
+
     InitialSync.prototype.get = function(plotId, dataSetId, uuid, args) {
       var _, callback, preError, target;
       preError = this.preError + ".get()";
@@ -1139,6 +1146,29 @@
         }
         _.requests[uuid].ready = true;
         return _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
+      };
+      this.sapi.get(target, args, callback);
+      return true;
+    };
+
+    InitialSync.prototype.getAppend = function(plotId, dataSetId, uuid, args) {
+      var _, callback, preError, target;
+      preError = this.preError + ".get()";
+      target = this.endpoint();
+      _ = this;
+      callback = function(data) {
+        if (!(data.responseJSON != null)) {
+          throw new Error(preError + " error requesting data.");
+          return null;
+        }
+        if (data.responseJSON.results.length === 0) {
+          throw new Error(preError + " no set found.");
+          return null;
+        }
+        _.requests[uuid].ready = true;
+        _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
+        _.plotter.plots[plotId].setData(_.plotter.plots[plotId].__data__[dataSetId]);
+        return _.plotter.plots[plotId].append();
       };
       this.sapi.get(target, args, callback);
       return true;
@@ -1714,7 +1744,7 @@
         this.dropdown.append("ul").attr("class", "dropdown-menu").selectAll("li").data(_.links).enter().append("li").append("a").text(function(d) {
           return d.title;
         }).on("click", function(d) {
-          return _.plotter.initVariable(_.options.plotId, d.variable, d.title);
+          return _.plotter.initializePlot(_.options.plotId, d.variable, d.title);
         });
         this.temp.append("p").text(sub_text).style("color", "#ggg").style("font-size", "12px");
       }
@@ -2168,6 +2198,7 @@
       this.i.livesync = new window.Plotter.LiveSync(this);
       this.i.zoom = new window.Plotter.Zoom(this);
       this.i.crosshairs = new window.Plotter.Crosshairs(this);
+      this.i.specs = new window.Plotter.Specs();
       this.i.colors = new window.Plotter.Colors();
       this.plots = [];
       this.updates = 0;
@@ -2288,7 +2319,7 @@
       uuid = this.lib.uuid();
       _target = "outer-" + uuid;
       plot = {
-        plotOrder: this.i.template.plotCount(),
+        plotOrder: this.i.template.plotCount() + 1,
         type: type,
         options: {
           type: type,
@@ -2302,6 +2333,34 @@
       this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot.options);
       this.plots[_key].proto.preAppend();
       return this.plots[_key].proto.options.plotId = _key;
+    };
+
+    Handler.prototype.initializePlot = function(plotId, variable, title) {
+      var _options;
+      _options = this.i.specs.getOptions(variable, null);
+      this.i.template.template[plotId].x = $.extend(true, {}, this.i.template.template[0].x);
+      this.i.template.template[plotId].y = [_options];
+      this.plots[plotId].proto.options = this.i.template.forPlots(plotId);
+      console.log("Initialize Plot Options (template, plot)", this.i.template.full(plotId), this.plots[plotId].proto.options);
+      this.i.controls.append(plotId);
+      return this.plots[plotId].proto.removeTemp();
+    };
+
+    Handler.prototype.addStation = function(plotId, dataLoggerId) {
+      var _state, _yOptions, maxDatetime;
+      if (!this.plots[plotId].proto.initialized) {
+        this.plots[plotId].proto.options.y[0].dataLoggerId = dataLoggerId;
+        this.i.controls.updateStationDropdown(plotId);
+        this.i.controls.updateStationMap(plotId);
+        this.i.initialsync.add(plotId);
+        return true;
+      }
+      _state = this.template[plotId].proto.getState();
+      maxDatetime = state.range.data.max.getTime();
+      _yOptions = this.i.getOptions(variable, dataLoggerId);
+      this.plots[plotId].options.y.push(_yOptions);
+      this.i.controls.updateStationDropdown(plotId);
+      return this.i.controls.updateStationMap(plotId);
     };
 
     return Handler;
@@ -2318,9 +2377,111 @@
   window.Plotter.Specs = Specs = (function() {
     function Specs() {}
 
-    Specs.prototype.getVariableBounds = function(variable) {};
+    Specs.prototype.getOptions = function(variable, dataLoggerId) {
+      var _bounds, _info, yOptions;
+      _bounds = this.getVariableBounds(variable);
+      _info = this.getVariableInfo(variable);
+      yOptions = {
+        dataLoggerId: dataLoggerId,
+        variable: variable,
+        min: _bounds.min,
+        max: _bounds.max,
+        maxBar: _bounds.maxBar,
+        title: _info.title,
+        units: _info.units
+      };
+      return yOptions;
+    };
 
-    Specs.prototype.getVariableInfo = function(variable) {};
+    Specs.prototype.getVariableBounds = function(variable) {
+      var bounds;
+      bounds = {
+        battery_voltage: {
+          min: 8,
+          max: 16,
+          maxBar: null
+        },
+        net_solar: {
+          min: 0,
+          max: 800,
+          maxBar: null
+        },
+        relative_humidity: {
+          min: 0,
+          max: 102,
+          maxBar: null
+        },
+        snow_depth: {
+          min: 0,
+          max: 40,
+          maxBar: null
+        },
+        wind_direction: {
+          min: 0,
+          max: 360,
+          maxBar: null
+        },
+        precipitation: {
+          min: 0,
+          max: 0.7,
+          maxBar: null
+        },
+        temperature: {
+          min: 0,
+          max: 60,
+          maxBar: 32
+        },
+        wind_speed_average: {
+          min: 0,
+          max: 60,
+          maxBar: null
+        }
+      };
+      return bounds[variable];
+    };
+
+    Specs.prototype.getVariableInfo = function(variable) {
+      var info;
+      info = {
+        battery_voltage: {
+          title: "Battery Voltage",
+          units: "V"
+        },
+        net_solar: {
+          title: "Solar Radiation",
+          units: "W/m2"
+        },
+        relative_humidity: {
+          title: "Relative Humidity",
+          units: "%"
+        },
+        barometric_pressure: {
+          title: "Barometric Pressure",
+          units: "atm"
+        },
+        snow_depth: {
+          title: "Snow Depth",
+          units: "\""
+        },
+        wind_direction: {
+          title: "Wind Direction",
+          units: "°"
+        },
+        precipitation: {
+          title: "Precipitation",
+          units: "\""
+        },
+        temperature: {
+          title: "Temperature",
+          units: "°F"
+        },
+        wind_speed_average: {
+          title: "Wind Speed",
+          units: "mph"
+        }
+      };
+      return info[variable];
+    };
 
     return Specs;
 

@@ -469,7 +469,7 @@ window.Plotter.LinePlot = class LinePlot
         .append("a")
         .text((d) -> return d.title)
         .on("click", (d) ->
-          _.plotter.initVariable(_.options.plotId, d.variable, d.title)
+          _.plotter.initializePlot(_.options.plotId, d.variable, d.title)
         )
 
       @temp.append("p")
