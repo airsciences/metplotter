@@ -659,63 +659,64 @@ window.Plotter.LinePlot = class LinePlot
 
     # Pre-Append Data For Smooth transform
     for key, row of @data
-      if @svg.select(".line-plot-area-#{key}").node() is null
-        @bands[key] = @svg.append("g")
-          .attr("clip-path", "url(\##{@options.target}_clip)")
-          .append("path")
-          .datum(row)
-          .attr("d", @definition.area)
-          .attr("class", "line-plot-area-#{key}")
-          .style("fill", @options.y[key].color)
-          .style("opacity", 0.15)
-          .style("stroke", () ->
-            return d3.color(_.options.y[key].color).darker(1)
-          )
-      else
-        @svg.select(".line-plot-area-#{key}")
-          .datum(row)
-          .attr("d", @definition.area)
-          .style("fill", @options.y[key].color)
-          .style("stroke", () ->
-            return d3.rgb(_.options.y[key].color).darker(1)
-          )
-      if @svg.select(".line-plot-path-#{key}").node() is null
-        @lines[key] = @svg.append("g")
-          .attr("clip-path", "url(\##{@options.target}_clip)")
-          .append("path")
-          .datum(row)
-          .attr("d", @definition.line)
-          .attr("class", "line-plot-path-#{key}")
-          .style("stroke", @options.y[key].color)
-          .style("stroke-width",
+      if row?
+        if @svg.select(".line-plot-area-#{key}").node() is null
+          @bands[key] = @svg.append("g")
+            .attr("clip-path", "url(\##{@options.target}_clip)")
+            .append("path")
+            .datum(row)
+            .attr("d", @definition.area)
+            .attr("class", "line-plot-area-#{key}")
+            .style("fill", @options.y[key].color)
+            .style("opacity", 0.15)
+            .style("stroke", () ->
+              return d3.color(_.options.y[key].color).darker(1)
+            )
+        else
+          @svg.select(".line-plot-area-#{key}")
+            .datum(row)
+            .attr("d", @definition.area)
+            .style("fill", @options.y[key].color)
+            .style("stroke", () ->
+              return d3.rgb(_.options.y[key].color).darker(1)
+            )
+        if @svg.select(".line-plot-path-#{key}").node() is null
+          @lines[key] = @svg.append("g")
+            .attr("clip-path", "url(\##{@options.target}_clip)")
+            .append("path")
+            .datum(row)
+            .attr("d", @definition.line)
+            .attr("class", "line-plot-path-#{key}")
+            .style("stroke", @options.y[key].color)
+            .style("stroke-width",
+                Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+            .style("fill", "none")
+
+          # Create Focus Circles and Labels
+          @focusCircle[key] = @svg.append("circle")
+            .attr("r", 4)
+            .attr("class", "focus-circle-#{key}")
+            .attr("fill", @options.y[key].color)
+            .attr("transform", "translate(-10, -10)")
+            .style("display", "none")
+
+          @focusText[key] = @svg.append("text")
+            .attr("class", "focus-text-#{key}")
+            .attr("x", 9)
+            .attr("y", 7)
+            .style("display", "none")
+            .style("fill", @options.y[key].color)
+            .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+              2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+              2px 2px 0 rgb(255,255,255)")
+        else
+          @svg.select(".line-plot-path-#{key}")
+            .datum(row)
+            .attr("d", @definition.line)
+            .style("stroke", @options.y[key].color)
+            .style("stroke-width",
               Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-          .style("fill", "none")
-
-        # Create Focus Circles and Labels
-        @focusCircle[key] = @svg.append("circle")
-          .attr("r", 4)
-          .attr("class", "focus-circle-#{key}")
-          .attr("fill", @options.y[key].color)
-          .attr("transform", "translate(-10, -10)")
-          .style("display", "none")
-
-        @focusText[key] = @svg.append("text")
-          .attr("class", "focus-text-#{key}")
-          .attr("x", 9)
-          .attr("y", 7)
-          .style("display", "none")
-          .style("fill", @options.y[key].color)
-          .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
-            2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
-            2px 2px 0 rgb(255,255,255)")
-      else
-        @svg.select(".line-plot-path-#{key}")
-          .datum(row)
-          .attr("d", @definition.line)
-          .style("stroke", @options.y[key].color)
-          .style("stroke-width",
-            Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-          .style("fill", "none")
+            .style("fill", "none")
 
     @overlay.datum(@data)
 
