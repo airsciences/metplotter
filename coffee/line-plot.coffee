@@ -659,7 +659,7 @@ window.Plotter.LinePlot = class LinePlot
 
     # Pre-Append Data For Smooth transform
     for key, row of @data
-      if row?
+      if row? and _.options.y[key]?
         if @svg.select(".line-plot-area-#{key}").node() is null
           @bands[key] = @svg.append("g")
             .attr("clip-path", "url(\##{@options.target}_clip)")

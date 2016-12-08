@@ -1812,7 +1812,7 @@
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        if (row != null) {
+        if ((row != null) && (_.options.y[key] != null)) {
           if (this.svg.select(".line-plot-area-" + key).node() === null) {
             this.bands[key] = this.svg.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
               return d3.color(_.options.y[key].color).darker(1);
