@@ -2391,7 +2391,8 @@
       plot = {
         plotOrder: this.i.template.plotCount() + 1,
         type: type,
-        target: '#' + _target
+        target: '#' + _target,
+        y: []
       };
       html = "<div id=\"" + _target + "\"></div>";
       $(this.options.target).append(html);
@@ -2407,7 +2408,7 @@
       var _revisedOptions, _yOptions;
       _yOptions = this.i.specs.getOptions(variable, null);
       this.i.template.template[plotId].x = $.extend(true, {}, this.i.template.template[0].x);
-      this.i.template.template[plotId].y = [_options];
+      this.i.template.template[plotId].y = [_yOptions];
       _revisedOptions = this.i.template.forPlots(plotId);
       this.plots[plotId].proto.options.x = _revisedOptions.x;
       this.plots[plotId].proto.options.y = _revisedOptions.y;

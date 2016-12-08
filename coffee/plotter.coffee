@@ -163,6 +163,7 @@ window.Plotter.Handler = class Handler
       plotOrder: @i.template.plotCount() + 1
       type: type
       target: '#' + _target
+      y: []
 
     html = "<div id=\"#{_target}\"></div>"
     $(@options.target).append(html)
@@ -180,7 +181,7 @@ window.Plotter.Handler = class Handler
     _yOptions = @i.specs.getOptions(variable, null)
     @i.template.template[plotId].x = $.extend(
       true, {}, @i.template.template[0].x)
-    @i.template.template[plotId].y = [_options]
+    @i.template.template[plotId].y = [_yOptions]
     _revisedOptions =  @i.template.forPlots(plotId)
     @plots[plotId].proto.options.x = _revisedOptions.x
     @plots[plotId].proto.options.y = _revisedOptions.y
