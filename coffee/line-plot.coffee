@@ -947,6 +947,7 @@ window.Plotter.LinePlot = class LinePlot
       .style("display", null)
 
     for setId, row of @options.y
+      #console.log("Showing focus items for (setId, row)", setId, row)
       if row.variable != null
         @focusCircle[setId].style("display", null)
           .attr("fill", row.color)
@@ -954,7 +955,7 @@ window.Plotter.LinePlot = class LinePlot
           .style("color", row.color)
           .style("fill", row.color)
 
-  hideCrosshair: () ->
+  hideCrosshair: ->
     # Hide the Crosshair
     if !@initialized
       return

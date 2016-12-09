@@ -113,14 +113,10 @@ window.Plotter.Handler = class Handler
       _options.target = "\#outer-#{row.uuid}"
       _options.uuid = row.uuid
 
-      console.log("Options.y", _options.y)
-
       # Initialize the Line Plot
       row.proto = new window.Plotter.LinePlot(@, row.__data__, _options)
       row.proto.preAppend()
       row.proto.append()
-
-      console.log("Options.y", _options.y)
 
       # Append controls
       @i.controls.append(key)

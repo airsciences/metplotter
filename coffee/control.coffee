@@ -326,7 +326,6 @@ window.Plotter.Controls = class Controls
           </div>
         </div>"
     $(appendTarget).prepend(html)
-    console.log("Append Map (target)", appendTarget)
     $("#map-#{plotId}").on('click', ->
       _.plotter.i.controls.toggleMap(plotId)
     )

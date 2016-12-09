@@ -536,7 +536,6 @@
       dom_uuid = "map-control-" + this.plotter.plots[plotId].proto.options.uuid;
       html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
-      console.log("Append Map (target)", appendTarget);
       $("#map-" + plotId).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);
       });
@@ -2341,11 +2340,9 @@
         _options = this.i.colors.getInitial(_options);
         _options.target = "\#outer-" + row.uuid;
         _options.uuid = row.uuid;
-        console.log("Options.y", _options.y);
         row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
         row.proto.preAppend();
         row.proto.append();
-        console.log("Options.y", _options.y);
         results.push(this.i.controls.append(key));
       }
       return results;
