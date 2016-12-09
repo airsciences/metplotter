@@ -718,7 +718,12 @@ window.Plotter.LinePlot = class LinePlot
               Math.round(Math.pow(@definition.dimensions.width, 0.1)))
             .style("fill", "none")
 
-    @overlay.datum(@data)
+    # Reset the overlay to last position.
+    @overlay.remove()
+    @overlay = @svg.append("rect")
+      .attr("class", "plot-event-target")
+    @appendCrosshairTarget()
+    @appendZoomTarget()
 
     @calculateYAxisDims(@data)
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()

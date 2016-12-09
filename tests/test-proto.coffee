@@ -7,10 +7,13 @@ window.Plotter.Tester = class Tester
 
   template: ->
     # Test the template
+    result = false
     _template = @plotter.i.template.template
-    console.log("Testing basic template validity...")
+
     validA = @plotter.i.template.isValid(_template)
     console.log("Template validA result is: ", validA)
+
+    return result
 
   plotOptions: ->
     for key, plot of @plotter.plots
@@ -36,3 +39,15 @@ window.Plotter.Tester = class Tester
 
   colors: ->
     # Test that colors for each plot match the template color management.
+
+
+
+  domOrdering: ->
+    # Test that the overlay rectangle is the top element
+    # on the DOM for each plot!
+    name = "DOM Overlay Ordering:"
+    for key, plot of @plotter.plots
+      _target = plot.proto.options.target
+      _last = $("#{_target}").find("svg").children().last()
+      valid = _last.hasClass("zoom-pane") and _last.is("rect")
+      console.log("#{name} listener is last", valid)

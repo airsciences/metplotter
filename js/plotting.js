@@ -1830,7 +1830,10 @@
           }
         }
       }
-      this.overlay.datum(this.data);
+      this.overlay.remove();
+      this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
+      this.appendCrosshairTarget();
+      this.appendZoomTarget();
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       ref1 = this.data;

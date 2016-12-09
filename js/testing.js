@@ -6,7 +6,8 @@
     _proto.template();
     _proto.plotOptions();
     _proto.templateOptionsMatch();
-    return true;
+    _proto.domOrdering();
+    return "Finished.";
   };
 
 }).call(this);
@@ -22,11 +23,12 @@
     }
 
     Tester.prototype.template = function() {
-      var _template, validA;
+      var _template, result, validA;
+      result = false;
       _template = this.plotter.i.template.template;
-      console.log("Testing basic template validity...");
       validA = this.plotter.i.template.isValid(_template);
-      return console.log("Template validA result is: ", validA);
+      console.log("Template validA result is: ", validA);
+      return result;
     };
 
     Tester.prototype.plotOptions = function() {
@@ -67,6 +69,21 @@
     };
 
     Tester.prototype.colors = function() {};
+
+    Tester.prototype.domOrdering = function() {
+      var _last, _target, key, name, plot, ref, results, valid;
+      name = "DOM Overlay Ordering:";
+      ref = this.plotter.plots;
+      results = [];
+      for (key in ref) {
+        plot = ref[key];
+        _target = plot.proto.options.target;
+        _last = $("" + _target).find("svg").children().last();
+        valid = _last.hasClass("zoom-pane") && _last.is("rect");
+        results.push(console.log(name + " listener is last", valid));
+      }
+      return results;
+    };
 
     return Tester;
 

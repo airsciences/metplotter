@@ -9,4 +9,5 @@ window.testPlotter = (plotter) ->
   _proto.template()
   _proto.plotOptions()
   _proto.templateOptionsMatch()
+  _proto.domOrdering()
   return "Finished."
