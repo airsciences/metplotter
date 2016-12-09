@@ -121,9 +121,8 @@ window.Plotter.LiveSync = class LiveSync
       if data.responseJSON.results.length is 0
         throw new Error("#{preError} no new data found.")
         _result = []
+        
       # Correct Data. Stage into Plotter.
-      console.log("Adding data to plot (_result, dataSetId)",
-        _result, dataSetId)
       _proto.addData(_result, dataSetId)
       _proto.update()
 

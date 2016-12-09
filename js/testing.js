@@ -5,7 +5,8 @@
     console.log("%c Testing Plotter...", 'background: #34495e; color: #2ecc71; font-weight: 900');
     _proto.template();
     _proto.plotOptions();
-    return _proto.templateOptionsMatch();
+    _proto.templateOptionsMatch();
+    return true;
   };
 
 }).call(this);
@@ -29,18 +30,19 @@
     };
 
     Tester.prototype.plotOptions = function() {
-      var key, plot, ref, results;
+      var cat, key, plot, ref, results;
       ref = this.plotter.plots;
       results = [];
       for (key in ref) {
         plot = ref[key];
-        results.push(console.log("Testing... (plot)", plot));
+        results.push(cat = "rawr");
       }
       return results;
     };
 
     Tester.prototype.templateOptionsMatch = function() {
-      var _template, _y, count, key, loggers, plot, ref, results, yKey, yRow;
+      var _template, _y, count, key, name, plot, ref, results, valid, yKey, yRow;
+      name = "Template-Options Match:";
       ref = this.plotter.plots;
       results = [];
       for (key in ref) {
@@ -48,26 +50,23 @@
         _template = this.plotter.i.template.template[key];
         _y = plot.proto.options.y;
         count = _template.y.length === _y.length;
-        console.log("Template-Options Match: Length is correct", count);
-        loggers = [];
+        console.log(name + " Length is correct", count);
         results.push((function() {
-          var i, len, ref1, results1;
+          var ref1, results1;
           ref1 = _template.y;
           results1 = [];
-          for (yRow = i = 0, len = ref1.length; i < len; yRow = ++i) {
-            yKey = ref1[yRow];
-            logger[yKey] = {
-              template: yRow.dataLoggerId,
-              options: _y[yKey].dataLoggerId
-            };
-            logger[yKey].valid = logger[yKey].template === logger[yKey].options;
-            results1.push(console.log("Template-Options Match: Logger Matches (y-key)", yKey, logger[yKey].valid));
+          for (yKey in ref1) {
+            yRow = ref1[yKey];
+            valid = yRow.dataLoggerId === _y[yKey].dataLoggerId;
+            results1.push(console.log(name + " Logger Matches", yKey, yRow.dataLoggerId, _y[yKey].dataLoggerId, valid));
           }
           return results1;
         })());
       }
       return results;
     };
+
+    Tester.prototype.colors = function() {};
 
     return Tester;
 

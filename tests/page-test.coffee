@@ -9,3 +9,4 @@ window.testPlotter = (plotter) ->
   _proto.template()
   _proto.plotOptions()
   _proto.templateOptionsMatch()
+  return "Finished."

@@ -2164,7 +2164,6 @@
           throw new Error(preError + " no new data found.");
           _result = [];
         }
-        console.log("Adding data to plot (_result, dataSetId)", _result, dataSetId);
         _proto.addData(_result, dataSetId);
         _proto.update();
         _.requests[uuid].ready = true;
