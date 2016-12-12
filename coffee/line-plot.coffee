@@ -211,18 +211,21 @@ window.Plotter.LinePlot = class LinePlot
 
   removeData: (key) ->
     # Removing sub key from data.
-    @data.splice(key, 1)
-    @options.y.splice(key, 1)
+    if key >= 0
+      console.log("Remove Data (data)", key, @data)
+      delete @data[key]
+      delete @options[key]
+      console.log("Remove Data Complete (data)", key, @data)
 
-    @svg.select(".line-plot-area-#{key}").remove()
-    @svg.select(".line-plot-path-#{key}").remove()
-    @svg.select(".focus-circle-#{key}").remove()
-    @svg.select(".focus-text-#{key}").remove()
+      @svg.select(".line-plot-area-#{key}").remove()
+      @svg.select(".line-plot-path-#{key}").remove()
+      @svg.select(".focus-circle-#{key}").remove()
+      @svg.select(".focus-text-#{key}").remove()
 
-    if @initialized
-      @setDataState()
-      @setIntervalState()
-      @setDataRequirement()
+      if @initialized
+        @setDataState()
+        @setIntervalState()
+        @setDataRequirement()
 
   setDataState: ->
     # Set Data Ranges

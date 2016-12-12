@@ -1200,8 +1200,10 @@
       index = -1;
       if (array.length > 0) {
         for (i = j = 0, ref = array.length - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
-          if (array[i][key] === value) {
-            index = i;
+          if (array[i] != null) {
+            if (array[i][key] == value) {
+              index = i;
+            }
           }
         }
       }
@@ -1484,16 +1486,20 @@
     };
 
     LinePlot.prototype.removeData = function(key) {
-      this.data.splice(key, 1);
-      this.options.y.splice(key, 1);
-      this.svg.select(".line-plot-area-" + key).remove();
-      this.svg.select(".line-plot-path-" + key).remove();
-      this.svg.select(".focus-circle-" + key).remove();
-      this.svg.select(".focus-text-" + key).remove();
-      if (this.initialized) {
-        this.setDataState();
-        this.setIntervalState();
-        return this.setDataRequirement();
+      if (key >= 0) {
+        console.log("Remove Data (data)", key, this.data);
+        delete this.data[key];
+        delete this.options[key];
+        console.log("Remove Data Complete (data)", key, this.data);
+        this.svg.select(".line-plot-area-" + key).remove();
+        this.svg.select(".line-plot-path-" + key).remove();
+        this.svg.select(".focus-circle-" + key).remove();
+        this.svg.select(".focus-text-" + key).remove();
+        if (this.initialized) {
+          this.setDataState();
+          this.setIntervalState();
+          return this.setDataRequirement();
+        }
       }
     };
 
@@ -2441,13 +2447,15 @@
     Handler.prototype.removeStation = function(plotId, dataLoggerId) {
       var _key;
       _key = this.lib.indexOfValue(this.plots[plotId].proto.options.y, "dataLoggerId", dataLoggerId);
-      this.i.template.template[plotId].y.splice(_key, 1);
-      this.plots[plotId].proto.getDefinition();
-      this.plots[plotId].proto.removeData(_key);
-      this.plots[plotId].proto.update();
-      this.i.controls.updateStationDropdown(plotId);
-      this.i.controls.updateStationMap(plotId);
-      return this.i.controls.removeSpinner(plotId);
+      if (_key >= 0) {
+        delete this.i.template.template[plotId].y[_key];
+        this.plots[plotId].proto.removeData(_key);
+        this.plots[plotId].proto.getDefinition();
+        this.plots[plotId].proto.update();
+        this.i.controls.updateStationDropdown(plotId);
+        this.i.controls.updateStationMap(plotId);
+        return this.i.controls.removeSpinner(plotId);
+      }
     };
 
     return Handler;

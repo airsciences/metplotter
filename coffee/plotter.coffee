@@ -221,11 +221,12 @@ window.Plotter.Handler = class Handler
     _key = @lib.indexOfValue(@plots[plotId].proto.options.y, "dataLoggerId",
       dataLoggerId)
 
-    @i.template.template[plotId].y.splice(_key, 1)
-    @plots[plotId].proto.getDefinition()
-    @plots[plotId].proto.removeData(_key)
-    @plots[plotId].proto.update()
+    if _key >= 0
+      delete @i.template.template[plotId].y[_key]
+      @plots[plotId].proto.removeData(_key)
+      @plots[plotId].proto.getDefinition()
+      @plots[plotId].proto.update()
 
-    @i.controls.updateStationDropdown(plotId)
-    @i.controls.updateStationMap(plotId)
-    @i.controls.removeSpinner(plotId)
+      @i.controls.updateStationDropdown(plotId)
+      @i.controls.updateStationMap(plotId)
+      @i.controls.removeSpinner(plotId)

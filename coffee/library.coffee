@@ -33,8 +33,9 @@ window.Plotter.Library = class Library
     index = -1
     if array.length > 0
       for i in [0..(array.length-1)]
-        if array[i][key] is value
-          index = i
+        if array[i]?
+          if `array[i][key] == value`
+            index = i
     return index
 
   uuid: ->
