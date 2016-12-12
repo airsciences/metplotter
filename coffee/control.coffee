@@ -331,9 +331,10 @@ window.Plotter.Controls = class Controls
     )
 
     @maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
-      center: new google.maps.LatLng(46.980, -121.980),
+      center: new google.maps.LatLng(46.980, 122.221),
       zoom: 6,
       maxZoom: 12,
+      minZoom: 6,
       mapTypeId: 'terrain',
       zoomControl: true,
       mapTypeControl: false,
@@ -460,7 +461,7 @@ window.Plotter.Controls = class Controls
         _row_id = "map-plot-#{plotId}-station-#{row.dataLoggerId}"
         updateMarker(plotId, _row_id, row.color)
 
-    @boundOnSelected(plotId)
+    #@boundOnSelected(plotId)
 
   boundOnSelected: (plotId) ->
     # Reset the Station Map

@@ -12,7 +12,7 @@ window.Plotter.Handler = class Handler
     @lib = new window.Plotter.Library(__libOptions)
 
     # Get the href Root.
-    if location.origin is "http://localhost:5000"
+    if location.origin.includes(":5000")
       __href = "http://dev.nwac.us"
     else
       __href = location.origin
@@ -125,13 +125,7 @@ window.Plotter.Handler = class Handler
       @i.controls.append(key)
 
     # Template Save Control.
-    if @isAdmin()
-      $(@options.target).append(
-        "<small><a style=\"cusor:pointer\"
-          id=\"save-#{@options.uuid}\">Save Template</a></small>")
-      $("#save-#{@options.uuid}").on("click", (event) ->
-        _.i.template.put()
-      )
+    @appendSave()
 
   remove: (plotId) ->
     # Remove a plotId
@@ -183,6 +177,7 @@ window.Plotter.Handler = class Handler
     @plots[_key].proto.preAppend()
     @plots[_key].proto.options.plotId = _key
     @plots[_key].proto.options.uuid = uuid
+    @appendSave()
 
   initializePlot: (plotId, variable, title) ->
     # Initialize the Plot Variable.
@@ -228,15 +223,27 @@ window.Plotter.Handler = class Handler
     return true
 
   removeStation: (plotId, dataLoggerId) ->
-    _key = @lib.indexOfValue(@plots[plotId].proto.options.y, "dataLoggerId",
-      dataLoggerId)
+    if @plots[plotId].proto.data.length > 1
+      _key = @lib.indexOfValue(@plots[plotId].proto.options.y, "dataLoggerId",
+        dataLoggerId)
 
-    if _key >= 0
-      delete @i.template.template[plotId].y[_key]
-      @plots[plotId].proto.removeData(_key)
-      @plots[plotId].proto.getDefinition()
-      @plots[plotId].proto.update()
+      if _key >= 0
+        delete @i.template.template[plotId].y[_key]
+        @plots[plotId].proto.removeData(_key)
+        @plots[plotId].proto.getDefinition()
+        @plots[plotId].proto.update()
 
-      @i.controls.updateStationDropdown(plotId)
-      @i.controls.updateStationMap(plotId)
-      @i.controls.removeSpinner(plotId)
+        @i.controls.updateStationDropdown(plotId)
+        @i.controls.updateStationMap(plotId)
+    @i.controls.removeSpinner(plotId)
+
+  appendSave: ->
+    # Template Save Control.
+    $("#save-#{@options.uuid}").parent().remove()
+    if @isAdmin()
+      $(@options.target).append(
+        "<small><a style=\"cusor:pointer\"
+          id=\"save-#{@options.uuid}\">Save Template</a></small>")
+      $("#save-#{@options.uuid}").on("click", (event) ->
+        _.i.template.put()
+      )

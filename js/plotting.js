@@ -540,9 +540,10 @@
         return _.plotter.i.controls.toggleMap(plotId);
       });
       this.maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
-        center: new google.maps.LatLng(46.980, -121.980),
+        center: new google.maps.LatLng(46.980, 122.221),
         zoom: 6,
         maxZoom: 12,
+        minZoom: 6,
         mapTypeId: 'terrain',
         zoomControl: true,
         mapTypeControl: false,
@@ -639,7 +640,7 @@
     };
 
     Controls.prototype.updateStationMap = function(plotId) {
-      var _, _id, _options, _row_id, key, ref, row, updateMarker;
+      var _, _id, _options, _row_id, key, ref, results1, row, updateMarker;
       _ = this;
       this.resetStationMap(plotId);
       updateMarker = function(plotId, rowId, color) {
@@ -660,15 +661,18 @@
       };
       _options = this.plotter.plots[plotId].proto.options;
       ref = _options.y;
+      results1 = [];
       for (key in ref) {
         row = ref[key];
         if (row.variable !== null) {
           _id = row.variable.replace('_', '-');
           _row_id = "map-plot-" + plotId + "-station-" + row.dataLoggerId;
-          updateMarker(plotId, _row_id, row.color);
+          results1.push(updateMarker(plotId, _row_id, row.color));
+        } else {
+          results1.push(void 0);
         }
       }
-      return this.boundOnSelected(plotId);
+      return results1;
     };
 
     Controls.prototype.boundOnSelected = function(plotId) {
@@ -2248,7 +2252,7 @@
         dateFormat: __libDateFormat
       };
       this.lib = new window.Plotter.Library(__libOptions);
-      if (location.origin === "http://localhost:5000") {
+      if (location.origin.includes(":5000")) {
         __href = "http://dev.nwac.us";
       } else {
         __href = location.origin;
@@ -2361,12 +2365,7 @@
         row.proto.append();
         this.i.controls.append(key);
       }
-      if (this.isAdmin()) {
-        $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Template</a></small>");
-        return $("#save-" + this.options.uuid).on("click", function(event) {
-          return _.i.template.put();
-        });
-      }
+      return this.appendSave();
     };
 
     Handler.prototype.remove = function(plotId) {
@@ -2419,7 +2418,8 @@
       this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot);
       this.plots[_key].proto.preAppend();
       this.plots[_key].proto.options.plotId = _key;
-      return this.plots[_key].proto.options.uuid = uuid;
+      this.plots[_key].proto.options.uuid = uuid;
+      return this.appendSave();
     };
 
     Handler.prototype.initializePlot = function(plotId, variable, title) {
@@ -2458,15 +2458,27 @@
 
     Handler.prototype.removeStation = function(plotId, dataLoggerId) {
       var _key;
-      _key = this.lib.indexOfValue(this.plots[plotId].proto.options.y, "dataLoggerId", dataLoggerId);
-      if (_key >= 0) {
-        delete this.i.template.template[plotId].y[_key];
-        this.plots[plotId].proto.removeData(_key);
-        this.plots[plotId].proto.getDefinition();
-        this.plots[plotId].proto.update();
-        this.i.controls.updateStationDropdown(plotId);
-        this.i.controls.updateStationMap(plotId);
-        return this.i.controls.removeSpinner(plotId);
+      if (this.plots[plotId].proto.data.length > 1) {
+        _key = this.lib.indexOfValue(this.plots[plotId].proto.options.y, "dataLoggerId", dataLoggerId);
+        if (_key >= 0) {
+          delete this.i.template.template[plotId].y[_key];
+          this.plots[plotId].proto.removeData(_key);
+          this.plots[plotId].proto.getDefinition();
+          this.plots[plotId].proto.update();
+          this.i.controls.updateStationDropdown(plotId);
+          this.i.controls.updateStationMap(plotId);
+        }
+      }
+      return this.i.controls.removeSpinner(plotId);
+    };
+
+    Handler.prototype.appendSave = function() {
+      $("#save-" + this.options.uuid).parent().remove();
+      if (this.isAdmin()) {
+        $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Template</a></small>");
+        return $("#save-" + this.options.uuid).on("click", function(event) {
+          return _.i.template.put();
+        });
       }
     };
 
@@ -2613,41 +2625,43 @@
         var i, j, len, len1, ref, row, y;
         for (i = 0, len = template.length; i < len; i++) {
           row = template[i];
-          if (row.type === void 0) {
-            return false;
-          }
-          if (row.x === void 0) {
-            return false;
-          }
-          if (row.y === void 0) {
-            return false;
-          }
-          if (row.x.variable === void 0) {
-            return false;
-          }
-          if (row.x.min === void 0) {
-            return false;
-          }
-          if (row.x.max === void 0) {
-            return false;
-          }
-          if (row.y[0] === void 0) {
-            return false;
-          }
-          ref = row.y;
-          for (j = 0, len1 = ref.length; j < len1; j++) {
-            y = ref[j];
-            if (y.dataLoggerId === void 0) {
+          if (row != null) {
+            if (row.type === void 0) {
               return false;
             }
-            if (y.variable === void 0) {
+            if (row.x === void 0) {
               return false;
             }
-            if (y.title === void 0) {
+            if (row.y === void 0) {
               return false;
             }
-            if (y.units === void 0) {
+            if (row.x.variable === void 0) {
               return false;
+            }
+            if (row.x.min === void 0) {
+              return false;
+            }
+            if (row.x.max === void 0) {
+              return false;
+            }
+            if (row.y[0] === void 0) {
+              return false;
+            }
+            ref = row.y;
+            for (j = 0, len1 = ref.length; j < len1; j++) {
+              y = ref[j];
+              if (y.dataLoggerId === void 0) {
+                return false;
+              }
+              if (y.variable === void 0) {
+                return false;
+              }
+              if (y.title === void 0) {
+                return false;
+              }
+              if (y.units === void 0) {
+                return false;
+              }
             }
           }
         }
@@ -2657,8 +2671,10 @@
         var i, len, row;
         for (i = 0, len = template.length; i < len; i++) {
           row = template[i];
-          if (row.type === void 0) {
-            return false;
+          if (row != null) {
+            if (row.type === void 0) {
+              return false;
+            }
           }
         }
         return true;

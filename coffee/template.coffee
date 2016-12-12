@@ -21,24 +21,26 @@ window.Plotter.Template = class Template
     @isValid = (template) ->
       # JSON Format Validity Test
       for row in template
-        if row.type is undefined then return false
-        if row.x is undefined then return false
-        if row.y is undefined then return false
-        if row.x.variable is undefined then return false
-        if row.x.min is undefined then return false
-        if row.x.max is undefined then return false
-        if row.y[0] is undefined then return false
-        for y in row.y
-          if y.dataLoggerId is undefined then return false
-          if y.variable is undefined then return false
-          if y.title is undefined then return false
-          if y.units is undefined then return false
+        if row?
+          if row.type is undefined then return false
+          if row.x is undefined then return false
+          if row.y is undefined then return false
+          if row.x.variable is undefined then return false
+          if row.x.min is undefined then return false
+          if row.x.max is undefined then return false
+          if row.y[0] is undefined then return false
+          for y in row.y
+            if y.dataLoggerId is undefined then return false
+            if y.variable is undefined then return false
+            if y.title is undefined then return false
+            if y.units is undefined then return false
       return true
 
     @newIsValid = (template) ->
       # JSON Format Validity Test
       for row in template
-        if row.type is undefined then return false
+        if row?
+          if row.type is undefined then return false
       return true
 
     @parse = (templateData) ->
