@@ -34,6 +34,10 @@ window.Plotter.Specs = class Specs
         min: 0
         max: 40
         maxBar: null
+      snowfall_24_hour:
+        min: 0
+        max: 40
+        maxBar: null
       wind_direction:
         min: 0
         max: 360
@@ -68,6 +72,9 @@ window.Plotter.Specs = class Specs
         units: "atm"
       snow_depth:
         title: "Snow Depth"
+        units: "\""
+      snowfall_24_hour:
+        title: "24-Hour Snowfall"
         units: "\""
       wind_direction:
         title: "Wind Direction"
