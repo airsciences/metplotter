@@ -20,6 +20,7 @@ window.Plotter.Handler = class Handler
     # Defaults
     defaults =
       templateId: null
+      uuid: @lib.uuid()
       href: __href
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
@@ -102,6 +103,8 @@ window.Plotter.Handler = class Handler
       setTimeout(Plotter.Handler.prototype.listen.bind(@), @options.refresh)
 
   append: ->
+    _ = @
+
     # Append the Plots
     for key, row of @plots
       row.uuid = @lib.uuid()
@@ -120,6 +123,15 @@ window.Plotter.Handler = class Handler
 
       # Append controls
       @i.controls.append(key)
+
+    # Template Save Control.
+    if @isAdmin()
+      $(@options.target).append(
+        "<small><a style=\"cusor:pointer\"
+          id=\"save-#{@options.uuid}\">Save Template</a></small>")
+      $("#save-#{@options.uuid}").on("click", (event) ->
+        _.i.template.put()
+      )
 
   remove: (plotId) ->
     # Remove a plotId

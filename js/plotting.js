@@ -1830,7 +1830,6 @@
           }
         }
       }
-      console.log("Re-appending overlay (transform)", this.transform);
       this.overlay.remove();
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget(this.transform);
@@ -1995,8 +1994,14 @@
       for (setId in ref) {
         row = ref[setId];
         if (row.variable !== null) {
-          this.focusCircle[setId].style("display", null).attr("fill", row.color);
-          results.push(this.focusText[setId].style("display", null).style("color", row.color).style("fill", row.color));
+          if (this.focusCircle[setId] != null) {
+            this.focusCircle[setId].style("display", null).attr("fill", row.color);
+          }
+          if (this.focusText[setId] != null) {
+            results.push(this.focusText[setId].style("display", null).style("color", row.color).style("fill", row.color));
+          } else {
+            results.push(void 0);
+          }
         } else {
           results.push(void 0);
         }
@@ -2016,8 +2021,14 @@
       for (setId in ref) {
         row = ref[setId];
         if (row.variable !== null) {
-          this.focusCircle[setId].style("display", "none");
-          results.push(this.focusText[setId].style("display", "none"));
+          if (this.focusCircle[setId] != null) {
+            this.focusCircle[setId].style("display", "none");
+          }
+          if (this.focusText[setId] != null) {
+            results.push(this.focusText[setId].style("display", "none"));
+          } else {
+            results.push(void 0);
+          }
         } else {
           results.push(void 0);
         }
@@ -2244,6 +2255,7 @@
       }
       defaults = {
         templateId: null,
+        uuid: this.lib.uuid(),
         href: __href,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
@@ -2333,9 +2345,9 @@
     };
 
     Handler.prototype.append = function() {
-      var _options, key, ref, results, row;
+      var _, _options, key, ref, row;
+      _ = this;
       ref = this.plots;
-      results = [];
       for (key in ref) {
         row = ref[key];
         row.uuid = this.lib.uuid();
@@ -2347,9 +2359,14 @@
         row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
         row.proto.preAppend();
         row.proto.append();
-        results.push(this.i.controls.append(key));
+        this.i.controls.append(key);
       }
-      return results;
+      if (this.isAdmin()) {
+        $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Template</a></small>");
+        return $("#save-" + this.options.uuid).on("click", function(event) {
+          return _.i.template.put();
+        });
+      }
     };
 
     Handler.prototype.remove = function(plotId) {

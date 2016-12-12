@@ -721,7 +721,6 @@ window.Plotter.LinePlot = class LinePlot
             .style("fill", "none")
 
     # Reset the overlay to last position.
-    console.log("Re-appending overlay (transform)", @transform)
     @overlay.remove()
     @overlay = @svg.append("rect")
       .attr("class", "plot-event-target")
@@ -961,11 +960,13 @@ window.Plotter.LinePlot = class LinePlot
 
     for setId, row of @options.y
       if row.variable != null
-        @focusCircle[setId].style("display", null)
-          .attr("fill", row.color)
-        @focusText[setId].style("display", null)
-          .style("color", row.color)
-          .style("fill", row.color)
+        if @focusCircle[setId]?
+          @focusCircle[setId].style("display", null)
+            .attr("fill", row.color)
+        if @focusText[setId]?
+          @focusText[setId].style("display", null)
+            .style("color", row.color)
+            .style("fill", row.color)
 
   hideCrosshair: ->
     # Hide the Crosshair
@@ -979,8 +980,10 @@ window.Plotter.LinePlot = class LinePlot
 
     for setId, row of @options.y
       if row.variable != null
-        @focusCircle[setId].style("display", "none")
-        @focusText[setId].style("display", "none")
+        if @focusCircle[setId]?
+          @focusCircle[setId].style("display", "none")
+        if @focusText[setId]?
+          @focusText[setId].style("display", "none")
 
   appendTitle: (title, subtitle) ->
     # Append a Plot Title
