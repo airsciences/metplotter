@@ -62,6 +62,7 @@ window.Plotter.LinePlot = class LinePlot
     options.y[0] = @plotter.lib.mergeDefaults(options.y[0], @defaults.y[0])
     @options = @plotter.lib.mergeDefaults(options, @defaults)
     @device = 'full'
+    @transform = d3.zoomIdentity
 
     @links = [
       {"variable": "battery_voltage", "title": "Battery Voltage"},
@@ -212,10 +213,8 @@ window.Plotter.LinePlot = class LinePlot
   removeData: (key) ->
     # Removing sub key from data.
     if key >= 0
-      console.log("Remove Data (data)", key, @data)
       delete @data[key]
       delete @options[key]
-      console.log("Remove Data Complete (data)", key, @data)
 
       @svg.select(".line-plot-area-#{key}").remove()
       @svg.select(".line-plot-path-#{key}").remove()
@@ -230,9 +229,9 @@ window.Plotter.LinePlot = class LinePlot
   setDataState: ->
     # Set Data Ranges
     _len = @data.length-1
-    for i in [0.._len]
-      if @data[i] is undefined
-        console.log("data[i] is (i, row)", i, @data[i])
+    # for i in [0.._len]
+    #   if @data[i] is undefined
+    #     console.log("data[i] is (i, row)", i, @data[i])
     for key, row of @data
       @state.range.data[key] =
         min: d3.min(@data[key], (d)-> d.x)
@@ -653,8 +652,8 @@ window.Plotter.LinePlot = class LinePlot
       .attr("class", "plot-event-target")
 
     # Append Crosshair & Zoom Listening Targets
-    @appendCrosshairTarget()
-    @appendZoomTarget()
+    @appendCrosshairTarget(@transform)
+    @appendZoomTarget(@transform)
 
   update: ->
     preError = "#{@preError}update()"
@@ -722,11 +721,15 @@ window.Plotter.LinePlot = class LinePlot
             .style("fill", "none")
 
     # Reset the overlay to last position.
+    console.log("Re-appending overlay (transform)", @transform)
     @overlay.remove()
     @overlay = @svg.append("rect")
       .attr("class", "plot-event-target")
-    @appendCrosshairTarget()
-    @appendZoomTarget()
+    @appendCrosshairTarget(@transform)
+    @appendZoomTarget(@transform)
+
+    # @appendCrosshairTarget(d3.zoomIdentity)
+    # @appendZoomTarget()
 
     @calculateYAxisDims(@data)
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
@@ -745,6 +748,9 @@ window.Plotter.LinePlot = class LinePlot
     # Redraw the Y-Axis
     @svg.select(".line-plot-axis-y")
       .call(@definition.yAxis)
+
+    # Reset the zoom state
+    @setZoomTransform(@transform)
 
   removeTemp: ->
     @temp.remove()
@@ -773,7 +779,7 @@ window.Plotter.LinePlot = class LinePlot
         _.plotter.i.crosshairs.set(transform, mouse)
       )
 
-  appendZoomTarget: ->
+  appendZoomTarget: (transform) ->
     if !@initialized
       return
     preError = "#{@preError}appendZoomTarget()"
@@ -790,7 +796,7 @@ window.Plotter.LinePlot = class LinePlot
       .style("fill", "none")
       .style("pointer-events", "all")
       .style("cursor", "move")
-      .call(@definition.zoom, d3.zoomIdentity)
+      .call(@definition.zoom, transform)
 
   setZoomTransform: (transform) ->
     # Set the current zoom transform state.
@@ -799,6 +805,7 @@ window.Plotter.LinePlot = class LinePlot
     preError = "#{@preError}.setZoomTransform(transform)"
     _ = @
     _transform = if transform then transform else d3.event.transform
+    @transform = transform
 
     # Zoom the X-Axis
     _rescaleX = _transform.rescaleX(@definition.x)
@@ -855,9 +862,7 @@ window.Plotter.LinePlot = class LinePlot
 
     x0 = @definition.x.invert(mouse[0] + _dims.leftPadding)
     if transform
-      x0 = @definition.x.invert(
-        transform.invertX(mouse[0] + _dims.leftPadding)
-      )
+      x0 = @definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding))
 
     i = _.bisectDate(_datum[0], x0, 1)
     if x0.getTime() < @state.range.data[0].min.getTime()
@@ -955,7 +960,6 @@ window.Plotter.LinePlot = class LinePlot
       .style("display", null)
 
     for setId, row of @options.y
-      #console.log("Showing focus items for (setId, row)", setId, row)
       if row.variable != null
         @focusCircle[setId].style("display", null)
           .attr("fill", row.color)

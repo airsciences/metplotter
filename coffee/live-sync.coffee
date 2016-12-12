@@ -58,9 +58,6 @@ window.Plotter.LiveSync = class LiveSync
     args = @plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit)
     uuid = @plotter.lib.uuid()
 
-    console.log(
-      "Adding line (plotId, dataSetId, args)", plotId, dataSetId, args)
-
     @requests[uuid] =
       ready: false
       requested: false
@@ -121,7 +118,7 @@ window.Plotter.LiveSync = class LiveSync
       if data.responseJSON.results.length is 0
         throw new Error("#{preError} no new data found.")
         _result = []
-        
+
       # Correct Data. Stage into Plotter.
       _proto.addData(_result, dataSetId)
       _proto.update()

@@ -1298,6 +1298,7 @@
       options.y[0] = this.plotter.lib.mergeDefaults(options.y[0], this.defaults.y[0]);
       this.options = this.plotter.lib.mergeDefaults(options, this.defaults);
       this.device = 'full';
+      this.transform = d3.zoomIdentity;
       this.links = [
         {
           "variable": "battery_voltage",
@@ -1487,10 +1488,8 @@
 
     LinePlot.prototype.removeData = function(key) {
       if (key >= 0) {
-        console.log("Remove Data (data)", key, this.data);
         delete this.data[key];
         delete this.options[key];
-        console.log("Remove Data Complete (data)", key, this.data);
         this.svg.select(".line-plot-area-" + key).remove();
         this.svg.select(".line-plot-path-" + key).remove();
         this.svg.select(".focus-circle-" + key).remove();
@@ -1504,17 +1503,12 @@
     };
 
     LinePlot.prototype.setDataState = function() {
-      var _len, i, j, key, ref, ref1, results, row;
+      var _len, key, ref, results, row;
       _len = this.data.length - 1;
-      for (i = j = 0, ref = _len; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
-        if (this.data[i] === void 0) {
-          console.log("data[i] is (i, row)", i, this.data[i]);
-        }
-      }
-      ref1 = this.data;
+      ref = this.data;
       results = [];
-      for (key in ref1) {
-        row = ref1[key];
+      for (key in ref) {
+        row = ref[key];
         this.state.range.data[key] = {
           min: d3.min(this.data[key], function(d) {
             return d.x;
@@ -1806,8 +1800,8 @@
         this.focusText[key] = this.svg.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       }
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
-      this.appendCrosshairTarget();
-      return this.appendZoomTarget();
+      this.appendCrosshairTarget(this.transform);
+      return this.appendZoomTarget(this.transform);
     };
 
     LinePlot.prototype.update = function() {
@@ -1836,10 +1830,11 @@
           }
         }
       }
+      console.log("Re-appending overlay (transform)", this.transform);
       this.overlay.remove();
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
-      this.appendCrosshairTarget();
-      this.appendZoomTarget();
+      this.appendCrosshairTarget(this.transform);
+      this.appendZoomTarget(this.transform);
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       ref1 = this.data;
@@ -1848,7 +1843,8 @@
         this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area);
         this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line);
       }
-      return this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
+      this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
+      return this.setZoomTransform(this.transform);
     };
 
     LinePlot.prototype.removeTemp = function() {
@@ -1873,14 +1869,14 @@
       });
     };
 
-    LinePlot.prototype.appendZoomTarget = function() {
+    LinePlot.prototype.appendZoomTarget = function(transform) {
       var _, preError;
       if (!this.initialized) {
         return;
       }
       preError = this.preError + "appendZoomTarget()";
       _ = this;
-      return this.overlay.attr("class", "zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move").call(this.definition.zoom, d3.zoomIdentity);
+      return this.overlay.attr("class", "zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move").call(this.definition.zoom, transform);
     };
 
     LinePlot.prototype.setZoomTransform = function(transform) {
@@ -1891,6 +1887,7 @@
       preError = this.preError + ".setZoomTransform(transform)";
       _ = this;
       _transform = transform ? transform : d3.event.transform;
+      this.transform = transform;
       _rescaleX = _transform.rescaleX(this.definition.x);
       this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
       this.state.range.scale = this.getDomainScale(_rescaleX);
@@ -2113,7 +2110,6 @@
       limit = state.length.data[0];
       args = this.plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit);
       uuid = this.plotter.lib.uuid();
-      console.log("Adding line (plotId, dataSetId, args)", plotId, dataSetId, args);
       this.requests[uuid] = {
         ready: false,
         requested: false
@@ -2417,7 +2413,6 @@
       _revisedOptions = this.i.template.forPlots(plotId);
       this.plots[plotId].proto.options.x = _revisedOptions.x;
       this.plots[plotId].proto.options.y = _revisedOptions.y;
-      console.log("Initialize Plot Options (template, plot)", this.i.template.full(plotId), this.plots[plotId].proto.options);
       this.i.controls.append(plotId);
       return this.plots[plotId].proto.removeTemp();
     };

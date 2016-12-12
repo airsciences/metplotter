@@ -181,8 +181,6 @@ window.Plotter.Handler = class Handler
     _revisedOptions =  @i.template.forPlots(plotId)
     @plots[plotId].proto.options.x = _revisedOptions.x
     @plots[plotId].proto.options.y = _revisedOptions.y
-    console.log("Initialize Plot Options (template, plot)",
-      @i.template.full(plotId), @plots[plotId].proto.options)
 
     # Append Controls on the New Plot
     @i.controls.append(plotId)
