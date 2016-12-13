@@ -855,53 +855,55 @@ window.Plotter.LinePlot = class LinePlot
     _ = @
     _dims = @definition.dimensions
 
-    _mouseTarget = @overlay.node()
-    _datum = @overlay.datum()
-    mouse = if mouse then mouse else d3.mouse(_mouseTarget)
+    for key, row of @data
+      _mouseTarget = @overlay.node()
+      #_datum = @overlay.datum()
+      _datum = row
+      mouse = if mouse then mouse else d3.mouse(_mouseTarget)
 
-    x0 = @definition.x.invert(mouse[0] + _dims.leftPadding)
-    if transform
-      x0 = @definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding))
-
-    i = _.bisectDate(_datum[0], x0, 1)
-    if x0.getTime() < @state.range.data[0].min.getTime()
-      i--
-    if x0.getTime() > @state.range.data[0].max.getTime()
-      i--
-    i = if x0.getMinutes() >= 30 then i else (i - 1)
-
-    if _datum[0][i]?
+      x0 = @definition.x.invert(mouse[0] + _dims.leftPadding)
       if transform
-        dx = transform.applyX(@definition.x(_datum[0][i].x))
-      else
-        dx = @definition.x(_datum[0][i].x)
-      dy = []
-      _value = []
-      for key, row of @data
+        x0 = @definition.x.invert(
+          transform.invertX(mouse[0] + _dims.leftPadding))
+
+      i = _.bisectDate(_datum, x0, 1)
+      if x0.getTime() < @state.range.data[key].min.getTime()
+        i--
+      if x0.getTime() > @state.range.data[key].max.getTime()
+        i--
+      i = if x0.getMinutes() >= 30 then i else (i - 1)
+
+      if _datum[i]?
+        if transform
+          dx = transform.applyX(@definition.x(_datum[i].x))
+        else
+          dx = @definition.x(_datum[i].x)
+        dy = []
+        _value = []
         if @options.y[key].variable != null
-          _value[key] = _datum[key][i]
+          _value[key] = _datum[i]
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
             if !isNaN(dy[key]) and _value[key].y?
               @focusCircle[key].attr("transform", "translate(0, 0)")
 
-      cx = dx - _dims.leftPadding
-      if cx >= 0
-        @crosshairs.select(".crosshair-x")
-          .attr("x1", cx)
-          .attr("y1", _dims.topPadding)
-          .attr("x2", cx)
-          .attr("y2", _dims.innerHeight + _dims.topPadding)
-          .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+        cx = dx - _dims.leftPadding
+        if cx >= 0
+          @crosshairs.select(".crosshair-x")
+            .attr("x1", cx)
+            .attr("y1", _dims.topPadding)
+            .attr("x2", cx)
+            .attr("y2", _dims.innerHeight + _dims.topPadding)
+            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-        @crosshairs.select(".crosshair-x-under")
-          .attr("x", cx)
-          .attr("y", _dims.topPadding)
-          .attr("width", (_dims.innerWidth - cx))
-          .attr("height", _dims.innerHeight)
-          .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+          @crosshairs.select(".crosshair-x-under")
+            .attr("x", cx)
+            .attr("y", _dims.topPadding)
+            .attr("width", (_dims.innerWidth - cx))
+            .attr("height", _dims.innerHeight)
+            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-      for key, row of @data
+
         if (
           @options.y[key].variable != null and !isNaN(dy[key]) and
           _value[key].y?

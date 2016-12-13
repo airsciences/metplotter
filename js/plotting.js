@@ -1926,41 +1926,41 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _datum, _dims, _mouseTarget, _value, cx, dx, dy, i, key, preError, ref, ref1, row, x0;
+      var _, _datum, _dims, _mouseTarget, _value, cx, dx, dy, i, key, preError, ref, row, x0;
       if (!this.initialized) {
         return;
       }
       preError = this.preError + ".setCrosshair(mouse)";
       _ = this;
       _dims = this.definition.dimensions;
-      _mouseTarget = this.overlay.node();
-      _datum = this.overlay.datum();
-      mouse = mouse ? mouse : d3.mouse(_mouseTarget);
-      x0 = this.definition.x.invert(mouse[0] + _dims.leftPadding);
-      if (transform) {
-        x0 = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
-      }
-      i = _.bisectDate(_datum[0], x0, 1);
-      if (x0.getTime() < this.state.range.data[0].min.getTime()) {
-        i--;
-      }
-      if (x0.getTime() > this.state.range.data[0].max.getTime()) {
-        i--;
-      }
-      i = x0.getMinutes() >= 30 ? i : i - 1;
-      if (_datum[0][i] != null) {
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        _mouseTarget = this.overlay.node();
+        _datum = row;
+        mouse = mouse ? mouse : d3.mouse(_mouseTarget);
+        x0 = this.definition.x.invert(mouse[0] + _dims.leftPadding);
         if (transform) {
-          dx = transform.applyX(this.definition.x(_datum[0][i].x));
-        } else {
-          dx = this.definition.x(_datum[0][i].x);
+          x0 = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
         }
-        dy = [];
-        _value = [];
-        ref = this.data;
-        for (key in ref) {
-          row = ref[key];
+        i = _.bisectDate(_datum, x0, 1);
+        if (x0.getTime() < this.state.range.data[key].min.getTime()) {
+          i--;
+        }
+        if (x0.getTime() > this.state.range.data[key].max.getTime()) {
+          i--;
+        }
+        i = x0.getMinutes() >= 30 ? i : i - 1;
+        if (_datum[i] != null) {
+          if (transform) {
+            dx = transform.applyX(this.definition.x(_datum[i].x));
+          } else {
+            dx = this.definition.x(_datum[i].x);
+          }
+          dy = [];
+          _value = [];
           if (this.options.y[key].variable !== null) {
-            _value[key] = _datum[key][i];
+            _value[key] = _datum[i];
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
               if (!isNaN(dy[key]) && (_value[key].y != null)) {
@@ -1968,15 +1968,11 @@
               }
             }
           }
-        }
-        cx = dx - _dims.leftPadding;
-        if (cx >= 0) {
-          this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-          this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-        }
-        ref1 = this.data;
-        for (key in ref1) {
-          row = ref1[key];
+          cx = dx - _dims.leftPadding;
+          if (cx >= 0) {
+            this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+            this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+          }
           if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
             this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
@@ -2458,16 +2454,14 @@
 
     Handler.prototype.removeStation = function(plotId, dataLoggerId) {
       var _key;
-      if (this.plots[plotId].proto.data.length > 1) {
-        _key = this.lib.indexOfValue(this.plots[plotId].proto.options.y, "dataLoggerId", dataLoggerId);
-        if (_key >= 0) {
-          delete this.i.template.template[plotId].y[_key];
-          this.plots[plotId].proto.removeData(_key);
-          this.plots[plotId].proto.getDefinition();
-          this.plots[plotId].proto.update();
-          this.i.controls.updateStationDropdown(plotId);
-          this.i.controls.updateStationMap(plotId);
-        }
+      _key = this.lib.indexOfValue(this.plots[plotId].proto.options.y, "dataLoggerId", dataLoggerId);
+      if (_key > 0) {
+        delete this.i.template.template[plotId].y[_key];
+        this.plots[plotId].proto.removeData(_key);
+        this.plots[plotId].proto.getDefinition();
+        this.plots[plotId].proto.update();
+        this.i.controls.updateStationDropdown(plotId);
+        this.i.controls.updateStationMap(plotId);
       }
       return this.i.controls.removeSpinner(plotId);
     };
