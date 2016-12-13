@@ -2522,13 +2522,13 @@
           maxBar: null
         },
         temperature: {
-          min: 0,
-          max: 60,
+          min: null,
+          max: null,
           maxBar: 32
         },
         equip_temperature: {
-          min: 0,
-          max: 60,
+          min: null,
+          max: null,
           maxBar: null
         },
         relative_humidity: {
@@ -2542,8 +2542,8 @@
           maxBar: null
         },
         snow_depth: {
-          min: 0,
-          max: 40,
+          min: null,
+          max: null,
           maxBar: null
         },
         snowfall_24_hour: {
@@ -2552,8 +2552,8 @@
           maxBar: null
         },
         intermittent_snow: {
-          min: 0,
-          max: 40,
+          min: null,
+          max: null,
           maxBar: null
         },
         wind_direction: {
@@ -2568,11 +2568,11 @@
         },
         wind_speed_average: {
           min: 0,
-          max: 60,
+          max: null,
           maxBar: null
         },
         solar_pyranometer: {
-          min: null,
+          min: 0,
           max: null,
           maxBar: null
         },
