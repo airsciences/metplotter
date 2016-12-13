@@ -25,13 +25,13 @@ window.Plotter.Specs = class Specs
         maxBar: null
       # {"variable": "temperature", "title": "Temperature"},
       temperature:
-        min: 0
-        max: 60
+        min: null
+        max: null
         maxBar: 32
       # {"variable": "equip_temperature", "title": "Equipment Temperature"},
       equip_temperature:
-        min: 0
-        max: 60
+        min: null
+        max: null
         maxBar: null
       # {"variable": "relative_humidity", "title": "Relative Humidity"},
       relative_humidity:
@@ -45,8 +45,8 @@ window.Plotter.Specs = class Specs
         maxBar: null
       # {"variable": "snow_depth", "title": "Snow Depth"},
       snow_depth:
-        min: 0
-        max: 40
+        min: null
+        max: null
         maxBar: null
       # {"variable": "snowfall_24_hour", "title": "24-Hr Snowfall"},
       snowfall_24_hour:
@@ -55,8 +55,8 @@ window.Plotter.Specs = class Specs
         maxBar: null
       # {"variable": "intermittent_snow", "title": "Intermittent Snow"}
       intermittent_snow:
-        min: 0
-        max: 40
+        min: null
+        max: null
         maxBar: null
       # {"variable": "wind_direction", "title": "Wind Direction"},
       wind_direction:
@@ -71,11 +71,11 @@ window.Plotter.Specs = class Specs
       # {"variable": "wind_speed_average", "title": "Wind Speed"},
       wind_speed_average:
         min: 0
-        max: 60
+        max: null
         maxBar: null
       # {"variable": "solar_pyranometer", "title": "Solar Pyranometer"},
       solar_pyranometer:
-        min: null
+        min: 0
         max: null
         maxBar: null
       # {"variable": "barometric_pressure", "title": "Barometric Pressure"},
