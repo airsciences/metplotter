@@ -576,8 +576,10 @@ window.Plotter.LinePlot = class LinePlot
       .style("font-weight", @options.font.weight)
 
     # Append Bands & Line Path
+    @lineWrapper = @svg.append("g")
+      .attr("class", "line-wrapper")
     for key, row of @data
-      @bands[key] = @svg.append("g")
+      @bands[key] = @lineWrapper.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
         .append("path")
         .datum(row)
@@ -589,7 +591,7 @@ window.Plotter.LinePlot = class LinePlot
           return d3.color(_.options.y[key].color).darker(1)
         )
 
-      @lines[key] = @svg.append("g")
+      @lines[key] = @lineWrapper.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
         .append("path")
         .datum(row)
@@ -601,7 +603,7 @@ window.Plotter.LinePlot = class LinePlot
         .style("fill", "none")
 
     if @options.y[0].maxBarValue?
-      @svg.append("rect")
+      @lineWrapper.append("rect")
         .attr("class", "line-plot-max-bar")
         .attr("x", @definition.dimensions.leftPadding)
         .attr("y", @definition.y(32))
@@ -610,8 +612,11 @@ window.Plotter.LinePlot = class LinePlot
         .style("color", '#gggggg')
         .style("opacity", 0.4)
 
+    @hoverWrapper = @svg.append("g")
+      .attr("class", "hover-wrapper")
+
     # Create Crosshairs
-    @crosshairs = @svg.append("g")
+    @crosshairs = @hoverWrapper.append("g")
       .attr("class", "crosshair")
 
     # Create Vertical line
@@ -630,14 +635,14 @@ window.Plotter.LinePlot = class LinePlot
 
     for key, row of @data
       # Create Focus Circles and Labels
-      @focusCircle[key] = @svg.append("circle")
+      @focusCircle[key] = @hoverWrapper.append("circle")
         .attr("r", 4)
         .attr("class", "focus-circle-#{key}")
         .attr("fill", @options.y[key].color)
         .attr("transform", "translate(-10, -10)")
         .style("display", "none")
 
-      @focusText[key] = @svg.append("text")
+      @focusText[key] = @hoverWrapper.append("text")
         .attr("class", "focus-text-#{key}")
         .attr("x", 9)
         .attr("y", 7)
@@ -663,7 +668,7 @@ window.Plotter.LinePlot = class LinePlot
     for key, row of @data
       if row? and _.options.y[key]?
         if @svg.select(".line-plot-area-#{key}").node() is null
-          @bands[key] = @svg.append("g")
+          @bands[key] = @lineWrapper.append("g")
             .attr("clip-path", "url(\##{@options.target}_clip)")
             .append("path")
             .datum(row)
@@ -683,7 +688,7 @@ window.Plotter.LinePlot = class LinePlot
               return d3.rgb(_.options.y[key].color).darker(1)
             )
         if @svg.select(".line-plot-path-#{key}").node() is null
-          @lines[key] = @svg.append("g")
+          @lines[key] = @lineWrapper.append("g")
             .attr("clip-path", "url(\##{@options.target}_clip)")
             .append("path")
             .datum(row)
@@ -695,14 +700,14 @@ window.Plotter.LinePlot = class LinePlot
             .style("fill", "none")
 
           # Create Focus Circles and Labels
-          @focusCircle[key] = @svg.append("circle")
+          @focusCircle[key] = @hoverWrapper.append("circle")
             .attr("r", 4)
             .attr("class", "focus-circle-#{key}")
             .attr("fill", @options.y[key].color)
             .attr("transform", "translate(-10, -10)")
             .style("display", "none")
 
-          @focusText[key] = @svg.append("text")
+          @focusText[key] = @hoverWrapper.append("text")
             .attr("class", "focus-text-#{key}")
             .attr("x", 9)
             .attr("y", 7)
