@@ -1879,7 +1879,8 @@
       }
       preError = this.preError + "appendZoomTarget()";
       _ = this;
-      return this.overlay.attr("class", "zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move").call(this.definition.zoom, transform);
+      this.overlay.attr("class", "zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move");
+      return this.svg.call(this.definition.zoom, transform);
     };
 
     LinePlot.prototype.setZoomTransform = function(transform) {
@@ -1889,8 +1890,14 @@
       }
       preError = this.preError + ".setZoomTransform(transform)";
       _ = this;
-      _transform = transform ? transform : d3.event.transform;
-      this.transform = transform;
+      if (transform != null) {
+        console.log("%c Got transform", "background: #27ae60; color: #ecf0f1", transform);
+        this.transform = transform;
+      } else if (d3.event != null) {
+        console.log("%c D3.Event transform", "background: #c0392b; color: #ecf0f1", d3.event.transform);
+        this.transform = d3.event.transform;
+      }
+      _transform = this.transform;
       _rescaleX = _transform.rescaleX(this.definition.x);
       this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
       this.state.range.scale = this.getDomainScale(_rescaleX);
