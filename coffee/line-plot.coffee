@@ -749,7 +749,6 @@ window.Plotter.LinePlot = class LinePlot
       .call(@definition.yAxis)
 
     # Reset the zoom state
-    #console.log("Update setting zoom transform (transform)", @transform)
     @setZoomTransform(@transform)
 
   removeTemp: ->
@@ -805,15 +804,11 @@ window.Plotter.LinePlot = class LinePlot
       return
     preError = "#{@preError}.setZoomTransform(transform)"
     _ = @
-    #console.log("d3.event.transform", d3.event.transform)
+
     #_transform = if transform then transform else d3.event.transform
     if transform?
-      console.log("%c Got transform",
-        "background: #27ae60; color: #ecf0f1", transform)
       @transform = transform
     else if d3.event?
-      console.log("%c D3.Event transform",
-        "background: #c0392b; color: #ecf0f1" , d3.event.transform)
       @transform = d3.event.transform
     _transform = @transform
 

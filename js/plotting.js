@@ -1891,10 +1891,8 @@
       preError = this.preError + ".setZoomTransform(transform)";
       _ = this;
       if (transform != null) {
-        console.log("%c Got transform", "background: #27ae60; color: #ecf0f1", transform);
         this.transform = transform;
       } else if (d3.event != null) {
-        console.log("%c D3.Event transform", "background: #c0392b; color: #ecf0f1", d3.event.transform);
         this.transform = d3.event.transform;
       }
       _transform = this.transform;
