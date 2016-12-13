@@ -2520,14 +2520,24 @@
           max: 16,
           maxBar: null
         },
-        net_solar: {
+        temperature: {
           min: 0,
-          max: 800,
+          max: 60,
+          maxBar: 32
+        },
+        equip_temperature: {
+          min: 0,
+          max: 60,
           maxBar: null
         },
         relative_humidity: {
           min: 0,
           max: 102,
+          maxBar: null
+        },
+        net_solar: {
+          min: 0,
+          max: 800,
           maxBar: null
         },
         snow_depth: {
@@ -2536,6 +2546,11 @@
           maxBar: null
         },
         snowfall_24_hour: {
+          min: 0,
+          max: 40,
+          maxBar: null
+        },
+        intermittent_snow: {
           min: 0,
           max: 40,
           maxBar: null
@@ -2550,14 +2565,19 @@
           max: 0.7,
           maxBar: null
         },
-        temperature: {
-          min: 0,
-          max: 60,
-          maxBar: 32
-        },
         wind_speed_average: {
           min: 0,
           max: 60,
+          maxBar: null
+        },
+        solar_pyranometer: {
+          min: null,
+          max: null,
+          maxBar: null
+        },
+        barometric_pressure: {
+          min: null,
+          max: null,
           maxBar: null
         }
       };
@@ -2575,13 +2595,17 @@
           title: "Solar Radiation",
           units: "W/m2"
         },
+        solar_pyranometer: {
+          title: "Solar Pyranometer",
+          units: "W/m2"
+        },
         relative_humidity: {
           title: "Relative Humidity",
           units: "%"
         },
         barometric_pressure: {
           title: "Barometric Pressure",
-          units: "atm"
+          units: "mb"
         },
         snow_depth: {
           title: "Snow Depth",
@@ -2589,6 +2613,10 @@
         },
         snowfall_24_hour: {
           title: "24-Hour Snowfall",
+          units: "\""
+        },
+        intermittent_snow: {
+          title: "Intermittent Snow",
           units: "\""
         },
         wind_direction: {
@@ -2601,6 +2629,10 @@
         },
         temperature: {
           title: "Temperature",
+          units: "°F"
+        },
+        equip_temperature: {
+          title: "Equipment Temperature",
           units: "°F"
         },
         wind_speed_average: {
