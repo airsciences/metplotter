@@ -408,6 +408,11 @@ window.Plotter.Controls = class Controls
       _bounds.extend(_point)
 
     @maps[plotId].fitBounds(_bounds)
+    @maps[plotId].panToBounds(_bounds)
+    if @maps[plotId].getZoom() < 6
+      @maps[plotId].setZoom(6)
+
+    #@boundOnSelected(plotId)
     #@maps[plotId].setZoom(12)
 
   resetStationMap: (plotId) ->

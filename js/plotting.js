@@ -611,7 +611,11 @@
         _point = _bound_points[k];
         _bounds.extend(_point);
       }
-      return this.maps[plotId].fitBounds(_bounds);
+      this.maps[plotId].fitBounds(_bounds);
+      this.maps[plotId].panToBounds(_bounds);
+      if (this.maps[plotId].getZoom() < 6) {
+        return this.maps[plotId].setZoom(6);
+      }
     };
 
     Controls.prototype.resetStationMap = function(plotId) {
