@@ -1937,13 +1937,53 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _datum, _dims, _mouseTarget, _value, cx, dx, dy, i, key, preError, ref, row, x0;
+      var _, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, key, preError, ref, row, x0;
       if (!this.initialized) {
         return;
       }
       preError = this.preError + ".setCrosshair(mouse)";
       _ = this;
       _dims = this.definition.dimensions;
+      directionLabel = function(dir) {
+        switch (false) {
+          case !(dir > 360 || dir < 0):
+            return "INV";
+          case !(dir >= 0 && dir < 11.25):
+            return "N";
+          case !(dir >= 11.25 && dir < 33.75):
+            return "NNE";
+          case !(dir >= 33.75 && dir < 56.25):
+            return "NE";
+          case !(dir >= 56.25 && dir < 78.75):
+            return "ENE";
+          case !(dir >= 78.75 && dir < 101.25):
+            return "E";
+          case !(dir >= 101.25 && dir < 123.75):
+            return "ESE";
+          case !(dir >= 123.75 && dir < 146.25):
+            return "SE";
+          case !(dir >= 146.25 && dir < 168.75):
+            return "SSE";
+          case !(dir >= 168.75 && dir < 191.25):
+            return "S";
+          case !(dir >= 191.25 && dir < 213.75):
+            return "SSW";
+          case !(dir >= 213.75 && dir < 236.25):
+            return "SW";
+          case !(dir >= 236.25 && dir < 258.75):
+            return "WSW";
+          case !(dir >= 258.75 && dir < 281.25):
+            return "W";
+          case !(dir >= 281.25 && dir < 303.75):
+            return "WNW";
+          case !(dir >= 303.75 && dir < 326.25):
+            return "NW";
+          case !(dir >= 326.25 && dir < 348.75):
+            return "NNW";
+          case !(dir >= 348.75 && dir <= 360):
+            return "N";
+        }
+      };
       ref = this.data;
       for (key in ref) {
         row = ref[key];
@@ -1986,7 +2026,7 @@
           }
           if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
-            this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
+            this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
           }
         }
       }
@@ -2626,7 +2666,7 @@
         },
         wind_direction: {
           title: "Wind Direction",
-          units: "°"
+          units: ""
         },
         precipitation: {
           title: "Precipitation",

@@ -113,7 +113,7 @@ window.Plotter.Specs = class Specs
         units: "\""
       wind_direction:
         title: "Wind Direction"
-        units: "°"
+        units: ""
       precipitation:
         title: "Precipitation"
         units: "\""

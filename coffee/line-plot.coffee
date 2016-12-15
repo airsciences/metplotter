@@ -866,6 +866,28 @@ window.Plotter.LinePlot = class LinePlot
     _ = @
     _dims = @definition.dimensions
 
+    directionLabel = (dir) ->
+      # Return a direction label for wind direction type items.
+      return switch
+        when dir > 360 or dir < 0 then "INV"
+        when dir >= 0 and dir < 11.25 then "N"
+        when dir >= 11.25 and dir < 33.75 then "NNE"
+        when dir >= 33.75 and dir < 56.25 then "NE"
+        when dir >= 56.25 and dir < 78.75 then "ENE"
+        when dir >= 78.75 and dir < 101.25 then "E"
+        when dir >= 101.25 and dir < 123.75 then "ESE"
+        when dir >= 123.75 and dir < 146.25 then "SE"
+        when dir >= 146.25 and dir < 168.75 then "SSE"
+        when dir >= 168.75 and dir < 191.25 then "S"
+        when dir >= 191.25 and dir < 213.75 then "SSW"
+        when dir >= 213.75 and dir < 236.25 then "SW"
+        when dir >= 236.25 and dir < 258.75 then "WSW"
+        when dir >= 258.75 and dir < 281.25 then "W"
+        when dir >= 281.25 and dir < 303.75 then "WNW"
+        when dir >= 303.75 and dir < 326.25 then "NW"
+        when dir >= 326.25 and dir < 348.75 then "NNW"
+        when dir >= 348.75 and dir <= 360 then "N"
+
     for key, row of @data
       _mouseTarget = @overlay.node()
       #_datum = @overlay.datum()
@@ -926,8 +948,12 @@ window.Plotter.LinePlot = class LinePlot
           @focusText[key]
             .attr("x", dx + _dims.leftPadding / 10)
             .attr("y", dy[key] - _dims.topPadding / 10)
-            .text(if _value[key].y then _value[key].y.toFixed(1) +
-              " " + @options.y[key].units)
+            .text(
+              if _value[key].y
+                if _.options.y[0].variable is "wind_direction"
+                  directionLabel(_value[key].y)
+                else
+                  _value[key].y.toFixed(1) + " " + @options.y[key].units)
 
     # Tooltip Overlap Prevention
     #if (
