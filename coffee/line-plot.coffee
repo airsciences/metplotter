@@ -33,6 +33,7 @@ window.Plotter.LinePlot = class LinePlot
       uuid: ''
       debug: true
       target: null
+      width: null
       merge: false
       x:
         variable: null
@@ -337,7 +338,10 @@ window.Plotter.LinePlot = class LinePlot
 
   calculateChartDims: ->
     # Calculate Basic DOM & SVG Dimensions
-    width = Math.round($(@options.target).width()) - 24
+    if @options.width?
+      width = Math.round(@options.width)
+    else
+      width = Math.round($(@options.target).width()) - 24
     height = Math.round(width/@options.aspectDivisor)
     if width > 1000
       margin =

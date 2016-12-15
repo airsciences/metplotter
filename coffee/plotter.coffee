@@ -27,6 +27,7 @@ window.Plotter.Handler = class Handler
       refresh: 500
       updateLength: 168
       updateLimit: 6
+      width: null
     @options = @lib.mergeDefaults(options, defaults)
 
     # Access Token & Admin
@@ -115,6 +116,8 @@ window.Plotter.Handler = class Handler
       _options = @i.colors.getInitial(_options)
       _options.target = "\#outer-#{row.uuid}"
       _options.uuid = row.uuid
+      if @options.width?
+        _options.width = @options.width
 
       # Initialize the Line Plot
       row.proto = new window.Plotter.LinePlot(@, row.__data__, _options)

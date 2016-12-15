@@ -1269,6 +1269,7 @@
         uuid: '',
         debug: true,
         target: null,
+        width: null,
         merge: false,
         x: {
           variable: null,
@@ -1630,7 +1631,11 @@
 
     LinePlot.prototype.calculateChartDims = function() {
       var height, margin, width;
-      width = Math.round($(this.options.target).width()) - 24;
+      if (this.options.width != null) {
+        width = Math.round(this.options.width);
+      } else {
+        width = Math.round($(this.options.target).width()) - 24;
+      }
       height = Math.round(width / this.options.aspectDivisor);
       if (width > 1000) {
         margin = {
@@ -2312,7 +2317,8 @@
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
         updateLength: 168,
-        updateLimit: 6
+        updateLimit: 6,
+        width: null
       };
       this.options = this.lib.mergeDefaults(options, defaults);
       __accessToken = {
@@ -2407,6 +2413,9 @@
         _options = this.i.colors.getInitial(_options);
         _options.target = "\#outer-" + row.uuid;
         _options.uuid = row.uuid;
+        if (this.options.width != null) {
+          _options.width = this.options.width;
+        }
         row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
         row.proto.preAppend();
         row.proto.append();
