@@ -940,7 +940,6 @@ window.Plotter.LinePlot = class LinePlot
             .attr("height", _dims.innerHeight)
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-
         if (
           @options.y[key].variable != null and !isNaN(dy[key]) and
           _value[key].y?
