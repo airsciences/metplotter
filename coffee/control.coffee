@@ -218,7 +218,7 @@ window.Plotter.Controls = class Controls
         __bindStationClicks(plotId, _.plotter, station)
 
       $("[data-region=\"#{_data_region}\"][data-plot-id=\"#{plotId}\"]")
-        .css("background-color", _background_color)
+        #.css("background-color", _background_color)
         .css("font-weight", _font_weight)
 
       $("[data-region=\"#{_data_region}\"][data-plot-id=\"#{plotId}\"] \

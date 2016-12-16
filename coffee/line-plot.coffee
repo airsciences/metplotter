@@ -470,11 +470,11 @@ window.Plotter.LinePlot = class LinePlot
       _offset = $(@options.target).offset()
       @temp = @outer.append("div")
         .attr("class", "new-temp-#{@options.plotId}")
-        .style("position", "absolute")
+        .style("position", "Relative")
         .style("top",
-          "#{parseInt(_offset.top+@definition.dimensions.innerHeight/2-18)}px")
+          "#{parseInt(@definition.dimensions.innerHeight/1.74)}px")
         .style("left",
-          "#{parseInt(_offset.left+@definition.dimensions.margin.left)}px")
+          "#{parseInt(@definition.dimensions.innerWidth/6.5)}px")
         .style("width", "#{@definition.dimensions.innerWidth}px")
         .style("text-align", "center")
 

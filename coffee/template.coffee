@@ -86,7 +86,7 @@ window.Plotter.Template = class Template
   put: ->
     # PUT a template onto the server
     preError = "#{@preError}put()"
-    if @plotter.isAdmin() is false
+    if !@plotter.isAdmin() or !(@plotter.options.uuid?)
       throw new Error("#{preError}, not authorized for PUT requests.")
       return false
     target = @endpoint()

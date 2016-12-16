@@ -48,6 +48,8 @@ window.Plotter.Colors = class Colors
   get: (dataLoggerId) ->
     # Return the Color from the ordered list.
     _length = Object.keys(@templateColors).length
+    if _length is 0
+      _length = Math.round(Math.random() * (7 - 1) + 1)
     _offset = (_length*2)%7
     if (@templateColors[dataLoggerId]?) is false
       @templateColors[dataLoggerId] = @color("light", _offset)

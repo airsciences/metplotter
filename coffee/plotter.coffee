@@ -242,7 +242,7 @@ window.Plotter.Handler = class Handler
   appendSave: ->
     # Template Save Control.
     $("#save-#{@options.uuid}").parent().remove()
-    if @isAdmin()
+    if @isAdmin() or @options.uuid?
       $(@options.target).append(
         "<small><a style=\"cusor:pointer\"
           id=\"save-#{@options.uuid}\">Save Template</a></small>")

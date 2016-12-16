@@ -273,6 +273,9 @@
     Colors.prototype.get = function(dataLoggerId) {
       var _length, _offset;
       _length = Object.keys(this.templateColors).length;
+      if (_length === 0) {
+        _length = Math.round(Math.random() * (7 - 1) + 1);
+      }
       _offset = (_length * 2) % 7;
       if ((this.templateColors[dataLoggerId] != null) === false) {
         this.templateColors[dataLoggerId] = this.color("light", _offset);
@@ -478,7 +481,7 @@
           $("[data-station-id=\"" + station.id + "\"][data-plot-id=\"" + plotId + "\"]> i.icon-circle").css("color", station.color);
           __bindStationClicks(plotId, _.plotter, station);
         }
-        $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"]").css("background-color", _background_color).css("font-weight", _font_weight);
+        $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"]").css("font-weight", _font_weight);
         results1.push($("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"] > span.region-dots").html(_dots_html));
       }
       return results1;
@@ -1755,7 +1758,7 @@
           sub_text = "Parameter type plots allow comparison of a single paramater at multiple stations";
         }
         _offset = $(this.options.target).offset();
-        this.temp = this.outer.append("div").attr("class", "new-temp-" + this.options.plotId).style("position", "absolute").style("top", (parseInt(_offset.top + this.definition.dimensions.innerHeight / 2 - 18)) + "px").style("left", (parseInt(_offset.left + this.definition.dimensions.margin.left)) + "px").style("width", this.definition.dimensions.innerWidth + "px").style("text-align", "center");
+        this.temp = this.outer.append("div").attr("class", "new-temp-" + this.options.plotId).style("position", "Relative").style("top", (parseInt(this.definition.dimensions.innerHeight / 1.74)) + "px").style("left", (parseInt(this.definition.dimensions.innerWidth / 6.5)) + "px").style("width", this.definition.dimensions.innerWidth + "px").style("text-align", "center");
         this.dropdown = this.temp.append("div").attr("class", "dropdown");
         this.dropdown.append("a").text(add_text).attr("class", "dropdown-toggle").attr("data-toggle", "dropdown");
         this.dropdown.append("ul").attr("class", "dropdown-menu").selectAll("li").data(_.links).enter().append("li").append("a").text(function(d) {
@@ -2528,7 +2531,7 @@
 
     Handler.prototype.appendSave = function() {
       $("#save-" + this.options.uuid).parent().remove();
-      if (this.isAdmin()) {
+      if (this.isAdmin() || (this.options.uuid != null)) {
         $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Template</a></small>");
         return $("#save-" + this.options.uuid).on("click", function(event) {
           return _.i.template.put();
@@ -2820,7 +2823,7 @@
     Template.prototype.put = function() {
       var _, args, callback, preError, target;
       preError = this.preError + "put()";
-      if (this.plotter.isAdmin() === false) {
+      if (!this.plotter.isAdmin() || !(this.plotter.options.uuid != null)) {
         throw new Error(preError + ", not authorized for PUT requests.");
         return false;
       }
