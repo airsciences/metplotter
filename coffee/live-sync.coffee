@@ -19,10 +19,17 @@ window.Plotter.LiveSync = class LiveSync
       # Plot already at maximum append update
       return true
 
+    limit = @plotter.options.updateLength
     currentMax = state.range.data[dataSetId].max.getTime()
     newMax = new Date(currentMax + (@plotter.options.updateLength * 3600000))
+
+    if newMax > _now
+      limit = Math.round((newMax.getTime() - _now.getTime()) / 3600000)
+
     maxDatetime = @plotter.lib.format(new Date(newMax))
-    limit = @plotter.options.updateLength
+    if limit < @plotter.options.minUpdateLength
+      # Limit too small.
+      return true
 
     args = @plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit)
     uuid = @plotter.lib.uuid()

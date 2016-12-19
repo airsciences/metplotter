@@ -4,7 +4,7 @@ window.Plotter.InitialSync = class InitialSync
   constructor: (plotter) ->
     @preError = "Plotter.InitialSync"
     @plotter = plotter
-    @sapi = @plotter.i.sapi
+    @api = @plotter.i.api
 
     @requests = {}
 
@@ -19,7 +19,8 @@ window.Plotter.InitialSync = class InitialSync
     _plotTemplate = @plotter.i.template.template[plotId]
     maxDatetime = _plotTemplate.x.max
     for i in [0..(@plotter.i.template.dataSetCount(plotId)-1)]
-      args = @plotter.i.template.forSync(plotId, i, maxDatetime, 504)
+      args = @plotter.i.template.forSync(plotId, i, maxDatetime,
+        @plotter.options.initialLength)
       uuid = @plotter.lib.uuid()
 
       @requests[uuid] =
@@ -62,7 +63,7 @@ window.Plotter.InitialSync = class InitialSync
       _.requests[uuid].ready = true
       _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results
 
-    @sapi.get(target, args, callback)
+    @api.get(target, args, callback)
     return true
 
   getAppend: (plotId, dataSetId, uuid, args) ->
@@ -94,5 +95,13 @@ window.Plotter.InitialSync = class InitialSync
       _.plotter.plots[plotId].proto.append()
       _.plotter.i.controls.removeSpinner(plotId)
 
-    @sapi.get(target, args, callback)
+    @api.get(target, args, callback)
     return true
+
+  isReady: ->
+    count = 0
+    for key, request of @requests
+      if request.ready is false
+        count++
+
+    return count is 0

@@ -20,7 +20,7 @@ window.Plotter.LinePlot = class LinePlot
       ticks: 5
       min: null
       max: null
-      maxBarValue: null
+      maxBar: null
       color: "rgb(41, 128, 185)"
       band:
         minVariable: null
@@ -606,11 +606,11 @@ window.Plotter.LinePlot = class LinePlot
             Math.round(Math.pow(@definition.dimensions.width, 0.1)))
         .style("fill", "none")
 
-    if @options.y[0].maxBarValue?
+    if @options.y[0].maxBar?
       @lineWrapper.append("rect")
         .attr("class", "line-plot-max-bar")
         .attr("x", @definition.dimensions.leftPadding)
-        .attr("y", @definition.y(32))
+        .attr("y", @definition.y(@options.y[0].maxBar))
         .attr("width", (@definition.dimensions.innerWidth))
         .attr("height", 1)
         .style("color", '#gggggg')

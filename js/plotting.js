@@ -273,9 +273,6 @@
     Colors.prototype.get = function(dataLoggerId) {
       var _length, _offset;
       _length = Object.keys(this.templateColors).length;
-      if (_length === 0) {
-        _length = Math.round(Math.random() * (7 - 1) + 1);
-      }
       _offset = (_length * 2) % 7;
       if ((this.templateColors[dataLoggerId] != null) === false) {
         this.templateColors[dataLoggerId] = this.color("light", _offset);
@@ -1069,7 +1066,7 @@
     function InitialSync(plotter) {
       this.preError = "Plotter.InitialSync";
       this.plotter = plotter;
-      this.sapi = this.plotter.i.sapi;
+      this.api = this.plotter.i.api;
       this.requests = {};
       this.endpoint = function() {
         return this.plotter.options.href + "/api/v5/measurement";
@@ -1091,7 +1088,7 @@
       maxDatetime = _plotTemplate.x.max;
       results = [];
       for (i = j = 0, ref = this.plotter.i.template.dataSetCount(plotId) - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
-        args = this.plotter.i.template.forSync(plotId, i, maxDatetime, 504);
+        args = this.plotter.i.template.forSync(plotId, i, maxDatetime, this.plotter.options.initialLength);
         uuid = this.plotter.lib.uuid();
         this.requests[uuid] = {
           plot: plotId,
@@ -1136,7 +1133,7 @@
         _.requests[uuid].ready = true;
         return _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
       };
-      this.sapi.get(target, args, callback);
+      this.api.get(target, args, callback);
       return true;
     };
 
@@ -1163,8 +1160,21 @@
         _.plotter.plots[plotId].proto.append();
         return _.plotter.i.controls.removeSpinner(plotId);
       };
-      this.sapi.get(target, args, callback);
+      this.api.get(target, args, callback);
       return true;
+    };
+
+    InitialSync.prototype.isReady = function() {
+      var count, key, ref, request;
+      count = 0;
+      ref = this.requests;
+      for (key in ref) {
+        request = ref[key];
+        if (request.ready === false) {
+          count++;
+        }
+      }
+      return count === 0;
     };
 
     return InitialSync;
@@ -1259,7 +1269,7 @@
           ticks: 5,
           min: null,
           max: null,
-          maxBarValue: null,
+          maxBar: null,
           color: "rgb(41, 128, 185)",
           band: {
             minVariable: null,
@@ -1804,8 +1814,8 @@
         });
         this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       }
-      if (this.options.y[0].maxBarValue != null) {
-        this.lineWrapper.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(32)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
+      if (this.options.y[0].maxBar != null) {
+        this.lineWrapper.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(this.options.y[0].maxBar)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
       }
       this.hoverWrapper = this.svg.append("g").attr("class", "hover-wrapper");
       this.crosshairs = this.hoverWrapper.append("g").attr("class", "crosshair");
@@ -2144,10 +2154,16 @@
       if (state.range.data[dataSetId].max >= _now) {
         return true;
       }
+      limit = this.plotter.options.updateLength;
       currentMax = state.range.data[dataSetId].max.getTime();
       newMax = new Date(currentMax + (this.plotter.options.updateLength * 3600000));
+      if (newMax > _now) {
+        limit = Math.round((newMax.getTime() - _now.getTime()) / 3600000);
+      }
       maxDatetime = this.plotter.lib.format(new Date(newMax));
-      limit = this.plotter.options.updateLength;
+      if (limit < this.plotter.options.minUpdateLength) {
+        return true;
+      }
       args = this.plotter.i.template.forSync(plotId, dataSetId, maxDatetime, limit);
       uuid = this.plotter.lib.uuid();
       this.requests[uuid] = {
@@ -2264,9 +2280,9 @@
     function Now(format, datetime) {
       this.parse = function(datetime) {
         var _offset, newDatetime;
-        if (datetime.includes("now")) {
+        if (datetime.indexOf("now") >= 0) {
           newDatetime = new Date();
-          if (datetime.includes("(")) {
+          if (datetime.indexOf("(") >= 0) {
             _offset = parseInt(datetime.replace("(", "").replace(")", "").replace("now", ""));
             newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000));
           }
@@ -2307,7 +2323,7 @@
         dateFormat: __libDateFormat
       };
       this.lib = new window.Plotter.Library(__libOptions);
-      if (location.origin.includes(":5000")) {
+      if (location.origin.indexOf(":5000") >= 0) {
         __href = "http://dev.nwac.us";
       } else {
         __href = location.origin;
@@ -2320,6 +2336,8 @@
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
         updateLength: 168,
+        initialLength: 504,
+        minUpdateLength: 1,
         updateLimit: 6,
         width: null
       };
@@ -2352,11 +2370,23 @@
     }
 
     Handler.prototype.initialize = function() {
+      var _, __wait;
       this.i.template.get();
+      this.appendLoading();
       this.initializePlots();
       this.i.initialsync.stageAll();
-      this.append();
-      return this.listen();
+      _ = this;
+      __wait = function() {
+        if (_.i.initialsync.isReady()) {
+          _.append();
+          _.removeLoading();
+          return _.listen();
+        } else {
+          setTimeout(__wait, 100);
+          return true;
+        }
+      };
+      return __wait();
     };
 
     Handler.prototype.initializePlots = function() {
@@ -2425,6 +2455,14 @@
         this.i.controls.append(key);
       }
       return this.appendSave();
+    };
+
+    Handler.prototype.appendLoading = function() {
+      return $(this.options.target).append("<div class=\"plotter-loading\" style=\"text-align: center; \"> <span> <i class=\"icon-spinner icon-spin icon-large\"></i> Loading Plots... </span> </div>");
+    };
+
+    Handler.prototype.removeLoading = function() {
+      return $(this.options.target).find(".plotter-loading").remove();
     };
 
     Handler.prototype.remove = function(plotId) {

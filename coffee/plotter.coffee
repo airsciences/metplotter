@@ -12,7 +12,7 @@ window.Plotter.Handler = class Handler
     @lib = new window.Plotter.Library(__libOptions)
 
     # Get the href Root.
-    if location.origin.includes(":5000")
+    if location.origin.indexOf(":5000") >= 0
       __href = "http://dev.nwac.us"
     else
       __href = location.origin
@@ -26,6 +26,8 @@ window.Plotter.Handler = class Handler
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       refresh: 500
       updateLength: 168
+      initialLength: 504
+      minUpdateLength: 1
       updateLimit: 6
       width: null
     @options = @lib.mergeDefaults(options, defaults)
@@ -62,11 +64,23 @@ window.Plotter.Handler = class Handler
   initialize: ->
     # Initialize the Plotter
     @i.template.get()
+    @appendLoading()
     @initializePlots()
     @i.initialsync.stageAll()
-    @append()
-    #@listen(true)
-    @listen()
+
+    _ = @
+
+    # Wait for append
+    __wait = () ->
+      if _.i.initialsync.isReady()
+        _.append()
+        _.removeLoading()
+        _.listen()
+      else
+        setTimeout(__wait, 100)
+        return true
+
+    __wait()
 
   initializePlots: ->
     # Initialize the Plot Arrays
@@ -129,6 +143,19 @@ window.Plotter.Handler = class Handler
 
     # Template Save Control.
     @appendSave()
+
+  appendLoading: ->
+    # Append Temp
+    $(@options.target).append("<div class=\"plotter-loading\"
+      style=\"text-align: center; \">
+        <span>
+          <i class=\"icon-spinner icon-spin icon-large\"></i>
+          Loading Plots...
+        </span>
+      </div>")
+
+  removeLoading: ->
+    $(@options.target).find(".plotter-loading").remove()
 
   remove: (plotId) ->
     # Remove a plotId

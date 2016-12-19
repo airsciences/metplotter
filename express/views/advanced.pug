@@ -32,7 +32,12 @@ html(lang='en')
     script.
       var options = {
           "target": "#d3-plot-target",
-          "templateId": #{templateId}
+          "templateId": #{templateId},
+          "refresh": 5000,
+          "initialLength": 168,
+          "updateLength": 24,
+          "minUpdateLength": 10,
+          "updateLimit": 6
       };
 
       var access = {

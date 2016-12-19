@@ -3,9 +3,9 @@ window.Plotter ||= {}
 window.Plotter.Now = class Now
   constructor: (format, datetime) ->
     @parse = (datetime) ->
-      if datetime.includes("now")
+      if datetime.indexOf("now") >= 0
         newDatetime = new Date()
-        if datetime.includes("(")
+        if datetime.indexOf("(") >= 0
           _offset = parseInt(datetime.replace("(", "")
             .replace(")", "").replace("now", ""))
           newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000))
