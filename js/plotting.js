@@ -243,6 +243,872 @@
 }).call(this);
 
 (function() {
+  var BarPlot,
+    slice = [].slice;
+
+  window.Plotter || (window.Plotter = {});
+
+  window.Plotter.BarPlot = BarPlot = (function() {
+    function BarPlot(plotter, data, options) {
+      var _domainMean, _domainScale, _y;
+      this.preError = "BarPlot.";
+      this.plotter = plotter;
+      this.initialized = false;
+      _y = [
+        {
+          dataLoggerId: null,
+          variable: null,
+          ticks: 5,
+          min: null,
+          max: null,
+          maxBar: null,
+          color: "rgb(41, 128, 185)",
+          band: {
+            minVariable: null,
+            maxVariable: null
+          }
+        }
+      ];
+      this.defaults = {
+        plotId: null,
+        uuid: '',
+        debug: true,
+        target: null,
+        width: null,
+        merge: false,
+        x: {
+          variable: null,
+          format: "%Y-%m-%dT%H:%M:%SZ",
+          min: null,
+          max: null,
+          ticks: 7
+        },
+        y: _y,
+        zoom: {
+          scale: {
+            min: 0.05,
+            max: 5
+          }
+        },
+        aspectDivisor: 5,
+        transitionDuration: 500,
+        weight: 2,
+        axisColor: "rgb(0,0,0)",
+        font: {
+          weight: 100,
+          size: 12
+        },
+        crosshairX: {
+          weight: 1,
+          color: "rgb(149,165,166)"
+        },
+        requestInterval: {
+          data: 336
+        }
+      };
+      if (options.x) {
+        options.x = this.plotter.lib.mergeDefaults(options.x, this.defaults.x);
+      }
+      options.y[0] = this.plotter.lib.mergeDefaults(options.y[0], this.defaults.y[0]);
+      this.options = this.plotter.lib.mergeDefaults(options, this.defaults);
+      this.device = 'full';
+      this.transform = d3.zoomIdentity;
+      this.links = [
+        {
+          "variable": "battery_voltage",
+          "title": "Battery Voltage"
+        }, {
+          "variable": "temperature",
+          "title": "Temperature"
+        }, {
+          "variable": "relative_humidity",
+          "title": "Relative Humidity"
+        }, {
+          "variable": "precipitation",
+          "title": "Precipitation"
+        }, {
+          "variable": "snow_depth",
+          "title": "Snow Depth"
+        }, {
+          "variable": "wind_direction",
+          "title": "Wind Direction"
+        }, {
+          "variable": "wind_speed_average",
+          "title": "Wind Speed"
+        }, {
+          "variable": "net_solar",
+          "title": "Net Solar"
+        }, {
+          "variable": "solar_pyranometer",
+          "title": "Solar Pyranometer"
+        }, {
+          "variable": "equip_temperature",
+          "title": "Equipment Temperature"
+        }, {
+          "variable": "barometric_pressure",
+          "title": "Barometric Pressure"
+        }, {
+          "variable": "snowfall_24_hour",
+          "title": "24-Hr Snowfall"
+        }, {
+          "variable": "intermittent_snow",
+          "title": "Intermittent Snow"
+        }
+      ];
+      this.log = function() {
+        var log;
+        log = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+      };
+      if (this.options.debug) {
+        this.log = function() {
+          var log;
+          log = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+          return console.log(log);
+        };
+      }
+      this.parseDate = d3.timeParse(this.options.x.format);
+      this.bisectDate = d3.bisector(function(d) {
+        return d.x;
+      }).left;
+      this.sortDatetimeAsc = function(a, b) {
+        return a.x - b.x;
+      };
+      this.data = this.processData(data);
+      this.getDefinition();
+      this.bands = [];
+      this.lines = [];
+      this.focusCircle = [];
+      this.focusText = [];
+      _domainScale = null;
+      _domainMean = null;
+      if (data.length > 0) {
+        _domainScale = this.getDomainScale(this.definition.x);
+        _domainMean = this.getDomainMean(this.definition.x);
+      }
+      this.state = {
+        range: {
+          data: [],
+          scale: _domainScale
+        },
+        length: {
+          data: []
+        },
+        interval: {
+          data: []
+        },
+        zoom: 1,
+        request: {
+          data: []
+        },
+        requested: {
+          data: []
+        },
+        mean: {
+          scale: _domainMean
+        }
+      };
+      if (data[0].length > 0) {
+        this.setDataState();
+        this.setIntervalState();
+        this.setDataRequirement();
+      }
+    }
+
+    BarPlot.prototype.processData = function(data) {
+      var result, set, setId;
+      result = [];
+      for (setId in data) {
+        set = data[setId];
+        result[setId] = this.processDataSet(set, setId);
+      }
+      return result;
+    };
+
+    BarPlot.prototype.processDataSet = function(data, dataSetId) {
+      var _result, _yOptions, key, result, row;
+      _yOptions = this.options.y[dataSetId];
+      result = [];
+      for (key in data) {
+        row = data[key];
+        result[key] = {
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
+          y: row[_yOptions.variable]
+        };
+        if (_yOptions.band != null) {
+          if (_yOptions.band.minVariable) {
+            result[key].yMin = row[_yOptions.band.minVariable];
+          }
+          if (_yOptions.band.maxVariable) {
+            result[key].yMax = row[_yOptions.band.maxVariable];
+          }
+        }
+      }
+      _result = new Plotter.Data(result);
+      result = _result._clean(_result.get());
+      return result.sort(this.sortDatetimeAsc);
+    };
+
+    BarPlot.prototype.setData = function(data) {
+      var _domainMean, _domainScale;
+      this.data = [this.processDataSet(data, 0)];
+      this.getDefinition();
+      _domainScale = null;
+      _domainMean = null;
+      if (data.length > 0) {
+        _domainScale = this.getDomainScale(this.definition.x);
+        _domainMean = this.getDomainMean(this.definition.x);
+      }
+      this.state.range.scale = _domainScale;
+      this.state.mean.scale = _domainMean;
+      if (data.length > 0) {
+        this.setDataState();
+        this.setIntervalState();
+        return this.setDataRequirement();
+      }
+    };
+
+    BarPlot.prototype.addData = function(data, dataSetId) {
+      var _domainMean, _domainScale;
+      this.data[dataSetId] = this.processDataSet(data, dataSetId);
+      this.getDefinition();
+      _domainScale = null;
+      _domainMean = null;
+      if (data.length > 0) {
+        _domainScale = this.getDomainScale(this.definition.x);
+        _domainMean = this.getDomainMean(this.definition.x);
+      }
+      this.state.range.scale = _domainScale;
+      this.state.mean.scale = _domainMean;
+      if (data.length > 0) {
+        this.setDataState();
+        this.setIntervalState();
+        return this.setDataRequirement();
+      }
+    };
+
+    BarPlot.prototype.appendData = function(data, dataSetId) {
+      var _data, _set;
+      _data = this.processDataSet(data, dataSetId);
+      _set = new window.Plotter.Data(this.data[dataSetId]);
+      _set.append(_data, ["x"]);
+      this.data[dataSetId] = _set._clean(_set.get());
+      this.data[dataSetId] = this.data[dataSetId].sort(this.sortDatetimeAsc);
+      if (this.initialized) {
+        this.setDataState();
+        this.setIntervalState();
+        return this.setDataRequirement();
+      }
+    };
+
+    BarPlot.prototype.removeData = function(key) {
+      if (key >= 0) {
+        delete this.data[key];
+        delete this.options[key];
+        this.svg.select(".line-plot-area-" + key).remove();
+        this.svg.select(".line-plot-path-" + key).remove();
+        this.svg.select(".focus-circle-" + key).remove();
+        this.svg.select(".focus-text-" + key).remove();
+        if (this.initialized) {
+          this.setDataState();
+          this.setIntervalState();
+          return this.setDataRequirement();
+        }
+      }
+    };
+
+    BarPlot.prototype.setDataState = function() {
+      var _len, key, ref, results, row;
+      _len = this.data.length - 1;
+      ref = this.data;
+      results = [];
+      for (key in ref) {
+        row = ref[key];
+        this.state.range.data[key] = {
+          min: d3.min(this.data[key], function(d) {
+            return d.x;
+          }),
+          max: d3.max(this.data[key], function(d) {
+            return d.x;
+          })
+        };
+        results.push(this.state.length.data[key] = this.data[key].length);
+      }
+      return results;
+    };
+
+    BarPlot.prototype.setIntervalState = function() {
+      var key, ref, results, row;
+      ref = this.data;
+      results = [];
+      for (key in ref) {
+        row = ref[key];
+        results.push(this.state.interval.data[key] = {
+          min: (this.state.range.scale.min.getTime() - this.state.range.data[key].min.getTime()) / 3600000,
+          max: (this.state.range.data[key].max.getTime() - this.state.range.scale.max.getTime()) / 3600000
+        });
+      }
+      return results;
+    };
+
+    BarPlot.prototype.setDataRequirement = function() {
+      var _data_max, _now, key, ref, results, row;
+      _now = new Date();
+      ref = this.data;
+      results = [];
+      for (key in ref) {
+        row = ref[key];
+        _data_max = false;
+        if (this.state.range.data[key].max.getTime() < (_now.getTime() - (3600000 * 2.5))) {
+          _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
+        }
+        this.state.request.data[key] = {
+          min: this.state.interval.data[key].min < this.options.requestInterval.data,
+          max: _data_max
+        };
+        if (!(this.state.requested.data[key] != null)) {
+          results.push(this.state.requested.data[key] = {
+            min: false,
+            max: false
+          });
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
+    };
+
+    BarPlot.prototype.setZoomState = function(k) {
+      return this.state.zoom = k;
+    };
+
+    BarPlot.prototype.getDomainScale = function(axis) {
+      var result;
+      return result = {
+        min: axis.domain()[0],
+        max: axis.domain()[1]
+      };
+    };
+
+    BarPlot.prototype.getDomainMean = function(axis) {
+      var center;
+      center = new Date(d3.mean(axis.domain()));
+      center.setHours(center.getHours() + Math.round(center.getMinutes() / 60));
+      center.setMinutes(0);
+      center.setSeconds(0);
+      center.setMilliseconds(0);
+      return center;
+    };
+
+    BarPlot.prototype.getDefinition = function() {
+      var _, _extent, preError;
+      preError = this.preError + "getDefinition():";
+      _ = this;
+      this.definition = {};
+      this.calculateChartDims();
+      this.calculateAxisDims(this.data);
+      this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
+      this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y[0].ticks);
+      this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
+      this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
+      _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
+      return this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
+        var transform;
+        transform = _.setZoomTransform();
+        return _.plotter.i.zoom.set(transform);
+      });
+    };
+
+    BarPlot.prototype.calculateChartDims = function() {
+      var height, margin, width;
+      if (this.options.width != null) {
+        width = Math.round(this.options.width);
+      } else {
+        width = Math.round($(this.options.target).width()) - 24;
+      }
+      height = Math.round(width / this.options.aspectDivisor);
+      if (width > 1000) {
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.3)),
+          bottom: Math.round(height * 0.12),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      } else if (width > 600) {
+        this.device = 'mid';
+        this.options.font.size = this.options.font.size / 1.25;
+        height = Math.round(width / (this.options.aspectDivisor / 1.25));
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.3)),
+          bottom: Math.round(height * 0.14),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      } else {
+        this.device = 'small';
+        this.options.font.size = this.options.font.size / 1.5;
+        height = Math.round(width / (this.options.aspectDivisor / 1.5));
+        margin = {
+          top: Math.round(height * 0.04),
+          right: Math.round(Math.pow(width, 0.3)),
+          bottom: Math.round(height * 0.18),
+          left: Math.round(Math.pow(width, 0.6))
+        };
+      }
+      this.definition.dimensions = {
+        width: width,
+        height: height,
+        margin: margin
+      };
+      this.definition.dimensions.topPadding = parseInt(this.definition.dimensions.margin.top);
+      this.definition.dimensions.bottomPadding = parseInt(this.definition.dimensions.height - this.definition.dimensions.margin.bottom);
+      this.definition.dimensions.leftPadding = parseInt(this.definition.dimensions.margin.left);
+      this.definition.dimensions.innerHeight = parseInt(this.definition.dimensions.height - this.definition.dimensions.margin.bottom - this.definition.dimensions.margin.top);
+      this.definition.dimensions.innerWidth = parseInt(this.definition.dimensions.width - this.definition.dimensions.margin.left - this.definition.dimensions.margin.right);
+      this.definition.x = d3.scaleBand().range([margin.left, width - margin.right]);
+      return this.definition.y = d3.scaleLinear().range([height - margin.bottom, margin.top]);
+    };
+
+    BarPlot.prototype.calculateAxisDims = function(data) {
+      this.calculateXAxisDims(data);
+      return this.calculateYAxisDims(data);
+    };
+
+    BarPlot.prototype.calculateXAxisDims = function(data) {
+      if (this.options.x.min === null) {
+        this.definition.x.min = d3.min(data[0], function(d) {
+          return d.x;
+        });
+      } else {
+        this.definition.x.min = this.parseDate(this.options.x.min);
+      }
+      if (this.options.x.max === null) {
+        return this.definition.x.max = d3.max(data[0], function(d) {
+          return d.x;
+        });
+      } else {
+        return this.definition.x.max = this.parseDate(this.options.x.max);
+      }
+    };
+
+    BarPlot.prototype.calculateYAxisDims = function(data) {
+      var _setMax, _setMin, set, subId;
+      this.definition.y.min = 0;
+      this.definition.y.max = 0;
+      for (subId in data) {
+        set = data[subId];
+        _setMin = d3.min([
+          d3.min(set, function(d) {
+            return d.y;
+          }), d3.min(set, function(d) {
+            return d.yMin;
+          })
+        ]);
+        _setMax = d3.max([
+          d3.max(set, function(d) {
+            return d.y;
+          }), d3.max(set, function(d) {
+            return d.yMax;
+          })
+        ]);
+        if (_setMin < this.definition.y.min || this.definition.y.min === void 0) {
+          this.definition.y.min = _setMin;
+        }
+        if (_setMax > this.definition.y.max || this.definition.y.max === void 0) {
+          this.definition.y.max = _setMax;
+        }
+      }
+      if (this.definition.y.min === this.definition.y.max) {
+        this.definition.y.min = this.definition.y.min * 0.8;
+        this.definition.y.max = this.definition.y.min * 1.2;
+      }
+      if (this.options.y[0].min != null) {
+        this.definition.y.min = this.options.y[0].min;
+      }
+      if (this.options.y[0].max != null) {
+        return this.definition.y.max = this.options.y[0].max;
+      }
+    };
+
+    BarPlot.prototype.preAppend = function() {
+      var _, _offset, add_text, preError, sub_text;
+      preError = this.preError + "preAppend()";
+      _ = this;
+      this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
+      this.ctls = d3.select(this.options.target).append("div").attr("class", "line-plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
+      if (this.data[0].length === 0) {
+        if (this.options.type === "station") {
+          add_text = "Select the Plot's Station";
+          sub_text = "Station type plots allow comparison of different variables from the same station.";
+        } else if (this.options.type === "parameter") {
+          add_text = "Select the Plot's Parameter";
+          sub_text = "Parameter type plots allow comparison of a single paramater at multiple stations";
+        }
+        _offset = $(this.options.target).offset();
+        this.temp = this.outer.append("div").attr("class", "new-temp-" + this.options.plotId).style("position", "Relative").style("top", (parseInt(this.definition.dimensions.innerHeight / 1.74)) + "px").style("left", (parseInt(this.definition.dimensions.innerWidth / 6.5)) + "px").style("width", this.definition.dimensions.innerWidth + "px").style("text-align", "center");
+        this.dropdown = this.temp.append("div").attr("class", "dropdown");
+        this.dropdown.append("a").text(add_text).attr("class", "dropdown-toggle").attr("data-toggle", "dropdown");
+        this.dropdown.append("ul").attr("class", "dropdown-menu").selectAll("li").data(_.links).enter().append("li").append("a").text(function(d) {
+          return d.title;
+        }).on("click", function(d) {
+          return _.plotter.initializePlot(_.options.plotId, d.variable, d.title);
+        });
+        this.temp.append("p").text(sub_text).style("color", "#ggg").style("font-size", "12px");
+      }
+      this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+    };
+
+    BarPlot.prototype.append = function() {
+      var _, _y_offset, _y_title, _y_vert, key, preError, ref, ref1, row;
+      this.initialized = true;
+      if (!this.initialized) {
+        return;
+      }
+      preError = this.preError + "append()";
+      _ = this;
+      this.svg.select(".line-plot-axis-x").call(this.definition.xAxis);
+      this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
+      _y_title = "" + this.options.y[0].title;
+      if (this.options.y[0].units) {
+        _y_title = _y_title + " " + this.options.y[0].units;
+      }
+      _y_vert = -15;
+      _y_offset = -52;
+      if (this.device === 'small') {
+        _y_vert = -10;
+        _y_offset = -30;
+      }
+      this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
+      this.lineWrapper = this.svg.append("g").attr("class", "line-wrapper");
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
+          return d3.color(_.options.y[key].color).darker(1);
+        });
+        this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+      }
+      if (this.options.y[0].maxBar != null) {
+        this.lineWrapper.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(this.options.y[0].maxBar)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
+      }
+      this.hoverWrapper = this.svg.append("g").attr("class", "hover-wrapper");
+      this.crosshairs = this.hoverWrapper.append("g").attr("class", "crosshair");
+      this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
+      this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
+      ref1 = this.data;
+      for (key in ref1) {
+        row = ref1[key];
+        this.focusCircle[key] = this.hoverWrapper.append("circle").attr("r", 4).attr("class", "focus-circle-" + key).attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
+        this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+      }
+      this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
+      this.appendCrosshairTarget(this.transform);
+      return this.appendZoomTarget(this.transform);
+    };
+
+    BarPlot.prototype.update = function() {
+      var _, key, preError, ref, ref1, row;
+      preError = this.preError + "update()";
+      _ = this;
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        if ((row != null) && (_.options.y[key] != null)) {
+          if (this.svg.select(".line-plot-area-" + key).node() === null) {
+            this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
+              return d3.color(_.options.y[key].color).darker(1);
+            });
+          } else {
+            this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area).style("fill", this.options.y[key].color).style("stroke", function() {
+              return d3.rgb(_.options.y[key].color).darker(1);
+            });
+          }
+          if (this.svg.select(".line-plot-path-" + key).node() === null) {
+            this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+            this.focusCircle[key] = this.hoverWrapper.append("circle").attr("r", 4).attr("class", "focus-circle-" + key).attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
+            this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+          } else {
+            this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+          }
+        }
+      }
+      this.overlay.remove();
+      this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
+      this.appendCrosshairTarget(this.transform);
+      this.appendZoomTarget(this.transform);
+      this.calculateYAxisDims(this.data);
+      this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
+      ref1 = this.data;
+      for (key in ref1) {
+        row = ref1[key];
+        this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area);
+        this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line);
+      }
+      this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
+      return this.setZoomTransform(this.transform);
+    };
+
+    BarPlot.prototype.removeTemp = function() {
+      return this.temp.remove();
+    };
+
+    BarPlot.prototype.appendCrosshairTarget = function(transform) {
+      var _, preError;
+      if (!this.initialized) {
+        return;
+      }
+      preError = this.preError + "appendCrosshairTarget()";
+      _ = this;
+      return this.overlay.datum(this.data).attr("class", "overlay").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").on("mouseover", function() {
+        return _.plotter.i.crosshairs.show();
+      }).on("mouseout", function() {
+        return _.plotter.i.crosshairs.hide();
+      }).on("mousemove", function() {
+        var mouse;
+        mouse = _.setCrosshair(transform);
+        return _.plotter.i.crosshairs.set(transform, mouse);
+      });
+    };
+
+    BarPlot.prototype.appendZoomTarget = function(transform) {
+      var _, preError;
+      if (!this.initialized) {
+        return;
+      }
+      preError = this.preError + "appendZoomTarget()";
+      _ = this;
+      this.overlay.attr("class", "zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move");
+      return this.svg.call(this.definition.zoom, transform);
+    };
+
+    BarPlot.prototype.setZoomTransform = function(transform) {
+      var _, _rescaleX, _transform, key, preError, ref, row;
+      if (!this.initialized) {
+        return;
+      }
+      preError = this.preError + ".setZoomTransform(transform)";
+      _ = this;
+      if (transform != null) {
+        this.transform = transform;
+      } else if (d3.event != null) {
+        this.transform = d3.event.transform;
+      }
+      _transform = this.transform;
+      _rescaleX = _transform.rescaleX(this.definition.x);
+      this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
+      this.state.range.scale = this.getDomainScale(_rescaleX);
+      this.state.mean.scale = this.getDomainMean(_rescaleX);
+      this.setDataState();
+      this.setIntervalState();
+      this.setDataRequirement();
+      this.setZoomState(_transform.k);
+      this.definition.area = d3.area().defined(function(d) {
+        return !isNaN(d.yMin) && d.yMin !== null && !isNaN(d.yMax) && d.yMax !== null;
+      }).x(function(d) {
+        return _transform.applyX(_.definition.x(d.x));
+      }).y0(function(d) {
+        return _.definition.y(d.yMin);
+      }).y1(function(d) {
+        return _.definition.y(d.yMax);
+      });
+      this.definition.line = d3.line().defined(function(d) {
+        return !isNaN(d.y) && d.y !== null;
+      }).x(function(d) {
+        return _transform.applyX(_.definition.x(d.x));
+      }).y(function(d) {
+        return _.definition.y(d.y);
+      });
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        this.svg.select(".line-plot-area-" + key).attr("d", this.definition.area);
+        this.svg.select(".line-plot-path-" + key).attr("d", this.definition.line);
+      }
+      this.appendCrosshairTarget(_transform);
+      return _transform;
+    };
+
+    BarPlot.prototype.setCrosshair = function(transform, mouse) {
+      var _, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, key, preError, ref, row, x0;
+      if (!this.initialized) {
+        return;
+      }
+      preError = this.preError + ".setCrosshair(mouse)";
+      _ = this;
+      _dims = this.definition.dimensions;
+      directionLabel = function(dir) {
+        switch (false) {
+          case !(dir > 360 || dir < 0):
+            return "INV";
+          case !(dir >= 0 && dir < 11.25):
+            return "N";
+          case !(dir >= 11.25 && dir < 33.75):
+            return "NNE";
+          case !(dir >= 33.75 && dir < 56.25):
+            return "NE";
+          case !(dir >= 56.25 && dir < 78.75):
+            return "ENE";
+          case !(dir >= 78.75 && dir < 101.25):
+            return "E";
+          case !(dir >= 101.25 && dir < 123.75):
+            return "ESE";
+          case !(dir >= 123.75 && dir < 146.25):
+            return "SE";
+          case !(dir >= 146.25 && dir < 168.75):
+            return "SSE";
+          case !(dir >= 168.75 && dir < 191.25):
+            return "S";
+          case !(dir >= 191.25 && dir < 213.75):
+            return "SSW";
+          case !(dir >= 213.75 && dir < 236.25):
+            return "SW";
+          case !(dir >= 236.25 && dir < 258.75):
+            return "WSW";
+          case !(dir >= 258.75 && dir < 281.25):
+            return "W";
+          case !(dir >= 281.25 && dir < 303.75):
+            return "WNW";
+          case !(dir >= 303.75 && dir < 326.25):
+            return "NW";
+          case !(dir >= 326.25 && dir < 348.75):
+            return "NNW";
+          case !(dir >= 348.75 && dir <= 360):
+            return "N";
+        }
+      };
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        _mouseTarget = this.overlay.node();
+        _datum = row;
+        mouse = mouse ? mouse : d3.mouse(_mouseTarget);
+        x0 = this.definition.x.invert(mouse[0] + _dims.leftPadding);
+        if (transform) {
+          x0 = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
+        }
+        i = _.bisectDate(_datum, x0, 1);
+        if (x0.getTime() < this.state.range.data[key].min.getTime()) {
+          i--;
+        }
+        if (x0.getTime() > this.state.range.data[key].max.getTime()) {
+          i--;
+        }
+        i = x0.getMinutes() >= 30 ? i : i - 1;
+        if (_datum[i] != null) {
+          if (transform) {
+            dx = transform.applyX(this.definition.x(_datum[i].x));
+          } else {
+            dx = this.definition.x(_datum[i].x);
+          }
+          dy = [];
+          _value = [];
+          if (this.options.y[key].variable !== null) {
+            _value[key] = _datum[i];
+            if (_value[key] != null) {
+              dy[key] = this.definition.y(_value[key].y);
+              if (!isNaN(dy[key]) && (_value[key].y != null)) {
+                this.focusCircle[key].attr("transform", "translate(0, 0)");
+              }
+            }
+          }
+          cx = dx - _dims.leftPadding;
+          if (cx >= 0) {
+            this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+            this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+          }
+          if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
+            this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
+            this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
+          }
+        }
+      }
+      return mouse;
+    };
+
+    BarPlot.prototype.showCrosshair = function() {
+      var ref, results, row, setId;
+      if (!this.initialized) {
+        return;
+      }
+      this.crosshairs.select(".crosshair-x").style("display", null);
+      this.crosshairs.select(".crosshair-x-under").style("display", null);
+      ref = this.options.y;
+      results = [];
+      for (setId in ref) {
+        row = ref[setId];
+        if (row.variable !== null) {
+          if (this.focusCircle[setId] != null) {
+            this.focusCircle[setId].style("display", null).attr("fill", row.color);
+          }
+          if (this.focusText[setId] != null) {
+            results.push(this.focusText[setId].style("display", null).style("color", row.color).style("fill", row.color));
+          } else {
+            results.push(void 0);
+          }
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
+    };
+
+    BarPlot.prototype.hideCrosshair = function() {
+      var ref, results, row, setId;
+      if (!this.initialized) {
+        return;
+      }
+      this.crosshairs.select(".crosshair-x").style("display", "none");
+      this.crosshairs.select(".crosshair-x-under").style("display", "none");
+      ref = this.options.y;
+      results = [];
+      for (setId in ref) {
+        row = ref[setId];
+        if (row.variable !== null) {
+          if (this.focusCircle[setId] != null) {
+            this.focusCircle[setId].style("display", "none");
+          }
+          if (this.focusText[setId] != null) {
+            results.push(this.focusText[setId].style("display", "none"));
+          } else {
+            results.push(void 0);
+          }
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
+    };
+
+    BarPlot.prototype.appendTitle = function(title, subtitle) {
+      var _mainSize, _offsetFactor, _subSize;
+      _offsetFactor = 1;
+      _mainSize = '16px';
+      _subSize = '12px';
+      if (this.device === 'small') {
+        _offsetFactor = 0.4;
+        _mainSize = '10px';
+        _subSize = '7px';
+      }
+      this.title = this.svg.append("g").attr("class", "line-plot-title");
+      this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 - (4 * _offsetFactor)).style("font-size", _mainSize).style("font-weight", 600).text(title);
+      if (subtitle) {
+        return this.title.append("text").attr("x", this.definition.dimensions.margin.left + 10).attr("y", this.definition.dimensions.margin.top / 2 + (12 * _offsetFactor)).style("font-size", _subSize).text(subtitle);
+      }
+    };
+
+    BarPlot.prototype.getState = function() {
+      return this.state;
+    };
+
+    return BarPlot;
+
+  })();
+
+}).call(this);
+
+(function() {
   var Colors;
 
   window.Plotter || (window.Plotter = {});
