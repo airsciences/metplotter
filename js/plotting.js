@@ -375,8 +375,7 @@
       };
       this.data = this.processData(data);
       this.getDefinition();
-      this.bands = [];
-      this.lines = [];
+      this.bars = [];
       this.focusCircle = [];
       this.focusText = [];
       _domainScale = null;
@@ -609,6 +608,9 @@
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y[0].ticks);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
+      this.definition.x1.domain(this.data[0].map(function(d) {
+        return d.x;
+      }));
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
       return this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
@@ -664,7 +666,8 @@
       this.definition.dimensions.leftPadding = parseInt(this.definition.dimensions.margin.left);
       this.definition.dimensions.innerHeight = parseInt(this.definition.dimensions.height - this.definition.dimensions.margin.bottom - this.definition.dimensions.margin.top);
       this.definition.dimensions.innerWidth = parseInt(this.definition.dimensions.width - this.definition.dimensions.margin.left - this.definition.dimensions.margin.right);
-      this.definition.x = d3.scaleBand().range([margin.left, width - margin.right]);
+      this.definition.x = d3.scaleTime().range([margin.left, width - margin.right]);
+      this.definition.x1 = d3.scaleBand().rangeRound([margin.left, width - margin.right], 0.05).padding(0.1);
       return this.definition.y = d3.scaleLinear().range([height - margin.bottom, margin.top]);
     };
 
@@ -754,10 +757,10 @@
         });
         this.temp.append("p").text(sub_text).style("color", "#ggg").style("font-size", "12px");
       }
-      this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.svg = this.outer.append("svg").attr("class", "bar-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
-      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
-      return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      this.svg.append("g").attr("class", "bar-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      return this.svg.append("g").attr("class", "bar-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
 
     BarPlot.prototype.append = function() {
@@ -768,8 +771,8 @@
       }
       preError = this.preError + "append()";
       _ = this;
-      this.svg.select(".line-plot-axis-x").call(this.definition.xAxis);
-      this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
+      this.svg.select(".bar-plot-axis-x").call(this.definition.xAxis);
+      this.svg.select(".bar-plot-axis-y").call(this.definition.yAxis);
       _y_title = "" + this.options.y[0].title;
       if (this.options.y[0].units) {
         _y_title = _y_title + " " + this.options.y[0].units;
@@ -780,18 +783,21 @@
         _y_vert = -10;
         _y_offset = -30;
       }
-      this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
-      this.lineWrapper = this.svg.append("g").attr("class", "line-wrapper");
+      this.svg.select(".bar-plot-axis-y").append("text").text(_y_title).attr("class", "bar-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
+      this.barWrapper = this.svg.append("g").attr("class", "bar-wrapper");
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
-          return d3.color(_.options.y[key].color).darker(1);
-        });
-        this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+        this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").selectAll(".bar").data(row).enter().append("rect").attr("class", "bar").attr("x", function(d) {
+          return _.definition.x(d.x);
+        }).attr("width", this.definition.x1.bandwidth()).attr("y", function(d) {
+          return _.definition.y(d.y);
+        }).attr("height", function(d) {
+          return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
+        }).style("fill", this.options.y[key].color);
       }
       if (this.options.y[0].maxBar != null) {
-        this.lineWrapper.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(this.options.y[0].maxBar)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
+        this.barWrapper.append("rect").attr("class", "bar-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(this.options.y[0].maxBar)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
       }
       this.hoverWrapper = this.svg.append("g").attr("class", "hover-wrapper");
       this.crosshairs = this.hoverWrapper.append("g").attr("class", "crosshair");
@@ -3315,7 +3321,7 @@
         if (this.options.width != null) {
           _options.width = this.options.width;
         }
-        row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
+        row.proto = new window.Plotter.BarPlot(this, row.__data__, _options);
         row.proto.preAppend();
         row.proto.append();
         this.i.controls.append(key);

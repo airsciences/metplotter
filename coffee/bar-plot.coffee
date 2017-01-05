@@ -95,8 +95,7 @@ window.Plotter.BarPlot = class BarPlot
     @data = @processData(data)
     @getDefinition()
 
-    @bands = []
-    @lines = []
+    @bars = []
     @focusCircle = []
     @focusText = []
 
@@ -304,6 +303,7 @@ window.Plotter.BarPlot = class BarPlot
 
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
+    @definition.x1.domain(@data[0].map((d) -> d.x))
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Define the Zoom Method
@@ -376,7 +376,10 @@ window.Plotter.BarPlot = class BarPlot
       @definition.dimensions.margin.left - @definition.dimensions.margin.right)
 
     # Define the X & Y Scales
-    @definition.x = d3.scaleBand().range([margin.left, (width-margin.right)])
+    @definition.x = d3.scaleTime().range([margin.left, (width-margin.right)])
+    @definition.x1 = d3.scaleBand()
+      .rangeRound([margin.left, (width-margin.right)], 0.05)
+      .padding(0.1)
     @definition.y = d3.scaleLinear().range([(height-margin.bottom),
       (margin.top)])
 
@@ -490,7 +493,7 @@ window.Plotter.BarPlot = class BarPlot
 
     # Create the SVG
     @svg = @outer.append("svg")
-      .attr("class", "line-plot")
+      .attr("class", "bar-plot")
       .attr("width", @definition.dimensions.width)
       .attr("height", @definition.dimensions.height)
 
@@ -508,7 +511,7 @@ window.Plotter.BarPlot = class BarPlot
 
     # Append the X-Axis
     @svg.append("g")
-      .attr("class", "line-plot-axis-x")
+      .attr("class", "bar-plot-axis-x")
       .style("fill", "none")
       .style("stroke", @options.axisColor)
       .style("font-size", @options.font.size)
@@ -520,7 +523,7 @@ window.Plotter.BarPlot = class BarPlot
 
     # Append the Y-Axis
     @svg.append("g")
-      .attr("class", "line-plot-axis-y")
+      .attr("class", "bar-plot-axis-y")
       .style("fill", "none")
       .style("stroke", @options.axisColor)
       .style("font-size", @options.font.size)
@@ -536,10 +539,10 @@ window.Plotter.BarPlot = class BarPlot
     _ = @
 
     # Update the X-Axis
-    @svg.select(".line-plot-axis-x")
+    @svg.select(".bar-plot-axis-x")
       .call(@definition.xAxis)
 
-    @svg.select(".line-plot-axis-y")
+    @svg.select(".bar-plot-axis-y")
       .call(@definition.yAxis)
 
     # Append Axis Label
@@ -554,10 +557,10 @@ window.Plotter.BarPlot = class BarPlot
       _y_offset = -30
 
     # Y-Axis Title
-    @svg.select(".line-plot-axis-y")
+    @svg.select(".bar-plot-axis-y")
       .append("text")
       .text(_y_title)
-      .attr("class", "line-plot-y-label")
+      .attr("class", "bar-plot-y-label")
       .attr("x", _y_vert)
       .attr("y", _y_offset)
       .attr("dy", ".75em")
@@ -565,36 +568,29 @@ window.Plotter.BarPlot = class BarPlot
       .style("font-size", @options.font.size)
       .style("font-weight", @options.font.weight)
 
-    # Append Bands & Line Path
-    @lineWrapper = @svg.append("g")
-      .attr("class", "line-wrapper")
+    # Append Bands & Bar Path
+    @barWrapper = @svg.append("g")
+      .attr("class", "bar-wrapper")
     for key, row of @data
-      @bands[key] = @lineWrapper.append("g")
+      @bars[key] = @barWrapper.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
-        .append("path")
-        .datum(row)
-        .attr("d", @definition.area)
-        .attr("class", "line-plot-area-#{key}")
-        .style("fill", @options.y[key].color)
-        .style("opacity", 0.15)
-        .style("stroke", () ->
-          return d3.color(_.options.y[key].color).darker(1)
+        .selectAll(".bar")
+        .data(row)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", (d) -> _.definition.x(d.x))
+        .attr("width", @definition.x1.bandwidth())
+        .attr("y", (d) -> _.definition.y(d.y))
+        .attr("height", (d) ->
+          _.definition.dimensions.innerHeight +
+          _.definition.dimensions.margin.top - _.definition.y(d.y)
         )
-
-      @lines[key] = @lineWrapper.append("g")
-        .attr("clip-path", "url(\##{@options.target}_clip)")
-        .append("path")
-        .datum(row)
-        .attr("d", @definition.line)
-        .attr("class", "line-plot-path-#{key}")
-        .style("stroke", @options.y[key].color)
-        .style("stroke-width",
-            Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-        .style("fill", "none")
+        .style("fill", @options.y[key].color)
 
     if @options.y[0].maxBar?
-      @lineWrapper.append("rect")
-        .attr("class", "line-plot-max-bar")
+      @barWrapper.append("rect")
+        .attr("class", "bar-plot-max-bar")
         .attr("x", @definition.dimensions.leftPadding)
         .attr("y", @definition.y(@options.y[0].maxBar))
         .attr("width", (@definition.dimensions.innerWidth))
