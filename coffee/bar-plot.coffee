@@ -575,11 +575,11 @@ window.Plotter.BarPlot = class BarPlot
     for key, row of @data
       @bars[key] = @barWrapper.append("g")
         .attr("clip-path", "url(\##{@options.target}_clip)")
-        .selectAll(".bar")
+        .selectAll(".bar-#{key}")
         .data(row)
         .enter()
         .append("rect")
-        .attr("class", "bar")
+        .attr("class", "bar-#{key}")
         .attr("x", (d) -> _.definition.x(d.x))
         .attr("width", @definition.x1.bandwidth())
         .attr("y", (d) -> _.definition.y(d.y))
@@ -655,20 +655,31 @@ window.Plotter.BarPlot = class BarPlot
     preError = "#{@preError}update()"
     _ = @
 
+    _rescaleX = @transform.rescaleX(@definition.x)
+    _bandwidth = @transform.k * @definition.x1.bandwidth()
+
     # Pre-Append Data For Smooth transform
     for key, row of @data
       if row? and _.options.y[key]?
-        if @svg.select(".bar-plot-path-#{key}").node() is null
-          @lines[key] = @lineWrapper.append("g")
+        if @svg.selectAll(".bar-#{key}").node()[0] is null
+          console.log("Adding new BarPlot data set.")
+          @bars[key] = @barWrapper.append("g")
             .attr("clip-path", "url(\##{@options.target}_clip)")
-            .append("path")
-            .datum(row)
-            .attr("d", @definition.line)
-            .attr("class", "bar-plot-path-#{key}")
-            .style("stroke", @options.y[key].color)
-            .style("stroke-width",
-                Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-            .style("fill", "none")
+            .selectAll(".bar-#{key}")
+            .data(row)
+            .enter()
+            .append("rect")
+            .attr("class", "bar-#{key}")
+            .attr("x", (d) -> _rescaleX(d.x))
+            .attr("width", _bandwidth)
+            #.attr("x", (d) -> _.definition.x(d.x))
+            #.attr("width", @definition.x1.bandwidth())
+            .attr("y", (d) -> _.definition.y(d.y))
+            .attr("height", (d) ->
+              _.definition.dimensions.innerHeight +
+              _.definition.dimensions.margin.top - _.definition.y(d.y)
+            )
+            .style("fill", @options.y[key].color)
 
           # Create Focus Circles and Labels
           @focusRect[key] = @hoverWrapper.append("rect")
@@ -692,13 +703,41 @@ window.Plotter.BarPlot = class BarPlot
               2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
               2px 2px 0 rgb(255,255,255)")
         else
-          @svg.select(".bar-plot-path-#{key}")
-            .datum(row)
-            .attr("d", @definition.line)
-            .style("stroke", @options.y[key].color)
-            .style("stroke-width",
-              Math.round(Math.pow(@definition.dimensions.width, 0.1)))
-            .style("fill", "none")
+          # Update Data
+          @bars[key] = @barWrapper.selectAll(".bar-#{key}")
+            .data(row)
+
+          # Append new rect.
+          @bars[key].enter()
+            .append("rect")
+            .attr("class", "bar-#{key}")
+            .attr("x", (d) -> _rescaleX(d.x))
+            .attr("width", _bandwidth)
+            #.attr("x", (d) -> _.definition.x(d.x))
+            #.attr("width", @definition.x1.bandwidth())
+            .attr("y", (d) -> _.definition.y(d.y))
+            .attr("height", (d) ->
+              _.definition.dimensions.innerHeight +
+              _.definition.dimensions.margin.top - _.definition.y(d.y)
+            )
+            .style("fill", @options.y[key].color)
+
+          # Updated existing rect.
+
+          # Remove deleted rect.
+          @bars[key].exit()
+            .remove()
+
+          # transitionDurationbar
+          @bars[key].attr("x", (d) -> _rescaleX(d.x))
+            .attr("width", _bandwidth)
+            #.attr("x", (d) -> _.definition.x(d.x))
+            #.attr("width", @definition.x1.bandwidth())
+            .attr("y", (d) -> _.definition.y(d.y))
+            .attr("height", (d) ->
+              _.definition.dimensions.innerHeight +
+              _.definition.dimensions.margin.top - _.definition.y(d.y)
+            )
 
     # Reset the overlay to last position.
     @overlay.remove()
@@ -707,17 +746,15 @@ window.Plotter.BarPlot = class BarPlot
     @appendCrosshairTarget(@transform)
     @appendZoomTarget(@transform)
 
-    # @appendCrosshairTarget(d3.zoomIdentity)
-    # @appendZoomTarget()
-
     @calculateYAxisDims(@data)
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
-    for key, row of @data
-      # Redraw the Bars
-      @svg.select(".bar-plot-path-#{key}")
-        .datum(row)
-        .attr("d", @definition.line)
+    #_rescaleX = @transform.rescaleX(@definition.x)
+    #for key, row of @data
+    #  # Redraw the Bars
+    #  @svg.selectAll(".bar-#{key}")
+    #    .attr("x", (d) -> _rescaleX(d.x))
+    #    .attr("width", Math.floor(@transform.k * @definition.x1.bandwidth()))
 
     # Redraw the Y-Axis
     @svg.select(".bar-plot-axis-y")

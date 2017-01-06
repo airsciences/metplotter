@@ -791,7 +791,7 @@
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").selectAll(".bar").data(row).enter().append("rect").attr("class", "bar").attr("x", function(d) {
+        this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
           return _.definition.x(d.x);
         }).attr("width", this.definition.x1.bandwidth()).attr("y", function(d) {
           return _.definition.y(d.y);
@@ -818,19 +818,43 @@
     };
 
     BarPlot.prototype.update = function() {
-      var _, key, preError, ref, ref1, row;
+      var _, _bandwidth, _rescaleX, key, preError, ref, row;
       preError = this.preError + "update()";
       _ = this;
+      _rescaleX = this.transform.rescaleX(this.definition.x);
+      _bandwidth = this.transform.k * this.definition.x1.bandwidth();
       ref = this.data;
       for (key in ref) {
         row = ref[key];
         if ((row != null) && (_.options.y[key] != null)) {
-          if (this.svg.select(".bar-plot-path-" + key).node() === null) {
-            this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "bar-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+          if (this.svg.selectAll(".bar-" + key).node()[0] === null) {
+            console.log("Adding new BarPlot data set.");
+            this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
+              return _rescaleX(d.x);
+            }).attr("width", _bandwidth).attr("y", function(d) {
+              return _.definition.y(d.y);
+            }).attr("height", function(d) {
+              return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
+            }).style("fill", this.options.y[key].color);
             this.focusRect[key] = this.hoverWrapper.append("rect").attr("width", this.definition.x1.bandwidth()).attr("height", 2).attr("class", "focus-rect-" + key).attr("fill", this.options.focusX.color).attr("transform", "translate(-10, -10)").style("display", "none").style("stroke", "rgb(255,255,255)").style("opacity", 0.75);
             this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 11).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
           } else {
-            this.svg.select(".bar-plot-path-" + key).datum(row).attr("d", this.definition.line).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+            this.bars[key] = this.barWrapper.selectAll(".bar-" + key).data(row);
+            this.bars[key].enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
+              return _rescaleX(d.x);
+            }).attr("width", _bandwidth).attr("y", function(d) {
+              return _.definition.y(d.y);
+            }).attr("height", function(d) {
+              return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
+            }).style("fill", this.options.y[key].color);
+            this.bars[key].exit().remove();
+            this.bars[key].attr("x", function(d) {
+              return _rescaleX(d.x);
+            }).attr("width", _bandwidth).attr("y", function(d) {
+              return _.definition.y(d.y);
+            }).attr("height", function(d) {
+              return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
+            });
           }
         }
       }
@@ -840,11 +864,6 @@
       this.appendZoomTarget(this.transform);
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      ref1 = this.data;
-      for (key in ref1) {
-        row = ref1[key];
-        this.svg.select(".bar-plot-path-" + key).datum(row).attr("d", this.definition.line);
-      }
       this.svg.select(".bar-plot-axis-y").call(this.definition.yAxis);
       return this.setZoomTransform(this.transform);
     };
@@ -3229,7 +3248,8 @@
       __wait = function() {
         if (_.i.initialsync.isReady()) {
           _.append();
-          return _.removeLoading();
+          _.removeLoading();
+          return _.listen();
         } else {
           setTimeout(__wait, 100);
           return true;

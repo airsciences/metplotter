@@ -75,8 +75,7 @@ window.Plotter.Handler = class Handler
       if _.i.initialsync.isReady()
         _.append()
         _.removeLoading()
-        # LISTEN -> RE-ENABLE
-        # _.listen()
+        _.listen()
       else
         setTimeout(__wait, 100)
         return true
