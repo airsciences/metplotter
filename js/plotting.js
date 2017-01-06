@@ -740,7 +740,7 @@
       preError = this.preError + "preAppend()";
       _ = this;
       this.outer = d3.select(this.options.target).append("div").attr("class", "bar-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
-      this.ctls = d3.select(this.options.target).append("div").attr("class", "bar-plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
+      this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       if (this.data[0].length === 0) {
         if (this.options.type === "station") {
           add_text = "Select the Plot's Station";
@@ -1162,7 +1162,7 @@
       selector = "plot-controls-" + _uuid;
       _li_style = "";
       html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> </ul>";
-      $(_proto.options.target).find(".line-plot-controls").append(html);
+      $(_proto.options.target).find(".plot-controls").append(html);
       this.move(plotId, '#' + selector, 'up');
       this["new"]('#' + selector, 'down');
       this.remove(plotId, '#' + selector);
@@ -2608,7 +2608,7 @@
       preError = this.preError + "preAppend()";
       _ = this;
       this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
-      this.ctls = d3.select(this.options.target).append("div").attr("class", "line-plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
+      this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       if (this.data[0].length === 0) {
         if (this.options.type === "station") {
           add_text = "Select the Plot's Station";
@@ -3298,7 +3298,6 @@
         if (this.options.width != null) {
           _options.width = this.options.width;
         }
-        console.log(row, _options);
         if (_options.plotType === "bar") {
           row.proto = new window.Plotter.BarPlot(this, row.__data__, _options);
         } else {

@@ -442,7 +442,7 @@ window.Plotter.BarPlot = class BarPlot
 
     # Create the Controls Div
     @ctls = d3.select(@options.target).append("div")
-      .attr("class", "bar-plot-controls")
+      .attr("class", "plot-controls")
       .style("width", '23px')
       .style("height", "#{@definition.dimensions.height}px")
       .style("display", "inline-block")

@@ -37,7 +37,7 @@ window.Plotter.Controls = class Controls
       </ul>"
 
     $(_proto.options.target)
-      .find(".line-plot-controls").append(html)
+      .find(".plot-controls").append(html)
 
     @move(plotId, '#'+selector, 'up')
     @new('#'+selector, 'down')

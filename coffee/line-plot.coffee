@@ -452,7 +452,7 @@ window.Plotter.LinePlot = class LinePlot
 
     # Create the Controls Div
     @ctls = d3.select(@options.target).append("div")
-      .attr("class", "line-plot-controls")
+      .attr("class", "plot-controls")
       .style("width", '23px')
       .style("height", "#{@definition.dimensions.height}px")
       .style("display", "inline-block")
