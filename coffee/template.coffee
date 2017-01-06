@@ -134,9 +134,6 @@ window.Plotter.Template = class Template
 
   forPlots: (plotId) ->
     # Prepare the template for building a plot.
-    _type = "line"
-    if @template[plotId].plotType is not undefined
-      _type = @template[plotId].plotType
     _x = @template[plotId].x
     _y = @template[plotId].y
     for _row in _y
@@ -145,9 +142,13 @@ window.Plotter.Template = class Template
           minVariable: "wind_speed_minimum"
           maxVariable: "wind_speed_maximum"
 
+    _type = "line"
+    if @template[plotId].plotType != undefined
+      _type = @template[plotId].plotType
+
     result =
-      plotType: _type
       plotId: plotId
+      plotType: _type
       x: _x
       y: _y
 

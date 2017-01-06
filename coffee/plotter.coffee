@@ -135,7 +135,6 @@ window.Plotter.Handler = class Handler
         _options.width = @options.width
 
       # Initialize the Line Plot
-      console.log(row, _options)
       if _options.plotType is "bar"
         row.proto = new window.Plotter.BarPlot(@, row.__data__, _options)
       else

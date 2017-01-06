@@ -3769,10 +3769,6 @@
 
     Template.prototype.forPlots = function(plotId) {
       var _row, _type, _x, _y, i, len, result;
-      _type = "line";
-      if (this.template[plotId].plotType === !void 0) {
-        _type = this.template[plotId].plotType;
-      }
       _x = this.template[plotId].x;
       _y = this.template[plotId].y;
       for (i = 0, len = _y.length; i < len; i++) {
@@ -3784,9 +3780,13 @@
           };
         }
       }
+      _type = "line";
+      if (this.template[plotId].plotType !== void 0) {
+        _type = this.template[plotId].plotType;
+      }
       result = {
-        plotType: _type,
         plotId: plotId,
+        plotType: _type,
         x: _x,
         y: _y
       };
