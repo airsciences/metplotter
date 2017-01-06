@@ -839,7 +839,7 @@
             this.focusRect[key] = this.hoverWrapper.append("rect").attr("width", this.definition.x1.bandwidth()).attr("height", 2).attr("class", "focus-rect-" + key).attr("fill", this.options.focusX.color).attr("transform", "translate(-10, -10)").style("display", "none").style("stroke", "rgb(255,255,255)").style("opacity", 0.75);
             this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 11).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
           } else {
-            this.bars[key] = this.barWrapper.selectAll(".bar-" + key).data(row);
+            this.bars[key] = this.barWrapper.select("g").selectAll(".bar-" + key).data(row);
             this.bars[key].enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
               return _rescaleX(d.x);
             }).attr("width", _bandwidth).attr("y", function(d) {

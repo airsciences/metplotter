@@ -704,7 +704,8 @@ window.Plotter.BarPlot = class BarPlot
               2px 2px 0 rgb(255,255,255)")
         else
           # Update Data
-          @bars[key] = @barWrapper.selectAll(".bar-#{key}")
+          @bars[key] = @barWrapper.select("g")
+            .selectAll(".bar-#{key}")
             .data(row)
 
           # Append new rect.
@@ -721,8 +722,6 @@ window.Plotter.BarPlot = class BarPlot
               _.definition.dimensions.margin.top - _.definition.y(d.y)
             )
             .style("fill", @options.y[key].color)
-
-          # Updated existing rect.
 
           # Remove deleted rect.
           @bars[key].exit()
