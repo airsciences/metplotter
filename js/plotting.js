@@ -822,7 +822,7 @@
       preError = this.preError + "update()";
       _ = this;
       _rescaleX = this.transform.rescaleX(this.definition.x);
-      _bandwidth = this.transform.k * this.definition.x1.bandwidth();
+      _bandwidth = Math.floor(this.transform.k * this.definition.x1.bandwidth());
       ref = this.data;
       for (key in ref) {
         row = ref[key];
@@ -925,7 +925,7 @@
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.svg.selectAll(".bar").attr("x", function(d) {
+        this.svg.selectAll(".bar-" + key).attr("x", function(d) {
           return _rescaleX(d.x);
         }).attr("width", Math.floor(_transform.k * this.definition.x1.bandwidth()));
       }

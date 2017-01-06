@@ -656,7 +656,7 @@ window.Plotter.BarPlot = class BarPlot
     _ = @
 
     _rescaleX = @transform.rescaleX(@definition.x)
-    _bandwidth = @transform.k * @definition.x1.bandwidth()
+    _bandwidth = Math.floor(@transform.k * @definition.x1.bandwidth())
 
     # Pre-Append Data For Smooth transform
     for key, row of @data
@@ -840,7 +840,7 @@ window.Plotter.BarPlot = class BarPlot
 
     # Redraw Bars
     for key, row of @data
-      @svg.selectAll(".bar")
+      @svg.selectAll(".bar-#{key}")
         .attr("x", (d) -> _rescaleX(d.x))
         .attr("width", Math.floor(_transform.k * @definition.x1.bandwidth()))
 
