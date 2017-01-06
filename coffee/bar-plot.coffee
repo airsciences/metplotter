@@ -1,6 +1,6 @@
 #
 #   Northwest Avalanche Center (NWAC)
-#   Plotter Tools - D3 V.4 Line Plot (line-plot.coffee)
+#   Plotter Tools - D3 V.4 Line Plot (bar-plot.coffee)
 #
 #   Air Sciences Inc. - 2016
 #   Jacob Fielding
@@ -53,6 +53,8 @@ window.Plotter.BarPlot = class BarPlot
       font:
         weight: 100
         size: 12
+      focusX:
+        color: "rgb(52, 52, 52)"
       crosshairX:
         weight: 1
         color: "rgb(149,165,166)"
@@ -96,7 +98,7 @@ window.Plotter.BarPlot = class BarPlot
     @getDefinition()
 
     @bars = []
-    @focusCircle = []
+    @focusRect = []
     @focusText = []
 
     # Initialize the State
@@ -216,9 +218,9 @@ window.Plotter.BarPlot = class BarPlot
       delete @data[key]
       delete @options[key]
 
-      @svg.select(".line-plot-area-#{key}").remove()
-      @svg.select(".line-plot-path-#{key}").remove()
-      @svg.select(".focus-circle-#{key}").remove()
+      @svg.select(".bar-plot-area-#{key}").remove()
+      @svg.select(".bar-plot-path-#{key}").remove()
+      @svg.select(".focus-rect-#{key}").remove()
       @svg.select(".focus-text-#{key}").remove()
 
       if @initialized
@@ -433,14 +435,14 @@ window.Plotter.BarPlot = class BarPlot
 
     # Create the SVG Div
     @outer = d3.select(@options.target).append("div")
-      .attr("class", "line-plot-body")
+      .attr("class", "bar-plot-body")
       .style("width", "#{@definition.dimensions.width}px")
       .style("height", "#{@definition.dimensions.height}px")
       .style("display", "inline-block")
 
     # Create the Controls Div
     @ctls = d3.select(@options.target).append("div")
-      .attr("class", "line-plot-controls")
+      .attr("class", "bar-plot-controls")
       .style("width", '23px')
       .style("height", "#{@definition.dimensions.height}px")
       .style("display", "inline-block")
@@ -620,16 +622,20 @@ window.Plotter.BarPlot = class BarPlot
 
     for key, row of @data
       # Create Focus Circles and Labels
-      @focusCircle[key] = @hoverWrapper.append("circle")
-        .attr("r", 4)
-        .attr("class", "focus-circle-#{key}")
-        .attr("fill", @options.y[key].color)
+      @focusRect[key] = @hoverWrapper.append("rect")
+        .attr("width", @definition.x1.bandwidth())
+        .attr("height", 2)
+        .attr("class", "focus-rect-#{key}")
+        .attr("fill", @options.focusX.color)
+        #.attr("fill", @options.y[key].color)
         .attr("transform", "translate(-10, -10)")
         .style("display", "none")
+        .style("stroke", "rgb(255,255,255)")
+        .style("opacity", 0.75)
 
       @focusText[key] = @hoverWrapper.append("text")
         .attr("class", "focus-text-#{key}")
-        .attr("x", 9)
+        .attr("x", 11)
         .attr("y", 7)
         .style("display", "none")
         .style("fill", @options.y[key].color)
@@ -665,16 +671,20 @@ window.Plotter.BarPlot = class BarPlot
             .style("fill", "none")
 
           # Create Focus Circles and Labels
-          @focusCircle[key] = @hoverWrapper.append("circle")
-            .attr("r", 4)
-            .attr("class", "focus-circle-#{key}")
-            .attr("fill", @options.y[key].color)
+          @focusRect[key] = @hoverWrapper.append("rect")
+            .attr("width", @definition.x1.bandwidth())
+            .attr("height", 2)
+            .attr("class", "focus-rect-#{key}")
+            .attr("fill", @options.focusX.color)
+            #.attr("fill", @options.y[key].color)
             .attr("transform", "translate(-10, -10)")
             .style("display", "none")
+            .style("stroke", "rgb(255,255,255)")
+            .style("opacity", 0.75)
 
           @focusText[key] = @hoverWrapper.append("text")
             .attr("class", "focus-text-#{key}")
-            .attr("x", 9)
+            .attr("x", 11)
             .attr("y", 7)
             .style("display", "none")
             .style("fill", @options.y[key].color)
@@ -796,7 +806,7 @@ window.Plotter.BarPlot = class BarPlot
     for key, row of @data
       @svg.selectAll(".bar")
         .attr("x", (d) -> _rescaleX(d.x))
-        .attr("width", @definition.x1.bandwidth())
+        .attr("width", Math.floor(_transform.k * @definition.x1.bandwidth()))
 
     @appendCrosshairTarget(_transform)
     return _transform
@@ -861,7 +871,7 @@ window.Plotter.BarPlot = class BarPlot
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
             if !isNaN(dy[key]) and _value[key].y?
-              @focusCircle[key].attr("transform", "translate(0, 0)")
+              @focusRect[key].attr("transform", "translate(0, 0)")
 
         cx = dx - _dims.leftPadding
         if cx >= 0
@@ -883,12 +893,14 @@ window.Plotter.BarPlot = class BarPlot
           @options.y[key].variable != null and !isNaN(dy[key]) and
           _value[key].y?
         )
-          @focusCircle[key]
-            .attr("cx", dx)
-            .attr("cy", dy[key])
+          @focusRect[key]
+            .attr("width", transform.k * @definition.x1.bandwidth())
+            .attr("x", dx)
+            .attr("y", dy[key])
 
           @focusText[key]
-            .attr("x", dx + _dims.leftPadding / 10)
+            .attr("x", dx + _dims.leftPadding / 10 +
+              transform.k * @definition.x1.bandwidth() + 2)
             .attr("y", dy[key] - _dims.topPadding / 10)
             .text(
               if _value[key].y
@@ -941,9 +953,10 @@ window.Plotter.BarPlot = class BarPlot
 
     for setId, row of @options.y
       if row.variable != null
-        if @focusCircle[setId]?
-          @focusCircle[setId].style("display", null)
-            .attr("fill", row.color)
+        if @focusRect[setId]?
+          @focusRect[setId].style("display", null)
+            .attr("fill", @options.focusX.color)
+            #.attr("fill", row.color)
         if @focusText[setId]?
           @focusText[setId].style("display", null)
             .style("color", row.color)
@@ -961,8 +974,8 @@ window.Plotter.BarPlot = class BarPlot
 
     for setId, row of @options.y
       if row.variable != null
-        if @focusCircle[setId]?
-          @focusCircle[setId].style("display", "none")
+        if @focusRect[setId]?
+          @focusRect[setId].style("display", "none")
         if @focusText[setId]?
           @focusText[setId].style("display", "none")
 
@@ -977,7 +990,7 @@ window.Plotter.BarPlot = class BarPlot
       _subSize = '7px'
 
     @title = @svg.append("g")
-      .attr("class", "line-plot-title")
+      .attr("class", "bar-plot-title")
 
     @title.append("text")
       .attr("x", (@definition.dimensions.margin.left + 10))
