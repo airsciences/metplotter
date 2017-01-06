@@ -809,7 +809,7 @@
       ref1 = this.data;
       for (key in ref1) {
         row = ref1[key];
-        this.focusRect[key] = this.hoverWrapper.append("rect").attr("width", this.definition.x1.bandwidth()).attr("height", 2).attr("class", "focus-rect-" + key).attr("fill", this.options.focusX.color).attr("transform", "translate(-10, -10)").style("display", "none").style("stroke", "rgb(255,255,255)");
+        this.focusRect[key] = this.hoverWrapper.append("rect").attr("width", this.definition.x1.bandwidth()).attr("height", 2).attr("class", "focus-rect-" + key).attr("fill", this.options.focusX.color).attr("transform", "translate(-10, -10)").style("display", "none").style("stroke", "rgb(255,255,255)").style("opacity", 0.75);
         this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 11).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       }
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
@@ -3298,7 +3298,12 @@
         if (this.options.width != null) {
           _options.width = this.options.width;
         }
-        row.proto = new window.Plotter.BarPlot(this, row.__data__, _options);
+        console.log(row, _options);
+        if (_options.plotType === "bar") {
+          row.proto = new window.Plotter.BarPlot(this, row.__data__, _options);
+        } else {
+          row.proto = new window.Plotter.LinePlot(this, row.__data__, _options);
+        }
         row.proto.preAppend();
         row.proto.append();
         this.i.controls.append(key);
@@ -3763,7 +3768,11 @@
     Template.prototype.forControls = function() {};
 
     Template.prototype.forPlots = function(plotId) {
-      var _row, _x, _y, i, len, result;
+      var _row, _type, _x, _y, i, len, result;
+      _type = "line";
+      if (this.template[plotId].plotType === !void 0) {
+        _type = this.template[plotId].plotType;
+      }
       _x = this.template[plotId].x;
       _y = this.template[plotId].y;
       for (i = 0, len = _y.length; i < len; i++) {
@@ -3776,6 +3785,7 @@
         }
       }
       result = {
+        plotType: _type,
         plotId: plotId,
         x: _x,
         y: _y

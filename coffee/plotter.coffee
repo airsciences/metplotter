@@ -135,8 +135,11 @@ window.Plotter.Handler = class Handler
         _options.width = @options.width
 
       # Initialize the Line Plot
-      #row.proto = new window.Plotter.LinePlot(@, row.__data__, _options)
-      row.proto = new window.Plotter.BarPlot(@, row.__data__, _options)
+      console.log(row, _options)
+      if _options.plotType is "bar"
+        row.proto = new window.Plotter.BarPlot(@, row.__data__, _options)
+      else
+        row.proto = new window.Plotter.LinePlot(@, row.__data__, _options)
       row.proto.preAppend()
       row.proto.append()
 
