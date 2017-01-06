@@ -822,21 +822,12 @@
       for (key in ref) {
         row = ref[key];
         if ((row != null) && (_.options.y[key] != null)) {
-          if (this.svg.select(".line-plot-area-" + key).node() === null) {
-            this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
-              return d3.color(_.options.y[key].color).darker(1);
-            });
-          } else {
-            this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area).style("fill", this.options.y[key].color).style("stroke", function() {
-              return d3.rgb(_.options.y[key].color).darker(1);
-            });
-          }
-          if (this.svg.select(".line-plot-path-" + key).node() === null) {
-            this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+          if (this.svg.select(".bar-plot-path-" + key).node() === null) {
+            this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "bar-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
             this.focusCircle[key] = this.hoverWrapper.append("circle").attr("r", 4).attr("class", "focus-circle-" + key).attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
             this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
           } else {
-            this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+            this.svg.select(".bar-plot-path-" + key).datum(row).attr("d", this.definition.line).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
           }
         }
       }
@@ -849,10 +840,9 @@
       ref1 = this.data;
       for (key in ref1) {
         row = ref1[key];
-        this.svg.select(".line-plot-area-" + key).datum(row).attr("d", this.definition.area);
-        this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line);
+        this.svg.select(".bar-plot-path-" + key).datum(row).attr("d", this.definition.line);
       }
-      this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
+      this.svg.select(".bar-plot-axis-y").call(this.definition.yAxis);
       return this.setZoomTransform(this.transform);
     };
 
@@ -903,34 +893,19 @@
       }
       _transform = this.transform;
       _rescaleX = _transform.rescaleX(this.definition.x);
-      this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
+      this.svg.select(".bar-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
       this.state.range.scale = this.getDomainScale(_rescaleX);
       this.state.mean.scale = this.getDomainMean(_rescaleX);
       this.setDataState();
       this.setIntervalState();
       this.setDataRequirement();
       this.setZoomState(_transform.k);
-      this.definition.area = d3.area().defined(function(d) {
-        return !isNaN(d.yMin) && d.yMin !== null && !isNaN(d.yMax) && d.yMax !== null;
-      }).x(function(d) {
-        return _transform.applyX(_.definition.x(d.x));
-      }).y0(function(d) {
-        return _.definition.y(d.yMin);
-      }).y1(function(d) {
-        return _.definition.y(d.yMax);
-      });
-      this.definition.line = d3.line().defined(function(d) {
-        return !isNaN(d.y) && d.y !== null;
-      }).x(function(d) {
-        return _transform.applyX(_.definition.x(d.x));
-      }).y(function(d) {
-        return _.definition.y(d.y);
-      });
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.svg.select(".line-plot-area-" + key).attr("d", this.definition.area);
-        this.svg.select(".line-plot-path-" + key).attr("d", this.definition.line);
+        this.svg.selectAll(".bar").attr("x", function(d) {
+          return _rescaleX(d.x);
+        }).attr("width", this.definition.x1.bandwidth());
       }
       this.appendCrosshairTarget(_transform);
       return _transform;
@@ -3251,8 +3226,7 @@
       __wait = function() {
         if (_.i.initialsync.isReady()) {
           _.append();
-          _.removeLoading();
-          return _.listen();
+          return _.removeLoading();
         } else {
           setTimeout(__wait, 100);
           return true;

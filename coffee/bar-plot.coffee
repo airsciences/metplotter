@@ -321,7 +321,6 @@ window.Plotter.BarPlot = class BarPlot
       )
 
 
-
   calculateChartDims: ->
     # Calculate Basic DOM & SVG Dimensions
     if @options.width?
@@ -653,33 +652,13 @@ window.Plotter.BarPlot = class BarPlot
     # Pre-Append Data For Smooth transform
     for key, row of @data
       if row? and _.options.y[key]?
-        if @svg.select(".line-plot-area-#{key}").node() is null
-          @bands[key] = @lineWrapper.append("g")
-            .attr("clip-path", "url(\##{@options.target}_clip)")
-            .append("path")
-            .datum(row)
-            .attr("d", @definition.area)
-            .attr("class", "line-plot-area-#{key}")
-            .style("fill", @options.y[key].color)
-            .style("opacity", 0.15)
-            .style("stroke", () ->
-              return d3.color(_.options.y[key].color).darker(1)
-            )
-        else
-          @svg.select(".line-plot-area-#{key}")
-            .datum(row)
-            .attr("d", @definition.area)
-            .style("fill", @options.y[key].color)
-            .style("stroke", () ->
-              return d3.rgb(_.options.y[key].color).darker(1)
-            )
-        if @svg.select(".line-plot-path-#{key}").node() is null
+        if @svg.select(".bar-plot-path-#{key}").node() is null
           @lines[key] = @lineWrapper.append("g")
             .attr("clip-path", "url(\##{@options.target}_clip)")
             .append("path")
             .datum(row)
             .attr("d", @definition.line)
-            .attr("class", "line-plot-path-#{key}")
+            .attr("class", "bar-plot-path-#{key}")
             .style("stroke", @options.y[key].color)
             .style("stroke-width",
                 Math.round(Math.pow(@definition.dimensions.width, 0.1)))
@@ -703,7 +682,7 @@ window.Plotter.BarPlot = class BarPlot
               2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
               2px 2px 0 rgb(255,255,255)")
         else
-          @svg.select(".line-plot-path-#{key}")
+          @svg.select(".bar-plot-path-#{key}")
             .datum(row)
             .attr("d", @definition.line)
             .style("stroke", @options.y[key].color)
@@ -725,18 +704,13 @@ window.Plotter.BarPlot = class BarPlot
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     for key, row of @data
-      # Redraw the Bands
-      @svg.select(".line-plot-area-#{key}")
-        .datum(row)
-        .attr("d", @definition.area)
-
-      # Redraw the Line Paths
-      @svg.select(".line-plot-path-#{key}")
+      # Redraw the Bars
+      @svg.select(".bar-plot-path-#{key}")
         .datum(row)
         .attr("d", @definition.line)
 
     # Redraw the Y-Axis
-    @svg.select(".line-plot-axis-y")
+    @svg.select(".bar-plot-axis-y")
       .call(@definition.yAxis)
 
     # Reset the zoom state
@@ -805,7 +779,8 @@ window.Plotter.BarPlot = class BarPlot
 
     # Zoom the X-Axis
     _rescaleX = _transform.rescaleX(@definition.x)
-    @svg.select(".line-plot-axis-x").call(
+    #_rescaleX1 = _transform.rescaleX(@definition.x1)
+    @svg.select(".bar-plot-axis-x").call(
       @definition.xAxis.scale(_rescaleX)
     )
 
@@ -817,29 +792,11 @@ window.Plotter.BarPlot = class BarPlot
     @setDataRequirement()
     @setZoomState(_transform.k)
 
-    # Redefine & Redraw the Area
-    @definition.area = d3.area()
-      .defined((d)->
-        !isNaN(d.yMin) and d.yMin isnt null and
-        !isNaN(d.yMax) and d.yMax isnt null
-      )
-      .x((d) -> _transform.applyX(_.definition.x(d.x)))
-      .y0((d) -> _.definition.y(d.yMin))
-      .y1((d) -> _.definition.y(d.yMax))
-
-    # Redefine & Redraw the Line Path
-    @definition.line = d3.line()
-      .defined((d)->
-        !isNaN(d.y) and d.y isnt null
-      )
-      .x((d) -> _transform.applyX(_.definition.x(d.x)))
-      .y((d) -> _.definition.y(d.y))
-
+    # Redraw Bars
     for key, row of @data
-      @svg.select(".line-plot-area-#{key}")
-        .attr("d", @definition.area)
-      @svg.select(".line-plot-path-#{key}")
-        .attr("d", @definition.line)
+      @svg.selectAll(".bar")
+        .attr("x", (d) -> _rescaleX(d.x))
+        .attr("width", @definition.x1.bandwidth())
 
     @appendCrosshairTarget(_transform)
     return _transform
