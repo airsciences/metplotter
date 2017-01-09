@@ -536,6 +536,23 @@ window.Plotter.Controls = class Controls
     _ = @
     uuid = @plotter.lib.uuid()
 
+    _params = [
+      {variable: "precipitation", title: "Precipitation"},
+      {variable: "battery_voltage", title: "Battery Voltage"},
+      {variable: "net_solar", title: "Solar Radiation"},
+      {variable: "solar_pyranometer", title: "Solar Pyranometer"},
+      {variable: "relative_humidity", title: "Relative Humidity"},
+      {variable: "barometric_pressure", title: "Barometric Pressure"},
+      {variable: "snow_depth", title: "Snow Depth"},
+      {variable: "snowfall_24_hour", title: "24-Hour Snowfall"},
+      {variable: "intermittent_snow", title: "Intermittent Snow"},
+      {variable: "wind_direction", title: "Wind Direction"},
+      {variable: "precipitation", title: "Precipitation"},
+      {variable: "temperature", title: "Temperature"},
+      {variable: "equip_temperature", title: "Equipment Temperature"},
+      {variable: "wind_speed_average", title: "Wind Speed"},
+    ]
+
     _ul = "<ul id=\"new-#{uuid}-dropdown\"
         class=\"dropdown-menu pull-right\" role=\"menu\"
         aria-labelledby=\"new-#{uuid}\">
@@ -546,9 +563,21 @@ window.Plotter.Controls = class Controls
       </ul>"
 
     html = "<div class=\"dropdown\">
-        <li><a id=\"new-#{uuid}\" role=\"button\" href=\"#\">
-            <i class=\"icon-plus\"></i>
-          </a></li>
+        <li><a id=\"new-#{uuid}\" class=\"dropdown-toggle\"
+          data-toggle=\"dropdown\" role=\"button\" href=\"#\">
+            <i class=\"icon-plus\"></i></a>
+            <ul
+              class=\"dropdown-menu pull-right\" role=\"menu\"
+              aria-labelledby=\"#{uuid}\">"
+
+    for row in _params
+      html = "#{html}
+        <li><a id=\"new-#{row.variable}_#{uuid}\"><i class=\"icon-plus\"></i>
+         #{row.title}</a></li>"
+
+    html = "#{html}
+            </ul>
+          </li>
         </div>"
 
     # Append & Bind Dropdown
@@ -556,9 +585,11 @@ window.Plotter.Controls = class Controls
     #$("#new-#{uuid}").dropdown()
 
     # Bind Click Events
-    $("#new-#{uuid}").on('click', ->
-      _.plotter.add("parameter")
-    )
+    for row in _params
+      $("#new-#{row.variable}_#{uuid}").on('click', ->
+        console.log("Adding variable:", row.variable, row)
+        _.plotter.add("parameter", row.variable)
+      )
     # $("#new-#{uuid}-station").on('click', ->
     #   _.plotter.add("station")
     # )

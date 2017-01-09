@@ -1614,15 +1614,71 @@
     };
 
     Controls.prototype["new"] = function(appendTarget) {
-      var _, _ul, html, uuid;
+      var _, _params, _ul, html, i, j, len, len1, results1, row, uuid;
       _ = this;
       uuid = this.plotter.lib.uuid();
+      _params = [
+        {
+          variable: "precipitation",
+          title: "Precipitation"
+        }, {
+          variable: "battery_voltage",
+          title: "Battery Voltage"
+        }, {
+          variable: "net_solar",
+          title: "Solar Radiation"
+        }, {
+          variable: "solar_pyranometer",
+          title: "Solar Pyranometer"
+        }, {
+          variable: "relative_humidity",
+          title: "Relative Humidity"
+        }, {
+          variable: "barometric_pressure",
+          title: "Barometric Pressure"
+        }, {
+          variable: "snow_depth",
+          title: "Snow Depth"
+        }, {
+          variable: "snowfall_24_hour",
+          title: "24-Hour Snowfall"
+        }, {
+          variable: "intermittent_snow",
+          title: "Intermittent Snow"
+        }, {
+          variable: "wind_direction",
+          title: "Wind Direction"
+        }, {
+          variable: "precipitation",
+          title: "Precipitation"
+        }, {
+          variable: "temperature",
+          title: "Temperature"
+        }, {
+          variable: "equip_temperature",
+          title: "Equipment Temperature"
+        }, {
+          variable: "wind_speed_average",
+          title: "Wind Speed"
+        }
+      ];
       _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
-      html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i> </a></li> </div>";
+      html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+      for (i = 0, len = _params.length; i < len; i++) {
+        row = _params[i];
+        html = html + " <li><a id=\"new-" + row.variable + "_" + uuid + "\"><i class=\"icon-plus\"></i> " + row.title + "</a></li>";
+      }
+      html = html + " </ul> </li> </div>";
       $(appendTarget).append(html);
-      return $("#new-" + uuid).on('click', function() {
-        return _.plotter.add("parameter");
-      });
+      results1 = [];
+      for (j = 0, len1 = _params.length; j < len1; j++) {
+        row = _params[j];
+        results1.push($("#new-" + row.variable + "_" + uuid).on('click', function() {
+          console.log("Adding variable:", row.variable, row);
+          return _.plotter.add("parameter", row.variable);
+        }));
+      }
+      return results1;
     };
 
     Controls.prototype.isCurrent = function(current, key, value) {
@@ -3371,8 +3427,8 @@
       }
     };
 
-    Handler.prototype.add = function(type) {
-      var _key, _target, html, plot, uuid;
+    Handler.prototype.add = function(type, variable) {
+      var _key, _plotType, _target, html, plot, uuid;
       uuid = this.lib.uuid();
       _target = "outer-" + uuid;
       plot = {
@@ -3385,7 +3441,12 @@
       $(this.options.target).append(html);
       _key = this.i.template.add(plot);
       this.plots[_key] = {};
-      this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot);
+      _plotType = this.i.specs.getPlotType(variable);
+      if (_plotType === "bar") {
+        this.plots[_key].proto = new window.Plotter.BarPlot(this, [[]], plot);
+      } else {
+        this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot);
+      }
       this.plots[_key].proto.preAppend();
       this.plots[_key].proto.options.plotId = _key;
       this.plots[_key].proto.options.uuid = uuid;
@@ -3471,6 +3532,7 @@
       yOptions = {
         dataLoggerId: dataLoggerId,
         variable: variable,
+        plotType: this.getPlotType(variable),
         min: _bounds.min,
         max: _bounds.max,
         maxBar: _bounds.maxBar,
@@ -3609,6 +3671,15 @@
         }
       };
       return info[variable];
+    };
+
+    Specs.prototype.getPlotType = function(variable) {
+      switch (variable) {
+        case "precipitation":
+          return "bar";
+        default:
+          return "line";
+      }
     };
 
     return Specs;

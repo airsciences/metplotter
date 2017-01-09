@@ -9,6 +9,7 @@ window.Plotter.Specs = class Specs
     yOptions =
       dataLoggerId: dataLoggerId
       variable: variable
+      plotType: @getPlotType(variable)
       min: _bounds.min
       max: _bounds.max
       maxBar: _bounds.maxBar
@@ -127,3 +128,8 @@ window.Plotter.Specs = class Specs
         title: "Wind Speed"
         units: "mph"
     return info[variable]
+
+  getPlotType: (variable) ->
+    return switch variable
+      when "precipitation" then "bar"
+      else "line"

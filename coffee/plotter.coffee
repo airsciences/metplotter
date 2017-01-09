@@ -190,7 +190,7 @@ window.Plotter.Handler = class Handler
         _swap.pageOrder--
         selected.next().insertBefore(selected)
 
-  add: (type) ->
+  add: (type, variable) ->
     # Add a new plot.
     uuid = @lib.uuid()
     _target = "outer-#{uuid}"
@@ -206,7 +206,12 @@ window.Plotter.Handler = class Handler
     _key = @i.template.add(plot)
     @plots[_key] = {}
 
-    @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot)
+    _plotType = @i.specs.getPlotType(variable)
+
+    if _plotType is "bar"
+      @plots[_key].proto = new window.Plotter.BarPlot(@, [[]], plot)
+    else
+      @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot)
     @plots[_key].proto.preAppend()
     @plots[_key].proto.options.plotId = _key
     @plots[_key].proto.options.uuid = uuid
