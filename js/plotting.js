@@ -1256,7 +1256,7 @@
       callback = function(data) {
         var _region_name, html, i, j, len, len1, ref, ref1, region, station;
         _.stations[plotId] = data.responseJSON.results;
-        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
+        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" title=\"Select Stations\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
         ref = _.stations[plotId];
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
@@ -1387,7 +1387,7 @@
       _ = this;
       current = this.getCurrent(plotId);
       dom_uuid = "map-control-" + this.plotter.plots[plotId].proto.options.uuid;
-      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
       $("#map-" + plotId).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);
@@ -1578,9 +1578,10 @@
     };
 
     Controls.prototype.move = function(plotId, appendTarget, direction) {
-      var _, html;
+      var _, _dirText, html;
       _ = this;
-      html = "<i id=\"move-" + plotId + "-" + direction + "\" style=\"cursor: pointer;\" class=\"icon-arrow-" + direction + "\"></i>";
+      _dirText = direction === 'up' ? 'Up' : 'Down';
+      html = "<i id=\"move-" + plotId + "-" + direction + "\" style=\"cursor: pointer;\" title=\"Move Plot " + _dirText + "\" class=\"icon-arrow-" + direction + "\"></i>";
       $(appendTarget).append(html);
       return $("#move-" + plotId + "-" + direction).on('click', function() {
         return _.plotter.move(plotId, direction);
@@ -1590,7 +1591,7 @@
     Controls.prototype.remove = function(plotId, appendTarget) {
       var _, html;
       _ = this;
-      html = "<i id=\"remove-" + plotId + "\" style=\"cursor: pointer;\" class=\"icon-remove\"></i>";
+      html = "<i id=\"remove-" + plotId + "\" style=\"cursor: pointer;\" title=\"Remove Plot\" class=\"icon-remove\"></i>";
       $(appendTarget).append(html);
       return $("#remove-" + plotId).on('click', function() {
         return _.plotter.remove(plotId);
@@ -1647,10 +1648,10 @@
         }
       ];
       _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
-      html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+      html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" title=\"Add New Plot\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
       for (i = 0, len = _params.length; i < len; i++) {
         row = _params[i];
-        html = html + " <li><a id=\"new_" + row.variable + "_" + uuid + "\" data-variable=\"" + row.variable + "\"><i class=\"icon-plus\"></i> " + row.title + "</a></li>";
+        html = html + " <li><a id=\"new_" + row.variable + "_" + uuid + "\" data-variable=\"" + row.variable + "\">" + row.title + "</a></li>";
       }
       html = html + " </ul> </li> </div>";
       $(appendTarget).append(html);

@@ -107,7 +107,7 @@ window.Plotter.Controls = class Controls
 
       html = "<div class=\"dropdown\">
         <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
-            role=\"button\"
+            role=\"button\" title=\"Select Stations\"
             data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
         <ul id=\"station-dropdown-#{plotId}\"
@@ -316,6 +316,7 @@ window.Plotter.Controls = class Controls
 
     html = "<li data-toggle=\"popover\" data-placement=\"left\">
           <i id=\"map-#{plotId}\" class=\"icon-map-marker\"
+           title=\"Select Stations Map\"
           style=\"cursor: pointer\"></i>
         </li>
         <div class=\"popover\" style=\"max-width: 356px;\">
@@ -516,7 +517,9 @@ window.Plotter.Controls = class Controls
 
   move: (plotId, appendTarget, direction) ->
     _ = @
+    _dirText = if direction is 'up' then 'Up' else 'Down'
     html = "<i id=\"move-#{plotId}-#{direction}\" style=\"cursor: pointer;\"
+      title=\"Move Plot #{_dirText}\"
       class=\"icon-arrow-#{direction}\"></i>"
     $(appendTarget).append(html)
     $("#move-#{plotId}-#{direction}").on('click', ->
@@ -526,6 +529,7 @@ window.Plotter.Controls = class Controls
   remove: (plotId, appendTarget) ->
     _ = @
     html = "<i id=\"remove-#{plotId}\" style=\"cursor: pointer;\"
+      title=\"Remove Plot\"
       class=\"icon-remove\"></i>"
     $(appendTarget).append(html)
     $("#remove-#{plotId}").on('click', ->
@@ -564,6 +568,7 @@ window.Plotter.Controls = class Controls
 
     html = "<div class=\"dropdown\">
         <li><a id=\"new-#{uuid}\" class=\"dropdown-toggle\"
+          title=\"Add New Plot\"
           data-toggle=\"dropdown\" role=\"button\" href=\"#\">
             <i class=\"icon-plus\"></i></a>
             <ul
@@ -573,8 +578,7 @@ window.Plotter.Controls = class Controls
     for row in _params
       html = "#{html}
         <li><a id=\"new_#{row.variable}_#{uuid}\"
-          data-variable=\"#{row.variable}\"><i class=\"icon-plus\"></i>
-         #{row.title}</a></li>"
+          data-variable=\"#{row.variable}\">#{row.title}</a></li>"
 
     html = "#{html}
             </ul>
