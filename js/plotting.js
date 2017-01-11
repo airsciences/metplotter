@@ -3436,6 +3436,10 @@
         this.i.controls.updateStationMap(plotId);
         return true;
       }
+      if (this.plots[plotId].proto.options.plotType === 'bar') {
+        this.i.controls.removeSpinner(plotId);
+        return false;
+      }
       _state = this.plots[plotId].proto.getState();
       maxDatetime = _state.range.data[0].max.getTime();
       _yOptions = $.extend(true, {}, this.plots[plotId].proto.options.y[0]);

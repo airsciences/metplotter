@@ -243,6 +243,10 @@ window.Plotter.Handler = class Handler
       @i.controls.updateStationMap(plotId)
       return true
 
+    if @plots[plotId].proto.options.plotType is 'bar'
+      @i.controls.removeSpinner(plotId)
+      return false
+
     # Add another station.
     _state = @plots[plotId].proto.getState()
     maxDatetime = _state.range.data[0].max.getTime()
