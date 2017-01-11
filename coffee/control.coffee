@@ -572,7 +572,8 @@ window.Plotter.Controls = class Controls
 
     for row in _params
       html = "#{html}
-        <li><a id=\"new-#{row.variable}_#{uuid}\"><i class=\"icon-plus\"></i>
+        <li><a id=\"new_#{row.variable}_#{uuid}\"
+          data-variable=\"#{row.variable}\"><i class=\"icon-plus\"></i>
          #{row.title}</a></li>"
 
     html = "#{html}
@@ -586,13 +587,10 @@ window.Plotter.Controls = class Controls
 
     # Bind Click Events
     for row in _params
-      $("#new-#{row.variable}_#{uuid}").on('click', ->
-        console.log("Adding variable:", row.variable, row)
-        _.plotter.add("parameter", row.variable)
+      $("#new_#{row.variable}_#{uuid}").off('click').on('click', ->
+        _variable = $(this).attr("data-variable")
+        _.plotter.add("parameter", _variable)
       )
-    # $("#new-#{uuid}-station").on('click', ->
-    #   _.plotter.add("station")
-    # )
 
   isCurrent: (current, key, value) ->
     for cKey, cValue of current

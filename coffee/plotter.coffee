@@ -207,6 +207,7 @@ window.Plotter.Handler = class Handler
     @plots[_key] = {}
 
     _plotType = @i.specs.getPlotType(variable)
+    console.log("Adding plotType: ", _plotType)
 
     if _plotType is "bar"
       @plots[_key].proto = new window.Plotter.BarPlot(@, [[]], plot)
@@ -217,21 +218,19 @@ window.Plotter.Handler = class Handler
     @plots[_key].proto.options.uuid = uuid
     @appendSave()
 
-  initializePlot: (plotId, variable, title) ->
-    # Initialize the Plot Variable.
+    # Update Options
     _yOptions = @i.specs.getOptions(variable, null)
-    @i.template.template[plotId].x = $.extend(
+
+    @i.template.template[_key].x = $.extend(
       true, {}, @i.template.template[0].x)
-    @i.template.template[plotId].y = [_yOptions]
-    _revisedOptions =  @i.template.forPlots(plotId)
-    @plots[plotId].proto.options.x = _revisedOptions.x
-    @plots[plotId].proto.options.y = _revisedOptions.y
+    @i.template.template[_key].y = [_yOptions]
 
-    # Append Controls on the New Plot
-    @i.controls.append(plotId)
+    _revisedOptions =  @i.template.forPlots(_key)
+    @plots[_key].proto.options.x = _revisedOptions.x
+    @plots[_key].proto.options.y = _revisedOptions.y
 
-    # Remove the Temp Methods
-    @plots[plotId].proto.removeTemp()
+    # Append the Plot Controls
+    @i.controls.append(_key)
 
   addStation: (plotId, dataLoggerId) ->
     # Add another data logger to the plot.

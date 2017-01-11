@@ -458,49 +458,30 @@ window.Plotter.LinePlot = class LinePlot
       .style("display", "inline-block")
       .style("vertical-align", "top")
 
-    if @data[0].length == 0
-      if @options.type is "station"
-        add_text = "Select the Plot's Station"
-        sub_text = "Station type plots allow comparison of different variab\
-          les from the same station."
-      else if @options.type is "parameter"
-        add_text = "Select the Plot's Parameter"
-        sub_text = "Parameter type plots allow comparison of a single parama\
-          ter at multiple stations"
-      _offset = $(@options.target).offset()
-      @temp = @outer.append("div")
-        .attr("class", "new-temp-#{@options.plotId}")
-        .style("position", "Relative")
-        .style("top",
-          "#{parseInt(@definition.dimensions.innerHeight/1.74)}px")
-        .style("left",
-          "#{parseInt(@definition.dimensions.innerWidth/6.5)}px")
-        .style("width", "#{@definition.dimensions.innerWidth}px")
-        .style("text-align", "center")
+    #if @data[0].length == 0
+    #  if @options.type is "station"
+    #    add_text = "Select the Plot's Station"
+    #    sub_text = "Station type plots allow comparison of different variab\
+    #      les from the same station."
+    #  else if @options.type is "parameter"
+    #    add_text = "Select the Plot's Parameter"
+    #    sub_text = "Parameter type plots allow comparison of a single parama\
+    #      ter at multiple stations"
+    #  _offset = $(@options.target).offset()
+    #  @temp = @outer.append("div")
+    #    .attr("class", "new-temp-#{@options.plotId}")
+    #    .style("position", "Relative")
+    #    .style("top",
+    #      "#{parseInt(@definition.dimensions.innerHeight/1.74)}px")
+    #    .style("left",
+    #      "#{parseInt(@definition.dimensions.innerWidth/6.5)}px")
+    #    .style("width", "#{@definition.dimensions.innerWidth}px")
+    #    .style("text-align", "center")
 
-      @dropdown = @temp.append("div")
-        .attr("class", "dropdown")
-
-      @dropdown.append("a")
-        .text(add_text)
-        .attr("class", "dropdown-toggle")
-        .attr("data-toggle", "dropdown")
-
-      @dropdown.append("ul")
-        .attr("class", "dropdown-menu")
-        .selectAll("li")
-        .data(_.links)
-        .enter().append("li")
-        .append("a")
-        .text((d) -> return d.title)
-        .on("click", (d) ->
-          _.plotter.initializePlot(_.options.plotId, d.variable, d.title)
-        )
-
-      @temp.append("p")
-        .text(sub_text)
-        .style("color", "#ggg")
-        .style("font-size", "12px")
+    #  @temp.append("p")
+    #    .text(sub_text)
+    #    .style("color", "#ggg")
+    #    .style("font-size", "12px")
 
     # Create the SVG
     @svg = @outer.append("svg")
@@ -757,11 +738,13 @@ window.Plotter.LinePlot = class LinePlot
     @svg.select(".line-plot-axis-y")
       .call(@definition.yAxis)
 
+    # Update the Max Bar
+    if @options.y[0].maxBar?
+      @lineWrapper.select(".line-plot-max-bar")
+        .attr("y", @definition.y(@options.y[0].maxBar))
+
     # Reset the zoom state
     @setZoomTransform(@transform)
-
-  removeTemp: ->
-    @temp.remove()
 
   appendCrosshairTarget: (transform) ->
     # Move Crosshairs and Focus Circle Based on Mouse Location

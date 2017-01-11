@@ -736,30 +736,11 @@
     };
 
     BarPlot.prototype.preAppend = function() {
-      var _, _offset, add_text, preError, sub_text;
+      var _, preError;
       preError = this.preError + "preAppend()";
       _ = this;
       this.outer = d3.select(this.options.target).append("div").attr("class", "bar-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
-      if (this.data[0].length === 0) {
-        if (this.options.type === "station") {
-          add_text = "Select the Plot's Station";
-          sub_text = "Station type plots allow comparison of different variables from the same station.";
-        } else if (this.options.type === "parameter") {
-          add_text = "Select the Plot's Parameter";
-          sub_text = "Parameter type plots allow comparison of a single paramater at multiple stations";
-        }
-        _offset = $(this.options.target).offset();
-        this.temp = this.outer.append("div").attr("class", "new-temp-" + this.options.plotId).style("position", "Relative").style("top", (parseInt(this.definition.dimensions.innerHeight / 1.74)) + "px").style("left", (parseInt(this.definition.dimensions.innerWidth / 6.5)) + "px").style("width", this.definition.dimensions.innerWidth + "px").style("text-align", "center");
-        this.dropdown = this.temp.append("div").attr("class", "dropdown");
-        this.dropdown.append("a").text(add_text).attr("class", "dropdown-toggle").attr("data-toggle", "dropdown");
-        this.dropdown.append("ul").attr("class", "dropdown-menu").selectAll("li").data(_.links).enter().append("li").append("a").text(function(d) {
-          return d.title;
-        }).on("click", function(d) {
-          return _.plotter.initializePlot(_.options.plotId, d.variable, d.title);
-        });
-        this.temp.append("p").text(sub_text).style("color", "#ggg").style("font-size", "12px");
-      }
       this.svg = this.outer.append("svg").attr("class", "bar-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "bar-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
@@ -865,6 +846,9 @@
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       this.svg.select(".bar-plot-axis-y").call(this.definition.yAxis);
+      if (this.options.y[0].maxBar != null) {
+        this.barWrapper.select(".bar-plot-max-bar").attr("y", this.definition.y(this.options.y[0].maxBar));
+      }
       return this.setZoomTransform(this.transform);
     };
 
@@ -1666,16 +1650,17 @@
       html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
       for (i = 0, len = _params.length; i < len; i++) {
         row = _params[i];
-        html = html + " <li><a id=\"new-" + row.variable + "_" + uuid + "\"><i class=\"icon-plus\"></i> " + row.title + "</a></li>";
+        html = html + " <li><a id=\"new_" + row.variable + "_" + uuid + "\" data-variable=\"" + row.variable + "\"><i class=\"icon-plus\"></i> " + row.title + "</a></li>";
       }
       html = html + " </ul> </li> </div>";
       $(appendTarget).append(html);
       results1 = [];
       for (j = 0, len1 = _params.length; j < len1; j++) {
         row = _params[j];
-        results1.push($("#new-" + row.variable + "_" + uuid).on('click', function() {
-          console.log("Adding variable:", row.variable, row);
-          return _.plotter.add("parameter", row.variable);
+        results1.push($("#new_" + row.variable + "_" + uuid).off('click').on('click', function() {
+          var _variable;
+          _variable = $(this).attr("data-variable");
+          return _.plotter.add("parameter", _variable);
         }));
       }
       return results1;
@@ -2679,30 +2664,11 @@
     };
 
     LinePlot.prototype.preAppend = function() {
-      var _, _offset, add_text, preError, sub_text;
+      var _, preError;
       preError = this.preError + "preAppend()";
       _ = this;
       this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
-      if (this.data[0].length === 0) {
-        if (this.options.type === "station") {
-          add_text = "Select the Plot's Station";
-          sub_text = "Station type plots allow comparison of different variables from the same station.";
-        } else if (this.options.type === "parameter") {
-          add_text = "Select the Plot's Parameter";
-          sub_text = "Parameter type plots allow comparison of a single paramater at multiple stations";
-        }
-        _offset = $(this.options.target).offset();
-        this.temp = this.outer.append("div").attr("class", "new-temp-" + this.options.plotId).style("position", "Relative").style("top", (parseInt(this.definition.dimensions.innerHeight / 1.74)) + "px").style("left", (parseInt(this.definition.dimensions.innerWidth / 6.5)) + "px").style("width", this.definition.dimensions.innerWidth + "px").style("text-align", "center");
-        this.dropdown = this.temp.append("div").attr("class", "dropdown");
-        this.dropdown.append("a").text(add_text).attr("class", "dropdown-toggle").attr("data-toggle", "dropdown");
-        this.dropdown.append("ul").attr("class", "dropdown-menu").selectAll("li").data(_.links).enter().append("li").append("a").text(function(d) {
-          return d.title;
-        }).on("click", function(d) {
-          return _.plotter.initializePlot(_.options.plotId, d.variable, d.title);
-        });
-        this.temp.append("p").text(sub_text).style("color", "#ggg").style("font-size", "12px");
-      }
       this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
@@ -2796,11 +2762,10 @@
         this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line);
       }
       this.svg.select(".line-plot-axis-y").call(this.definition.yAxis);
+      if (this.options.y[0].maxBar != null) {
+        this.lineWrapper.select(".line-plot-max-bar").attr("y", this.definition.y(this.options.y[0].maxBar));
+      }
       return this.setZoomTransform(this.transform);
-    };
-
-    LinePlot.prototype.removeTemp = function() {
-      return this.temp.remove();
     };
 
     LinePlot.prototype.appendCrosshairTarget = function(transform) {
@@ -3428,7 +3393,7 @@
     };
 
     Handler.prototype.add = function(type, variable) {
-      var _key, _plotType, _target, html, plot, uuid;
+      var _key, _plotType, _revisedOptions, _target, _yOptions, html, plot, uuid;
       uuid = this.lib.uuid();
       _target = "outer-" + uuid;
       plot = {
@@ -3442,6 +3407,7 @@
       _key = this.i.template.add(plot);
       this.plots[_key] = {};
       _plotType = this.i.specs.getPlotType(variable);
+      console.log("Adding plotType: ", _plotType);
       if (_plotType === "bar") {
         this.plots[_key].proto = new window.Plotter.BarPlot(this, [[]], plot);
       } else {
@@ -3450,19 +3416,14 @@
       this.plots[_key].proto.preAppend();
       this.plots[_key].proto.options.plotId = _key;
       this.plots[_key].proto.options.uuid = uuid;
-      return this.appendSave();
-    };
-
-    Handler.prototype.initializePlot = function(plotId, variable, title) {
-      var _revisedOptions, _yOptions;
+      this.appendSave();
       _yOptions = this.i.specs.getOptions(variable, null);
-      this.i.template.template[plotId].x = $.extend(true, {}, this.i.template.template[0].x);
-      this.i.template.template[plotId].y = [_yOptions];
-      _revisedOptions = this.i.template.forPlots(plotId);
-      this.plots[plotId].proto.options.x = _revisedOptions.x;
-      this.plots[plotId].proto.options.y = _revisedOptions.y;
-      this.i.controls.append(plotId);
-      return this.plots[plotId].proto.removeTemp();
+      this.i.template.template[_key].x = $.extend(true, {}, this.i.template.template[0].x);
+      this.i.template.template[_key].y = [_yOptions];
+      _revisedOptions = this.i.template.forPlots(_key);
+      this.plots[_key].proto.options.x = _revisedOptions.x;
+      this.plots[_key].proto.options.y = _revisedOptions.y;
+      return this.i.controls.append(_key);
     };
 
     Handler.prototype.addStation = function(plotId, dataLoggerId) {
