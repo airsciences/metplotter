@@ -618,3 +618,11 @@ window.Plotter.Controls = class Controls
           .addClass("icon-caret-up")
         next.slideDown()
     )
+
+  getLoggerName: (plotId, dataLoggerId) ->
+    result = "Station"
+    for outerKey, outerRow of @stations[plotId]
+      for key, row of outerRow.dataloggers
+        if row.id is parseInt(dataLoggerId)
+          result = row.datalogger_name
+    return result

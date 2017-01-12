@@ -929,7 +929,6 @@ window.Plotter.BarPlot = class BarPlot
                 if _.options.y[0].variable is "wind_direction"
                   directionLabel(_value[key].y)
                 else
-                  console.log("Value y: ", _value[key].y)
                   _value[key].y.toFixed(2) + " " + @options.y[key].units)
 
     # Tooltip Overlap Prevention

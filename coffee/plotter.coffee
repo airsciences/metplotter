@@ -56,6 +56,7 @@ window.Plotter.Handler = class Handler
 
     # Define the Plots
     @plots = []
+    @legends = []
     @updates = 0
 
     @isReady = ->
@@ -144,6 +145,10 @@ window.Plotter.Handler = class Handler
       # Append controls
       @i.controls.append(key)
 
+      # Append the Legend
+      @legends[key] = new window.Plotter.Legend(@, key)
+      #@legends[key].append()
+
     # Template Save Control.
     @appendSave()
 
@@ -213,6 +218,7 @@ window.Plotter.Handler = class Handler
       @plots[_key].proto = new window.Plotter.BarPlot(@, [[]], plot)
     else
       @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot)
+    @legends[_key] = new window.Plotter.Legend(@plots[_key].proto)
     @plots[_key].proto.preAppend()
     @plots[_key].proto.options.plotId = _key
     @plots[_key].proto.options.uuid = uuid
@@ -245,6 +251,8 @@ window.Plotter.Handler = class Handler
 
     if @plots[plotId].proto.options.plotType is 'bar'
       @i.controls.removeSpinner(plotId)
+      alert("The bar plot only supports one station.
+        Please add precipitation as a line plot to use multiple.")
       return false
 
     # Add another station.

@@ -1007,7 +1007,7 @@
           }
           if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusRect[key].attr("width", transform.k * this.definition.x1.bandwidth()).attr("x", dx).attr("y", dy[key]);
-            this.focusText[key].attr("x", dx + _dims.leftPadding / 10 + transform.k * this.definition.x1.bandwidth() + 2).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y != null ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : (console.log("Value y: ", _value[key].y), _value[key].y.toFixed(2) + " " + this.options.y[key].units) : void 0);
+            this.focusText[key].attr("x", dx + _dims.leftPadding / 10 + transform.k * this.definition.x1.bandwidth() + 2).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y != null ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(2) + " " + this.options.y[key].units : void 0);
           }
         }
       }
@@ -1694,6 +1694,23 @@
       });
     };
 
+    Controls.prototype.getLoggerName = function(plotId, dataLoggerId) {
+      var key, outerKey, outerRow, ref, ref1, result, row;
+      result = "Station";
+      ref = this.stations[plotId];
+      for (outerKey in ref) {
+        outerRow = ref[outerKey];
+        ref1 = outerRow.dataloggers;
+        for (key in ref1) {
+          row = ref1[key];
+          if (row.id === parseInt(dataLoggerId)) {
+            result = row.datalogger_name;
+          }
+        }
+      }
+      return result;
+    };
+
     return Controls;
 
   })();
@@ -2089,6 +2106,84 @@
     };
 
     return InitialSync;
+
+  })();
+
+}).call(this);
+
+(function() {
+  var Legend;
+
+  window.Plotter || (window.Plotter = {});
+
+  window.Plotter.Legend = Legend = (function() {
+    function Legend(plotter, plotId) {
+      var preError;
+      this.preError = "Plotter.Legend.";
+      preError = this.preError + ".constructor(...)";
+      this.plotter = plotter;
+      this.svg = this.plotter.plots[plotId].proto.svg;
+      this.plotId = this.plotter.plots[plotId].proto.options.plotId;
+      this.dimensions = this.plotter.plots[plotId].proto.definition.dimensions;
+    }
+
+    Legend.prototype.set = function() {
+      var _count, _datalogger, _options, _result, key, ref, row;
+      this.data = [];
+      _options = this.plotter.plots[this.plotId].proto.options;
+      _count = 0;
+      ref = _options.y;
+      for (key in ref) {
+        row = ref[key];
+        _datalogger = this.plotter.i.controls.getLoggerName(this.plotId, row.dataLoggerId);
+        _count++;
+        _result = {
+          offset: _count,
+          title: "" + _datalogger,
+          color: row.color
+        };
+        this.data.push(_result);
+      }
+      return this.data;
+    };
+
+    Legend.prototype.draw = function() {
+      var _rect, _text;
+      this.set();
+      console.log("Drawing new Legend (@data)", this.data);
+      this.legend = this.svg.append("g").attr("class", "legend");
+      _rect = this.legend.selectAll("rect").data(this.data);
+      _rect.attr("y", function(d) {
+        return d.offset * 12;
+      }).style("fill", function(d) {
+        return d.color;
+      });
+      _rect.enter().append("rect").attr("rx", 1).attr("ry", 1).attr("width", 6).attr("height", 6).attr("x", this.dimensions.margin.left + 20).attr("y", function(d) {
+        return d.offset * 12;
+      }).style("fill", function(d) {
+        return d.color;
+      });
+      _rect.exit().remove();
+      _text = this.legend.selectAll("text").data(this.data);
+      _rect.attr("y", function(d) {
+        return d.offset * 12;
+      }).text(function(d) {
+        return d.title;
+      });
+      _text.enter().append("text").attr("x", this.dimensions.margin.left + 30).attr("y", function(d) {
+        return d.offset * 12 + 6;
+      }).text(function(d) {
+        return d.title;
+      }).style("font-size", "12px").style("font-weight", 500);
+      _text.exit().remove();
+      return {
+        remove: function() {
+          return this.legend.selectAll(".legend").remove();
+        }
+      };
+    };
+
+    return Legend;
 
   })();
 
@@ -3254,6 +3349,7 @@
       this.i.specs = new window.Plotter.Specs();
       this.i.colors = new window.Plotter.Colors();
       this.plots = [];
+      this.legends = [];
       this.updates = 0;
       this.isReady = function() {
         return this.updates <= this.options.updateLimit;
@@ -3348,6 +3444,7 @@
         row.proto.preAppend();
         row.proto.append();
         this.i.controls.append(key);
+        this.legends[key] = new window.Plotter.Legend(this, key);
       }
       return this.appendSave();
     };
@@ -3414,6 +3511,7 @@
       } else {
         this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot);
       }
+      this.legends[_key] = new window.Plotter.Legend(this.plots[_key].proto);
       this.plots[_key].proto.preAppend();
       this.plots[_key].proto.options.plotId = _key;
       this.plots[_key].proto.options.uuid = uuid;
@@ -3439,6 +3537,7 @@
       }
       if (this.plots[plotId].proto.options.plotType === 'bar') {
         this.i.controls.removeSpinner(plotId);
+        alert("The bar plot only supports one station. Please add precipitation as a line plot to use multiple.");
         return false;
       }
       _state = this.plots[plotId].proto.getState();
