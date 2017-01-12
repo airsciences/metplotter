@@ -562,7 +562,7 @@ window.Plotter.BarPlot = class BarPlot
         .append("rect")
         .attr("class", "bar-#{key}")
         .attr("x", (d) -> _.definition.x(d.x))
-        .attr("width", @definition.x1.bandwidth())
+        .attr("width", d3.max([1, @definition.x1.bandwidth()]))
         .attr("y", (d) -> _.definition.y(d.y))
         .attr("height", (d) ->
           _.definition.dimensions.innerHeight +
@@ -652,9 +652,9 @@ window.Plotter.BarPlot = class BarPlot
             .append("rect")
             .attr("class", "bar-#{key}")
             .attr("x", (d) -> _rescaleX(d.x))
-            .attr("width", _bandwidth)
+            .attr("width", d3.max([1, _bandwidth]))
             #.attr("x", (d) -> _.definition.x(d.x))
-            #.attr("width", @definition.x1.bandwidth())
+            #.attr("width", d3.max([1, @definition.x1.bandwidth()]))
             .attr("y", (d) -> _.definition.y(d.y))
             .attr("height", (d) ->
               _.definition.dimensions.innerHeight +
@@ -694,9 +694,9 @@ window.Plotter.BarPlot = class BarPlot
             .append("rect")
             .attr("class", "bar-#{key}")
             .attr("x", (d) -> _rescaleX(d.x))
-            .attr("width", _bandwidth)
+            .attr("width", d3.max([1, _bandwidth]))
             #.attr("x", (d) -> _.definition.x(d.x))
-            #.attr("width", @definition.x1.bandwidth())
+            #.attr("width", d3.max([1, @definition.x1.bandwidth()]))
             .attr("y", (d) -> _.definition.y(d.y))
             .attr("height", (d) ->
               _.definition.dimensions.innerHeight +
@@ -710,9 +710,9 @@ window.Plotter.BarPlot = class BarPlot
 
           # transitionDurationbar
           @bars[key].attr("x", (d) -> _rescaleX(d.x))
-            .attr("width", _bandwidth)
+            .attr("width", d3.max([1, _bandwidth]))
             #.attr("x", (d) -> _.definition.x(d.x))
-            #.attr("width", @definition.x1.bandwidth())
+            #.attr("width", d3.max([1, @definition.x1.bandwidth()]))
             .attr("y", (d) -> _.definition.y(d.y))
             .attr("height", (d) ->
               _.definition.dimensions.innerHeight +
@@ -827,7 +827,8 @@ window.Plotter.BarPlot = class BarPlot
     for key, row of @data
       @svg.selectAll(".bar-#{key}")
         .attr("x", (d) -> _rescaleX(d.x))
-        .attr("width", Math.floor(_transform.k * @definition.x1.bandwidth()))
+        .attr("width",
+          d3.max([1, Math.floor(_transform.k * @definition.x1.bandwidth())]))
 
     @appendCrosshairTarget(_transform)
     return _transform
@@ -924,11 +925,12 @@ window.Plotter.BarPlot = class BarPlot
               transform.k * @definition.x1.bandwidth() + 2)
             .attr("y", dy[key] - _dims.topPadding / 10)
             .text(
-              if _value[key].y
+              if _value[key].y?
                 if _.options.y[0].variable is "wind_direction"
                   directionLabel(_value[key].y)
                 else
-                  _value[key].y.toFixed(1) + " " + @options.y[key].units)
+                  console.log("Value y: ", _value[key].y)
+                  _value[key].y.toFixed(2) + " " + @options.y[key].units)
 
     # Tooltip Overlap Prevention
     #if (

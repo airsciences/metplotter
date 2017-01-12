@@ -774,7 +774,7 @@
         row = ref[key];
         this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
           return _.definition.x(d.x);
-        }).attr("width", this.definition.x1.bandwidth()).attr("y", function(d) {
+        }).attr("width", d3.max([1, this.definition.x1.bandwidth()])).attr("y", function(d) {
           return _.definition.y(d.y);
         }).attr("height", function(d) {
           return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
@@ -812,7 +812,7 @@
             console.log("Adding new BarPlot data set.");
             this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
               return _rescaleX(d.x);
-            }).attr("width", _bandwidth).attr("y", function(d) {
+            }).attr("width", d3.max([1, _bandwidth])).attr("y", function(d) {
               return _.definition.y(d.y);
             }).attr("height", function(d) {
               return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
@@ -823,7 +823,7 @@
             this.bars[key] = this.barWrapper.select("g").selectAll(".bar-" + key).data(row);
             this.bars[key].enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
               return _rescaleX(d.x);
-            }).attr("width", _bandwidth).attr("y", function(d) {
+            }).attr("width", d3.max([1, _bandwidth])).attr("y", function(d) {
               return _.definition.y(d.y);
             }).attr("height", function(d) {
               return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
@@ -831,7 +831,7 @@
             this.bars[key].exit().remove();
             this.bars[key].attr("x", function(d) {
               return _rescaleX(d.x);
-            }).attr("width", _bandwidth).attr("y", function(d) {
+            }).attr("width", d3.max([1, _bandwidth])).attr("y", function(d) {
               return _.definition.y(d.y);
             }).attr("height", function(d) {
               return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
@@ -911,7 +911,7 @@
         row = ref[key];
         this.svg.selectAll(".bar-" + key).attr("x", function(d) {
           return _rescaleX(d.x);
-        }).attr("width", Math.floor(_transform.k * this.definition.x1.bandwidth()));
+        }).attr("width", d3.max([1, Math.floor(_transform.k * this.definition.x1.bandwidth())]));
       }
       this.appendCrosshairTarget(_transform);
       return _transform;
@@ -1007,7 +1007,7 @@
           }
           if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusRect[key].attr("width", transform.k * this.definition.x1.bandwidth()).attr("x", dx).attr("y", dy[key]);
-            this.focusText[key].attr("x", dx + _dims.leftPadding / 10 + transform.k * this.definition.x1.bandwidth() + 2).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
+            this.focusText[key].attr("x", dx + _dims.leftPadding / 10 + transform.k * this.definition.x1.bandwidth() + 2).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y != null ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : (console.log("Value y: ", _value[key].y), _value[key].y.toFixed(2) + " " + this.options.y[key].units) : void 0);
           }
         }
       }
