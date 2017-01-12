@@ -1333,7 +1333,9 @@
         $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"]").css("font-weight", _font_weight);
         $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"] > span.region-dots").html(_dots_html);
       }
-      return this.plotter.legends[plotId].draw();
+      if (this.plotter.legends[plotId] != null) {
+        return this.plotter.legends[plotId].draw();
+      }
     };
 
     Controls.prototype.removeSpinner = function(plotId) {
@@ -2085,6 +2087,11 @@
         _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
         _.plotter.plots[plotId].proto.setData(_.plotter.plots[plotId].__data__[dataSetId]);
         _.plotter.plots[plotId].proto.append();
+        if (!(_.plotter.legends[plotId] != null)) {
+          console.log("Adding new Plotter.Legend");
+          _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter, _.plotter.plots[plotId].proto);
+          _.plotter.legends[plotId].draw();
+        }
         return _.plotter.i.controls.removeSpinner(plotId);
       };
       this.api.get(target, args, callback);
@@ -3509,7 +3516,6 @@
       } else {
         this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot);
       }
-      this.legends[_key] = new window.Plotter.Legend(this.plots[_key].proto);
       this.plots[_key].proto.preAppend();
       this.plots[_key].proto.options.plotId = _key;
       this.plots[_key].proto.options.uuid = uuid;

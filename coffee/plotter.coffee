@@ -218,7 +218,6 @@ window.Plotter.Handler = class Handler
       @plots[_key].proto = new window.Plotter.BarPlot(@, [[]], plot)
     else
       @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot)
-    @legends[_key] = new window.Plotter.Legend(@plots[_key].proto)
     @plots[_key].proto.preAppend()
     @plots[_key].proto.options.plotId = _key
     @plots[_key].proto.options.uuid = uuid

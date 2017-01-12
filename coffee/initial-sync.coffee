@@ -93,6 +93,14 @@ window.Plotter.InitialSync = class InitialSync
       _.plotter.plots[plotId].proto.setData(
         _.plotter.plots[plotId].__data__[dataSetId])
       _.plotter.plots[plotId].proto.append()
+
+      # Draw the Legend.
+      if !(_.plotter.legends[plotId]?)
+        console.log("Adding new Plotter.Legend")
+        _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter,
+          _.plotter.plots[plotId].proto)
+        _.plotter.legends[plotId].draw()
+
       _.plotter.i.controls.removeSpinner(plotId)
 
     @api.get(target, args, callback)
