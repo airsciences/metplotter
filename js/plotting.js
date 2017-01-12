@@ -1281,7 +1281,7 @@
     };
 
     Controls.prototype.updateStationDropdown = function(plotId) {
-      var _, __bindStationClicks, __buildDots, _background_color, _data_region, _dots_html, _font_weight, i, j, len, len1, ref, ref1, region, results1, station;
+      var _, __bindStationClicks, __buildDots, _background_color, _data_region, _dots_html, _font_weight, i, j, len, len1, ref, ref1, region, station;
       _ = this;
       this.updateStationStates(plotId);
       __buildDots = function(displayed) {
@@ -1313,7 +1313,6 @@
         }
       };
       ref = this.stations[plotId];
-      results1 = [];
       for (i = 0, len = ref.length; i < len; i++) {
         region = ref[i];
         _data_region = this.plotter.lib.toLower(region.name);
@@ -1332,9 +1331,9 @@
           __bindStationClicks(plotId, _.plotter, station);
         }
         $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"]").css("font-weight", _font_weight);
-        results1.push($("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"] > span.region-dots").html(_dots_html));
+        $("[data-region=\"" + _data_region + "\"][data-plot-id=\"" + plotId + "\"] > span.region-dots").html(_dots_html);
       }
-      return results1;
+      return this.plotter.legends[plotId].draw();
     };
 
     Controls.prototype.removeSpinner = function(plotId) {
@@ -2125,6 +2124,7 @@
       this.svg = this.plotter.plots[plotId].proto.svg;
       this.plotId = this.plotter.plots[plotId].proto.options.plotId;
       this.dimensions = this.plotter.plots[plotId].proto.definition.dimensions;
+      this.legend = this.svg.append("g").attr("class", "legend");
     }
 
     Legend.prototype.set = function() {
@@ -2150,8 +2150,6 @@
     Legend.prototype.draw = function() {
       var _rect, _text;
       this.set();
-      console.log("Drawing new Legend (@data)", this.data);
-      this.legend = this.svg.append("g").attr("class", "legend");
       _rect = this.legend.selectAll("rect").data(this.data);
       _rect.attr("y", function(d) {
         return d.offset * 12;
@@ -2165,8 +2163,8 @@
       });
       _rect.exit().remove();
       _text = this.legend.selectAll("text").data(this.data);
-      _rect.attr("y", function(d) {
-        return d.offset * 12;
+      _text.attr("y", function(d) {
+        return d.offset * 12 + 6;
       }).text(function(d) {
         return d.title;
       });
@@ -3911,9 +3909,13 @@
     };
 
     Template.prototype.forSync = function(plotId, lineId, maxDatetime, limit) {
-      var result;
+      var _id, result;
+      _id = null;
+      if (this.template[plotId].y[lineId] != null) {
+        _id = this.template[plotId].y[lineId].dataLoggerId;
+      }
       result = {
-        data_logger: this.template[plotId].y[lineId].dataLoggerId,
+        data_logger: _id,
         max_datetime: maxDatetime,
         limit: limit
       };

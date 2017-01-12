@@ -17,6 +17,9 @@ window.Plotter.Legend = class Legend
     @plotId = @plotter.plots[plotId].proto.options.plotId
     @dimensions = @plotter.plots[plotId].proto.definition.dimensions
 
+    @legend = @svg.append("g")
+      .attr("class", "legend")
+
   set: ->
     @data = []
     _options = @plotter.plots[@plotId].proto.options
@@ -34,10 +37,6 @@ window.Plotter.Legend = class Legend
   draw: ->
     # Append the Legend the SVG
     @set()
-    console.log("Drawing new Legend (@data)", @data)
-
-    @legend = @svg.append("g")
-      .attr("class", "legend")
 
     _rect = @legend.selectAll("rect")
       .data(@data)
@@ -61,7 +60,7 @@ window.Plotter.Legend = class Legend
     _text = @legend.selectAll("text")
       .data(@data)
 
-    _rect.attr("y", (d) -> d.offset * 12)
+    _text.attr("y", (d) -> d.offset * 12 + 6)
       .text((d) -> d.title)
 
     _text.enter()

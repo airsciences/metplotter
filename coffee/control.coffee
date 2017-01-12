@@ -225,6 +225,9 @@ window.Plotter.Controls = class Controls
       > span.region-dots")
         .html(_dots_html)
 
+    # Update the Legend (Here because it depends on control data)
+    @plotter.legends[plotId].draw()
+
   removeSpinner: (plotId) ->
     # Remove all spinners associated with that plot
     $("i.icon-spinner[data-plot-id=\"#{plotId}\"]").remove()

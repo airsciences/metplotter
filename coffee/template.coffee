@@ -123,8 +123,12 @@ window.Plotter.Template = class Template
 
   forSync: (plotId, lineId, maxDatetime, limit) ->
     # Prepare the template for an API request.
+    _id = null
+    if @template[plotId].y[lineId]?
+      _id = @template[plotId].y[lineId].dataLoggerId
+
     result =
-      data_logger: @template[plotId].y[lineId].dataLoggerId
+      data_logger: _id
       max_datetime: maxDatetime
       limit: limit
     return result
