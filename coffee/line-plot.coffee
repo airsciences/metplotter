@@ -99,6 +99,7 @@ window.Plotter.LinePlot = class LinePlot
     @lines = []
     @focusCircle = []
     @focusText = []
+    @skipBandDomainSet = false
 
     # Initialize the State
     _domainScale = null
@@ -287,6 +288,9 @@ window.Plotter.LinePlot = class LinePlot
     center.setMilliseconds(0)
     return center
 
+  setBandDomain: (bandDomain) ->
+    @definition.x1 = bandDomain
+
   getDefinition: ->
     preError = "#{@preError}getDefinition():"
     _ = @
@@ -304,6 +308,8 @@ window.Plotter.LinePlot = class LinePlot
 
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
+    if !@skipBandDomainSet
+      @definition.x1.domain(@data[0].map((d) -> d.x))
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Define the Zoom Method
@@ -391,6 +397,9 @@ window.Plotter.LinePlot = class LinePlot
 
     # Define the X & Y Scales
     @definition.x = d3.scaleTime().range([margin.left, (width-margin.right)])
+    @definition.x1 = d3.scaleBand()
+      .rangeRound([margin.left, (width-margin.right)], 0.05)
+      .padding(0.1)
     @definition.y = d3.scaleLinear().range([(height-margin.bottom),
       (margin.top)])
 

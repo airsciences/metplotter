@@ -100,6 +100,7 @@ window.Plotter.BarPlot = class BarPlot
     @bars = []
     @focusRect = []
     @focusText = []
+    @skipBandDomainSet = false
 
     # Initialize the State
     _domainScale = null
@@ -305,7 +306,8 @@ window.Plotter.BarPlot = class BarPlot
 
     # Define the Domains
     @definition.x.domain([@definition.x.min, @definition.x.max])
-    @definition.x1.domain(@data[0].map((d) -> d.x))
+    if !@skipBandDomainSet
+      @definition.x1.domain(@data[0].map((d) -> d.x))
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Define the Zoom Method
@@ -322,6 +324,8 @@ window.Plotter.BarPlot = class BarPlot
         _.plotter.i.zoom.set(transform)
       )
 
+  setBandDomain: (bandDomain) ->
+    @definition.x1 = bandDomain
 
   calculateChartDims: ->
     # Calculate Basic DOM & SVG Dimensions

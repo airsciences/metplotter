@@ -381,6 +381,7 @@
       this.bars = [];
       this.focusRect = [];
       this.focusText = [];
+      this.skipBandDomainSet = false;
       _domainScale = null;
       _domainMean = null;
       if (data.length > 0) {
@@ -611,9 +612,11 @@
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y[0].ticks);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
-      this.definition.x1.domain(this.data[0].map(function(d) {
-        return d.x;
-      }));
+      if (!this.skipBandDomainSet) {
+        this.definition.x1.domain(this.data[0].map(function(d) {
+          return d.x;
+        }));
+      }
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
       return this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
@@ -621,6 +624,10 @@
         transform = _.setZoomTransform();
         return _.plotter.i.zoom.set(transform);
       });
+    };
+
+    BarPlot.prototype.setBandDomain = function(bandDomain) {
+      return this.definition.x1 = bandDomain;
     };
 
     BarPlot.prototype.calculateChartDims = function() {
@@ -2085,6 +2092,9 @@
         }
         _.requests[uuid].ready = true;
         _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
+        console.log("Setting band domain for (plotId).", plotId);
+        _.plotter.plots[plotId].proto.skipBandDomainSet = true;
+        _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain);
         _.plotter.plots[plotId].proto.setData(_.plotter.plots[plotId].__data__[dataSetId]);
         _.plotter.plots[plotId].proto.append();
         if (!(_.plotter.legends[plotId] != null)) {
@@ -2397,6 +2407,7 @@
       this.lines = [];
       this.focusCircle = [];
       this.focusText = [];
+      this.skipBandDomainSet = false;
       _domainScale = null;
       _domainMean = null;
       if (data.length > 0) {
@@ -2617,6 +2628,10 @@
       return center;
     };
 
+    LinePlot.prototype.setBandDomain = function(bandDomain) {
+      return this.definition.x1 = bandDomain;
+    };
+
     LinePlot.prototype.getDefinition = function() {
       var _, _extent, preError;
       preError = this.preError + "getDefinition():";
@@ -2627,6 +2642,11 @@
       this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y[0].ticks);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
+      if (!this.skipBandDomainSet) {
+        this.definition.x1.domain(this.data[0].map(function(d) {
+          return d.x;
+        }));
+      }
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
       this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
@@ -2699,6 +2719,7 @@
       this.definition.dimensions.innerHeight = parseInt(this.definition.dimensions.height - this.definition.dimensions.margin.bottom - this.definition.dimensions.margin.top);
       this.definition.dimensions.innerWidth = parseInt(this.definition.dimensions.width - this.definition.dimensions.margin.left - this.definition.dimensions.margin.right);
       this.definition.x = d3.scaleTime().range([margin.left, width - margin.right]);
+      this.definition.x1 = d3.scaleBand().rangeRound([margin.left, width - margin.right], 0.05).padding(0.1);
       return this.definition.y = d3.scaleLinear().range([height - margin.bottom, margin.top]);
     };
 
@@ -3355,6 +3376,7 @@
       this.plots = [];
       this.legends = [];
       this.updates = 0;
+      this.bandDomain = null;
       this.isReady = function() {
         return this.updates <= this.options.updateLimit;
       };
@@ -3450,6 +3472,7 @@
         this.i.controls.append(key);
         this.legends[key] = new window.Plotter.Legend(this, key);
       }
+      this.bandDomain = this.plots[0].proto.definition.x1;
       return this.appendSave();
     };
 

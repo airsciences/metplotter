@@ -90,6 +90,9 @@ window.Plotter.InitialSync = class InitialSync
       _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results
 
       # Set Data and Append the Plot.
+      console.log("Setting band domain for (plotId).", plotId)
+      _.plotter.plots[plotId].proto.skipBandDomainSet = true
+      _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain)
       _.plotter.plots[plotId].proto.setData(
         _.plotter.plots[plotId].__data__[dataSetId])
       _.plotter.plots[plotId].proto.append()

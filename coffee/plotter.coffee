@@ -58,6 +58,7 @@ window.Plotter.Handler = class Handler
     @plots = []
     @legends = []
     @updates = 0
+    @bandDomain = null
 
     @isReady = ->
       return @updates <= @options.updateLimit
@@ -148,6 +149,9 @@ window.Plotter.Handler = class Handler
       # Append the Legend
       @legends[key] = new window.Plotter.Legend(@, key)
       #@legends[key].append()
+
+    # Set the Global Band Domain
+    @bandDomain = @plots[0].proto.definition.x1
 
     # Template Save Control.
     @appendSave()
