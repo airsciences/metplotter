@@ -3667,13 +3667,13 @@
           maxBar: null
         },
         snow_depth: {
-          min: null,
-          max: null,
+          min: 0,
+          max: 200,
           maxBar: null
         },
         snowfall_24_hour: {
           min: 0,
-          max: 40,
+          max: 30,
           maxBar: null
         },
         intermittent_snow: {
@@ -3688,7 +3688,7 @@
         },
         precipitation: {
           min: 0,
-          max: 0.7,
+          max: 0.4,
           maxBar: null
         },
         wind_speed_average: {
