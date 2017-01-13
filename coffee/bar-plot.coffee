@@ -308,6 +308,7 @@ window.Plotter.BarPlot = class BarPlot
     @definition.x.domain([@definition.x.min, @definition.x.max])
     if !@skipBandDomainSet
       @definition.x1.domain(@data[0].map((d) -> d.x))
+      @skipBandDomainSet = false
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Define the Zoom Method

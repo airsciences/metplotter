@@ -616,6 +616,7 @@
         this.definition.x1.domain(this.data[0].map(function(d) {
           return d.x;
         }));
+        this.skipBandDomainSet = false;
       }
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
@@ -2092,10 +2093,9 @@
         }
         _.requests[uuid].ready = true;
         _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results;
-        console.log("Setting band domain for (plotId).", plotId);
         _.plotter.plots[plotId].proto.skipBandDomainSet = true;
-        _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain);
         _.plotter.plots[plotId].proto.setData(_.plotter.plots[plotId].__data__[dataSetId]);
+        _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain);
         _.plotter.plots[plotId].proto.append();
         if (!(_.plotter.legends[plotId] != null)) {
           _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter, plotId);
@@ -2646,6 +2646,7 @@
         this.definition.x1.domain(this.data[0].map(function(d) {
           return d.x;
         }));
+        this.skipBandDomainSet = false;
       }
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
