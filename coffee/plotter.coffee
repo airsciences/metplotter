@@ -212,13 +212,18 @@ window.Plotter.Handler = class Handler
     @plots[_key] = {}
 
     _plotType = @i.specs.getPlotType(variable)
-    console.log("Adding plotType: ", _plotType)
+
+    # Special Precip LinePlot
+    if variable is "precipitation_line"
+      variable = "precipitation"
+      _plotType = "line"
 
     if _plotType is "bar"
       @plots[_key].proto = new window.Plotter.BarPlot(@, [[]], plot)
     else
       @plots[_key].proto = new window.Plotter.LinePlot(@, [[]], plot)
     @plots[_key].proto.preAppend()
+    @plots[_key].proto.options.plotType = _plotType
     @plots[_key].proto.options.plotId = _key
     @plots[_key].proto.options.uuid = uuid
     @appendSave()

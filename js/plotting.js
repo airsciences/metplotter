@@ -1605,9 +1605,6 @@
       uuid = this.plotter.lib.uuid();
       _params = [
         {
-          variable: "precipitation",
-          title: "Precipitation"
-        }, {
           variable: "battery_voltage",
           title: "Battery Voltage"
         }, {
@@ -1636,7 +1633,10 @@
           title: "Wind Direction"
         }, {
           variable: "precipitation",
-          title: "Precipitation"
+          title: "Precipitation (Bar Plot)"
+        }, {
+          variable: "precipitation_line",
+          title: "Precipitation (Line Plot)"
         }, {
           variable: "temperature",
           title: "Temperature"
@@ -2088,8 +2088,7 @@
         _.plotter.plots[plotId].proto.setData(_.plotter.plots[plotId].__data__[dataSetId]);
         _.plotter.plots[plotId].proto.append();
         if (!(_.plotter.legends[plotId] != null)) {
-          console.log("Adding new Plotter.Legend");
-          _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter, _.plotter.plots[plotId].proto);
+          _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter, plotId);
           _.plotter.legends[plotId].draw();
         }
         return _.plotter.i.controls.removeSpinner(plotId);
@@ -3510,13 +3509,17 @@
       _key = this.i.template.add(plot);
       this.plots[_key] = {};
       _plotType = this.i.specs.getPlotType(variable);
-      console.log("Adding plotType: ", _plotType);
+      if (variable === "precipitation_line") {
+        variable = "precipitation";
+        _plotType = "line";
+      }
       if (_plotType === "bar") {
         this.plots[_key].proto = new window.Plotter.BarPlot(this, [[]], plot);
       } else {
         this.plots[_key].proto = new window.Plotter.LinePlot(this, [[]], plot);
       }
       this.plots[_key].proto.preAppend();
+      this.plots[_key].proto.options.plotType = _plotType;
       this.plots[_key].proto.options.plotId = _key;
       this.plots[_key].proto.options.uuid = uuid;
       this.appendSave();

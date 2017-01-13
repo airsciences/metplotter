@@ -545,7 +545,6 @@ window.Plotter.Controls = class Controls
     uuid = @plotter.lib.uuid()
 
     _params = [
-      {variable: "precipitation", title: "Precipitation"},
       {variable: "battery_voltage", title: "Battery Voltage"},
       {variable: "net_solar", title: "Solar Radiation"},
       {variable: "solar_pyranometer", title: "Solar Pyranometer"},
@@ -555,7 +554,8 @@ window.Plotter.Controls = class Controls
       {variable: "snowfall_24_hour", title: "24-Hour Snowfall"},
       {variable: "intermittent_snow", title: "Intermittent Snow"},
       {variable: "wind_direction", title: "Wind Direction"},
-      {variable: "precipitation", title: "Precipitation"},
+      {variable: "precipitation", title: "Precipitation (Bar Plot)"},
+      {variable: "precipitation_line", title: "Precipitation (Line Plot)"},
       {variable: "temperature", title: "Temperature"},
       {variable: "equip_temperature", title: "Equipment Temperature"},
       {variable: "wind_speed_average", title: "Wind Speed"},

@@ -96,9 +96,7 @@ window.Plotter.InitialSync = class InitialSync
 
       # Draw the Legend.
       if !(_.plotter.legends[plotId]?)
-        console.log("Adding new Plotter.Legend")
-        _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter,
-          _.plotter.plots[plotId].proto)
+        _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter, plotId)
         _.plotter.legends[plotId].draw()
 
       _.plotter.i.controls.removeSpinner(plotId)
