@@ -3598,6 +3598,8 @@
     };
 
     Handler.prototype.appendSave = function() {
+      var _;
+      _ = this;
       $("#save-" + this.options.uuid).parent().remove();
       if (this.isAdmin() || (this.options.uuid != null)) {
         $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Template</a></small>");
