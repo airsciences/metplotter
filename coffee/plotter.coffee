@@ -259,8 +259,8 @@ window.Plotter.Handler = class Handler
 
     if @plots[plotId].proto.options.plotType is 'bar'
       @i.controls.removeSpinner(plotId)
-      alert("The bar plot only supports one station.
-        Please add precipitation as a line plot to use multiple.")
+      alert("Bar plots only support one station.
+        Please add a new Precipitation Line Plot to view multiple stations.")
       return false
 
     # Add another station.
