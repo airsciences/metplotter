@@ -413,8 +413,6 @@ window.Plotter.Controls = class Controls
       for _point in _bound_points
         _bounds.extend(_point)
 
-      console.log("Plot bounds & points", _bound_points, _bounds)
-
       @maps[plotId].fitBounds(_bounds)
       @maps[plotId].panToBounds(_bounds)
 

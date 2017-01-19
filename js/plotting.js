@@ -1476,7 +1476,6 @@
           _point = _bound_points[k];
           _bounds.extend(_point);
         }
-        console.log("Plot bounds & points", _bound_points, _bounds);
         this.maps[plotId].fitBounds(_bounds);
         this.maps[plotId].panToBounds(_bounds);
       }
