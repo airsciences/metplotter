@@ -632,7 +632,7 @@
     };
 
     BarPlot.prototype.calculateChartDims = function() {
-      var height, margin, width;
+      var _height, height, margin, width;
       if (this.options.width != null) {
         width = Math.round(this.options.width);
       } else {
@@ -649,7 +649,8 @@
       } else if (width > 600) {
         this.device = 'mid';
         this.options.font.size = this.options.font.size / 1.25;
-        height = Math.round(width / (this.options.aspectDivisor / 1.25));
+        _height = this.options.aspectDivisor / 1.25;
+        height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -659,7 +660,8 @@
       } else {
         this.device = 'small';
         this.options.font.size = this.options.font.size / 1.5;
-        height = Math.round(width / (this.options.aspectDivisor / 1.5));
+        _height = this.options.aspectDivisor / 1.5;
+        height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -1402,7 +1404,7 @@
         return _.plotter.i.controls.toggleMap(plotId);
       });
       this.maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
-        center: new google.maps.LatLng(46.980, 122.221),
+        center: new google.maps.LatLng(46.980, -122.221),
         zoom: 6,
         maxZoom: 12,
         minZoom: 6,
@@ -1469,12 +1471,15 @@
           this.markers[plotId][_row_id].setMap(this.maps[plotId]);
         }
       }
-      for (k = 0, len2 = _bound_points.length; k < len2; k++) {
-        _point = _bound_points[k];
-        _bounds.extend(_point);
+      if (_bound_points.length > 0) {
+        for (k = 0, len2 = _bound_points.length; k < len2; k++) {
+          _point = _bound_points[k];
+          _bounds.extend(_point);
+        }
+        console.log("Plot bounds & points", _bound_points, _bounds);
+        this.maps[plotId].fitBounds(_bounds);
+        this.maps[plotId].panToBounds(_bounds);
       }
-      this.maps[plotId].fitBounds(_bounds);
-      this.maps[plotId].panToBounds(_bounds);
       if (this.maps[plotId].getZoom() < 6) {
         return this.maps[plotId].setZoom(6);
       }
@@ -2674,7 +2679,7 @@
     };
 
     LinePlot.prototype.calculateChartDims = function() {
-      var height, margin, width;
+      var _height, height, margin, width;
       if (this.options.width != null) {
         width = Math.round(this.options.width);
       } else {
@@ -2691,7 +2696,8 @@
       } else if (width > 600) {
         this.device = 'mid';
         this.options.font.size = this.options.font.size / 1.25;
-        height = Math.round(width / (this.options.aspectDivisor / 1.25));
+        _height = this.options.aspectDivisor / 1.25;
+        height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -2701,7 +2707,8 @@
       } else {
         this.device = 'small';
         this.options.font.size = this.options.font.size / 1.5;
-        height = Math.round(width / (this.options.aspectDivisor / 1.5));
+        _height = this.options.aspectDivisor / 1.5;
+        height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),

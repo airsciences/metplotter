@@ -89,7 +89,7 @@ window.Plotter.InitialSync = class InitialSync
       _.requests[uuid].ready = true
       _.plotter.plots[plotId].__data__[dataSetId] = data.responseJSON.results
 
-      # Set Data and Append the Plot.
+      # Set Data and Append the Plot.cd
       _.plotter.plots[plotId].proto.skipBandDomainSet = true
       _.plotter.plots[plotId].proto.setData(
         _.plotter.plots[plotId].__data__[dataSetId])

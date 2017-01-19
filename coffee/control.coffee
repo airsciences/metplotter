@@ -336,7 +336,7 @@ window.Plotter.Controls = class Controls
     )
 
     @maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
-      center: new google.maps.LatLng(46.980, 122.221),
+      center: new google.maps.LatLng(46.980, -122.221),
       zoom: 6,
       maxZoom: 12,
       minZoom: 6,
@@ -409,11 +409,15 @@ window.Plotter.Controls = class Controls
         @markers[plotId][_row_id].setMap(@maps[plotId])
 
     # Fit to Bounds
-    for _point in _bound_points
-      _bounds.extend(_point)
+    if _bound_points.length > 0
+      for _point in _bound_points
+        _bounds.extend(_point)
 
-    @maps[plotId].fitBounds(_bounds)
-    @maps[plotId].panToBounds(_bounds)
+      console.log("Plot bounds & points", _bound_points, _bounds)
+
+      @maps[plotId].fitBounds(_bounds)
+      @maps[plotId].panToBounds(_bounds)
+
     if @maps[plotId].getZoom() < 6
       @maps[plotId].setZoom(6)
 
