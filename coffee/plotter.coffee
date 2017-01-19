@@ -235,8 +235,11 @@ window.Plotter.Handler = class Handler
     # Update Options
     _yOptions = @i.specs.getOptions(variable, null)
 
-    @i.template.template[_key].x = $.extend(
-      true, {}, @i.template.template[0].x)
+    for template in @i.template.template
+      if template != undefined
+        @i.template.template[_key].x = $.extend(
+          true, {}, template.x)
+        break
     @i.template.template[_key].y = [_yOptions]
 
     _revisedOptions =  @i.template.forPlots(_key)

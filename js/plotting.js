@@ -2043,9 +2043,16 @@
     };
 
     InitialSync.prototype.add = function(plotId) {
-      var _plotTemplate, _state, args, limit, maxDatetime, uuid;
+      var _plotTemplate, _state, args, j, len, limit, maxDatetime, plot, ref, uuid;
+      ref = this.plotter.plots;
+      for (j = 0, len = ref.length; j < len; j++) {
+        plot = ref[j];
+        if (plot !== void 0) {
+          _state = plot.proto.getState();
+          break;
+        }
+      }
       _plotTemplate = this.plotter.i.template.template[plotId];
-      _state = this.plotter.plots[0].proto.getState();
       maxDatetime = this.plotter.lib.format(_state.range.data[0].max);
       limit = _state.length.data[0];
       args = this.plotter.i.template.forSync(plotId, 0, maxDatetime, limit);
@@ -2085,6 +2092,7 @@
       target = this.endpoint();
       _ = this;
       callback = function(data) {
+        var _transform, j, len, plot, ref;
         if (!(data.responseJSON != null)) {
           throw new Error(preError + " error requesting data.");
           return null;
@@ -2092,6 +2100,14 @@
         if (data.responseJSON.results.length === 0) {
           throw new Error(preError + " no set found.");
           return null;
+        }
+        ref = _.plotter.plots;
+        for (j = 0, len = ref.length; j < len; j++) {
+          plot = ref[j];
+          if (plot !== void 0) {
+            _transform = plot.proto.transform;
+            break;
+          }
         }
         if (!(_.plotter.plots[plotId].__data__ != null)) {
           _.plotter.plots[plotId].__data__ = [];
@@ -2102,6 +2118,7 @@
         _.plotter.plots[plotId].proto.setData(_.plotter.plots[plotId].__data__[dataSetId]);
         _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain);
         _.plotter.plots[plotId].proto.append();
+        _.plotter.plots[plotId].proto.setZoomTransform(_transform);
         if (!(_.plotter.legends[plotId] != null)) {
           _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter, plotId);
           _.plotter.legends[plotId].draw();
@@ -3526,7 +3543,7 @@
     };
 
     Handler.prototype.add = function(type, variable) {
-      var _key, _plotType, _revisedOptions, _target, _yOptions, html, plot, uuid;
+      var _key, _plotType, _revisedOptions, _target, _yOptions, html, i, len, plot, ref, template, uuid;
       uuid = this.lib.uuid();
       _target = "outer-" + uuid;
       plot = {
@@ -3555,7 +3572,14 @@
       this.plots[_key].proto.options.uuid = uuid;
       this.appendSave();
       _yOptions = this.i.specs.getOptions(variable, null);
-      this.i.template.template[_key].x = $.extend(true, {}, this.i.template.template[0].x);
+      ref = this.i.template.template;
+      for (i = 0, len = ref.length; i < len; i++) {
+        template = ref[i];
+        if (template !== void 0) {
+          this.i.template.template[_key].x = $.extend(true, {}, template.x);
+          break;
+        }
+      }
       this.i.template.template[_key].y = [_yOptions];
       _revisedOptions = this.i.template.forPlots(_key);
       this.plots[_key].proto.options.x = _revisedOptions.x;
@@ -3575,7 +3599,7 @@
       }
       if (this.plots[plotId].proto.options.plotType === 'bar') {
         this.i.controls.removeSpinner(plotId);
-        alert("The bar plot only supports one station. Please add precipitation as a line plot to use multiple.");
+        alert("Bar plots only support one station. Please add a new Precipitation Line Plot to view multiple stations.");
         return false;
       }
       _state = this.plots[plotId].proto.getState();
@@ -3667,7 +3691,7 @@
         },
         relative_humidity: {
           min: 0,
-          max: 102,
+          max: 100,
           maxBar: null
         },
         net_solar: {
@@ -3686,7 +3710,7 @@
           maxBar: null
         },
         intermittent_snow: {
-          min: null,
+          min: 0,
           max: null,
           maxBar: null
         },
@@ -3711,8 +3735,8 @@
           maxBar: null
         },
         barometric_pressure: {
-          min: null,
-          max: null,
+          min: 950,
+          max: 1050,
           maxBar: null
         }
       };

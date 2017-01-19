@@ -30,8 +30,12 @@ window.Plotter.InitialSync = class InitialSync
       @requests[uuid]['requested'] = @get(plotId, i, uuid, args)
 
   add: (plotId) ->
+    for plot in @plotter.plots
+      if plot != undefined
+        _state = plot.proto.getState()
+        break
+
     _plotTemplate = @plotter.i.template.template[plotId]
-    _state = @plotter.plots[0].proto.getState()
     maxDatetime = @plotter.lib.format(_state.range.data[0].max)
     limit = _state.length.data[0]
 
@@ -81,6 +85,12 @@ window.Plotter.InitialSync = class InitialSync
         throw new Error("#{preError} no set found.")
         return null
 
+      # Get the Current transform
+      for plot in _.plotter.plots
+        if plot != undefined
+          _transform = plot.proto.transform
+          break
+
       # Set __data__ if Undefined
       if !(_.plotter.plots[plotId].__data__?)
         _.plotter.plots[plotId].__data__ = []
@@ -95,6 +105,7 @@ window.Plotter.InitialSync = class InitialSync
         _.plotter.plots[plotId].__data__[dataSetId])
       _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain)
       _.plotter.plots[plotId].proto.append()
+      _.plotter.plots[plotId].proto.setZoomTransform(_transform)
 
       # Draw the Legend.
       if !(_.plotter.legends[plotId]?)
