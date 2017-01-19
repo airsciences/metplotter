@@ -37,7 +37,7 @@ window.Plotter.Specs = class Specs
       # {"variable": "relative_humidity", "title": "Relative Humidity"},
       relative_humidity:
         min: 0
-        max: 102
+        max: 100
         maxBar: null
       # {"variable": "net_solar", "title": "Net Solar"},
       net_solar:
@@ -56,7 +56,7 @@ window.Plotter.Specs = class Specs
         maxBar: null
       # {"variable": "intermittent_snow", "title": "Intermittent Snow"}
       intermittent_snow:
-        min: null
+        min: 0
         max: null
         maxBar: null
       # {"variable": "wind_direction", "title": "Wind Direction"},
@@ -81,8 +81,8 @@ window.Plotter.Specs = class Specs
         maxBar: null
       # {"variable": "barometric_pressure", "title": "Barometric Pressure"},
       barometric_pressure:
-        min: null
-        max: null
+        min: 950
+        max: 1050
         maxBar: null
      return bounds[variable]
 
