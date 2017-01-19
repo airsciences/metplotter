@@ -326,12 +326,17 @@ window.Plotter.Controls = class Controls
         <div class=\"popover\" style=\"max-width: 356px;\">
           <div class=\"arrow\"></div>
           <div class=\"popover-content\">
+            <a id=\"map-close-#{plotId}\"
+              style=\"font-size: 10px; cursor: pointer\">Close</a>
             <div id=\"#{dom_uuid}\" style=\"width: 312px;
               height: 312px;\"></div>
           </div>
         </div>"
     $(appendTarget).prepend(html)
     $("#map-#{plotId}").on('click', ->
+      _.plotter.i.controls.toggleMap(plotId)
+    )
+    $("#map-close-#{plotId}").on('click', ->
       _.plotter.i.controls.toggleMap(plotId)
     )
 
@@ -498,12 +503,12 @@ window.Plotter.Controls = class Controls
     # toggle the map div.
     _uuid = @plotter.plots[plotId].proto.options.uuid
     _nwac_offset_left = 128
-    _nwac_offset_top = 256
+    _nwac_offset_top = 256 + 12
 
     # Localhost (Emulator) Specific Styling Offset
     if location.origin is "http://localhost:5000"
       _nwac_offset_left = 0
-      _nwac_offset_top = 0
+      _nwac_offset_top = 12
 
     _center = @plotter.i.controls.maps[plotId].getCenter()
     _zoom = @plotter.i.controls.maps[plotId].getZoom()
@@ -630,5 +635,5 @@ window.Plotter.Controls = class Controls
     for outerKey, outerRow of @stations[plotId]
       for key, row of outerRow.dataloggers
         if row.id is parseInt(dataLoggerId)
-          result = row.datalogger_name
+          result = row.datalogger_name + " - " + row.elevation + " Ft."
     return result
