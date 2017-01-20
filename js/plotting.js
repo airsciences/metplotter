@@ -3568,7 +3568,7 @@
       }
       if (this.plots[plotId].proto.options.plotType === 'bar') {
         this.i.controls.removeSpinner(plotId);
-        alert("The bar plot only supports one station. Please add precipitation as a line plot to use multiple.");
+        alert("Bar plots only support one station. Please add a new Precipitation Line Plot to view multiple stations.");
         return false;
       }
       _state = this.plots[plotId].proto.getState();
@@ -3660,7 +3660,7 @@
         },
         relative_humidity: {
           min: 0,
-          max: 102,
+          max: 100,
           maxBar: null
         },
         net_solar: {
@@ -3675,22 +3675,22 @@
         },
         snowfall_24_hour: {
           min: 0,
-          max: 30,
+          max: 24,
           maxBar: null
         },
         intermittent_snow: {
-          min: null,
+          min: 0,
           max: null,
           maxBar: null
         },
         wind_direction: {
           min: 0,
-          max: 360,
+          max: 350,
           maxBar: null
         },
         precipitation: {
           min: 0,
-          max: 0.4,
+          max: 0.35,
           maxBar: null
         },
         wind_speed_average: {
@@ -3704,8 +3704,8 @@
           maxBar: null
         },
         barometric_pressure: {
-          min: null,
-          max: null,
+          min: 950,
+          max: 1050,
           maxBar: null
         }
       };

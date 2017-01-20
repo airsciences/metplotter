@@ -52,7 +52,7 @@ window.Plotter.Specs = class Specs
       # {"variable": "snowfall_24_hour", "title": "24-Hr Snowfall"},
       snowfall_24_hour:
         min: 0
-        max: 30
+        max: 24
         maxBar: null
       # {"variable": "intermittent_snow", "title": "Intermittent Snow"}
       intermittent_snow:
@@ -62,12 +62,12 @@ window.Plotter.Specs = class Specs
       # {"variable": "wind_direction", "title": "Wind Direction"},
       wind_direction:
         min: 0
-        max: 360
+        max: 350
         maxBar: null
       # {"variable": "precipitation", "title": "Precipitation"},
       precipitation:
         min: 0
-        max: 0.4
+        max: 0.35
         maxBar: null
       # {"variable": "wind_speed_average", "title": "Wind Speed"},
       wind_speed_average:
