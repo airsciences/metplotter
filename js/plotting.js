@@ -632,7 +632,7 @@
     };
 
     BarPlot.prototype.calculateChartDims = function() {
-      var height, margin, width;
+      var _height, height, margin, width;
       if (this.options.width != null) {
         width = Math.round(this.options.width);
       } else {
@@ -649,7 +649,8 @@
       } else if (width > 600) {
         this.device = 'mid';
         this.options.font.size = this.options.font.size / 1.25;
-        height = Math.round(width / (this.options.aspectDivisor / 1.25));
+        _height = this.options.aspectDivisor / 1.25;
+        height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -659,7 +660,8 @@
       } else {
         this.device = 'small';
         this.options.font.size = this.options.font.size / 1.5;
-        height = Math.round(width / (this.options.aspectDivisor / 1.5));
+        _height = this.options.aspectDivisor / 1.5;
+        height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -1396,13 +1398,16 @@
       _ = this;
       current = this.getCurrent(plotId);
       dom_uuid = "map-control-" + this.plotter.plots[plotId].proto.options.uuid;
-      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <a id=\"map-close-" + plotId + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
       $("#map-" + plotId).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);
       });
+      $("#map-close-" + plotId).on('click', function() {
+        return _.plotter.i.controls.toggleMap(plotId);
+      });
       this.maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
-        center: new google.maps.LatLng(46.980, 122.221),
+        center: new google.maps.LatLng(46.980, -122.221),
         zoom: 6,
         maxZoom: 12,
         minZoom: 6,
@@ -1469,12 +1474,14 @@
           this.markers[plotId][_row_id].setMap(this.maps[plotId]);
         }
       }
-      for (k = 0, len2 = _bound_points.length; k < len2; k++) {
-        _point = _bound_points[k];
-        _bounds.extend(_point);
+      if (_bound_points.length > 0) {
+        for (k = 0, len2 = _bound_points.length; k < len2; k++) {
+          _point = _bound_points[k];
+          _bounds.extend(_point);
+        }
+        this.maps[plotId].fitBounds(_bounds);
+        this.maps[plotId].panToBounds(_bounds);
       }
-      this.maps[plotId].fitBounds(_bounds);
-      this.maps[plotId].panToBounds(_bounds);
       if (this.maps[plotId].getZoom() < 6) {
         return this.maps[plotId].setZoom(6);
       }
@@ -1568,10 +1575,10 @@
       var _center, _nwac_offset_left, _nwac_offset_top, _offset, _uuid, _zoom;
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
       _nwac_offset_left = 128;
-      _nwac_offset_top = 256;
+      _nwac_offset_top = 256 + 12;
       if (location.origin === "http://localhost:5000") {
         _nwac_offset_left = 0;
-        _nwac_offset_top = 0;
+        _nwac_offset_top = 12;
       }
       _center = this.plotter.i.controls.maps[plotId].getCenter();
       _zoom = this.plotter.i.controls.maps[plotId].getZoom();
@@ -1713,7 +1720,7 @@
         for (key in ref1) {
           row = ref1[key];
           if (row.id === parseInt(dataLoggerId)) {
-            result = row.datalogger_name;
+            result = row.datalogger_name + " - " + row.elevation + " Ft.";
           }
         }
       }
@@ -2038,9 +2045,16 @@
     };
 
     InitialSync.prototype.add = function(plotId) {
-      var _plotTemplate, _state, args, limit, maxDatetime, uuid;
+      var _plotTemplate, _state, args, j, len, limit, maxDatetime, plot, ref, uuid;
+      ref = this.plotter.plots;
+      for (j = 0, len = ref.length; j < len; j++) {
+        plot = ref[j];
+        if (plot !== void 0) {
+          _state = plot.proto.getState();
+          break;
+        }
+      }
       _plotTemplate = this.plotter.i.template.template[plotId];
-      _state = this.plotter.plots[0].proto.getState();
       maxDatetime = this.plotter.lib.format(_state.range.data[0].max);
       limit = _state.length.data[0];
       args = this.plotter.i.template.forSync(plotId, 0, maxDatetime, limit);
@@ -2080,6 +2094,7 @@
       target = this.endpoint();
       _ = this;
       callback = function(data) {
+        var _transform, j, len, plot, ref;
         if (!(data.responseJSON != null)) {
           throw new Error(preError + " error requesting data.");
           return null;
@@ -2087,6 +2102,14 @@
         if (data.responseJSON.results.length === 0) {
           throw new Error(preError + " no set found.");
           return null;
+        }
+        ref = _.plotter.plots;
+        for (j = 0, len = ref.length; j < len; j++) {
+          plot = ref[j];
+          if (plot !== void 0) {
+            _transform = plot.proto.transform;
+            break;
+          }
         }
         if (!(_.plotter.plots[plotId].__data__ != null)) {
           _.plotter.plots[plotId].__data__ = [];
@@ -2097,6 +2120,7 @@
         _.plotter.plots[plotId].proto.setData(_.plotter.plots[plotId].__data__[dataSetId]);
         _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain);
         _.plotter.plots[plotId].proto.append();
+        _.plotter.plots[plotId].proto.setZoomTransform(_transform);
         if (!(_.plotter.legends[plotId] != null)) {
           _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter, plotId);
           _.plotter.legends[plotId].draw();
@@ -2674,7 +2698,7 @@
     };
 
     LinePlot.prototype.calculateChartDims = function() {
-      var height, margin, width;
+      var _height, height, margin, width;
       if (this.options.width != null) {
         width = Math.round(this.options.width);
       } else {
@@ -2691,7 +2715,8 @@
       } else if (width > 600) {
         this.device = 'mid';
         this.options.font.size = this.options.font.size / 1.25;
-        height = Math.round(width / (this.options.aspectDivisor / 1.25));
+        _height = this.options.aspectDivisor / 1.25;
+        height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -2701,7 +2726,8 @@
       } else {
         this.device = 'small';
         this.options.font.size = this.options.font.size / 1.5;
-        height = Math.round(width / (this.options.aspectDivisor / 1.5));
+        _height = this.options.aspectDivisor / 1.5;
+        height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -3519,7 +3545,7 @@
     };
 
     Handler.prototype.add = function(type, variable) {
-      var _key, _plotType, _revisedOptions, _target, _yOptions, html, plot, uuid;
+      var _key, _plotType, _revisedOptions, _target, _yOptions, html, i, len, plot, ref, template, uuid;
       uuid = this.lib.uuid();
       _target = "outer-" + uuid;
       plot = {
@@ -3548,7 +3574,14 @@
       this.plots[_key].proto.options.uuid = uuid;
       this.appendSave();
       _yOptions = this.i.specs.getOptions(variable, null);
-      this.i.template.template[_key].x = $.extend(true, {}, this.i.template.template[0].x);
+      ref = this.i.template.template;
+      for (i = 0, len = ref.length; i < len; i++) {
+        template = ref[i];
+        if (template !== void 0) {
+          this.i.template.template[_key].x = $.extend(true, {}, template.x);
+          break;
+        }
+      }
       this.i.template.template[_key].y = [_yOptions];
       _revisedOptions = this.i.template.forPlots(_key);
       this.plots[_key].proto.options.x = _revisedOptions.x;

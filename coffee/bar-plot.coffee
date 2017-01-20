@@ -344,7 +344,8 @@ window.Plotter.BarPlot = class BarPlot
     else if width > 600
       @device = 'mid'
       @options.font.size = @options.font.size/1.25
-      height = Math.round(width/(@options.aspectDivisor/1.25))
+      _height = @options.aspectDivisor/1.25
+      height = Math.round(width/_height)
       margin =
         top: Math.round(height * 0.04)
         right: Math.round(Math.pow(width, 0.3))
@@ -353,7 +354,8 @@ window.Plotter.BarPlot = class BarPlot
     else
       @device = 'small'
       @options.font.size = @options.font.size/1.5
-      height = Math.round(width/(@options.aspectDivisor/1.5))
+      _height = @options.aspectDivisor/1.5
+      height = Math.round(width/_height)
       margin =
         top: Math.round(height * 0.04)
         right: Math.round(Math.pow(width, 0.3))
