@@ -258,10 +258,8 @@ window.Plotter.BarPlot = class BarPlot
     _now = new Date()
 
     for key, row of @data
-      _data_max = false
-      if @state.range.data[key].max.getTime() < (_now.getTime() - (3600000*2.5))
-        _data_max = @state.interval.data[key].max <
-          @options.requestInterval.data
+      _data_max = @state.interval.data[key].max <
+        @options.requestInterval.data
 
       @state.request.data[key] =
         min: @state.interval.data[key].min < @options.requestInterval.data

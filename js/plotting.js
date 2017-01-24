@@ -561,10 +561,7 @@
       results = [];
       for (key in ref) {
         row = ref[key];
-        _data_max = false;
-        if (this.state.range.data[key].max.getTime() < (_now.getTime() - (3600000 * 2.5))) {
-          _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
-        }
+        _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
         this.state.request.data[key] = {
           min: this.state.interval.data[key].min < this.options.requestInterval.data,
           max: _data_max
@@ -2617,10 +2614,7 @@
       results = [];
       for (key in ref) {
         row = ref[key];
-        _data_max = false;
-        if (this.state.range.data[key].max.getTime() < (_now.getTime() - (3600000 * 2.5))) {
-          _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
-        }
+        _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
         this.state.request.data[key] = {
           min: this.state.interval.data[key].min < this.options.requestInterval.data,
           max: _data_max
@@ -3199,8 +3193,11 @@
     }
 
     LiveSync.prototype.append = function(plotId, dataSetId, state) {
-      var _now, args, currentMax, limit, maxDatetime, newMax, uuid;
-      _now = new Date();
+      var _local, _now, _offset, args, currentMax, limit, maxDatetime, newMax, uuid;
+      _local = new Date();
+      _offset = _local.getTimezoneOffset() / 60;
+      _now = new Date(_local.getTime() - (8 - _offset) * 3600000);
+      console.log(_now, state.range.data[dataSetId].max, state.range.data[dataSetId].max >= _now);
       if (state.range.data[dataSetId].max >= _now) {
         return true;
       }
@@ -3385,13 +3382,16 @@
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
         refresh: 500,
+        futureWait: 180000,
         updateLength: 168,
         initialLength: 504,
-        minUpdateLength: 1,
+        minUpdateLength: 0,
         updateLimit: 6,
         width: null
       };
       this.options = this.lib.mergeDefaults(options, defaults);
+      this.waitCounter = parseInt(this.options.futureWait / this.options.refresh);
+      this.refreshCounter = 0;
       __accessToken = {
         token: null,
         admin: false
@@ -3458,6 +3458,7 @@
 
     Handler.prototype.listen = function(test) {
       var dataSetId, plot, plotId, ref, ref1, request, state;
+      this.refreshCounter++;
       ref = this.plots;
       for (plotId in ref) {
         plot = ref[plotId];
@@ -3472,10 +3473,12 @@
                 plot.proto.state.requested.data[dataSetId].min = true;
                 this.i.livesync.prepend(plotId, dataSetId, state);
               }
-              if (request.max === true && this.isReady() && plot.proto.state.requested.data[dataSetId].max === false) {
-                this.updates++;
-                plot.proto.state.requested.data[dataSetId].max = true;
-                this.i.livesync.append(plotId, dataSetId, state);
+              if ((this.refreshCounter % this.waitCounter) === 0) {
+                if (request.max === true && this.isReady() && plot.proto.state.requested.data[dataSetId].max === false) {
+                  this.updates++;
+                  plot.proto.state.requested.data[dataSetId].max = true;
+                  this.i.livesync.append(plotId, dataSetId, state);
+                }
               }
             }
           }

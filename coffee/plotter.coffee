@@ -25,12 +25,17 @@ window.Plotter.Handler = class Handler
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
       refresh: 500
+      futureWait: 180000
       updateLength: 168
       initialLength: 504
-      minUpdateLength: 1
+      minUpdateLength: 0
       updateLimit: 6
       width: null
     @options = @lib.mergeDefaults(options, defaults)
+
+    # Refresh Wait Counters
+    @waitCounter = parseInt(@options.futureWait / @options.refresh)
+    @refreshCounter = 0
 
     # Access Token & Admin
     __accessToken =
@@ -94,6 +99,7 @@ window.Plotter.Handler = class Handler
       @plots[key] = _plotRow
 
   listen: (test) ->
+    @refreshCounter++
     for plotId, plot of @plots
       if plot?
         if plot.proto.initialized
@@ -108,13 +114,14 @@ window.Plotter.Handler = class Handler
               plot.proto.state.requested.data[dataSetId].min = true
               @i.livesync.prepend(plotId, dataSetId, state)
             # Max-Sided Events
-            if (
-              request.max is true and @isReady() and
-              plot.proto.state.requested.data[dataSetId].max is false
-            )
-              @updates++
-              plot.proto.state.requested.data[dataSetId].max = true
-              @i.livesync.append(plotId, dataSetId, state)
+            if ((@refreshCounter % @waitCounter) is 0)
+              if (
+                request.max is true and @isReady() and
+                plot.proto.state.requested.data[dataSetId].max is false
+              )
+                @updates++
+                plot.proto.state.requested.data[dataSetId].max = true
+                @i.livesync.append(plotId, dataSetId, state)
 
     if !test
       setTimeout(Plotter.Handler.prototype.listen.bind(@), @options.refresh)
