@@ -798,7 +798,7 @@
       this.crosshairs = this.hoverWrapper.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
-      this.focusDateText = this.hoverWrapper.append("text").attr("class", "focus-date-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", "#000000").style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)").style("font-size", "10px");
+      this.focusDateText = this.hoverWrapper.append("text").attr("class", "focus-date-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", "#000000").style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       ref1 = this.data;
       for (key in ref1) {
         row = ref1[key];
@@ -1017,7 +1017,7 @@
           if (cx >= 0) {
             this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-            this.focusDateText.attr("x", cx - 90).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
+            this.focusDateText.attr("x", cx - 120).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
           }
           if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusRect[key].attr("width", transform.k * this.definition.x1.bandwidth()).attr("x", dx).attr("y", dy[key]);
@@ -2867,7 +2867,7 @@
       this.crosshairs = this.hoverWrapper.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
-      this.focusDateText = this.hoverWrapper.append("text").attr("class", "focus-date-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", "#000000").style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)").style("font-size", "10px");
+      this.focusDateText = this.hoverWrapper.append("text").attr("class", "focus-date-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", "#000000").style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       ref1 = this.data;
       for (key in ref1) {
         row = ref1[key];
@@ -3088,7 +3088,7 @@
           if (cx >= 0) {
             this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-            this.focusDateText.attr("x", cx - 90).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
+            this.focusDateText.attr("x", cx - 120).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
           }
           if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);

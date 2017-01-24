@@ -618,7 +618,6 @@ window.Plotter.BarPlot = class BarPlot
       .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
         2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
         2px 2px 0 rgb(255,255,255)")
-      .style("font-size", "10px")
 
     for key, row of @data
       # Create Focus Circles and Labels
@@ -932,7 +931,7 @@ window.Plotter.BarPlot = class BarPlot
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
           @focusDateText
-            .attr("x", cx - 90)
+            .attr("x", cx - 120)
             .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
             .text(_date)
