@@ -89,6 +89,7 @@ window.Plotter.LinePlot = class LinePlot
     # Minor Prototype Support Functions
     @parseDate = d3.timeParse(@options.x.format)
     @bisectDate = d3.bisector((d) -> d.x).left
+    @displayDate = d3.timeFormat("%b. %e, %I:%M %p")
     @sortDatetimeAsc = (a, b) -> a.x - b.x
 
     # Prepare the Data & Definition
@@ -630,6 +631,17 @@ window.Plotter.LinePlot = class LinePlot
       .style("fill", "rgb(255,255,255)")
       .style("opacity", 0.1)
 
+    @focusDateText = @hoverWrapper.append("text")
+      .attr("class", "focus-date-text")
+      .attr("x", 9)
+      .attr("y", 7)
+      .style("display", "none")
+      .style("fill", "#000000")
+      .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+        2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+        2px 2px 0 rgb(255,255,255)")
+      .style("font-size", "10px")
+
     for key, row of @data
       # Create Focus Circles and Labels
       @focusCircle[key] = @hoverWrapper.append("circle")
@@ -916,6 +928,7 @@ window.Plotter.LinePlot = class LinePlot
           _value[key] = _datum[i]
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
+            _date = @displayDate(_value[key].x)
             if !isNaN(dy[key]) and _value[key].y?
               @focusCircle[key].attr("transform", "translate(0, 0)")
 
@@ -934,6 +947,12 @@ window.Plotter.LinePlot = class LinePlot
             .attr("width", (_dims.innerWidth - cx))
             .attr("height", _dims.innerHeight)
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+
+          @focusDateText
+            .attr("x", cx - 90)
+            .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
+            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+            .text(_date)
 
         if (
           @options.y[key].variable != null and !isNaN(dy[key]) and
@@ -994,6 +1013,7 @@ window.Plotter.LinePlot = class LinePlot
       .style("display", null)
     @crosshairs.select(".crosshair-x-under")
       .style("display", null)
+    @focusDateText.style("display", null)
 
     for setId, row of @options.y
       if row.variable != null
@@ -1014,6 +1034,7 @@ window.Plotter.LinePlot = class LinePlot
       .style("display", "none")
     @crosshairs.select(".crosshair-x-under")
       .style("display", "none")
+    @focusDateText.style("display", "none")
 
     for setId, row of @options.y
       if row.variable != null

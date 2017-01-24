@@ -373,6 +373,7 @@
       this.bisectDate = d3.bisector(function(d) {
         return d.x;
       }).left;
+      this.displayDate = d3.timeFormat("%b. %e, %I:%M %p");
       this.sortDatetimeAsc = function(a, b) {
         return a.x - b.x;
       };
@@ -797,6 +798,7 @@
       this.crosshairs = this.hoverWrapper.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
+      this.focusDateText = this.hoverWrapper.append("text").attr("class", "focus-date-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", "#000000").style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)").style("font-size", "10px");
       ref1 = this.data;
       for (key in ref1) {
         row = ref1[key];
@@ -928,7 +930,7 @@
     };
 
     BarPlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, key, preError, ref, row, x0;
+      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, key, preError, ref, row, x0;
       if (!this.initialized) {
         return;
       }
@@ -1005,6 +1007,7 @@
             _value[key] = _datum[i];
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
+              _date = this.displayDate(_value[key].x);
               if (!isNaN(dy[key]) && (_value[key].y != null)) {
                 this.focusRect[key].attr("transform", "translate(0, 0)");
               }
@@ -1014,6 +1017,7 @@
           if (cx >= 0) {
             this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+            this.focusDateText.attr("x", cx - 90).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
           }
           if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusRect[key].attr("width", transform.k * this.definition.x1.bandwidth()).attr("x", dx).attr("y", dy[key]);
@@ -1031,6 +1035,7 @@
       }
       this.crosshairs.select(".crosshair-x").style("display", null);
       this.crosshairs.select(".crosshair-x-under").style("display", null);
+      this.focusDateText.style("display", null);
       ref = this.options.y;
       results = [];
       for (setId in ref) {
@@ -1058,6 +1063,7 @@
       }
       this.crosshairs.select(".crosshair-x").style("display", "none");
       this.crosshairs.select(".crosshair-x-under").style("display", "none");
+      this.focusDateText.style("display", "none");
       ref = this.options.y;
       results = [];
       for (setId in ref) {
@@ -2422,6 +2428,7 @@
       this.bisectDate = d3.bisector(function(d) {
         return d.x;
       }).left;
+      this.displayDate = d3.timeFormat("%b. %e, %I:%M %p");
       this.sortDatetimeAsc = function(a, b) {
         return a.x - b.x;
       };
@@ -2860,6 +2867,7 @@
       this.crosshairs = this.hoverWrapper.append("g").attr("class", "crosshair");
       this.crosshairs.append("line").attr("class", "crosshair-x").style("stroke", this.options.crosshairX.color).style("stroke-width", this.options.crosshairX.weight).style("stroke-dasharray", "3, 3").style("fill", "none");
       this.crosshairs.append("rect").attr("class", "crosshair-x-under").style("fill", "rgb(255,255,255)").style("opacity", 0.1);
+      this.focusDateText = this.hoverWrapper.append("text").attr("class", "focus-date-text").attr("x", 9).attr("y", 7).style("display", "none").style("fill", "#000000").style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)").style("font-size", "10px");
       ref1 = this.data;
       for (key in ref1) {
         row = ref1[key];
@@ -2993,7 +3001,7 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, key, preError, ref, row, x0;
+      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, key, preError, ref, row, x0;
       if (!this.initialized) {
         return;
       }
@@ -3070,6 +3078,7 @@
             _value[key] = _datum[i];
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
+              _date = this.displayDate(_value[key].x);
               if (!isNaN(dy[key]) && (_value[key].y != null)) {
                 this.focusCircle[key].attr("transform", "translate(0, 0)");
               }
@@ -3079,6 +3088,7 @@
           if (cx >= 0) {
             this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+            this.focusDateText.attr("x", cx - 90).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
           }
           if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
             this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
@@ -3096,6 +3106,7 @@
       }
       this.crosshairs.select(".crosshair-x").style("display", null);
       this.crosshairs.select(".crosshair-x-under").style("display", null);
+      this.focusDateText.style("display", null);
       ref = this.options.y;
       results = [];
       for (setId in ref) {
@@ -3123,6 +3134,7 @@
       }
       this.crosshairs.select(".crosshair-x").style("display", "none");
       this.crosshairs.select(".crosshair-x-under").style("display", "none");
+      this.focusDateText.style("display", "none");
       ref = this.options.y;
       results = [];
       for (setId in ref) {
