@@ -3720,7 +3720,7 @@
         },
         snowfall_24_hour: {
           min: 0,
-          max: 30,
+          max: 24,
           maxBar: null
         },
         intermittent_snow: {
@@ -3730,12 +3730,12 @@
         },
         wind_direction: {
           min: 0,
-          max: 360,
+          max: 350,
           maxBar: null
         },
         precipitation: {
           min: 0,
-          max: 0.4,
+          max: 0.35,
           maxBar: null
         },
         wind_speed_average: {
