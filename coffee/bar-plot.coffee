@@ -91,6 +91,7 @@ window.Plotter.BarPlot = class BarPlot
     # Minor Prototype Support Functions
     @parseDate = d3.timeParse(@options.x.format)
     @bisectDate = d3.bisector((d) -> d.x).left
+    @displayDate = d3.timeFormat("%b. %e, %I:%M %p")
     @sortDatetimeAsc = (a, b) -> a.x - b.x
 
     # Prepare the Data & Definition
@@ -608,6 +609,16 @@ window.Plotter.BarPlot = class BarPlot
       .style("fill", "rgb(255,255,255)")
       .style("opacity", 0.1)
 
+    @focusDateText = @hoverWrapper.append("text")
+      .attr("class", "focus-date-text")
+      .attr("x", 9)
+      .attr("y", 7)
+      .style("display", "none")
+      .style("fill", "#000000")
+      .style("text-shadow", "-2px -2px 0 rgb(255,255,255),
+        2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255),
+        2px 2px 0 rgb(255,255,255)")
+
     for key, row of @data
       # Create Focus Circles and Labels
       @focusRect[key] = @hoverWrapper.append("rect")
@@ -899,6 +910,7 @@ window.Plotter.BarPlot = class BarPlot
           _value[key] = _datum[i]
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
+            _date = @displayDate(_value[key].x)
             if !isNaN(dy[key]) and _value[key].y?
               @focusRect[key].attr("transform", "translate(0, 0)")
 
@@ -917,6 +929,12 @@ window.Plotter.BarPlot = class BarPlot
             .attr("width", (_dims.innerWidth - cx))
             .attr("height", _dims.innerHeight)
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+
+          @focusDateText
+            .attr("x", cx - 120)
+            .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
+            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+            .text(_date)
 
         if (
           @options.y[key].variable != null and !isNaN(dy[key]) and
@@ -979,6 +997,7 @@ window.Plotter.BarPlot = class BarPlot
       .style("display", null)
     @crosshairs.select(".crosshair-x-under")
       .style("display", null)
+    @focusDateText.style("display", null)
 
     for setId, row of @options.y
       if row.variable != null
@@ -1000,6 +1019,7 @@ window.Plotter.BarPlot = class BarPlot
       .style("display", "none")
     @crosshairs.select(".crosshair-x-under")
       .style("display", "none")
+    @focusDateText.style("display", "none")
 
     for setId, row of @options.y
       if row.variable != null
