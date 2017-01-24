@@ -3197,7 +3197,6 @@
       _local = new Date();
       _offset = _local.getTimezoneOffset() / 60;
       _now = new Date(_local.getTime() - (8 - _offset) * 3600000);
-      console.log(_now, state.range.data[dataSetId].max, state.range.data[dataSetId].max >= _now);
       if (state.range.data[dataSetId].max >= _now) {
         return true;
       }
