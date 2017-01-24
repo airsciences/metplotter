@@ -20,7 +20,7 @@ window.Plotter.Handler = class Handler
     # Defaults
     defaults =
       templateId: null
-      uuid: @lib.uuid()
+      uuid: null
       href: __href
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"

@@ -3380,7 +3380,7 @@
       }
       defaults = {
         templateId: null,
-        uuid: this.lib.uuid(),
+        uuid: null,
         href: __href,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
