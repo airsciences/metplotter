@@ -114,7 +114,12 @@ window.Plotter.Handler = class Handler
               plot.proto.state.requested.data[dataSetId].min = true
               @i.livesync.prepend(plotId, dataSetId, state)
             # Max-Sided Events
-            if ((@refreshCounter % @waitCounter) is 0)
+            _now = new Date()
+            if (
+              (@refreshCounter % @waitCounter) is 0 or
+              (plot.proto.state.range.data[0].max.getTime() <
+              (_now.getTime() - 12 * 3600000))
+            )
               if (
                 request.max is true and @isReady() and
                 plot.proto.state.requested.data[dataSetId].max is false

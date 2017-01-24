@@ -3457,7 +3457,7 @@
     };
 
     Handler.prototype.listen = function(test) {
-      var dataSetId, plot, plotId, ref, ref1, request, state;
+      var _now, dataSetId, plot, plotId, ref, ref1, request, state;
       this.refreshCounter++;
       ref = this.plots;
       for (plotId in ref) {
@@ -3473,7 +3473,8 @@
                 plot.proto.state.requested.data[dataSetId].min = true;
                 this.i.livesync.prepend(plotId, dataSetId, state);
               }
-              if ((this.refreshCounter % this.waitCounter) === 0) {
+              _now = new Date();
+              if ((this.refreshCounter % this.waitCounter) === 0 || (plot.proto.state.range.data[0].max.getTime() < (_now.getTime() - 12 * 3600000))) {
                 if (request.max === true && this.isReady() && plot.proto.state.requested.data[dataSetId].max === false) {
                   this.updates++;
                   plot.proto.state.requested.data[dataSetId].max = true;
