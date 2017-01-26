@@ -1401,7 +1401,7 @@
       _ = this;
       current = this.getCurrent(plotId);
       dom_uuid = "map-control-" + this.plotter.plots[plotId].proto.options.uuid;
-      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"arrow\"></div> <div class=\"popover-content\"> <a id=\"map-close-" + plotId + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"popover-content\"> <a id=\"map-close-" + plotId + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
       $("#map-" + plotId).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);

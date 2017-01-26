@@ -324,7 +324,6 @@ window.Plotter.Controls = class Controls
           style=\"cursor: pointer\"></i>
         </li>
         <div class=\"popover\" style=\"max-width: 356px;\">
-          <div class=\"arrow\"></div>
           <div class=\"popover-content\">
             <a id=\"map-close-#{plotId}\"
               style=\"font-size: 10px; cursor: pointer\">Close</a>
