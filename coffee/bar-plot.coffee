@@ -890,12 +890,14 @@ window.Plotter.BarPlot = class BarPlot
         x0 = @definition.x.invert(
           transform.invertX(mouse[0] + _dims.leftPadding))
 
-      i = _.bisectDate(_datum, x0, 1)
-      if x0.getTime() < @state.range.data[key].min.getTime()
-        i--
-      if x0.getTime() > @state.range.data[key].max.getTime()
-        i--
-      i = if x0.getMinutes() >= 30 then i else (i - 1)
+      i1 = _.bisectDate(_datum, x0, 1)
+      i = if x0.getMinutes() >= 30 then i1 else (i1 - 1)
+
+      # Correct for Max & Min
+      if x0.getTime() <= @state.range.data[key].min.getTime()
+        i = i1
+      if x0.getTime() >= @state.range.data[key].max.getTime()
+        i = i1 - 1
 
       if _datum[i]?
         if transform
@@ -934,25 +936,25 @@ window.Plotter.BarPlot = class BarPlot
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
             .text(_date)
 
-        if (
-          @options.y[key].variable != null and !isNaN(dy[key]) and
-          _value[key].y?
-        )
-          @focusRect[key]
-            .attr("width", transform.k * @definition.x1.bandwidth())
-            .attr("x", dx)
-            .attr("y", dy[key])
+          if (
+            @options.y[key].variable != null and !isNaN(dy[key]) and
+            _value[key].y?
+          )
+            @focusRect[key]
+              .attr("width", transform.k * @definition.x1.bandwidth())
+              .attr("x", dx)
+              .attr("y", dy[key])
 
-          @focusText[key]
-            .attr("x", dx + _dims.leftPadding / 10 +
-              transform.k * @definition.x1.bandwidth() + 2)
-            .attr("y", dy[key] - _dims.topPadding / 10)
-            .text(
-              if _value[key].y?
-                if _.options.y[0].variable is "wind_direction"
-                  directionLabel(_value[key].y)
-                else
-                  _value[key].y.toFixed(2) + " " + @options.y[key].units)
+            @focusText[key]
+              .attr("x", dx + _dims.leftPadding / 10 +
+                transform.k * @definition.x1.bandwidth() + 2)
+              .attr("y", dy[key] - _dims.topPadding / 10)
+              .text(
+                if _value[key].y?
+                  if _.options.y[0].variable is "wind_direction"
+                    directionLabel(_value[key].y)
+                  else
+                    _value[key].y.toFixed(2) + " " + @options.y[key].units)
 
     # Tooltip Overlap Prevention
     #if (
