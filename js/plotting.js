@@ -601,7 +601,7 @@
     };
 
     BarPlot.prototype.getDefinition = function() {
-      var _, _extent, preError;
+      var _, _extent, _max, preError;
       preError = this.preError + "getDefinition():";
       _ = this;
       this.definition = {};
@@ -617,6 +617,8 @@
         this.skipBandDomainSet = false;
       }
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
+      _max = this.definition.x.max;
+      console.log("Max = ", _max);
       _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
       return this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
         var transform;

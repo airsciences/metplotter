@@ -311,6 +311,8 @@ window.Plotter.BarPlot = class BarPlot
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Define the Zoom Method
+    _max = @definition.x.max
+    console.log("Max = ", _max)
     _extent = [
         [-Infinity, 0],
         [(@definition.x(new Date())),
