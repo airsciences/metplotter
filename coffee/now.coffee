@@ -10,7 +10,6 @@ window.Plotter.Now = class Now
             .replace(")", "").replace("now", ""))
           newDatetime = new Date(newDatetime.getTime() + (_offset * 3600000))
         datetime = format(newDatetime)
-      console.log("Parse Now (newDatetime)", newDatetime)
       return datetime
 
     # Process the datetime.

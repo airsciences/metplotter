@@ -3330,7 +3330,6 @@
           }
           datetime = format(newDatetime);
         }
-        console.log("Parse Now (newDatetime)", newDatetime);
         return datetime;
       };
       this.datetime = this.parse(datetime);
