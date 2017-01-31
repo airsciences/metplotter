@@ -305,9 +305,7 @@
           weight: 1,
           color: "rgb(149,165,166)"
         },
-        requestInterval: {
-          data: 336
-        }
+        requestInterval: 336
       };
       if (options.x) {
         options.x = this.plotter.lib.mergeDefaults(options.x, this.defaults.x);
@@ -561,9 +559,9 @@
       results = [];
       for (key in ref) {
         row = ref[key];
-        _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
+        _data_max = this.state.interval.data[key].max < this.options.requestInterval;
         this.state.request.data[key] = {
-          min: this.state.interval.data[key].min < this.options.requestInterval.data,
+          min: this.state.interval.data[key].min < this.options.requestInterval,
           max: _data_max
         };
         if (!(this.state.requested.data[key] != null)) {
@@ -601,7 +599,7 @@
     };
 
     BarPlot.prototype.getDefinition = function() {
-      var _, _extent, _max, preError;
+      var _, _extent, preError;
       preError = this.preError + "getDefinition():";
       _ = this;
       this.definition = {};
@@ -617,9 +615,7 @@
         this.skipBandDomainSet = false;
       }
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      _max = this.definition.x.max;
-      console.log("Max = ", _max);
-      _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
+      _extent = [[-Infinity, 0], [this.definition.x(new Date()) + this.definition.dimensions.margin.left, this.definition.dimensions.innerHeight]];
       return this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
         var transform;
         transform = _.setZoomTransform();
@@ -2359,9 +2355,7 @@
           weight: 1,
           color: "rgb(149,165,166)"
         },
-        requestInterval: {
-          data: 336
-        }
+        requestInterval: 336
       };
       if (options.x) {
         options.x = this.plotter.lib.mergeDefaults(options.x, this.defaults.x);
@@ -2616,9 +2610,9 @@
       results = [];
       for (key in ref) {
         row = ref[key];
-        _data_max = this.state.interval.data[key].max < this.options.requestInterval.data;
+        _data_max = this.state.interval.data[key].max < this.options.requestInterval;
         this.state.request.data[key] = {
-          min: this.state.interval.data[key].min < this.options.requestInterval.data,
+          min: this.state.interval.data[key].min < this.options.requestInterval,
           max: _data_max
         };
         if (!(this.state.requested.data[key] != null)) {
@@ -2676,7 +2670,7 @@
         this.skipBandDomainSet = false;
       }
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
-      _extent = [[-Infinity, 0], [this.definition.x(new Date()), this.definition.dimensions.innerHeight]];
+      _extent = [[-Infinity, 0], [this.definition.x(new Date()) + this.definition.dimensions.margin.left, this.definition.dimensions.innerHeight]];
       this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
         var transform;
         transform = _.setZoomTransform();
@@ -3336,6 +3330,7 @@
           }
           datetime = format(newDatetime);
         }
+        console.log("Parse Now (newDatetime)", newDatetime);
         return datetime;
       };
       this.datetime = this.parse(datetime);
@@ -3386,6 +3381,8 @@
         futureWait: 180000,
         updateLength: 168,
         initialLength: 504,
+        requestPaddingInterval: 336,
+        newDataInterval: 168,
         minUpdateLength: 0,
         updateLimit: 6,
         width: null
@@ -3475,7 +3472,7 @@
                 this.i.livesync.prepend(plotId, dataSetId, state);
               }
               _now = new Date();
-              if ((this.refreshCounter % this.waitCounter) === 0 || (plot.proto.state.range.data[0].max.getTime() < (_now.getTime() - 12 * 3600000))) {
+              if ((this.refreshCounter % this.waitCounter) === 0 || (plot.proto.state.range.data[0].max.getTime() < (_now.getTime() - this.options.newDataInterval * 3600000))) {
                 if (request.max === true && this.isReady() && plot.proto.state.requested.data[dataSetId].max === false) {
                   this.updates++;
                   plot.proto.state.requested.data[dataSetId].max = true;
@@ -3502,6 +3499,7 @@
         _options = this.i.template.forPlots(key);
         _options = this.i.colors.getInitial(_options);
         _options.target = "\#outer-" + row.uuid;
+        _options.requestInterval = this.options.requestPaddingInterval;
         _options.uuid = row.uuid;
         if (this.options.width != null) {
           _options.width = this.options.width;
@@ -3569,6 +3567,7 @@
         pageOrder: this.i.template.plotCount() + 1,
         type: type,
         target: '#' + _target,
+        requestInterval: this.options.requestPaddingInterval,
         y: []
       };
       html = "<div id=\"" + _target + "\"></div>";

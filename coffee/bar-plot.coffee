@@ -58,8 +58,7 @@ window.Plotter.BarPlot = class BarPlot
       crosshairX:
         weight: 1
         color: "rgb(149,165,166)"
-      requestInterval:
-        data: 336
+      requestInterval: 336
     if options.x
       options.x = @plotter.lib.mergeDefaults(options.x, @defaults.x)
     options.y[0] = @plotter.lib.mergeDefaults(options.y[0], @defaults.y[0])
@@ -259,10 +258,10 @@ window.Plotter.BarPlot = class BarPlot
 
     for key, row of @data
       _data_max = @state.interval.data[key].max <
-        @options.requestInterval.data
+        @options.requestInterval
 
       @state.request.data[key] =
-        min: @state.interval.data[key].min < @options.requestInterval.data
+        min: @state.interval.data[key].min < @options.requestInterval
         max: _data_max
 
       if !(@state.requested.data[key]?)
@@ -311,11 +310,9 @@ window.Plotter.BarPlot = class BarPlot
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
 
     # Define the Zoom Method
-    _max = @definition.x.max
-    console.log("Max = ", _max)
     _extent = [
         [-Infinity, 0],
-        [(@definition.x(new Date())),
+        [(@definition.x(new Date()) + @definition.dimensions.margin.left),
         @definition.dimensions.innerHeight]
     ]
     @definition.zoom = d3.zoom()

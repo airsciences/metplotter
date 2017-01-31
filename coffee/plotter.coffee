@@ -28,6 +28,8 @@ window.Plotter.Handler = class Handler
       futureWait: 180000
       updateLength: 168
       initialLength: 504
+      requestPaddingInterval: 336
+      newDataInterval: 168
       minUpdateLength: 0
       updateLimit: 6
       width: null
@@ -118,7 +120,7 @@ window.Plotter.Handler = class Handler
             if (
               (@refreshCounter % @waitCounter) is 0 or
               (plot.proto.state.range.data[0].max.getTime() <
-              (_now.getTime() - 12 * 3600000))
+              (_now.getTime() - @options.newDataInterval * 3600000))
             )
               if (
                 request.max is true and @isReady() and
@@ -143,6 +145,7 @@ window.Plotter.Handler = class Handler
       _options = @i.template.forPlots(key)
       _options = @i.colors.getInitial(_options)
       _options.target = "\#outer-#{row.uuid}"
+      _options.requestInterval = @options.requestPaddingInterval
       _options.uuid = row.uuid
       if @options.width?
         _options.width = @options.width
@@ -219,6 +222,7 @@ window.Plotter.Handler = class Handler
       pageOrder: @i.template.plotCount() + 1
       type: type
       target: '#' + _target
+      requestInterval: @options.requestPaddingInterval
       y: []
 
     html = "<div id=\"#{_target}\"></div>"
