@@ -502,7 +502,7 @@ window.Plotter.LinePlot = class LinePlot
     # Append a Clip Path
     @svg.append("defs")
       .append("clipPath")
-      .attr("id", "#{@options.target}_clip")
+      .attr("id", "line-plot-clip-path")
       .append("rect")
       .attr("width", @definition.dimensions.innerWidth)
       .attr("height", @definition.dimensions.innerHeight)
@@ -575,7 +575,7 @@ window.Plotter.LinePlot = class LinePlot
       .attr("class", "line-wrapper")
     for key, row of @data
       @bands[key] = @lineWrapper.append("g")
-        .attr("clip-path", "url(\##{@options.target}_clip)")
+        .attr("clip-path", "url(\#line-plot-clip-path)")
         .append("path")
         .datum(row)
         .attr("d", @definition.area)
@@ -587,7 +587,7 @@ window.Plotter.LinePlot = class LinePlot
         )
 
       @lines[key] = @lineWrapper.append("g")
-        .attr("clip-path", "url(\##{@options.target}_clip)")
+        .attr("clip-path", "url(\#line-plot-clip-path)")
         .append("path")
         .datum(row)
         .attr("d", @definition.line)
@@ -674,7 +674,7 @@ window.Plotter.LinePlot = class LinePlot
       if row? and _.options.y[key]?
         if @svg.select(".line-plot-area-#{key}").node() is null
           @bands[key] = @lineWrapper.append("g")
-            .attr("clip-path", "url(\##{@options.target}_clip)")
+            .attr("clip-path", "url(\#line-plot-clip-path)")
             .append("path")
             .datum(row)
             .attr("d", @definition.area)
@@ -694,7 +694,7 @@ window.Plotter.LinePlot = class LinePlot
             )
         if @svg.select(".line-plot-path-#{key}").node() is null
           @lines[key] = @lineWrapper.append("g")
-            .attr("clip-path", "url(\##{@options.target}_clip)")
+            .attr("clip-path", "url(\#line-plot-clip-path)")
             .append("path")
             .datum(row)
             .attr("d", @definition.line)

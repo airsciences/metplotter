@@ -487,7 +487,7 @@ window.Plotter.BarPlot = class BarPlot
     # Append a Clip Path
     @svg.append("defs")
       .append("clipPath")
-      .attr("id", "#{@options.target}_clip")
+      .attr("id", "line-plot-clip-path")
       .append("rect")
       .attr("width", @definition.dimensions.innerWidth)
       .attr("height", @definition.dimensions.innerHeight)
@@ -560,7 +560,7 @@ window.Plotter.BarPlot = class BarPlot
       .attr("class", "bar-wrapper")
     for key, row of @data
       @bars[key] = @barWrapper.append("g")
-        .attr("clip-path", "url(\##{@options.target}_clip)")
+        .attr("clip-path", "url(\#line-plot-clip-path)")
         .selectAll(".bar-#{key}")
         .data(row)
         .enter()
@@ -660,7 +660,7 @@ window.Plotter.BarPlot = class BarPlot
         if @svg.selectAll(".bar-#{key}").node()[0] is null
           console.log("Adding new BarPlot data set.")
           @bars[key] = @barWrapper.append("g")
-            .attr("clip-path", "url(\##{@options.target}_clip)")
+            .attr("clip-path", "url(\#line-plot-clip-path)")
             .selectAll(".bar-#{key}")
             .data(row)
             .enter()

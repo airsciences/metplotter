@@ -748,7 +748,7 @@
       this.outer = d3.select(this.options.target).append("div").attr("class", "bar-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       this.svg = this.outer.append("svg").attr("class", "bar-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      this.svg.append("defs").append("clipPath").attr("id", "line-plot-clip-path").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "bar-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       return this.svg.append("g").attr("class", "bar-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
@@ -778,7 +778,7 @@
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
+        this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
           return _.definition.x(d.x);
         }).attr("width", d3.max([1, this.definition.x1.bandwidth()])).attr("y", function(d) {
           return _.definition.y(d.y);
@@ -817,7 +817,7 @@
         if ((row != null) && (_.options.y[key] != null)) {
           if (this.svg.selectAll(".bar-" + key).node()[0] === null) {
             console.log("Adding new BarPlot data set.");
-            this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
+            this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
               return _rescaleX(d.x);
             }).attr("width", d3.max([1, _bandwidth])).attr("y", function(d) {
               return _.definition.y(d.y);
@@ -2815,7 +2815,7 @@
       this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.svg.append("defs").append("clipPath").attr("id", this.options.target + "_clip").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      this.svg.append("defs").append("clipPath").attr("id", "line-plot-clip-path").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
@@ -2845,10 +2845,10 @@
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
+        this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
           return d3.color(_.options.y[key].color).darker(1);
         });
-        this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+        this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       }
       if (this.options.y[0].maxBar != null) {
         this.lineWrapper.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(this.options.y[0].maxBar)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
@@ -2878,7 +2878,7 @@
         row = ref[key];
         if ((row != null) && (_.options.y[key] != null)) {
           if (this.svg.select(".line-plot-area-" + key).node() === null) {
-            this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
+            this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
               return d3.color(_.options.y[key].color).darker(1);
             });
           } else {
@@ -2887,7 +2887,7 @@
             });
           }
           if (this.svg.select(".line-plot-path-" + key).node() === null) {
-            this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.options.target + "_clip)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+            this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
             this.focusCircle[key] = this.hoverWrapper.append("circle").attr("r", 4).attr("class", "focus-circle-" + key).attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
             this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
           } else {
