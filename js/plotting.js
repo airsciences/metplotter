@@ -1259,7 +1259,7 @@
 
     Controls.prototype.appendStationDropdown = function(plotId, appendTarget, parameter) {
       var _, args, callback, current, target, uuid;
-      target = location.protocol + "//dev.nwac.us/api/v5/dataloggerregion?sensor_name=" + parameter;
+      target = this.plotter.options.href + "/api/v5/dataloggerregion?sensor_name=" + parameter;
       _ = this;
       args = {};
       current = this.getCurrent(plotId);
@@ -1355,7 +1355,7 @@
 
     Controls.prototype.appendParameterDropdown = function(plotId, appendTarget, dataLoggerId) {
       var _current, args, callback, current, target, uuid;
-      target = location.protocol + "//dev.nwac.us/api/v5/sensortype?sensors__data_logger=" + dataLoggerId;
+      target = this.plotter.options.href + "/api/v5/sensortype?sensors__data_logger=" + dataLoggerId;
       args = {};
       current = this.getCurrent(plotId);
       uuid = this.plotter.lib.uuid();

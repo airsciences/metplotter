@@ -95,7 +95,7 @@ window.Plotter.Controls = class Controls
 
   appendStationDropdown: (plotId, appendTarget, parameter) ->
     # Append Station Dropdown.
-    target = "#{location.protocol}//dev.nwac.us/api/v5/dataloggerregion?\
+    target = "#{@plotter.options.href}/api/v5/dataloggerregion?\
       sensor_name=#{parameter}"
     _ = @
     args = {}
@@ -235,7 +235,7 @@ window.Plotter.Controls = class Controls
 
   appendParameterDropdown: (plotId, appendTarget, dataLoggerId) ->
     # Append Parameter Dropdown.
-    target = "#{location.protocol}//dev.nwac.us/api/v5/\
+    target = "#{@plotter.options.href}/api/v5/\
       sensortype?sensors__data_logger=#{dataLoggerId}"
     args = {}
     current = @getCurrent(plotId)
