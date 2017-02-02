@@ -95,6 +95,7 @@ window.Plotter.LinePlot = class LinePlot
     @data = @processData(data)
     @getDefinition()
 
+    @clipPathId = "line-plot-clip-path-#{@plotter.lib.uuid()}"
     @bands = []
     @lines = []
     @focusCircle = []
@@ -300,7 +301,7 @@ window.Plotter.LinePlot = class LinePlot
 
     # Define D3 Methods
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
-      .ticks(Math.round($(@options.target).width() / 100))
+      .ticks(Math.round(@definition.dimensions.width / 100))
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
       .ticks(@options.y[0].ticks)
 
@@ -502,7 +503,7 @@ window.Plotter.LinePlot = class LinePlot
     # Append a Clip Path
     @svg.append("defs")
       .append("clipPath")
-      .attr("id", "line-plot-clip-path")
+      .attr("id", @clipPathId)
       .append("rect")
       .attr("width", @definition.dimensions.innerWidth)
       .attr("height", @definition.dimensions.innerHeight)
@@ -575,7 +576,7 @@ window.Plotter.LinePlot = class LinePlot
       .attr("class", "line-wrapper")
     for key, row of @data
       @bands[key] = @lineWrapper.append("g")
-        .attr("clip-path", "url(\#line-plot-clip-path)")
+        .attr("clip-path", "url(\#" + @clipPathId + ")")
         .append("path")
         .datum(row)
         .attr("d", @definition.area)
@@ -587,7 +588,7 @@ window.Plotter.LinePlot = class LinePlot
         )
 
       @lines[key] = @lineWrapper.append("g")
-        .attr("clip-path", "url(\#line-plot-clip-path)")
+        .attr("clip-path", "url(\#" + @clipPathId + ")")
         .append("path")
         .datum(row)
         .attr("d", @definition.line)
@@ -674,7 +675,7 @@ window.Plotter.LinePlot = class LinePlot
       if row? and _.options.y[key]?
         if @svg.select(".line-plot-area-#{key}").node() is null
           @bands[key] = @lineWrapper.append("g")
-            .attr("clip-path", "url(\#line-plot-clip-path)")
+            .attr("clip-path", "url(\#" + @clipPathId + ")")
             .append("path")
             .datum(row)
             .attr("d", @definition.area)
@@ -694,7 +695,7 @@ window.Plotter.LinePlot = class LinePlot
             )
         if @svg.select(".line-plot-path-#{key}").node() is null
           @lines[key] = @lineWrapper.append("g")
-            .attr("clip-path", "url(\#line-plot-clip-path)")
+            .attr("clip-path", "url(\#" + @clipPathId + ")")
             .append("path")
             .datum(row)
             .attr("d", @definition.line)

@@ -20,6 +20,10 @@ html(lang='en')
         h5=title
         div(id='d3-dropdown-test-target')
         div(id='d3-plot-target')
+        br
+        h4="Next Plotter"
+        hr
+        div(id='d3-plot-target-2')
         div(style='margin-bottom: 15px')
           small
             code="NWAC Emulator - (Node.js)"
@@ -40,7 +44,7 @@ html(lang='en')
           "newDataInterval": 50,
           "updateLength": 24,
           "minUpdateLength": 10,
-          "updateLimit": 6
+          "updateLimit": 6,
       };
 
       var access = {
@@ -50,3 +54,25 @@ html(lang='en')
 
       var plotter214 = new Plotter.Handler(access, options);
       plotter214.initialize();
+
+      /** Second Plotter */
+      var options2 = {
+          "target": "#d3-plot-target-2",
+          "templateId": #{templateId},
+          "refresh": 1000,
+          "futureWait": 180000,
+          "initialLength": 168,
+          "requestPaddingInterval": 10,
+          "newDataInterval": 50,
+          "updateLength": 24,
+          "minUpdateLength": 10,
+          "updateLimit": 6,
+      };
+
+      var access2 = {
+          "token": "#{token.token}",
+          "admin": false
+      };
+
+      var plotter215 = new Plotter.Handler(access2, options2);
+      plotter215.initialize();

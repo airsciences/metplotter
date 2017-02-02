@@ -106,7 +106,7 @@ window.Plotter.Controls = class Controls
       _.stations[plotId] = data.responseJSON.results
 
       html = "<div class=\"dropdown\">
-        <li><a id=\"#{uuid}\" class=\"station-dropdown dropdown-toggle\"
+        <li><a id=\"station-#{uuid}\" class=\"station-dropdown dropdown-toggle\"
             role=\"button\" title=\"Select Stations\"
             data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
@@ -147,7 +147,7 @@ window.Plotter.Controls = class Controls
 
       # Append the Object
       $(appendTarget).prepend(html)
-      $('#'+uuid).dropdown()
+      $("#station-#{uuid}").dropdown()
       _.bindSubMenuEvent(".subheader")
 
       # Update Dropdown Highlighting & Events.
@@ -245,7 +245,7 @@ window.Plotter.Controls = class Controls
 
     callback = (data) ->
       html = "<div class=\"dropdown\">
-        <li><a id=\"#{uuid}\"
+        <li><a id=\"param-#{uuid}\"
           class=\"parameter-dropdown dropdown-toggle\" role=\"button\"
           data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
@@ -316,42 +316,43 @@ window.Plotter.Controls = class Controls
     # Append a google maps popover.
     _ = @
     current = @getCurrent(plotId)
-    dom_uuid = "map-control-" + @plotter.plots[plotId].proto.options.uuid
+    _uuid = @plotter.plots[plotId].proto.options.uuid
 
     html = "<li data-toggle=\"popover\" data-placement=\"left\">
-          <i id=\"map-#{plotId}\" class=\"icon-map-marker\"
+          <i id=\"map-#{_uuid}\" class=\"icon-map-marker\"
            title=\"Select Stations Map\"
           style=\"cursor: pointer\"></i>
         </li>
         <div class=\"popover\" style=\"max-width: 356px;\">
           <div class=\"popover-content\">
-            <a id=\"map-close-#{plotId}\"
+            <a id=\"map-close-#{_uuid}\"
               style=\"font-size: 10px; cursor: pointer\">Close</a>
-            <div id=\"#{dom_uuid}\" style=\"width: 312px;
+            <div id=\"map-control-#{_uuid}\" style=\"width: 312px;
               height: 312px;\"></div>
           </div>
         </div>"
     $(appendTarget).prepend(html)
-    $("#map-#{plotId}").on('click', ->
+    $("#map-#{_uuid}").on('click', ->
       _.plotter.i.controls.toggleMap(plotId)
     )
-    $("#map-close-#{plotId}").on('click', ->
+    $("#map-close-#{_uuid}").on('click', ->
       _.plotter.i.controls.toggleMap(plotId)
     )
 
-    @maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
-      center: new google.maps.LatLng(46.980, -122.221),
-      zoom: 6,
-      maxZoom: 12,
-      minZoom: 6,
-      mapTypeId: 'terrain',
-      zoomControl: true,
-      mapTypeControl: false,
-      scaleControl: false,
-      streetViewControl: false,
-      rotateControl: false,
-      fullscreenControl: false
-    })
+    @maps[plotId] = new google.maps.Map(
+      document.getElementById("map-control-#{_uuid}"), {
+        center: new google.maps.LatLng(46.980, -122.221),
+        zoom: 6,
+        maxZoom: 12,
+        minZoom: 6,
+        mapTypeId: 'terrain',
+        zoomControl: true,
+        mapTypeControl: false,
+        scaleControl: false,
+        streetViewControl: false,
+        rotateControl: false,
+        fullscreenControl: false
+      })
 
     infowindow = new google.maps.InfoWindow({
       content: "",
@@ -370,7 +371,7 @@ window.Plotter.Controls = class Controls
         color = "rgb(200,200,200)"
         scale = 5
         opacity = 0.5
-        _row_id = "map-plot-#{plotId}-station-#{station.id}"
+        _row_id = "map-plot-#{_uuid}-station-#{station.id}"
         _row_current = _.isCurrent(current, 'dataLoggerId', station.id)
 
         if _row_current
@@ -449,6 +450,7 @@ window.Plotter.Controls = class Controls
   updateStationMap: (plotId) ->
     # Update the station map markers.
     _ = @
+    _uuid = @plotter.plots[plotId].proto.options.uuid
 
     @resetStationMap(plotId)
 
@@ -474,7 +476,7 @@ window.Plotter.Controls = class Controls
     for key, row of _options.y
       if row.variable != null
         _id = row.variable.replace('_', '-')
-        _row_id = "map-plot-#{plotId}-station-#{row.dataLoggerId}"
+        _row_id = "map-plot-#{_uuid}-station-#{row.dataLoggerId}"
         updateMarker(plotId, _row_id, row.color)
 
     #@boundOnSelected(plotId)
@@ -527,22 +529,24 @@ window.Plotter.Controls = class Controls
 
   move: (plotId, appendTarget, direction) ->
     _ = @
+    _uuid = @plotter.plots[plotId].proto.options.uuid
     _dirText = if direction is 'up' then 'Up' else 'Down'
-    html = "<i id=\"move-#{plotId}-#{direction}\" style=\"cursor: pointer;\"
+    html = "<i id=\"move-#{_uuid}-#{direction}\" style=\"cursor: pointer;\"
       title=\"Move Plot #{_dirText}\"
       class=\"icon-arrow-#{direction}\"></i>"
     $(appendTarget).append(html)
-    $("#move-#{plotId}-#{direction}").on('click', ->
+    $("#move-#{_uuid}-#{direction}").on('click', ->
       _.plotter.move(plotId, direction)
     )
 
   remove: (plotId, appendTarget) ->
     _ = @
-    html = "<i id=\"remove-#{plotId}\" style=\"cursor: pointer;\"
+    _uuid = @plotter.plots[plotId].proto.options.uuid
+    html = "<i id=\"remove-#{_uuid}\" style=\"cursor: pointer;\"
       title=\"Remove Plot\"
       class=\"icon-remove\"></i>"
     $(appendTarget).append(html)
-    $("#remove-#{plotId}").on('click', ->
+    $("#remove-#{_uuid}").on('click', ->
       _.plotter.remove(plotId)
     )
 

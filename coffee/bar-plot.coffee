@@ -97,6 +97,7 @@ window.Plotter.BarPlot = class BarPlot
     @data = @processData(data)
     @getDefinition()
 
+    @clipPathId = "bar-plot-clip-path-#{@plotter.lib.uuid()}"
     @bars = []
     @focusRect = []
     @focusText = []
@@ -298,7 +299,7 @@ window.Plotter.BarPlot = class BarPlot
 
     # Define D3 Methods
     @definition.xAxis = d3.axisBottom().scale(@definition.x)
-      .ticks(Math.round($(@options.target).width() / 100))
+      .ticks(Math.round(@definition.dimensions.width / 100))
     @definition.yAxis = d3.axisLeft().scale(@definition.y)
       .ticks(@options.y[0].ticks)
 
@@ -487,7 +488,7 @@ window.Plotter.BarPlot = class BarPlot
     # Append a Clip Path
     @svg.append("defs")
       .append("clipPath")
-      .attr("id", "line-plot-clip-path")
+      .attr("id", @clipPathId)
       .append("rect")
       .attr("width", @definition.dimensions.innerWidth)
       .attr("height", @definition.dimensions.innerHeight)
@@ -560,7 +561,7 @@ window.Plotter.BarPlot = class BarPlot
       .attr("class", "bar-wrapper")
     for key, row of @data
       @bars[key] = @barWrapper.append("g")
-        .attr("clip-path", "url(\#line-plot-clip-path)")
+        .attr("clip-path", "url(\#" + @clipPathId + ")")
         .selectAll(".bar-#{key}")
         .data(row)
         .enter()
@@ -660,7 +661,7 @@ window.Plotter.BarPlot = class BarPlot
         if @svg.selectAll(".bar-#{key}").node()[0] is null
           console.log("Adding new BarPlot data set.")
           @bars[key] = @barWrapper.append("g")
-            .attr("clip-path", "url(\#line-plot-clip-path)")
+            .attr("clip-path", "url(\#" + @clipPathId + ")")
             .selectAll(".bar-#{key}")
             .data(row)
             .enter()

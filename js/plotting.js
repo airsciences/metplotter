@@ -377,6 +377,7 @@
       };
       this.data = this.processData(data);
       this.getDefinition();
+      this.clipPathId = "bar-plot-clip-path-" + (this.plotter.lib.uuid());
       this.bars = [];
       this.focusRect = [];
       this.focusText = [];
@@ -605,7 +606,7 @@
       this.definition = {};
       this.calculateChartDims();
       this.calculateAxisDims(this.data);
-      this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
+      this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round(this.definition.dimensions.width / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y[0].ticks);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       if (!this.skipBandDomainSet) {
@@ -748,7 +749,7 @@
       this.outer = d3.select(this.options.target).append("div").attr("class", "bar-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       this.svg = this.outer.append("svg").attr("class", "bar-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.svg.append("defs").append("clipPath").attr("id", "line-plot-clip-path").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      this.svg.append("defs").append("clipPath").attr("id", this.clipPathId).append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "bar-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       return this.svg.append("g").attr("class", "bar-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
@@ -778,7 +779,7 @@
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
+        this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.clipPathId + ")").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
           return _.definition.x(d.x);
         }).attr("width", d3.max([1, this.definition.x1.bandwidth()])).attr("y", function(d) {
           return _.definition.y(d.y);
@@ -817,7 +818,7 @@
         if ((row != null) && (_.options.y[key] != null)) {
           if (this.svg.selectAll(".bar-" + key).node()[0] === null) {
             console.log("Adding new BarPlot data set.");
-            this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
+            this.bars[key] = this.barWrapper.append("g").attr("clip-path", "url(\#" + this.clipPathId + ")").selectAll(".bar-" + key).data(row).enter().append("rect").attr("class", "bar-" + key).attr("x", function(d) {
               return _rescaleX(d.x);
             }).attr("width", d3.max([1, _bandwidth])).attr("y", function(d) {
               return _.definition.y(d.y);
@@ -1267,7 +1268,7 @@
       callback = function(data) {
         var _region_name, html, i, j, len, len1, ref, ref1, region, station;
         _.stations[plotId] = data.responseJSON.results;
-        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" title=\"Select Stations\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
+        html = "<div class=\"dropdown\"> <li><a id=\"station-" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" title=\"Select Stations\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
         ref = _.stations[plotId];
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
@@ -1282,7 +1283,7 @@
         }
         html = html + " </ul> </li>";
         $(appendTarget).prepend(html);
-        $('#' + uuid).dropdown();
+        $("#station-" + uuid).dropdown();
         _.bindSubMenuEvent(".subheader");
         _.setCurrent(plotId);
         _.updateStationDropdown(plotId);
@@ -1362,7 +1363,7 @@
       _current = [];
       callback = function(data) {
         var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
-        html = "<div class=\"dropdown\"> <li><a id=\"" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+        html = "<div class=\"dropdown\"> <li><a id=\"param-" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
         ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
           parameter = ref[i];
@@ -1395,19 +1396,19 @@
     };
 
     Controls.prototype.appendStationMap = function(plotId, appendTarget, results) {
-      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, color, current, dom_uuid, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station;
+      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, _uuid, color, current, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station;
       _ = this;
       current = this.getCurrent(plotId);
-      dom_uuid = "map-control-" + this.plotter.plots[plotId].proto.options.uuid;
-      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + plotId + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"popover-content\"> <a id=\"map-close-" + plotId + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"" + dom_uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
+      _uuid = this.plotter.plots[plotId].proto.options.uuid;
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + _uuid + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"popover-content\"> <a id=\"map-close-" + _uuid + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"map-control-" + _uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
       $(appendTarget).prepend(html);
-      $("#map-" + plotId).on('click', function() {
+      $("#map-" + _uuid).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);
       });
-      $("#map-close-" + plotId).on('click', function() {
+      $("#map-close-" + _uuid).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);
       });
-      this.maps[plotId] = new google.maps.Map(document.getElementById(dom_uuid), {
+      this.maps[plotId] = new google.maps.Map(document.getElementById("map-control-" + _uuid), {
         center: new google.maps.LatLng(46.980, -122.221),
         zoom: 6,
         maxZoom: 12,
@@ -1436,7 +1437,7 @@
           color = "rgb(200,200,200)";
           scale = 5;
           opacity = 0.5;
-          _row_id = "map-plot-" + plotId + "-station-" + station.id;
+          _row_id = "map-plot-" + _uuid + "-station-" + station.id;
           _row_current = _.isCurrent(current, 'dataLoggerId', station.id);
           if (_row_current) {
             color = _row_current.color;
@@ -1514,8 +1515,9 @@
     };
 
     Controls.prototype.updateStationMap = function(plotId) {
-      var _, _id, _options, _row_id, key, ref, results1, row, updateMarker;
+      var _, _id, _options, _row_id, _uuid, key, ref, results1, row, updateMarker;
       _ = this;
+      _uuid = this.plotter.plots[plotId].proto.options.uuid;
       this.resetStationMap(plotId);
       updateMarker = function(plotId, rowId, color) {
         _.markers[plotId][rowId].setIcon({
@@ -1540,7 +1542,7 @@
         row = ref[key];
         if (row.variable !== null) {
           _id = row.variable.replace('_', '-');
-          _row_id = "map-plot-" + plotId + "-station-" + row.dataLoggerId;
+          _row_id = "map-plot-" + _uuid + "-station-" + row.dataLoggerId;
           results1.push(updateMarker(plotId, _row_id, row.color));
         } else {
           results1.push(void 0);
@@ -1595,22 +1597,24 @@
     };
 
     Controls.prototype.move = function(plotId, appendTarget, direction) {
-      var _, _dirText, html;
+      var _, _dirText, _uuid, html;
       _ = this;
+      _uuid = this.plotter.plots[plotId].proto.options.uuid;
       _dirText = direction === 'up' ? 'Up' : 'Down';
-      html = "<i id=\"move-" + plotId + "-" + direction + "\" style=\"cursor: pointer;\" title=\"Move Plot " + _dirText + "\" class=\"icon-arrow-" + direction + "\"></i>";
+      html = "<i id=\"move-" + _uuid + "-" + direction + "\" style=\"cursor: pointer;\" title=\"Move Plot " + _dirText + "\" class=\"icon-arrow-" + direction + "\"></i>";
       $(appendTarget).append(html);
-      return $("#move-" + plotId + "-" + direction).on('click', function() {
+      return $("#move-" + _uuid + "-" + direction).on('click', function() {
         return _.plotter.move(plotId, direction);
       });
     };
 
     Controls.prototype.remove = function(plotId, appendTarget) {
-      var _, html;
+      var _, _uuid, html;
       _ = this;
-      html = "<i id=\"remove-" + plotId + "\" style=\"cursor: pointer;\" title=\"Remove Plot\" class=\"icon-remove\"></i>";
+      _uuid = this.plotter.plots[plotId].proto.options.uuid;
+      html = "<i id=\"remove-" + _uuid + "\" style=\"cursor: pointer;\" title=\"Remove Plot\" class=\"icon-remove\"></i>";
       $(appendTarget).append(html);
-      return $("#remove-" + plotId).on('click', function() {
+      return $("#remove-" + _uuid).on('click', function() {
         return _.plotter.remove(plotId);
       });
     };
@@ -2427,6 +2431,7 @@
       };
       this.data = this.processData(data);
       this.getDefinition();
+      this.clipPathId = "line-plot-clip-path-" + (this.plotter.lib.uuid());
       this.bands = [];
       this.lines = [];
       this.focusCircle = [];
@@ -2660,7 +2665,7 @@
       this.definition = {};
       this.calculateChartDims();
       this.calculateAxisDims(this.data);
-      this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round($(this.options.target).width() / 100));
+      this.definition.xAxis = d3.axisBottom().scale(this.definition.x).ticks(Math.round(this.definition.dimensions.width / 100));
       this.definition.yAxis = d3.axisLeft().scale(this.definition.y).ticks(this.options.y[0].ticks);
       this.definition.x.domain([this.definition.x.min, this.definition.x.max]);
       if (!this.skipBandDomainSet) {
@@ -2815,7 +2820,7 @@
       this.outer = d3.select(this.options.target).append("div").attr("class", "line-plot-body").style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px").style("display", "inline-block");
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
-      this.svg.append("defs").append("clipPath").attr("id", "line-plot-clip-path").append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      this.svg.append("defs").append("clipPath").attr("id", this.clipPathId).append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
       this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
       return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
@@ -2845,10 +2850,10 @@
       ref = this.data;
       for (key in ref) {
         row = ref[key];
-        this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
+        this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.clipPathId + ")").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
           return d3.color(_.options.y[key].color).darker(1);
         });
-        this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+        this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.clipPathId + ")").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
       }
       if (this.options.y[0].maxBar != null) {
         this.lineWrapper.append("rect").attr("class", "line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(this.options.y[0].maxBar)).attr("width", this.definition.dimensions.innerWidth).attr("height", 1).style("color", '#gggggg').style("opacity", 0.4);
@@ -2878,7 +2883,7 @@
         row = ref[key];
         if ((row != null) && (_.options.y[key] != null)) {
           if (this.svg.select(".line-plot-area-" + key).node() === null) {
-            this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
+            this.bands[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.clipPathId + ")").append("path").datum(row).attr("d", this.definition.area).attr("class", "line-plot-area-" + key).style("fill", this.options.y[key].color).style("opacity", 0.15).style("stroke", function() {
               return d3.color(_.options.y[key].color).darker(1);
             });
           } else {
@@ -2887,7 +2892,7 @@
             });
           }
           if (this.svg.select(".line-plot-path-" + key).node() === null) {
-            this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#line-plot-clip-path)").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
+            this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.clipPathId + ")").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
             this.focusCircle[key] = this.hoverWrapper.append("circle").attr("r", 4).attr("class", "focus-circle-" + key).attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
             this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
           } else {
