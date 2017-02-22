@@ -3378,6 +3378,7 @@
       defaults = {
         templateId: null,
         uuid: null,
+        localId: this.lib.uuid(),
         href: __href,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
@@ -3653,10 +3654,10 @@
     Handler.prototype.appendSave = function() {
       var _;
       _ = this;
-      $("#save-" + this.options.uuid).parent().remove();
+      $("#save-" + this.options.localId).parent().remove();
       if (this.isAdmin() || (this.options.uuid != null)) {
-        $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Template</a></small>");
-        return $("#save-" + this.options.uuid).on("click", function(event) {
+        $(this.options.target).append("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.localId + "\">Save Template</a></small>");
+        return $("#save-" + this.options.localId).on("click", function(event) {
           return _.i.template.put();
         });
       }
@@ -3956,13 +3957,13 @@
     Template.prototype.put = function() {
       var _, args, callback, preError, target;
       preError = this.preError + "put()";
-      if (!this.plotter.isAdmin() || !(this.plotter.options.uuid != null)) {
+      if (!this.plotter.isAdmin() && !(this.plotter.options.uuid != null)) {
         throw new Error(preError + ", not authorized for PUT requests.");
         return false;
       }
-      target = this.endpoint();
+      target = this.endpoint() + ("" + this.plotter.options.templateId);
+      console.log("PUT Target Test: ", target);
       args = {
-        id: this.plotter.options.templateId,
         template_data: this.stringify(this.template)
       };
       _ = this;

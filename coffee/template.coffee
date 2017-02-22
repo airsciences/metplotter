@@ -86,12 +86,12 @@ window.Plotter.Template = class Template
   put: ->
     # PUT a template onto the server
     preError = "#{@preError}put()"
-    if !@plotter.isAdmin() or !(@plotter.options.uuid?)
+    if !@plotter.isAdmin() and !(@plotter.options.uuid?)
       throw new Error("#{preError}, not authorized for PUT requests.")
       return false
-    target = @endpoint()
+    target = @endpoint() + "#{@plotter.options.templateId}"
+    console.log("PUT Target Test: ", target)
     args =
-      id: @plotter.options.templateId
       template_data: @stringify(@template)
     _ = @
 

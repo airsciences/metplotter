@@ -21,6 +21,7 @@ window.Plotter.Handler = class Handler
     defaults =
       templateId: null
       uuid: null
+      localId: @lib.uuid()
       href: __href
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
@@ -315,11 +316,11 @@ window.Plotter.Handler = class Handler
   appendSave: ->
     # Template Save Control.
     _ = @
-    $("#save-#{@options.uuid}").parent().remove()
+    $("#save-#{@options.localId}").parent().remove()
     if @isAdmin() or @options.uuid?
       $(@options.target).append(
         "<small><a style=\"cusor:pointer\"
-          id=\"save-#{@options.uuid}\">Save Template</a></small>")
-      $("#save-#{@options.uuid}").on("click", (event) ->
+          id=\"save-#{@options.localId}\">Save Template</a></small>")
+      $("#save-#{@options.localId}").on("click", (event) ->
         _.i.template.put()
       )
