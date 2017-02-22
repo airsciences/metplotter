@@ -81,6 +81,12 @@ window.Plotter.Template = class Template
         return
       _.template = _.parse(data.responseJSON.template_data)
 
+      # Sort the plots
+      _.template.sort((x, y) ->
+        # return d3.ascending(x.plotOrder, y.plotOrder)
+        return x.pageOrder - y.pageOrder
+      )
+
     @sapi.get(target, args, callback)
 
   put: ->
@@ -90,7 +96,7 @@ window.Plotter.Template = class Template
       throw new Error("#{preError}, not authorized for PUT requests.")
       return false
     target = @endpoint() + "#{@plotter.options.templateId}"
-    console.log("PUT Target Test: ", target)
+
     args =
       template_data: @stringify(@template)
     _ = @

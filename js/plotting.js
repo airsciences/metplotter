@@ -3949,7 +3949,10 @@
           throw new Error(preError + ".callback(data) error retrieving template.");
           return;
         }
-        return _.template = _.parse(data.responseJSON.template_data);
+        _.template = _.parse(data.responseJSON.template_data);
+        return _.template.sort(function(x, y) {
+          return x.pageOrder - y.pageOrder;
+        });
       };
       return this.sapi.get(target, args, callback);
     };
@@ -3962,7 +3965,6 @@
         return false;
       }
       target = this.endpoint() + ("" + this.plotter.options.templateId);
-      console.log("PUT Target Test: ", target);
       args = {
         template_data: this.stringify(this.template)
       };
