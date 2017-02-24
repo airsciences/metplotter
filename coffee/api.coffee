@@ -9,7 +9,7 @@
 window.Plotter ||= {}
 
 window.Plotter.API = class API
-  constructor: (accessToken, async) ->
+  constructor: (access, async) ->
     @preError = "Plotter.API"
     preError = "#{@preError}.constructor()"
 
@@ -20,12 +20,17 @@ window.Plotter.API = class API
 
     # Attach Authentication
     @getAccessToken = () ->
-      accessToken
+      access.token
 
     @getAccessTokenValue = () ->
-      if accessToken is undefined
+      if access.token is undefined
         throw new Error("#{preError} Access token is not defined.")
-      "Token #{accessToken}"
+      "Token #{access.token}"
+
+    @getCSRFToken = () ->
+      if access.csrfToken is undefined
+        throw new Error("#{preError} CSRF token is not defined.")
+      return access.csrfToken
 
   build: () ->
     # Build the XHR Class
@@ -120,6 +125,7 @@ window.Plotter.API = class API
     try
       xhr.open 'PUT', uri, @async
       xhr.setRequestHeader "Authorization", @getAccessToken()
+      xhr.setRequestHeader "X-CSRFToken", @getCSRFToken()
       xhr.setRequestHeader "Content-Type", "application/json;charset=UTF-8"
       xhr.send args
     catch error

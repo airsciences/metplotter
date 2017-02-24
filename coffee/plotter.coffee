@@ -43,6 +43,7 @@ window.Plotter.Handler = class Handler
     # Access Token & Admin
     __accessToken =
       token: null
+      csrfToken: null
       admin: false
     access = @lib.mergeDefaults(accessToken, __accessToken)
 
@@ -51,8 +52,8 @@ window.Plotter.Handler = class Handler
 
     # Define the Interface (Sub-Method Handlers)
     @i =
-      api: new window.Plotter.API(access.token)
-      sapi: new window.Plotter.API(access.token, false)
+      api: new window.Plotter.API(access)
+      sapi: new window.Plotter.API(access, false)
     @i.template = new window.Plotter.Template(@)
     @i.controls = new window.Plotter.Controls(@)
     @i.initialsync = new window.Plotter.InitialSync(@)

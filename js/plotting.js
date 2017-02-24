@@ -4,7 +4,7 @@
   window.Plotter || (window.Plotter = {});
 
   window.Plotter.API = API = (function() {
-    function API(accessToken, async) {
+    function API(access, async) {
       var preError;
       this.preError = "Plotter.API";
       preError = this.preError + ".constructor()";
@@ -13,13 +13,19 @@
         this.async = async;
       }
       this.getAccessToken = function() {
-        return accessToken;
+        return access.token;
       };
       this.getAccessTokenValue = function() {
-        if (accessToken === void 0) {
+        if (access.token === void 0) {
           throw new Error(preError + " Access token is not defined.");
         }
-        return "Token " + accessToken;
+        return "Token " + access.token;
+      };
+      this.getCSRFToken = function() {
+        if (access.csrfToken === void 0) {
+          throw new Error(preError + " CSRF token is not defined.");
+        }
+        return access.csrfToken;
       };
     }
 
@@ -118,6 +124,7 @@
       try {
         xhr.open('PUT', uri, this.async);
         xhr.setRequestHeader("Authorization", this.getAccessToken());
+        xhr.setRequestHeader("X-CSRFToken", this.getCSRFToken());
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.send(args);
       } catch (error1) {
@@ -3397,6 +3404,7 @@
       this.refreshCounter = 0;
       __accessToken = {
         token: null,
+        csrfToken: null,
         admin: false
       };
       access = this.lib.mergeDefaults(accessToken, __accessToken);
@@ -3404,8 +3412,8 @@
         return access.admin;
       };
       this.i = {
-        api: new window.Plotter.API(access.token),
-        sapi: new window.Plotter.API(access.token, false)
+        api: new window.Plotter.API(access),
+        sapi: new window.Plotter.API(access, false)
       };
       this.i.template = new window.Plotter.Template(this);
       this.i.controls = new window.Plotter.Controls(this);
