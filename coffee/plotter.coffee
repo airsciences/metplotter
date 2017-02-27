@@ -317,9 +317,9 @@ window.Plotter.Handler = class Handler
     _ = @
     $("#save-#{@options.uuid}").parent().remove()
     if @isAdmin() or @options.uuid?
-      $(@options.target).append(
+      $(@options.target).prepend(
         "<small><a style=\"cusor:pointer\"
-          id=\"save-#{@options.uuid}\">Save Template</a></small>")
+          id=\"save-#{@options.uuid}\">Save Graphs</a></small>")
       $("#save-#{@options.uuid}").on("click", (event) ->
         _.i.template.put()
       )
