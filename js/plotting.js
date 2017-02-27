@@ -4,7 +4,7 @@
   window.Plotter || (window.Plotter = {});
 
   window.Plotter.API = API = (function() {
-    function API(accessToken, async) {
+    function API(access, async) {
       var preError;
       this.preError = "Plotter.API";
       preError = this.preError + ".constructor()";
@@ -13,13 +13,19 @@
         this.async = async;
       }
       this.getAccessToken = function() {
-        return accessToken;
+        return access.token;
       };
       this.getAccessTokenValue = function() {
-        if (accessToken === void 0) {
+        if (access.token === void 0) {
           throw new Error(preError + " Access token is not defined.");
         }
-        return "Token " + accessToken;
+        return "Token " + access.token;
+      };
+      this.getCSRFToken = function() {
+        if (access.csrfToken === void 0) {
+          throw new Error(preError + " CSRF token is not defined.");
+        }
+        return access.csrfToken;
       };
     }
 
@@ -118,6 +124,7 @@
       try {
         xhr.open('PUT', uri, this.async);
         xhr.setRequestHeader("Authorization", this.getAccessToken());
+        xhr.setRequestHeader("X-CSRFToken", this.getCSRFToken());
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.send(args);
       } catch (error1) {
@@ -3378,6 +3385,7 @@
       defaults = {
         templateId: null,
         uuid: null,
+        localId: this.lib.uuid(),
         href: __href,
         target: null,
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
@@ -3396,6 +3404,7 @@
       this.refreshCounter = 0;
       __accessToken = {
         token: null,
+        csrfToken: null,
         admin: false
       };
       access = this.lib.mergeDefaults(accessToken, __accessToken);
@@ -3403,8 +3412,8 @@
         return access.admin;
       };
       this.i = {
-        api: new window.Plotter.API(access.token),
-        sapi: new window.Plotter.API(access.token, false)
+        api: new window.Plotter.API(access),
+        sapi: new window.Plotter.API(access, false)
       };
       this.i.template = new window.Plotter.Template(this);
       this.i.controls = new window.Plotter.Controls(this);
@@ -3653,7 +3662,7 @@
     Handler.prototype.appendSave = function() {
       var _;
       _ = this;
-      $("#save-" + this.options.uuid).parent().remove();
+      $("#save-" + this.options.localId).parent().remove();
       if (this.isAdmin() || (this.options.uuid != null)) {
         $(this.options.target).prepend("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Graphs</a></small>");
         return $("#save-" + this.options.uuid).on("click", function(event) {
@@ -3948,7 +3957,10 @@
           throw new Error(preError + ".callback(data) error retrieving template.");
           return;
         }
-        return _.template = _.parse(data.responseJSON.template_data);
+        _.template = _.parse(data.responseJSON.template_data);
+        return _.template.sort(function(x, y) {
+          return x.pageOrder - y.pageOrder;
+        });
       };
       return this.sapi.get(target, args, callback);
     };
@@ -3956,13 +3968,12 @@
     Template.prototype.put = function() {
       var _, args, callback, preError, target;
       preError = this.preError + "put()";
-      if (!this.plotter.isAdmin() || !(this.plotter.options.uuid != null)) {
+      if (!this.plotter.isAdmin() && !(this.plotter.options.uuid != null)) {
         throw new Error(preError + ", not authorized for PUT requests.");
         return false;
       }
-      target = this.endpoint();
+      target = this.endpoint() + ("" + this.plotter.options.templateId);
       args = {
-        id: this.plotter.options.templateId,
         template_data: this.stringify(this.template)
       };
       _ = this;

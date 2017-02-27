@@ -81,17 +81,23 @@ window.Plotter.Template = class Template
         return
       _.template = _.parse(data.responseJSON.template_data)
 
+      # Sort the plots
+      _.template.sort((x, y) ->
+        # return d3.ascending(x.plotOrder, y.plotOrder)
+        return x.pageOrder - y.pageOrder
+      )
+
     @sapi.get(target, args, callback)
 
   put: ->
     # PUT a template onto the server
     preError = "#{@preError}put()"
-    if !@plotter.isAdmin() or !(@plotter.options.uuid?)
+    if !@plotter.isAdmin() and !(@plotter.options.uuid?)
       throw new Error("#{preError}, not authorized for PUT requests.")
       return false
-    target = @endpoint()
+    target = @endpoint() + "#{@plotter.options.templateId}"
+
     args =
-      id: @plotter.options.templateId
       template_data: @stringify(@template)
     _ = @
 

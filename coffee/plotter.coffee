@@ -21,6 +21,7 @@ window.Plotter.Handler = class Handler
     defaults =
       templateId: null
       uuid: null
+      localId: @lib.uuid()
       href: __href
       target: null
       dateFormat: "%Y-%m-%dT%H:%M:%SZ"
@@ -42,6 +43,7 @@ window.Plotter.Handler = class Handler
     # Access Token & Admin
     __accessToken =
       token: null
+      csrfToken: null
       admin: false
     access = @lib.mergeDefaults(accessToken, __accessToken)
 
@@ -50,8 +52,8 @@ window.Plotter.Handler = class Handler
 
     # Define the Interface (Sub-Method Handlers)
     @i =
-      api: new window.Plotter.API(access.token)
-      sapi: new window.Plotter.API(access.token, false)
+      api: new window.Plotter.API(access)
+      sapi: new window.Plotter.API(access, false)
     @i.template = new window.Plotter.Template(@)
     @i.controls = new window.Plotter.Controls(@)
     @i.initialsync = new window.Plotter.InitialSync(@)
@@ -315,7 +317,7 @@ window.Plotter.Handler = class Handler
   appendSave: ->
     # Template Save Control.
     _ = @
-    $("#save-#{@options.uuid}").parent().remove()
+    $("#save-#{@options.localId}").parent().remove()
     if @isAdmin() or @options.uuid?
       $(@options.target).prepend(
         "<small><a style=\"cusor:pointer\"
