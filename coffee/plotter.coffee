@@ -323,6 +323,6 @@ window.Plotter.Handler = class Handler
         "<small><a style=\"cusor:pointer\"
           id=\"save-#{@options.uuid}\">Save Graph</a></small>")
       $("#save-#{@options.uuid}").on("click", (event) ->
-        _.options.target.append(" " +  _.i.lib.getNow2())
+        @.append(": Last Saved: " +  _.lib.getNowDisplay())
         _.i.template.put()
       )

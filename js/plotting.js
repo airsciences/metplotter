@@ -2249,17 +2249,17 @@
       var __options, defaults;
       defaults = {
         dateFormat: "%Y-%m-%dT%H:%M:%SZ",
-        timeFormat: "%Y-%m-%dT%H:%M:%SZ-08"
+        displayDate: "%b. %e, %I:%M %p"
       };
       __options = this.mergeDefaults(defaults, options);
       this.parseDate = d3.timeParse(__options.dateFormat);
       this.format = d3.utcFormat(__options.dateFormat);
-      this.format2 = d3.timeFormat(__options.timeFormat);
+      this.displayFormat = d3.timeFormat(__options.displayDate);
       this.getNow = function() {
         return this.format(new Date());
       };
-      this.getNow2 = function() {
-        return this.format2(new Date());
+      this.getNowDisplay = function() {
+        return this.displayFormat(new Date());
       };
     }
 
@@ -3671,7 +3671,7 @@
       if (this.isAdmin() || (this.options.uuid != null)) {
         $(this.options.target).prepend("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Graph</a></small>");
         return $("#save-" + this.options.uuid).on("click", function(event) {
-          _.options.target.append("hello world");
+          this.append(": Last Saved: " + _.lib.getNowDisplay());
           return _.i.template.put();
         });
       }

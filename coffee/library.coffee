@@ -8,22 +8,21 @@ window.Plotter ||= {}
 window.Plotter.Library = class Library
   constructor: (options) ->
     # Define the Library Formatting Options
-    defaults = {
-      dateFormat: "%Y-%m-%dT%H:%M:%SZ",
-      timeFormat: "%Y-%m-%dT%H:%MZ-08"
-    }
+    defaults =
+      dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+      displayDate: "%b. %e, %I:%M %p"
     __options = @mergeDefaults(defaults, options)
 
     # Pass-Through Functions
     @parseDate = d3.timeParse(__options.dateFormat)
     @format = d3.utcFormat(__options.dateFormat)
-    @format2 = d3.timeFormat(__options.timeFormat)
+    @displayFormat = d3.timeFormat(__options.displayDate)
 
     @getNow = ->
       return @format(new Date())
 
-    @getNow2 = ->
-      return @format2(new Date())
+    @getNowDisplay = ->
+      return @displayFormat(new Date())
 
   mergeDefaults: (args, defaults) ->
     # Merge Two Objects.
