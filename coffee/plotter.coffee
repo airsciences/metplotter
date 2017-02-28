@@ -320,9 +320,14 @@ window.Plotter.Handler = class Handler
     $("#save-#{@options.localId}").parent().remove()
     if @isAdmin() or @options.uuid?
       $(@options.target).prepend(
-        "<small><a style=\"cusor:pointer\"
-          id=\"save-#{@options.uuid}\">Save Graph</a></small>")
-      $("#save-#{@options.uuid}").on("click", (event) ->
-        @.append(": Last Saved: " +  _.lib.getNowDisplay())
+        "<small><a style=\"cursor:pointer\"
+          id=\"save-#{@options.localId}\">Save Graph</a></small>")
+      $("#save-#{@options.localId}").on("click", (event) ->
+        _last = ": Last Saved: " + _.lib.getNowDisplay()
+        if $("#save-#{_.options.localId}").html() == "Save Graph"
+          @.append(_last)
+        else
+          $("#save-#{_.options.localId}").html("Save Graph#{_last}")
+
         _.i.template.put()
       )

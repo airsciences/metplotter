@@ -3669,9 +3669,15 @@
       _ = this;
       $("#save-" + this.options.localId).parent().remove();
       if (this.isAdmin() || (this.options.uuid != null)) {
-        $(this.options.target).prepend("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Graph</a></small>");
-        return $("#save-" + this.options.uuid).on("click", function(event) {
-          this.append(": Last Saved: " + _.lib.getNowDisplay());
+        $(this.options.target).prepend("<small><a style=\"cursor:pointer\" id=\"save-" + this.options.localId + "\">Save Graph</a></small>");
+        return $("#save-" + this.options.localId).on("click", function(event) {
+          var _last;
+          _last = ": Last Saved: " + _.lib.getNowDisplay();
+          if ($("#save-" + _.options.localId).html() === "Save Graph") {
+            this.append(_last);
+          } else {
+            $("#save-" + _.options.localId).html("Save Graph" + _last);
+          }
           return _.i.template.put();
         });
       }
