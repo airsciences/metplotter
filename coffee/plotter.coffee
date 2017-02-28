@@ -321,7 +321,8 @@ window.Plotter.Handler = class Handler
     if @isAdmin() or @options.uuid?
       $(@options.target).prepend(
         "<small><a style=\"cusor:pointer\"
-          id=\"save-#{@options.uuid}\">Save Graphs</a></small>")
+          id=\"save-#{@options.uuid}\">Save Graph</a></small>")
       $("#save-#{@options.uuid}").on("click", (event) ->
+        _.options.target.append("hello world")
         _.i.template.put()
       )

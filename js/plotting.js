@@ -2248,13 +2248,18 @@
     function Library(options) {
       var __options, defaults;
       defaults = {
-        dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+        dateFormat: "%Y-%m-%dT%H:%M:%SZ",
+        timeFormat: "%Y-%m-%dT%H:%M:%SZ-08"
       };
       __options = this.mergeDefaults(defaults, options);
       this.parseDate = d3.timeParse(__options.dateFormat);
       this.format = d3.utcFormat(__options.dateFormat);
+      this.format2 = d3.timeFormat(__options.timeFormat);
       this.getNow = function() {
         return this.format(new Date());
+      };
+      this.getNow2 = function() {
+        return this.format2(new Date());
       };
     }
 
@@ -3664,8 +3669,9 @@
       _ = this;
       $("#save-" + this.options.localId).parent().remove();
       if (this.isAdmin() || (this.options.uuid != null)) {
-        $(this.options.target).prepend("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Graphs</a></small>");
+        $(this.options.target).prepend("<small><a style=\"cusor:pointer\" id=\"save-" + this.options.uuid + "\">Save Graph</a></small>");
         return $("#save-" + this.options.uuid).on("click", function(event) {
+          _.options.target.append("hello world");
           return _.i.template.put();
         });
       }
