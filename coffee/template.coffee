@@ -59,6 +59,7 @@ window.Plotter.Template = class Template
           else
             # Trim empty before building.
             __json.splice(key, 1)
+        __json = @resetPageOrder(__json)
         return __json
       else
         throw new Error("Plotter template format is invalid. Reference a
@@ -174,3 +175,9 @@ window.Plotter.Template = class Template
   removePlot: (plotId) ->
     # Remove the plot from the template
     delete @template[plotId]
+
+  resetPageOrder: (json) ->
+    # Reset first key
+    for key, row of json
+      row.pageOrder = parseInt(key) + 1
+    return json

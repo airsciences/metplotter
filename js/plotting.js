@@ -3945,6 +3945,7 @@
               __json.splice(key, 1);
             }
           }
+          __json = this.resetPageOrder(__json);
           return __json;
         } else {
           throw new Error("Plotter template format is invalid. Reference a working example.");
@@ -4068,6 +4069,16 @@
 
     Template.prototype.removePlot = function(plotId) {
       return delete this.template[plotId];
+    };
+
+    Template.prototype.resetPageOrder = function(json) {
+      var key, row;
+      for (key in json) {
+        row = json[key];
+        row.pageOrder = parseInt(key) + 1;
+      }
+      console.log("Reset Order ", json);
+      return json;
     };
 
     return Template;
