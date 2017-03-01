@@ -3877,7 +3877,7 @@
         var i, j, len, len1, ref, row, y;
         for (i = 0, len = template.length; i < len; i++) {
           row = template[i];
-          if (row != null) {
+          if ((row != null) && row === ![]) {
             if (row.type === void 0) {
               return false;
             }
@@ -3932,13 +3932,18 @@
         return true;
       };
       this.parse = function(templateData) {
-        var __json, i, len, row;
+        var __json, i, key, ref, remove, row;
         __json = JSON.parse(templateData).templateData;
         if (this.isValid(__json)) {
-          for (i = 0, len = __json.length; i < len; i++) {
-            row = __json[i];
-            row.x.min = new window.Plotter.Now(this.plotter.lib.format, row.x.min).get();
-            row.x.max = new window.Plotter.Now(this.plotter.lib.format, row.x.max).get();
+          remove = [];
+          for (key = i = ref = __json.length - 1; ref <= 0 ? i <= 0 : i >= 0; key = ref <= 0 ? ++i : --i) {
+            row = __json[key];
+            if (row != null) {
+              row.x.min = new window.Plotter.Now(this.plotter.lib.format, row.x.min).get();
+              row.x.max = new window.Plotter.Now(this.plotter.lib.format, row.x.max).get();
+            } else {
+              __json.splice(key, 1);
+            }
           }
           return __json;
         } else {

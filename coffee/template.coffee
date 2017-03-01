@@ -21,7 +21,7 @@ window.Plotter.Template = class Template
     @isValid = (template) ->
       # JSON Format Validity Test
       for row in template
-        if row?
+        if row? and row is not []
           if row.type is undefined then return false
           if row.x is undefined then return false
           if row.y is undefined then return false
@@ -34,6 +34,7 @@ window.Plotter.Template = class Template
             if y.variable is undefined then return false
             if y.title is undefined then return false
             if y.units is undefined then return false
+
       return true
 
     @newIsValid = (template) ->
@@ -47,11 +48,17 @@ window.Plotter.Template = class Template
       # Parse the string format
       __json = JSON.parse(templateData).templateData
       if @isValid(__json)
-        for row in __json
-          row.x.min =
-            new window.Plotter.Now(@plotter.lib.format, row.x.min).get()
-          row.x.max =
-            new window.Plotter.Now(@plotter.lib.format, row.x.max).get()
+        remove = []
+        for key in [(__json.length-1)..0]
+          row = __json[key]
+          if row?
+            row.x.min =
+              new window.Plotter.Now(@plotter.lib.format, row.x.min).get()
+            row.x.max =
+              new window.Plotter.Now(@plotter.lib.format, row.x.max).get()
+          else
+            # Trim empty before building.
+            __json.splice(key, 1)
         return __json
       else
         throw new Error("Plotter template format is invalid. Reference a
