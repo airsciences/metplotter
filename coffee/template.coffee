@@ -48,7 +48,7 @@ window.Plotter.Template = class Template
       # Parse the string format
       __json = JSON.parse(templateData).templateData
       if @isValid(__json)
-        remove = []
+        remove = false
         for key in [(__json.length-1)..0]
           row = __json[key]
           if row?
@@ -57,8 +57,13 @@ window.Plotter.Template = class Template
             row.x.max =
               new window.Plotter.Now(@plotter.lib.format, row.x.max).get()
           else
+            remove = true
             # Trim empty before building.
             __json.splice(key, 1)
+
+        __json.sort((x, y) ->
+          return x.pageOrder - y.pageOrder
+        )
         __json = @resetPageOrder(__json)
         return __json
       else
@@ -88,12 +93,6 @@ window.Plotter.Template = class Template
         throw new Error("#{preError}.callback(data) error retrieving template.")
         return
       _.template = _.parse(data.responseJSON.template_data)
-
-      # Sort the plots
-      _.template.sort((x, y) ->
-        # return d3.ascending(x.plotOrder, y.plotOrder)
-        return x.pageOrder - y.pageOrder
-      )
 
     @sapi.get(target, args, callback)
 

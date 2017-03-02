@@ -3935,16 +3935,20 @@
         var __json, i, key, ref, remove, row;
         __json = JSON.parse(templateData).templateData;
         if (this.isValid(__json)) {
-          remove = [];
+          remove = false;
           for (key = i = ref = __json.length - 1; ref <= 0 ? i <= 0 : i >= 0; key = ref <= 0 ? ++i : --i) {
             row = __json[key];
             if (row != null) {
               row.x.min = new window.Plotter.Now(this.plotter.lib.format, row.x.min).get();
               row.x.max = new window.Plotter.Now(this.plotter.lib.format, row.x.max).get();
             } else {
+              remove = true;
               __json.splice(key, 1);
             }
           }
+          __json.sort(function(x, y) {
+            return x.pageOrder - y.pageOrder;
+          });
           __json = this.resetPageOrder(__json);
           return __json;
         } else {
@@ -3975,10 +3979,7 @@
           throw new Error(preError + ".callback(data) error retrieving template.");
           return;
         }
-        _.template = _.parse(data.responseJSON.template_data);
-        return _.template.sort(function(x, y) {
-          return x.pageOrder - y.pageOrder;
-        });
+        return _.template = _.parse(data.responseJSON.template_data);
       };
       return this.sapi.get(target, args, callback);
     };
@@ -4077,7 +4078,6 @@
         row = json[key];
         row.pageOrder = parseInt(key) + 1;
       }
-      console.log("Reset Order ", json);
       return json;
     };
 
