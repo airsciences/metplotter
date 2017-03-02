@@ -3941,6 +3941,7 @@
             if (row != null) {
               row.x.min = new window.Plotter.Now(this.plotter.lib.format, row.x.min).get();
               row.x.max = new window.Plotter.Now(this.plotter.lib.format, row.x.max).get();
+              row.y = this.spliceArrayY(row.y);
             } else {
               remove = true;
               __json.splice(key, 1);
@@ -4079,6 +4080,16 @@
         row.pageOrder = parseInt(key) + 1;
       }
       return json;
+    };
+
+    Template.prototype.spliceArrayY = function(yArray) {
+      var i, key, ref;
+      for (key = i = ref = yArray.length - 1; ref <= 0 ? i <= 0 : i >= 0; key = ref <= 0 ? ++i : --i) {
+        if (!(yArray[key] != null)) {
+          yArray.splice(key, 1);
+        }
+      }
+      return yArray;
     };
 
     return Template;

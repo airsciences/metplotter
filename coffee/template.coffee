@@ -56,6 +56,7 @@ window.Plotter.Template = class Template
               new window.Plotter.Now(@plotter.lib.format, row.x.min).get()
             row.x.max =
               new window.Plotter.Now(@plotter.lib.format, row.x.max).get()
+            row.y = @spliceArrayY(row.y)
           else
             remove = true
             # Trim empty before building.
@@ -180,3 +181,9 @@ window.Plotter.Template = class Template
     for key, row of json
       row.pageOrder = parseInt(key) + 1
     return json
+
+  spliceArrayY: (yArray) ->
+    for key in [(yArray.length-1)..0]
+      if !(yArray[key]?)
+        yArray.splice(key, 1)
+    return yArray
