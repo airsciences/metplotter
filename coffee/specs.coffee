@@ -47,7 +47,7 @@ window.Plotter.Specs = class Specs
       # {"variable": "snow_depth", "title": "Snow Depth"},
       snow_depth:
         min: 0
-        max: 150
+        max: 200
         maxBar: null
       # {"variable": "snowfall_24_hour", "title": "24-Hr Snowfall"},
       snowfall_24_hour:

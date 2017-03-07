@@ -3744,7 +3744,7 @@
         },
         snow_depth: {
           min: 0,
-          max: 150,
+          max: 200,
           maxBar: null
         },
         snowfall_24_hour: {
