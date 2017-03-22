@@ -2501,7 +2501,7 @@
       for (key in data) {
         row = data[key];
         result[key] = {
-          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime()),
           y: row[_yOptions.variable]
         };
         if (_yOptions.band != null) {
@@ -3209,7 +3209,7 @@
       var _local, _now, _offset, args, currentMax, limit, maxDatetime, newMax, uuid;
       _local = new Date();
       _offset = _local.getTimezoneOffset() / 60;
-      _now = new Date(_local.getTime() - (8 - _offset) * 3600000);
+      _now = new Date(_local.getTime() - _offset * 3600000);
       if (state.range.data[dataSetId].max >= _now) {
         return true;
       }

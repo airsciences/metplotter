@@ -147,7 +147,7 @@ window.Plotter.LinePlot = class LinePlot
       result[key] =
         #x: row[@options.x.variable]
         x: new Date(
-          @parseDate(row[@options.x.variable]).getTime() - 8*3600000)
+          @parseDate(row[@options.x.variable]).getTime())
         y: row[_yOptions.variable]
       if _yOptions.band?
         if _yOptions.band.minVariable
