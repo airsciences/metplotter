@@ -6,7 +6,7 @@ window.Plotter.Handler = class Handler
 
     # Define the Library
     __libDateFormat = if options.dateFormat then options.dateFormat
-    else "%Y-%m-%dT%H:%M:%SZ"
+    else "%Y-%m-%dT%H:%M:%S-08:00"
     __libOptions =
       dateFormat: __libDateFormat
     @lib = new window.Plotter.Library(__libOptions)
@@ -24,7 +24,7 @@ window.Plotter.Handler = class Handler
       localId: @lib.uuid()
       href: __href
       target: null
-      dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+      dateFormat: "%Y-%m-%dT%H:%M:%S-08:00"
       refresh: 500
       futureWait: 180000
       updateLength: 168

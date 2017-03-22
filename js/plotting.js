@@ -285,7 +285,7 @@
         merge: false,
         x: {
           variable: null,
-          format: "%Y-%m-%dT%H:%M:%SZ",
+          format: "%Y-%m-%dT%H:%M:%S-08:00",
           min: null,
           max: null,
           ticks: 7
@@ -441,7 +441,7 @@
       for (key in data) {
         row = data[key];
         result[key] = {
-          x: new Date(this.parseDate(row[this.options.x.variable]).getTime() - 8 * 3600000),
+          x: new Date(this.parseDate(row[this.options.x.variable]).getTime()),
           y: row[_yOptions.variable]
         };
         if (_yOptions.band != null) {
@@ -2248,7 +2248,7 @@
     function Library(options) {
       var __options, defaults;
       defaults = {
-        dateFormat: "%Y-%m-%dT%H:%M:%SZ",
+        dateFormat: "%Y-%m-%dT%H:%M:%S-08:00",
         displayDate: "%b. %e, %I:%M %p"
       };
       __options = this.mergeDefaults(defaults, options);
@@ -2347,7 +2347,7 @@
         merge: false,
         x: {
           variable: null,
-          format: "%Y-%m-%dT%H:%M:%SZ",
+          format: "%Y-%m-%dT%H:%M:%S-08:00",
           min: null,
           max: null,
           ticks: 7
@@ -3377,7 +3377,7 @@
     function Handler(accessToken, options, plots) {
       var __accessToken, __href, __libDateFormat, __libOptions, access, defaults;
       this.preError = "Plotter.Handler";
-      __libDateFormat = options.dateFormat ? options.dateFormat : "%Y-%m-%dT%H:%M:%SZ";
+      __libDateFormat = options.dateFormat ? options.dateFormat : "%Y-%m-%dT%H:%M:%S-08:00";
       __libOptions = {
         dateFormat: __libDateFormat
       };
@@ -3393,7 +3393,7 @@
         localId: this.lib.uuid(),
         href: __href,
         target: null,
-        dateFormat: "%Y-%m-%dT%H:%M:%SZ",
+        dateFormat: "%Y-%m-%dT%H:%M:%S-08:00",
         refresh: 500,
         futureWait: 180000,
         updateLength: 168,

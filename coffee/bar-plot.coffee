@@ -37,7 +37,7 @@ window.Plotter.BarPlot = class BarPlot
       merge: false
       x:
         variable: null
-        format: "%Y-%m-%dT%H:%M:%SZ"
+        format: "%Y-%m-%dT%H:%M:%S-08:00"
         min: null
         max: null
         ticks: 7
@@ -148,7 +148,7 @@ window.Plotter.BarPlot = class BarPlot
       result[key] =
         #x: row[@options.x.variable]
         x: new Date(
-          @parseDate(row[@options.x.variable]).getTime() - 8*3600000)
+          @parseDate(row[@options.x.variable]).getTime())
         y: row[_yOptions.variable]
       if _yOptions.band?
         if _yOptions.band.minVariable

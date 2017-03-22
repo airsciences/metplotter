@@ -37,7 +37,7 @@ window.Plotter.LinePlot = class LinePlot
       merge: false
       x:
         variable: null
-        format: "%Y-%m-%dT%H:%M:%SZ"
+        format: "%Y-%m-%dT%H:%M:%S-08:00"
         min: null
         max: null
         ticks: 7

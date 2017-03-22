@@ -9,7 +9,7 @@ window.Plotter.Library = class Library
   constructor: (options) ->
     # Define the Library Formatting Options
     defaults =
-      dateFormat: "%Y-%m-%dT%H:%M:%SZ"
+      dateFormat: "%Y-%m-%dT%H:%M:%S-08:00"
       displayDate: "%b. %e, %I:%M %p"
     __options = @mergeDefaults(defaults, options)
 

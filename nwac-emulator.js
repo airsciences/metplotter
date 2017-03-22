@@ -61,7 +61,7 @@ app.get('/template/:templateId', function(req, res) {
 
     xVar =  {
         "variable": "datetime",
-        "format": "%Y-%m-%dT%H:%M:%SZ",
+        "format": "%Y-%m-%dT%H:%M:%S-08:00",
         "min": "2016-02-19T00:00:00Z",
         "max": "2016-02-26T00:00:00Z"
     };
