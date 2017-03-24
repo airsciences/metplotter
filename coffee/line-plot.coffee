@@ -516,7 +516,7 @@ window.Plotter.LinePlot = class LinePlot
     @svg.append("g")
       .attr("class", "line-plot-axis-x")
       .style("fill", "none")
-      .style("stroke", @options.axisColor)
+      # .style("stroke", @options.axisColor)
       .style("font-size", @options.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.xAxis)
@@ -528,7 +528,7 @@ window.Plotter.LinePlot = class LinePlot
     @svg.append("g")
       .attr("class", "line-plot-axis-y")
       .style("fill", "none")
-      .style("stroke", @options.axisColor)
+      # .style("stroke", @options.axisColor)
       .style("font-size", @options.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.yAxis)
@@ -553,16 +553,14 @@ window.Plotter.LinePlot = class LinePlot
     if @options.y[0].units
       _y_title = "#{_y_title} #{@options.y[0].units}"
 
-    _y_vert = -15
-    _y_offset = -52
-    if @device == 'small'
-      _y_vert = -10
-      _y_offset = -30
+    _y_vert = -@definition.dimensions.margin.top
+    _y_offset = -@definition.dimensions.margin.left
 
     # Y-Axis Title
     @svg.select(".line-plot-axis-y")
       .append("text")
       .text(_y_title)
+      .attr("fill", @options.axisColor)
       .attr("class", "line-plot-y-label")
       .attr("x", _y_vert)
       .attr("y", _y_offset)
@@ -649,7 +647,7 @@ window.Plotter.LinePlot = class LinePlot
         .style("display", "none")
 
       @focusText[key] = @hoverWrapper.append("text")
-        .attr("class", "focus-text-#{key}")
+        .attr("class", "focus-text focus-text-#{key}")
         .attr("x", 9)
         .attr("y", 7)
         .style("display", "none")
@@ -714,7 +712,7 @@ window.Plotter.LinePlot = class LinePlot
             .style("display", "none")
 
           @focusText[key] = @hoverWrapper.append("text")
-            .attr("class", "focus-text-#{key}")
+            .attr("class", "focus-text focus-text-#{key}")
             .attr("x", 9)
             .attr("y", 7)
             .style("display", "none")
@@ -972,34 +970,31 @@ window.Plotter.LinePlot = class LinePlot
                     _value[key].y.toFixed(1) + " " + @options.y[key].units)
 
     # Tooltip Overlap Prevention
-    #if (
-    #  @options.y.variable != null and
-    #  @options.y2.variable != null and
-    #  @options.y3.variable != null
-    #)
-    #  ypos = []
-    #  @svg.selectAll('.focus-text')
-    #    .attr("transform", (d, i) ->
-    #      row =
-    #        ind: i
-    #        y: parseInt(d3.select(@).attr("y"))
-    #        offset: 0
-    #      ypos.push(row)
-    #      return ""
-    #    )
-    #    .call((sel) ->
-    #      ypos.sort((a, b) -> a.y - b.y)
-    #      ypos.forEach ((p, i) ->
-    #        if i > 0
-    #          offset = Math.max(0, (ypos[i-1].y + 18) - ypos[i].y)
-    #          if ypos[i].ind == 0
-    #            offset = -offset
-    #          ypos[i].offset = offset
-    #      )
-    #    )
-    #    .attr("transform", (d, i) ->
-    #      return "translate (0, #{ypos[i].offset})"
-    #    )
+    if (@options.y[1] != undefined)
+      ypos = []
+      @svg.selectAll('.focus-text')
+        .attr("transform", (d, i) ->
+          row =
+            ind: i
+            y: parseInt(d3.select(@).attr("y"))
+            offset: 0
+          ypos.push(row)
+          return ""
+        )
+        .call((sel) ->
+          ypos.sort((a, b) -> a.y - b.y)
+          ypos.forEach ((p, i) ->
+            console.log("Calculating (p, i)", p, i)
+            if i > 0
+              offset = Math.max(0, (ypos[i-1].y + 18) - ypos[i].y)
+              ypos[i].offset = offset
+          )
+        )
+        .attr("transform", (d, i) ->
+          console.log("Transforming (i, index,  offset)",
+            i, ypos[i].ind, ypos[i].offset)
+          return "translate (0, #{ypos[i].offset})"
+        )
 
     return mouse
 

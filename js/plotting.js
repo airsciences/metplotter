@@ -2833,8 +2833,8 @@
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.clipPathId).append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
-      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
-      return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
 
     LinePlot.prototype.append = function() {
@@ -2851,13 +2851,9 @@
       if (this.options.y[0].units) {
         _y_title = _y_title + " " + this.options.y[0].units;
       }
-      _y_vert = -15;
-      _y_offset = -52;
-      if (this.device === 'small') {
-        _y_vert = -10;
-        _y_offset = -30;
-      }
-      this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
+      _y_vert = -this.definition.dimensions.margin.top;
+      _y_offset = -this.definition.dimensions.margin.left;
+      this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("fill", this.options.axisColor).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
       this.lineWrapper = this.svg.append("g").attr("class", "line-wrapper");
       ref = this.data;
       for (key in ref) {
@@ -2879,7 +2875,7 @@
       for (key in ref1) {
         row = ref1[key];
         this.focusCircle[key] = this.hoverWrapper.append("circle").attr("r", 4).attr("class", "focus-circle-" + key).attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
-        this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+        this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
       }
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget(this.transform);
@@ -2906,7 +2902,7 @@
           if (this.svg.select(".line-plot-path-" + key).node() === null) {
             this.lines[key] = this.lineWrapper.append("g").attr("clip-path", "url(\#" + this.clipPathId + ")").append("path").datum(row).attr("d", this.definition.line).attr("class", "line-plot-path-" + key).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
             this.focusCircle[key] = this.hoverWrapper.append("circle").attr("r", 4).attr("class", "focus-circle-" + key).attr("fill", this.options.y[key].color).attr("transform", "translate(-10, -10)").style("display", "none");
-            this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
+            this.focusText[key] = this.hoverWrapper.append("text").attr("class", "focus-text focus-text-" + key).attr("x", 9).attr("y", 7).style("display", "none").style("fill", this.options.y[key].color).style("text-shadow", "-2px -2px 0 rgb(255,255,255), 2px -2px 0 rgb(255,255,255), -2px 2px 0 rgb(255,255,255), 2px 2px 0 rgb(255,255,255)");
           } else {
             this.svg.select(".line-plot-path-" + key).datum(row).attr("d", this.definition.line).style("stroke", this.options.y[key].color).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1))).style("fill", "none");
           }
@@ -3008,7 +3004,7 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, i1, key, preError, ref, row, x0;
+      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, i1, key, preError, ref, row, x0, ypos;
       if (!this.initialized) {
         return;
       }
@@ -3102,6 +3098,33 @@
             }
           }
         }
+      }
+      if (this.options.y[1] !== void 0) {
+        ypos = [];
+        this.svg.selectAll('.focus-text').attr("transform", function(d, i) {
+          row = {
+            ind: i,
+            y: parseInt(d3.select(this).attr("y")),
+            offset: 0
+          };
+          ypos.push(row);
+          return "";
+        }).call(function(sel) {
+          ypos.sort(function(a, b) {
+            return a.y - b.y;
+          });
+          return ypos.forEach((function(p, i) {
+            var offset;
+            console.log("Calculating (p, i)", p, i);
+            if (i > 0) {
+              offset = Math.max(0, (ypos[i - 1].y + 18) - ypos[i].y);
+              return ypos[i].offset = offset;
+            }
+          }));
+        }).attr("transform", function(d, i) {
+          console.log("Transforming (i, index,  offset)", i, ypos[i].ind, ypos[i].offset);
+          return "translate (0, " + ypos[i].offset + ")";
+        });
       }
       return mouse;
     };
