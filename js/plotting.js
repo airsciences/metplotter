@@ -1123,7 +1123,7 @@
     function Colors() {
       var __colors;
       __colors = {
-        light: ["rgb(53, 152, 219)", "rgb(241, 196, 14)", "rgb(155, 88, 181)", "rgb(27, 188, 155)", "rgb(52, 73, 94)", "rgb(231, 126, 35)", "rgb(45, 204, 112)", "rgb(232, 76, 61)", "rgb(149, 165, 165)"],
+        light: ["rgb(228,26,28)", "rgb(55,126,184)", "rgb(152,78,163)", "rgb(77,175,74)", "rgb(255,127,0)", "rgb(166,86,40)", "rgb(247,129,191)", "rgb(224,224,20)", "rgb(140,140,140)"],
         dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
       };
       this.color = function(shade, key) {
@@ -3114,16 +3114,20 @@
             return a.y - b.y;
           });
           return ypos.forEach((function(p, i) {
-            var offset;
-            console.log("Calculating (p, i)", p, i);
+            var offset, preOffset;
             if (i > 0) {
-              offset = Math.max(0, (ypos[i - 1].y + 18) - ypos[i].y);
-              return ypos[i].offset = offset;
+              preOffset = 0;
+              if (ypos[i].y < (ypos[i - 1].y + ypos[i - 1].offset)) {
+                preOffset = (ypos[i - 1].y + ypos[i - 1].offset) - ypos[i].y;
+              }
+              offset = Math.max(0, (ypos[i - 1].y + ypos[i - 1].offset + 18) - (ypos[i].y + preOffset));
+              return ypos[i].offset = offset + preOffset;
             }
           }));
         }).attr("transform", function(d, i) {
-          console.log("Transforming (i, index,  offset)", i, ypos[i].ind, ypos[i].offset);
-          return "translate (0, " + ypos[i].offset + ")";
+          var index;
+          index = _.plotter.lib.indexOfValue(ypos, "ind", i);
+          return "translate (0, " + ypos[index].offset + ")";
         });
       }
       return mouse;

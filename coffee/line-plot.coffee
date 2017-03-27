@@ -984,16 +984,24 @@ window.Plotter.LinePlot = class LinePlot
         .call((sel) ->
           ypos.sort((a, b) -> a.y - b.y)
           ypos.forEach ((p, i) ->
-            console.log("Calculating (p, i)", p, i)
             if i > 0
-              offset = Math.max(0, (ypos[i-1].y + 18) - ypos[i].y)
-              ypos[i].offset = offset
+              preOffset = 0
+              if (ypos[i].y < (ypos[i-1].y + ypos[i-1].offset))
+                preOffset = (ypos[i-1].y + ypos[i-1].offset) - ypos[i].y
+              offset = Math.max(0, (ypos[i-1].y + ypos[i-1].offset + 18) -
+                (ypos[i].y + preOffset))
+              ypos[i].offset = offset + preOffset
+              # console.log("Calculating: (
+              #   y-1.y, y-1.offset, y.y, y.offset, preOffset)",
+              #   ypos[i-1].y, ypos[i-1].offset,
+              #   ypos[i].y, ypos[i].offset, preOffset)
           )
         )
         .attr("transform", (d, i) ->
-          console.log("Transforming (i, index,  offset)",
-            i, ypos[i].ind, ypos[i].offset)
-          return "translate (0, #{ypos[i].offset})"
+          index = _.plotter.lib.indexOfValue(ypos, "ind", i)
+          # console.log("Transforming (i, d, index, indexAct, y, offset)",
+          #   i, d, ypos[i].ind, index, ypos[i].y, ypos[i].offset)
+          return "translate (0, #{ypos[index].offset})"
         )
 
     return mouse
