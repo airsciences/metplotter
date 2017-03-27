@@ -1119,7 +1119,7 @@
     function Colors() {
       var __colors;
       __colors = {
-        light: ["rgb(102,194,165)", "rgb(252,141,98)", "rgb(141,160,203)", "rgb(231,138,195)", "rgb(166,216,84)", "rgb(255,217,47)", "rgb(229,196,148)", "rgb(179,179,179)"],
+        light: ["rgb(141,160,203)", "rgb(252,141,98)", "rgb(166,216,84)", "rgb(231,138,195)", "rgb(255,217,47)", "rgb(229,196,148)", "rgb(179,179,179)", "rgb(102,194,165)"],
         dark: ["rgb(45, 62, 80)", "rgb(210, 84, 0)", "rgb(39, 174, 97)", "rgb(192, 57, 43)", "rgb(126, 140, 141)", "rgb(42, 128, 185)", "rgb(239, 154, 15)", "rgb(143, 68, 173)", "rgb(23, 160, 134)"]
       };
       this.color = function(shade, key) {
@@ -1141,7 +1141,7 @@
     Colors.prototype.get = function(dataLoggerId) {
       var _length, _offset;
       _length = Object.keys(this.templateColors).length;
-      _offset = (_length * 2) % 7;
+      _offset = _length % 7;
       if ((this.templateColors[dataLoggerId] != null) === false) {
         this.templateColors[dataLoggerId] = this.color("light", _offset);
       }
