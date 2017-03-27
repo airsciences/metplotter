@@ -500,8 +500,7 @@ window.Plotter.BarPlot = class BarPlot
     # Append the X-Axis
     @svg.append("g")
       .attr("class", "bar-plot-axis-x")
-      .style("fill", "none")
-      .style("stroke", @options.axisColor)
+      .style("fill", "none")\
       .style("font-size", @options.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.xAxis)
@@ -513,7 +512,6 @@ window.Plotter.BarPlot = class BarPlot
     @svg.append("g")
       .attr("class", "bar-plot-axis-y")
       .style("fill", "none")
-      .style("stroke", @options.axisColor)
       .style("font-size", @options.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.yAxis)
@@ -538,11 +536,8 @@ window.Plotter.BarPlot = class BarPlot
     if @options.y[0].units
       _y_title = "#{_y_title} #{@options.y[0].units}"
 
-    _y_vert = -15
-    _y_offset = -52
-    if @device == 'small'
-      _y_vert = -10
-      _y_offset = -30
+    _y_vert = -@definition.dimensions.margin.top
+    _y_offset = -@definition.dimensions.margin.left
 
     # Y-Axis Title
     @svg.select(".bar-plot-axis-y")
@@ -555,6 +550,7 @@ window.Plotter.BarPlot = class BarPlot
       .attr("transform", "rotate(-90)")
       .style("font-size", @options.font.size)
       .style("font-weight", @options.font.weight)
+      .attr("fill", @options.axisColor)
 
     # Append Bands & Bar Path
     @barWrapper = @svg.append("g")

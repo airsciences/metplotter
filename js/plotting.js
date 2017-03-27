@@ -757,8 +757,8 @@
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       this.svg = this.outer.append("svg").attr("class", "bar-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.clipPathId).append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
-      this.svg.append("g").attr("class", "bar-plot-axis-x").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
-      return this.svg.append("g").attr("class", "bar-plot-axis-y").style("fill", "none").style("stroke", this.options.axisColor).style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      this.svg.append("g").attr("class", "bar-plot-axis-x").style("fill", "none").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      return this.svg.append("g").attr("class", "bar-plot-axis-y").style("fill", "none").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
 
     BarPlot.prototype.append = function() {
@@ -775,13 +775,9 @@
       if (this.options.y[0].units) {
         _y_title = _y_title + " " + this.options.y[0].units;
       }
-      _y_vert = -15;
-      _y_offset = -52;
-      if (this.device === 'small') {
-        _y_vert = -10;
-        _y_offset = -30;
-      }
-      this.svg.select(".bar-plot-axis-y").append("text").text(_y_title).attr("class", "bar-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
+      _y_vert = -this.definition.dimensions.margin.top;
+      _y_offset = -this.definition.dimensions.margin.left;
+      this.svg.select(".bar-plot-axis-y").append("text").text(_y_title).attr("class", "bar-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).attr("fill", this.options.axisColor);
       this.barWrapper = this.svg.append("g").attr("class", "bar-wrapper");
       ref = this.data;
       for (key in ref) {
