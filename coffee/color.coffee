@@ -12,14 +12,15 @@ window.Plotter.Colors = class Colors
   constructor: ->
     __colors =
       light: [
-        "rgb(102,194,165)",
-        "rgb(252,141,98)",
         "rgb(141,160,203)",
-        "rgb(231,138,195)",
+        "rgb(252,141,98)",
         "rgb(166,216,84)",
+        "rgb(231,138,195)",
         "rgb(255,217,47)",
         "rgb(229,196,148)",
         "rgb(179,179,179)",
+        "rgb(102,194,165)",
+
         # "rgb(228,26,28)",
         # "rgb(55,126,184)",
         # "rgb(152,78,163)",
@@ -58,7 +59,7 @@ window.Plotter.Colors = class Colors
     _length = Object.keys(@templateColors).length
     #if _length is 0
     #  _length = Math.round(Math.random() * (7 - 1) + 1)
-    _offset = (_length*2)%7
+    _offset = _length % 7
     if (@templateColors[dataLoggerId]?) is false
       @templateColors[dataLoggerId] = @color("light", _offset)
     return @templateColors[dataLoggerId]
