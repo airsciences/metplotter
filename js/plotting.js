@@ -3420,7 +3420,7 @@
         refresh: 500,
         futureWait: 180000,
         updateLength: 168,
-        initialLength: 504,
+        initialLength: 168,
         requestPaddingInterval: 336,
         newDataInterval: 168,
         minUpdateLength: 0,
