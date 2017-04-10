@@ -133,3 +133,8 @@ window.Plotter.Specs = class Specs
     return switch variable
       when "precipitation" then "bar"
       else "line"
+
+  getPlotDecimals: (variable) ->
+    return switch variable
+      when "precipitation" then 2
+      else 1

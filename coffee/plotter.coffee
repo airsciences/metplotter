@@ -240,6 +240,9 @@ window.Plotter.Handler = class Handler
       variable = "precipitation"
       _plotType = "line"
 
+    _decimals = @i.specs.getPlotDecimals(variable)
+    console.log("New Plot (variable, decimals): ", variable, _decimals)
+
     if _plotType is "bar"
       @plots[_key].proto = new window.Plotter.BarPlot(@, [[]], plot)
     else
@@ -248,6 +251,7 @@ window.Plotter.Handler = class Handler
     @plots[_key].proto.options.plotType = _plotType
     @plots[_key].proto.options.plotId = _key
     @plots[_key].proto.options.uuid = uuid
+    @plots[_key].proto.options.decimals = _decimals
     @appendSave()
 
     # Update Options

@@ -3611,7 +3611,7 @@
     };
 
     Handler.prototype.add = function(type, variable) {
-      var _key, _plotType, _revisedOptions, _target, _yOptions, html, i, len, plot, ref, template, uuid;
+      var _decimals, _key, _plotType, _revisedOptions, _target, _yOptions, html, i, len, plot, ref, template, uuid;
       uuid = this.lib.uuid();
       _target = "outer-" + uuid;
       plot = {
@@ -3630,6 +3630,8 @@
         variable = "precipitation";
         _plotType = "line";
       }
+      _decimals = this.i.specs.getPlotDecimals(variable);
+      console.log("New Plot (variable, decimals): ", variable, _decimals);
       if (_plotType === "bar") {
         this.plots[_key].proto = new window.Plotter.BarPlot(this, [[]], plot);
       } else {
@@ -3639,6 +3641,7 @@
       this.plots[_key].proto.options.plotType = _plotType;
       this.plots[_key].proto.options.plotId = _key;
       this.plots[_key].proto.options.uuid = uuid;
+      this.plots[_key].proto.options.decimals = _decimals;
       this.appendSave();
       _yOptions = this.i.specs.getOptions(variable, null);
       ref = this.i.template.template;
@@ -3884,6 +3887,15 @@
           return "bar";
         default:
           return "line";
+      }
+    };
+
+    Specs.prototype.getPlotDecimals = function(variable) {
+      switch (variable) {
+        case "precipitation":
+          return 2;
+        default:
+          return 1;
       }
     };
 
