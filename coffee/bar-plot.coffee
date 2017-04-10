@@ -946,13 +946,16 @@ window.Plotter.BarPlot = class BarPlot
               .attr("x", dx)
               .attr("y", dy[key])
 
+            textAlign = "left"
             if dx + 80 > @definition.dimensions.width
               dx = dx - 80
+              textAlign = "right"
 
             @focusText[key]
               .attr("x", dx + _dims.leftPadding / 10 +
                 transform.k * @definition.x1.bandwidth() + 2)
               .attr("y", dy[key] - _dims.topPadding / 10)
+              .attr("text-align", textAlign)
               .text(
                 if _value[key].y?
                   if _.options.y[0].variable is "wind_direction"

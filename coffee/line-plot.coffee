@@ -964,12 +964,15 @@ window.Plotter.LinePlot = class LinePlot
               .attr("cx", dx)
               .attr("cy", dy[key])
 
+            textAlign = "left"
             if dx + 80 > @definition.dimensions.width
               dx = dx - 80
+              textAlign = "right"
 
             @focusText[key]
               .attr("x", dx + _dims.leftPadding / 10)
               .attr("y", dy[key] - _dims.topPadding / 10)
+              .attr("text-align", textAlign)
               .text(
                 if _value[key].y
                   if _.options.y[0].variable is "wind_direction"
