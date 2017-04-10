@@ -946,6 +946,9 @@ window.Plotter.BarPlot = class BarPlot
               .attr("x", dx)
               .attr("y", dy[key])
 
+            if dx + 80 > @definition.dimensions.width
+              dx = dx - 80
+
             @focusText[key]
               .attr("x", dx + _dims.leftPadding / 10 +
                 transform.k * @definition.x1.bandwidth() + 2)

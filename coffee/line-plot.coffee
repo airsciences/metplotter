@@ -964,6 +964,9 @@ window.Plotter.LinePlot = class LinePlot
               .attr("cx", dx)
               .attr("cy", dy[key])
 
+            if dx + 80 > @definition.dimensions.width
+              dx = dx - 80
+
             @focusText[key]
               .attr("x", dx + _dims.leftPadding / 10)
               .attr("y", dy[key] - _dims.topPadding / 10)

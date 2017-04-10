@@ -1024,6 +1024,9 @@
             this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
               this.focusRect[key].attr("width", transform.k * this.definition.x1.bandwidth()).attr("x", dx).attr("y", dy[key]);
+              if (dx + 80 > this.definition.dimensions.width) {
+                dx = dx - 80;
+              }
               this.focusText[key].attr("x", dx + _dims.leftPadding / 10 + transform.k * this.definition.x1.bandwidth() + 2).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y != null ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(this.options.decimals) + " " + this.options.y[key].units : void 0);
             }
           }
@@ -3100,6 +3103,9 @@
             this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
               this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
+              if (dx + 80 > this.definition.dimensions.width) {
+                dx = dx - 80;
+              }
               this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(this.options.decimals) + " " + this.options.y[key].units : void 0);
             }
           }
