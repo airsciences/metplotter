@@ -172,6 +172,7 @@ window.Plotter.Handler = class Handler
 
     # Template Save Control.
     @appendSave()
+    @appendPoweredBy()
 
   appendLoading: ->
     # Append Temp
@@ -335,3 +336,8 @@ window.Plotter.Handler = class Handler
 
         _.i.template.put()
       )
+
+  appendPoweredBy: ->
+    $(@options.target).parent().append("<p
+      style=\"font-size: 11px; font-weight: 300\">Powered by Air Sciences Inc. |
+      <a href=\"http://airsci.com\">www.airsci.com</a></p>")

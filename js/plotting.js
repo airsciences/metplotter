@@ -3566,7 +3566,8 @@
         this.legends[key] = new window.Plotter.Legend(this, key);
       }
       this.bandDomain = this.plots[0].proto.definition.x1;
-      return this.appendSave();
+      this.appendSave();
+      return this.appendPoweredBy();
     };
 
     Handler.prototype.appendLoading = function() {
@@ -3717,6 +3718,10 @@
           return _.i.template.put();
         });
       }
+    };
+
+    Handler.prototype.appendPoweredBy = function() {
+      return $(this.options.target).parent().append("<p style=\"font-size: 11px; font-weight: 300\">Powered by Air Sciences Inc. | <a href=\"http://airsci.com\">www.airsci.com</a></p>");
     };
 
     return Handler;
