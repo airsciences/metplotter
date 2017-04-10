@@ -945,8 +945,12 @@ window.Plotter.LinePlot = class LinePlot
             .attr("height", _dims.innerHeight)
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
+          fdtx = cx - 120
+          if cx < 150
+            fdtx = cx + 10
+
           @focusDateText
-            .attr("x", cx - 120)
+            .attr("x", fdtx)
             .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
             .text(_date)

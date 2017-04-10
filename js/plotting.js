@@ -929,7 +929,7 @@
     };
 
     BarPlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, i1, key, preError, ref, row, x0;
+      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, x0;
       if (!this.initialized) {
         return;
       }
@@ -1016,7 +1016,11 @@
           if (cx >= 0) {
             this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-            this.focusDateText.attr("x", cx - 120).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
+            fdtx = cx - 120;
+            if (cx < 150) {
+              fdtx = cx + 10;
+            }
+            this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
               this.focusRect[key].attr("width", transform.k * this.definition.x1.bandwidth()).attr("x", dx).attr("y", dy[key]);
               this.focusText[key].attr("x", dx + _dims.leftPadding / 10 + transform.k * this.definition.x1.bandwidth() + 2).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y != null ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(2) + " " + this.options.y[key].units : void 0);
@@ -3000,7 +3004,7 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, i, i1, key, preError, ref, row, x0, ypos;
+      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, x0, ypos;
       if (!this.initialized) {
         return;
       }
@@ -3087,7 +3091,11 @@
           if (cx >= 0) {
             this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-            this.focusDateText.attr("x", cx - 120).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
+            fdtx = cx - 120;
+            if (cx < 150) {
+              fdtx = cx + 10;
+            }
+            this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
               this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
               this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).text(_value[key].y ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(1) + " " + this.options.y[key].units : void 0);
