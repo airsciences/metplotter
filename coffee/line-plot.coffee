@@ -35,6 +35,7 @@ window.Plotter.LinePlot = class LinePlot
       target: null
       width: null
       merge: false
+      decimals: 1
       x:
         variable: null
         format: "%Y-%m-%dT%H:%M:%S-08:00"
@@ -971,7 +972,8 @@ window.Plotter.LinePlot = class LinePlot
                   if _.options.y[0].variable is "wind_direction"
                     directionLabel(_value[key].y)
                   else
-                    _value[key].y.toFixed(1) + " " + @options.y[key].units)
+                    _value[key].y.toFixed(@options.decimals) + " " +
+                      @options.y[key].units)
 
     # Tooltip Overlap Prevention
     if (@options.y[1] != undefined)

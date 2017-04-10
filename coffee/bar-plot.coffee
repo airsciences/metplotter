@@ -35,6 +35,7 @@ window.Plotter.BarPlot = class BarPlot
       target: null
       width: null
       merge: false
+      decimals: 1
       x:
         variable: null
         format: "%Y-%m-%dT%H:%M:%S-08:00"
@@ -954,7 +955,8 @@ window.Plotter.BarPlot = class BarPlot
                   if _.options.y[0].variable is "wind_direction"
                     directionLabel(_value[key].y)
                   else
-                    _value[key].y.toFixed(2) + " " + @options.y[key].units)
+                    _value[key].y.toFixed(@options.decimals) + " " +
+                      @options.y[key].units)
 
     # Tooltip Overlap Prevention
     #if (
