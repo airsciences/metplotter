@@ -947,8 +947,9 @@ window.Plotter.LinePlot = class LinePlot
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
           fdtx = cx - 120
-          if cx < 150
-            fdtx = cx + 10
+          # [Disabled] - Tooltip Flip
+          # if cx < 150
+          #   fdtx = cx + 10
 
           @focusDateText
             .attr("x", fdtx)
@@ -964,15 +965,16 @@ window.Plotter.LinePlot = class LinePlot
               .attr("cx", dx)
               .attr("cy", dy[key])
 
-            textAnchor = "start"
-            if dx + 80 > @definition.dimensions.width
-              dx = dx - 14
-              textAnchor = "end"
+            # [Disabled] - Tooltip Flip
+            # textAnchor = "start"
+            # if dx + 80 > @definition.dimensions.width
+            #   dx = dx - 14
+            #   textAnchor = "end"
 
             @focusText[key]
               .attr("x", dx + _dims.leftPadding / 10)
               .attr("y", dy[key] - _dims.topPadding / 10)
-              .attr("text-anchor", textAnchor)
+              # .attr("text-anchor", textAnchor)
               .text(
                 if _value[key].y
                   if _.options.y[0].variable is "wind_direction"

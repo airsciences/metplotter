@@ -928,8 +928,9 @@ window.Plotter.BarPlot = class BarPlot
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
           fdtx = cx - 120
-          if cx < 150
-            fdtx = cx + 10
+          # [Disabled] - Tooltip Flip
+          # if cx < 150
+          #   fdtx = cx + 10
 
           @focusDateText
             .attr("x", fdtx)
@@ -946,10 +947,11 @@ window.Plotter.BarPlot = class BarPlot
               .attr("x", dx)
               .attr("y", dy[key])
 
-            textAnchor = "start"
-            if dx + 80 > @definition.dimensions.width
-              dx = dx - 14
-              textAnchor = "end"
+            # [Disabled] - Tooltip Flip
+            # textAnchor = "start"
+            # if dx + 80 > @definition.dimensions.width
+            #   dx = dx - 14
+            #   textAnchor = "end"
 
             @focusText[key]
               .attr("x", dx + _dims.leftPadding / 10 +
