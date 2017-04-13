@@ -164,11 +164,13 @@ window.Plotter.Template = class Template
     if @template[plotId].plotType != undefined
       _type = @template[plotId].plotType
 
-    result =
-      plotId: plotId
-      plotType: _type
-      x: _x
-      y: _y
+    # Extend the Whole Template Definition.
+    result = $.extend(true, {}, @template[plotId])
+
+    result.plotId = plotId
+    result.plotType = _type
+    result.x = _x
+    result.y = _y
 
     return result
 

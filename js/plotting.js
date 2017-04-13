@@ -4120,12 +4120,11 @@
       if (this.template[plotId].plotType !== void 0) {
         _type = this.template[plotId].plotType;
       }
-      result = {
-        plotId: plotId,
-        plotType: _type,
-        x: _x,
-        y: _y
-      };
+      result = $.extend(true, {}, this.template[plotId]);
+      result.plotId = plotId;
+      result.plotType = _type;
+      result.x = _x;
+      result.y = _y;
       return result;
     };
 
