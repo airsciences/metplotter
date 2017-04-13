@@ -1,3 +1,9 @@
+/* Copyright (C) Northwest Avalanche Center and Air Sciences, Inc. - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Jacob Fielding <jfielding@airsci.com>, April 2017
+ */
+
 (function() {
   var API;
 
