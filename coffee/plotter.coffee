@@ -222,6 +222,7 @@ window.Plotter.Handler = class Handler
     uuid = @lib.uuid()
     _target = "outer-#{uuid}"
     plot =
+      width: @options.width
       pageOrder: @i.template.plotCount() + 1
       type: type
       target: '#' + _target
