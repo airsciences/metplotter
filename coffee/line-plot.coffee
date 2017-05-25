@@ -966,7 +966,7 @@ window.Plotter.LinePlot = class LinePlot
               .attr("cy", dy[key])
 
             # [Disabled] - Tooltip Flip
-            # textAnchor = "start"
+            textAnchor = "start"
             # if dx + 80 > @definition.dimensions.width
             #   dx = dx - 14
             #   textAnchor = "end"
@@ -974,7 +974,7 @@ window.Plotter.LinePlot = class LinePlot
             @focusText[key]
               .attr("x", dx + _dims.leftPadding / 10)
               .attr("y", dy[key] - _dims.topPadding / 10)
-              # .attr("text-anchor", textAnchor)
+              .attr("text-anchor", textAnchor)
               .text(
                 if _value[key].y
                   if _.options.y[0].variable is "wind_direction"

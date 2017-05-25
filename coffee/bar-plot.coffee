@@ -948,7 +948,7 @@ window.Plotter.BarPlot = class BarPlot
               .attr("y", dy[key])
 
             # [Disabled] - Tooltip Flip
-            # textAnchor = "start"
+            textAnchor = "start"
             # if dx + 80 > @definition.dimensions.width
             #   dx = dx - 14
             #   textAnchor = "end"

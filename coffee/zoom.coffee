@@ -13,5 +13,6 @@ window.Plotter.Zoom = class Zoom
   set: (transform) ->
     # Set the zoom state of all plots. Triggered by a single plot.
     for plot in @plotter.plots
+
       if plot?
         plot.proto.setZoomTransform(transform)
