@@ -1412,11 +1412,17 @@
     };
 
     Controls.prototype.appendStationMap = function(plotId, appendTarget, results) {
-      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, _uuid, color, current, html, i, infowindow, j, k, len, len1, len2, marker, opacity, ref, region, scale, station;
+      var _, _bound_points, _bounds, _len, _point, _row_current, _row_id, _uuid, color, current, html, i, infowindow, j, k, len, len1, len2, marker, maxPopover, opacity, ref, region, scale, size, station;
       _ = this;
       current = this.getCurrent(plotId);
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
-      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + _uuid + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: 356px;\"> <div class=\"popover-content\"> <a id=\"map-close-" + _uuid + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"map-control-" + _uuid + "\" style=\"width: 312px; height: 312px;\"></div> </div> </div>";
+      size = "200px";
+      maxPopover = "244px";
+      if ($(window).width() > 400) {
+        size = "312px";
+        maxPopover = "356px";
+      }
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + _uuid + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: " + maxPopover + ";\"> <div class=\"popover-content\"> <a id=\"map-close-" + _uuid + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"map-control-" + _uuid + "\" style=\"width: " + size + "; height: " + size + ";\"></div> </div> </div>";
       $(appendTarget).prepend(html);
       $("#map-" + _uuid).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);
@@ -1591,18 +1597,24 @@
     };
 
     Controls.prototype.toggleMap = function(plotId) {
-      var _center, _nwac_offset_left, _nwac_offset_top, _offset, _uuid, _zoom;
+      var _center, _nwac_offset_left, _nwac_offset_top, _offset, _popover_size, _uuid, _zoom;
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
+      _popover_size = 356;
       _nwac_offset_left = 128;
       _nwac_offset_top = 256 + 12;
       if (location.origin === "http://localhost:5000") {
         _nwac_offset_left = 0;
         _nwac_offset_top = 12;
       }
+      if ($(window).width() <= 400) {
+        _popover_size = 200;
+        _nwac_offset_left = $(window).width() / 2 - 112;
+        _nwac_offset_top = 0;
+      }
       _center = this.plotter.i.controls.maps[plotId].getCenter();
       _zoom = this.plotter.i.controls.maps[plotId].getZoom();
       _offset = $("#map-control-" + _uuid).parent().parent().prev().offset();
-      $("#map-control-" + _uuid).parent().parent().toggle().css("left", _offset.left - 356 - _nwac_offset_left).css("top", _offset.top - _nwac_offset_top);
+      $("#map-control-" + _uuid).parent().parent().toggle().css("left", _offset.left - _popover_size - _nwac_offset_left).css("top", _offset.top - _nwac_offset_top);
       google.maps.event.trigger(this.plotter.i.controls.maps[plotId], 'resize');
       this.plotter.i.controls.maps[plotId].setCenter(_center);
       return this.plotter.i.controls.maps[plotId].setZoom(_zoom);
