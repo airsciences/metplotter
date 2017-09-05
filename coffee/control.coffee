@@ -32,8 +32,12 @@ window.Plotter.Controls = class Controls
     selector = "plot-controls-#{_uuid}"
     _li_style = ""
 
+    fontSize = "font-size: 9px;"
+    if $(window).width() > 400
+      fontSize = "font-size: 14px;"
+
     html = "<ul id=\"#{selector}\" class=\"unstyled\"
-        style=\"list-style-type: none; padding-left: 6px;\">
+        style=\"list-style-type: none; padding-left: 6px; #{fontSize}\">
       </ul>"
 
     $(_proto.options.target)
@@ -244,7 +248,8 @@ window.Plotter.Controls = class Controls
     _current = []
 
     callback = (data) ->
-      html = "<div class=\"dropdown\">
+      html = "<li>
+        <div class=\"dropdown\">
         <li><a id=\"param-#{uuid}\"
           class=\"parameter-dropdown dropdown-toggle\" role=\"button\"
           data-toggle=\"dropdown\" href=\"#\">
@@ -284,9 +289,10 @@ window.Plotter.Controls = class Controls
              #{parameter.sensortype_name}</a></li>"
 
       html = "#{html}
-            </ul>
-          </li>
-        </div>"
+              </ul>
+            </li>
+          </div>
+        </li>"
 
       $(appendTarget).prepend(html)
 
@@ -531,9 +537,11 @@ window.Plotter.Controls = class Controls
     _ = @
     _uuid = @plotter.plots[plotId].proto.options.uuid
     _dirText = if direction is 'up' then 'Up' else 'Down'
-    html = "<i id=\"move-#{_uuid}-#{direction}\" style=\"cursor: pointer;\"
+    html = "<li>
+      <i id=\"move-#{_uuid}-#{direction}\" style=\"cursor: pointer;\"
       title=\"Move Plot #{_dirText}\"
-      class=\"icon-arrow-#{direction} plot-control-button\"></i>"
+      class=\"icon-arrow-#{direction} plot-control-button\"></i>
+      </li>"
     $(appendTarget).append(html)
     $("#move-#{_uuid}-#{direction}").on('click', ->
       _.plotter.move(plotId, direction)
@@ -542,9 +550,11 @@ window.Plotter.Controls = class Controls
   remove: (plotId, appendTarget) ->
     _ = @
     _uuid = @plotter.plots[plotId].proto.options.uuid
-    html = "<i id=\"remove-#{_uuid}\" style=\"cursor: pointer;\"
+    html = "<li>
+      <i id=\"remove-#{_uuid}\" style=\"cursor: pointer;\"
       title=\"Remove Plot\"
-      class=\"icon-remove plot-control-button\"></i>"
+      class=\"icon-remove plot-control-button\"></i>
+      </li>"
     $(appendTarget).append(html)
     $("#remove-#{_uuid}").on('click', ->
       _.plotter.remove(plotId)
@@ -580,14 +590,15 @@ window.Plotter.Controls = class Controls
           style=\"cursor: pointer\">Add Station Plot</a></li>
       </ul>"
 
-    html = "<div class=\"dropdown\">
-        <li><a id=\"new-#{uuid}\" class=\"dropdown-toggle\"
-          title=\"Add New Plot\"
-          data-toggle=\"dropdown\" role=\"button\" href=\"#\">
-            <i class=\"icon-plus\"></i></a>
-            <ul
-              class=\"dropdown-menu pull-right\" role=\"menu\"
-              aria-labelledby=\"#{uuid}\">"
+    html = "<li>
+        <div class=\"dropdown\">
+          <li><a id=\"new-#{uuid}\" class=\"dropdown-toggle\"
+            title=\"Add New Plot\"
+            data-toggle=\"dropdown\" role=\"button\" href=\"#\">
+              <i class=\"icon-plus\"></i></a>
+              <ul
+                class=\"dropdown-menu pull-right\" role=\"menu\"
+                aria-labelledby=\"#{uuid}\">"
 
     for row in _params
       html = "#{html}
@@ -595,9 +606,10 @@ window.Plotter.Controls = class Controls
           data-variable=\"#{row.variable}\">#{row.title}</a></li>"
 
     html = "#{html}
-            </ul>
-          </li>
-        </div>"
+              </ul>
+            </li>
+          </div>
+        </li>"
 
     # Append & Bind Dropdown
     $(appendTarget).append(html)

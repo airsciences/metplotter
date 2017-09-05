@@ -1182,13 +1182,17 @@
     }
 
     Controls.prototype.append = function(plotId) {
-      var _li_style, _proto, _template, _uuid, html, selector;
+      var _li_style, _proto, _template, _uuid, fontSize, html, selector;
       _template = this.plotter.i.template.full()[plotId];
       _proto = this.plotter.plots[plotId].proto;
       _uuid = _proto.options.uuid;
       selector = "plot-controls-" + _uuid;
       _li_style = "";
-      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px;\"> </ul>";
+      fontSize = "font-size: 9px;";
+      if ($(window).width() > 400) {
+        fontSize = "font-size: 14px;";
+      }
+      html = "<ul id=\"" + selector + "\" class=\"unstyled\" style=\"list-style-type: none; padding-left: 6px; " + fontSize + "\"> </ul>";
       $(_proto.options.target).find(".plot-controls").append(html);
       this.move(plotId, '#' + selector, 'up');
       this["new"]('#' + selector, 'down');
@@ -1375,7 +1379,7 @@
       _current = [];
       callback = function(data) {
         var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
-        html = "<div class=\"dropdown\"> <li><a id=\"param-" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+        html = "<li> <div class=\"dropdown\"> <li><a id=\"param-" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
         ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
           parameter = ref[i];
@@ -1400,7 +1404,7 @@
           }
           html = html + " <li><a style=\"cursor: pointer\" onclick=\"plotter.addVariable(" + plotId + ", '" + _add + "')\">" + _prepend + " " + parameter.sensortype_name + "</a></li>";
         }
-        html = html + " </ul> </li> </div>";
+        html = html + " </ul> </li> </div> </li>";
         $(appendTarget).prepend(html);
         return $('#' + uuid).dropdown();
       };
@@ -1613,7 +1617,7 @@
       _ = this;
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
       _dirText = direction === 'up' ? 'Up' : 'Down';
-      html = "<i id=\"move-" + _uuid + "-" + direction + "\" style=\"cursor: pointer;\" title=\"Move Plot " + _dirText + "\" class=\"icon-arrow-" + direction + " plot-control-button\"></i>";
+      html = "<li> <i id=\"move-" + _uuid + "-" + direction + "\" style=\"cursor: pointer;\" title=\"Move Plot " + _dirText + "\" class=\"icon-arrow-" + direction + " plot-control-button\"></i> </li>";
       $(appendTarget).append(html);
       return $("#move-" + _uuid + "-" + direction).on('click', function() {
         return _.plotter.move(plotId, direction);
@@ -1624,7 +1628,7 @@
       var _, _uuid, html;
       _ = this;
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
-      html = "<i id=\"remove-" + _uuid + "\" style=\"cursor: pointer;\" title=\"Remove Plot\" class=\"icon-remove plot-control-button\"></i>";
+      html = "<li> <i id=\"remove-" + _uuid + "\" style=\"cursor: pointer;\" title=\"Remove Plot\" class=\"icon-remove plot-control-button\"></i> </li>";
       $(appendTarget).append(html);
       return $("#remove-" + _uuid).on('click', function() {
         return _.plotter.remove(plotId);
@@ -1681,12 +1685,12 @@
         }
       ];
       _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu pull-right plot-control-button\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
-      html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" title=\"Add New Plot\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+      html = "<li> <div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" title=\"Add New Plot\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
       for (i = 0, len = _params.length; i < len; i++) {
         row = _params[i];
         html = html + " <li><a id=\"new_" + row.variable + "_" + uuid + "\" data-variable=\"" + row.variable + "\">" + row.title + "</a></li>";
       }
-      html = html + " </ul> </li> </div>";
+      html = html + " </ul> </li> </div> </li>";
       $(appendTarget).append(html);
       results1 = [];
       for (j = 0, len1 = _params.length; j < len1; j++) {
