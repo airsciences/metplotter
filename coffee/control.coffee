@@ -533,7 +533,7 @@ window.Plotter.Controls = class Controls
     _dirText = if direction is 'up' then 'Up' else 'Down'
     html = "<i id=\"move-#{_uuid}-#{direction}\" style=\"cursor: pointer;\"
       title=\"Move Plot #{_dirText}\"
-      class=\"icon-arrow-#{direction}\"></i>"
+      class=\"icon-arrow-#{direction} plot-control-button\"></i>"
     $(appendTarget).append(html)
     $("#move-#{_uuid}-#{direction}").on('click', ->
       _.plotter.move(plotId, direction)
@@ -544,7 +544,7 @@ window.Plotter.Controls = class Controls
     _uuid = @plotter.plots[plotId].proto.options.uuid
     html = "<i id=\"remove-#{_uuid}\" style=\"cursor: pointer;\"
       title=\"Remove Plot\"
-      class=\"icon-remove\"></i>"
+      class=\"icon-remove plot-control-button\"></i>"
     $(appendTarget).append(html)
     $("#remove-#{_uuid}").on('click', ->
       _.plotter.remove(plotId)
@@ -572,7 +572,7 @@ window.Plotter.Controls = class Controls
     ]
 
     _ul = "<ul id=\"new-#{uuid}-dropdown\"
-        class=\"dropdown-menu pull-right\" role=\"menu\"
+        class=\"dropdown-menu pull-right plot-control-button\" role=\"menu\"
         aria-labelledby=\"new-#{uuid}\">
         <li><a id=\"new-#{uuid}-parameter\"
           style=\"cursor: pointer\">Add Parameter Plot</a></li>

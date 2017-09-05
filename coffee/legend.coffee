@@ -16,7 +16,15 @@ window.Plotter.Legend = class Legend
     @svg = @plotter.plots[plotId].proto.svg
     @plotId = @plotter.plots[plotId].proto.options.plotId
     @dimensions = @plotter.plots[plotId].proto.definition.dimensions
+    @plotOptions = @plotter.plots[plotId].proto.options
+    @plotDevice = @plotter.plots[plotId].proto.device
 
+    if @plotDevice == 'small'
+      @legendOffset =
+        rect: @dimensions.margin.left + 5
+        text: @dimensions.margin.left + 15
+    else
+      @legendOffset = {rect:@dimensions.margin.left + 20,text:@dimensions.margin.left + 30}
     @legend = @svg.append("g")
       .attr("class", "legend")
 
@@ -50,7 +58,7 @@ window.Plotter.Legend = class Legend
       .attr("ry", 1)
       .attr("width", 6)
       .attr("height", 6)
-      .attr("x", @dimensions.margin.left + 20)
+      .attr("x", @legendOffset.rect)
       .attr("y", (d) -> d.offset * 12)
       .style("fill", (d) -> d.color)
 
@@ -65,12 +73,12 @@ window.Plotter.Legend = class Legend
 
     _text.enter()
       .append("text")
-      .attr("x", @dimensions.margin.left + 30)
+      .attr("x", @legendOffset.text)
       .attr("y", (d) -> d.offset * 12 + 6)
       .text((d) -> d.title)
-      .style("font-size", "12px")
+      .style("font-size", @plotOptions.font.size + "px")
       .style("font-weight", 500)
-
+    console.log(@plotOptions.font.size + "px")
     _text.exit()
       .remove()
 

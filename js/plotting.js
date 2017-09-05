@@ -644,36 +644,42 @@
         width = Math.round($(this.options.target).width()) - 24;
       }
       height = Math.round(width / this.options.aspectDivisor);
-      if (width > 1000) {
+      if (width > 900) {
+        this.device = 'large';
+        this.options.font.size = this.options.font.size / 1.2;
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
-          bottom: Math.round(height * 0.12),
-          left: Math.round(Math.pow(width, 0.6))
+          bottom: 20,
+          left: 45
         };
-      } else if (width > 600) {
+      } else if (width > 400) {
         this.device = 'mid';
-        this.options.font.size = this.options.font.size / 1.25;
+        this.options.font.size = this.options.font.size / 1.5;
         _height = this.options.aspectDivisor / 1.25;
         height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
-          bottom: Math.round(height * 0.14),
-          left: Math.round(Math.pow(width, 0.6))
+          bottom: 18,
+          left: 38
         };
       } else {
         this.device = 'small';
-        this.options.font.size = this.options.font.size / 1.5;
-        _height = this.options.aspectDivisor / 1.5;
+        this.options.font.size = this.options.font.size / 1.6;
+        _height = this.options.aspectDivisor / 2.2;
         height = Math.round(width / _height);
         margin = {
-          top: Math.round(height * 0.04),
+          top: 35,
           right: Math.round(Math.pow(width, 0.3)),
-          bottom: Math.round(height * 0.18),
-          left: Math.round(Math.pow(width, 0.6))
+          bottom: 17,
+          left: 33
         };
       }
+      console.log('barwidth', width);
+      console.log('bardevice', this.device);
+      console.log('barmargin', margin);
+      console.log('barsize', this.options.font.size);
       this.definition.dimensions = {
         width: width,
         height: height,
@@ -1607,7 +1613,7 @@
       _ = this;
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
       _dirText = direction === 'up' ? 'Up' : 'Down';
-      html = "<i id=\"move-" + _uuid + "-" + direction + "\" style=\"cursor: pointer;\" title=\"Move Plot " + _dirText + "\" class=\"icon-arrow-" + direction + "\"></i>";
+      html = "<i id=\"move-" + _uuid + "-" + direction + "\" style=\"cursor: pointer;\" title=\"Move Plot " + _dirText + "\" class=\"icon-arrow-" + direction + " plot-control-button\"></i>";
       $(appendTarget).append(html);
       return $("#move-" + _uuid + "-" + direction).on('click', function() {
         return _.plotter.move(plotId, direction);
@@ -1618,7 +1624,7 @@
       var _, _uuid, html;
       _ = this;
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
-      html = "<i id=\"remove-" + _uuid + "\" style=\"cursor: pointer;\" title=\"Remove Plot\" class=\"icon-remove\"></i>";
+      html = "<i id=\"remove-" + _uuid + "\" style=\"cursor: pointer;\" title=\"Remove Plot\" class=\"icon-remove plot-control-button\"></i>";
       $(appendTarget).append(html);
       return $("#remove-" + _uuid).on('click', function() {
         return _.plotter.remove(plotId);
@@ -1674,7 +1680,7 @@
           title: "Wind Speed"
         }
       ];
-      _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
+      _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu pull-right plot-control-button\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
       html = "<div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" title=\"Add New Plot\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
       for (i = 0, len = _params.length; i < len; i++) {
         row = _params[i];
@@ -2175,6 +2181,19 @@
       this.svg = this.plotter.plots[plotId].proto.svg;
       this.plotId = this.plotter.plots[plotId].proto.options.plotId;
       this.dimensions = this.plotter.plots[plotId].proto.definition.dimensions;
+      this.plotOptions = this.plotter.plots[plotId].proto.options;
+      this.plotDevice = this.plotter.plots[plotId].proto.device;
+      if (this.plotDevice === 'small') {
+        this.legendOffset = {
+          rect: this.dimensions.margin.left + 5,
+          text: this.dimensions.margin.left + 15
+        };
+      } else {
+        this.legendOffset = {
+          rect: this.dimensions.margin.left + 20,
+          text: this.dimensions.margin.left + 30
+        };
+      }
       this.legend = this.svg.append("g").attr("class", "legend");
     }
 
@@ -2207,7 +2226,7 @@
       }).style("fill", function(d) {
         return d.color;
       });
-      _rect.enter().append("rect").attr("rx", 1).attr("ry", 1).attr("width", 6).attr("height", 6).attr("x", this.dimensions.margin.left + 20).attr("y", function(d) {
+      _rect.enter().append("rect").attr("rx", 1).attr("ry", 1).attr("width", 6).attr("height", 6).attr("x", this.legendOffset.rect).attr("y", function(d) {
         return d.offset * 12;
       }).style("fill", function(d) {
         return d.color;
@@ -2219,11 +2238,12 @@
       }).text(function(d) {
         return d.title;
       });
-      _text.enter().append("text").attr("x", this.dimensions.margin.left + 30).attr("y", function(d) {
+      _text.enter().append("text").attr("x", this.legendOffset.text).attr("y", function(d) {
         return d.offset * 12 + 6;
       }).text(function(d) {
         return d.title;
-      }).style("font-size", "12px").style("font-weight", 500);
+      }).style("font-size", this.plotOptions.font.size + "px").style("font-weight", 500);
+      console.log(this.plotOptions.font.size + "px");
       _text.exit().remove();
       return {
         remove: function() {
@@ -2365,7 +2385,7 @@
         axisColor: "rgb(0,0,0)",
         font: {
           weight: 100,
-          size: 12
+          size: 14
         },
         crosshairX: {
           weight: 1,
@@ -2719,36 +2739,41 @@
         width = Math.round($(this.options.target).width()) - 24;
       }
       height = Math.round(width / this.options.aspectDivisor);
-      if (width > 1000) {
+      if (width > 900) {
+        this.device = 'large';
+        this.options.font.size = this.options.font.size / 1.2;
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
-          bottom: Math.round(height * 0.12),
-          left: Math.round(Math.pow(width, 0.6))
+          bottom: 20,
+          left: 45
         };
-      } else if (width > 600) {
+      } else if (width > 400) {
         this.device = 'mid';
-        this.options.font.size = this.options.font.size / 1.25;
+        this.options.font.size = this.options.font.size / 1.5;
         _height = this.options.aspectDivisor / 1.25;
         height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
-          bottom: Math.round(height * 0.14),
-          left: Math.round(Math.pow(width, 0.6))
+          bottom: 18,
+          left: 38
         };
       } else {
         this.device = 'small';
-        this.options.font.size = this.options.font.size / 1.5;
-        _height = this.options.aspectDivisor / 1.5;
+        this.options.font.size = this.options.font.size / 1.6;
+        _height = this.options.aspectDivisor / 2.2;
         height = Math.round(width / _height);
         margin = {
-          top: Math.round(height * 0.04),
+          top: 35,
           right: Math.round(Math.pow(width, 0.3)),
-          bottom: Math.round(height * 0.18),
-          left: Math.round(Math.pow(width, 0.6))
+          bottom: 17,
+          left: 33
         };
       }
+      console.log('width', width);
+      console.log('device', this.device);
+      console.log('margin', margin);
       this.definition.dimensions = {
         width: width,
         height: height,

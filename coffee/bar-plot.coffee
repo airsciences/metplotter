@@ -335,32 +335,38 @@ window.Plotter.BarPlot = class BarPlot
     else
       width = Math.round($(@options.target).width()) - 24
     height = Math.round(width/@options.aspectDivisor)
-    if width > 1000
+    if width > 900
+      @device = 'large'
+      @options.font.size = @options.font.size/1.2
       margin =
         top: Math.round(height * 0.04)
         right: Math.round(Math.pow(width, 0.3))
-        bottom: Math.round(height * 0.12)
-        left: Math.round(Math.pow(width, 0.6))
-    else if width > 600
+        bottom: 20
+        left: 45
+    else if width > 400
       @device = 'mid'
-      @options.font.size = @options.font.size/1.25
+      @options.font.size = @options.font.size/1.5
       _height = @options.aspectDivisor/1.25
       height = Math.round(width/_height)
       margin =
         top: Math.round(height * 0.04)
         right: Math.round(Math.pow(width, 0.3))
-        bottom: Math.round(height * 0.14)
-        left: Math.round(Math.pow(width, 0.6))
+        bottom: 18
+        left: 38
     else
       @device = 'small'
-      @options.font.size = @options.font.size/1.5
-      _height = @options.aspectDivisor/1.5
+      @options.font.size = @options.font.size/1.6
+      _height = @options.aspectDivisor/2.2
       height = Math.round(width/_height)
       margin =
-        top: Math.round(height * 0.04)
+        top: 35
         right: Math.round(Math.pow(width, 0.3))
-        bottom: Math.round(height * 0.18)
-        left: Math.round(Math.pow(width, 0.6))
+        bottom: 17
+        left: 33
+    console.log('barwidth',width)
+    console.log('bardevice',@device)
+    console.log('barmargin',margin)
+    console.log('barsize',@options.font.size)
 
     # Basic Dimention
     @definition.dimensions =
