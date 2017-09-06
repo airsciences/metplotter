@@ -646,7 +646,9 @@
       height = Math.round(width / this.options.aspectDivisor);
       if (width > 900) {
         this.device = 'large';
-        this.options.font.size = this.options.font.size / 1.2;
+        this.definition.font = {
+          size: this.options.font.size / 1.2
+        };
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -655,7 +657,9 @@
         };
       } else if (width > 400) {
         this.device = 'mid';
-        this.options.font.size = this.options.font.size / 1.5;
+        this.definition.font = {
+          size: this.options.font.size / 1.5
+        };
         _height = this.options.aspectDivisor / 1.25;
         height = Math.round(width / _height);
         margin = {
@@ -666,7 +670,9 @@
         };
       } else {
         this.device = 'small';
-        this.options.font.size = this.options.font.size / 1.6;
+        this.definition.font = {
+          size: this.options.font.size / 1.6
+        };
         _height = this.options.aspectDivisor / 2.2;
         height = Math.round(width / _height);
         margin = {
@@ -676,10 +682,6 @@
           left: 33
         };
       }
-      console.log('barwidth', width);
-      console.log('bardevice', this.device);
-      console.log('barmargin', margin);
-      console.log('barsize', this.options.font.size);
       this.definition.dimensions = {
         width: width,
         height: height,
@@ -756,6 +758,40 @@
       }
     };
 
+    BarPlot.prototype.resize = function() {
+      var _, key, ref, ref1, row;
+      _ = this;
+      this.getDefinition();
+      this.outer.style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px");
+      this.ctls.style("height", this.definition.dimensions.height + "px");
+      this.svg.attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.svg.select("#" + this.clipPathId).select("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      this.svg.select(".bar-plot-axis-x").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      this.svg.select(".bar-plot-axis-y").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      this.svg.select(".bar-plot-y-label").attr("x", -this.definition.dimensions.margin.top).attr("y", -this.definition.dimensions.margin.left).style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight);
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        this.svg.selectAll(".bar-" + key).attr("x", function(d) {
+          return _.definition.x(d.x);
+        }).attr("width", d3.max([1, this.definition.x1.bandwidth()])).attr("y", function(d) {
+          return _.definition.y(d.y);
+        }).attr("height", function(d) {
+          return _.definition.dimensions.innerHeight + _.definition.dimensions.margin.top - _.definition.y(d.y);
+        });
+      }
+      if (this.options.y[0].maxBar != null) {
+        this.svg.select(".bar-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(this.options.y[0].maxBar)).attr("width", this.definition.dimensions.innerWidth);
+      }
+      ref1 = this.data;
+      for (key in ref1) {
+        row = ref1[key];
+        this.svg.selectAll(".focus-rect-" + key).attr("width", this.definition.x1.bandwidth());
+      }
+      this.overlay.select(".overlay").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      return this.overlay.select(".zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+    };
+
     BarPlot.prototype.preAppend = function() {
       var _, preError;
       preError = this.preError + "preAppend()";
@@ -764,12 +800,12 @@
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       this.svg = this.outer.append("svg").attr("class", "bar-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.clipPathId).append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
-      this.svg.append("g").attr("class", "bar-plot-axis-x").style("fill", "none").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
-      return this.svg.append("g").attr("class", "bar-plot-axis-y").style("fill", "none").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      this.svg.append("g").attr("class", "bar-plot-axis-x").style("fill", "none").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      return this.svg.append("g").attr("class", "bar-plot-axis-y").style("fill", "none").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
 
     BarPlot.prototype.append = function() {
-      var _, _y_offset, _y_title, _y_vert, key, preError, ref, ref1, row;
+      var _, _y_title, key, preError, ref, ref1, row;
       this.initialized = true;
       if (!this.initialized) {
         return;
@@ -782,9 +818,7 @@
       if (this.options.y[0].units) {
         _y_title = _y_title + " " + this.options.y[0].units;
       }
-      _y_vert = -this.definition.dimensions.margin.top;
-      _y_offset = -this.definition.dimensions.margin.left;
-      this.svg.select(".bar-plot-axis-y").append("text").text(_y_title).attr("class", "bar-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).attr("fill", this.options.axisColor);
+      this.svg.select(".bar-plot-axis-y").append("text").text(_y_title).attr("class", "bar-plot-y-label").attr("x", -this.definition.dimensions.margin.top).attr("y", -this.definition.dimensions.margin.left).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).attr("fill", this.options.axisColor);
       this.barWrapper = this.svg.append("g").attr("class", "bar-wrapper");
       ref = this.data;
       for (key in ref) {
@@ -1422,7 +1456,7 @@
         size = "312px";
         maxPopover = "356px";
       }
-      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + _uuid + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div class=\"popover\" style=\"max-width: " + maxPopover + ";\"> <div class=\"popover-content\"> <a id=\"map-close-" + _uuid + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"map-control-" + _uuid + "\" style=\"width: " + size + "; height: " + size + ";\"></div> </div> </div>";
+      html = "<li data-toggle=\"popover\" data-placement=\"left\"> <i id=\"map-" + _uuid + "\" class=\"icon-map-marker\" title=\"Select Stations Map\" style=\"cursor: pointer\"></i> </li> <div id=\"map-pop-" + _uuid + "\" class=\"popover\" style=\"max-width: " + maxPopover + ";\"> <div class=\"popover-content\"> <a id=\"map-close-" + _uuid + "\" style=\"font-size: 10px; cursor: pointer\">Close</a> <div id=\"map-control-" + _uuid + "\" style=\"width: " + size + "; height: " + size + ";\"></div> </div> </div>";
       $(appendTarget).prepend(html);
       $("#map-" + _uuid).on('click', function() {
         return _.plotter.i.controls.toggleMap(plotId);
@@ -1758,6 +1792,22 @@
         }
       }
       return result;
+    };
+
+    Controls.prototype.resize = function(plotId) {
+      var _uuid, fontSize, maxPopover, size;
+      _uuid = this.plotter.plots[plotId].proto.options.uuid;
+      fontSize = "9px";
+      size = "200px";
+      maxPopover = "244px";
+      if ($(window).width() > 400) {
+        fontSize = "14px";
+        size = "312px";
+        maxPopover = "356px";
+      }
+      $("#plot-controls-" + _uuid).css("font-size", fontSize);
+      $("#map-pop-" + _uuid).css("max-width", maxPopover);
+      return $("#map-control-" + _uuid).css("height", size).css("width", size);
     };
 
     return Controls;
@@ -2196,22 +2246,27 @@
       this.plotter = plotter;
       this.svg = this.plotter.plots[plotId].proto.svg;
       this.plotId = this.plotter.plots[plotId].proto.options.plotId;
-      this.dimensions = this.plotter.plots[plotId].proto.definition.dimensions;
+      this.definition = this.plotter.plots[plotId].proto.definition;
+      this.dimensions = this.definition.dimensions;
       this.plotOptions = this.plotter.plots[plotId].proto.options;
       this.plotDevice = this.plotter.plots[plotId].proto.device;
-      if (this.plotDevice === 'small') {
-        this.legendOffset = {
-          rect: this.dimensions.margin.left + 5,
-          text: this.dimensions.margin.left + 15
-        };
-      } else {
-        this.legendOffset = {
-          rect: this.dimensions.margin.left + 20,
-          text: this.dimensions.margin.left + 30
-        };
-      }
+      this.getDimensions();
       this.legend = this.svg.append("g").attr("class", "legend");
     }
+
+    Legend.prototype.getDimensions = function() {
+      this.definition = this.plotter.plots[this.plotId].proto.definition;
+      this.dimensions = this.definition.dimensions;
+      this.plotOptions = this.plotter.plots[this.plotId].proto.options;
+      this.legendOffset = {
+        rect: this.dimensions.margin.left + 20,
+        text: this.dimensions.margin.left + 30
+      };
+      if (this.plotDevice === 'small') {
+        this.legendOffset.rect = this.dimensions.margin.left + 5;
+        return this.legendOffset.text = this.dimensions.margin.left + 15;
+      }
+    };
 
     Legend.prototype.set = function() {
       var _count, _datalogger, _options, _result, key, ref, row;
@@ -2258,14 +2313,19 @@
         return d.offset * 12 + 6;
       }).text(function(d) {
         return d.title;
-      }).style("font-size", this.plotOptions.font.size + "px").style("font-weight", 500);
-      console.log(this.plotOptions.font.size + "px");
-      _text.exit().remove();
-      return {
-        remove: function() {
-          return this.legend.selectAll(".legend").remove();
-        }
-      };
+      }).style("font-size", this.definition.font.size + "px").style("font-weight", 500);
+      return _text.exit().remove();
+    };
+
+    Legend.prototype.remove = function() {
+      return this.legend.selectAll(".legend").remove();
+    };
+
+    Legend.prototype.resize = function() {
+      var _rect, _text;
+      this.getDimensions();
+      _rect = this.legend.selectAll("rect").attr("x", this.legendOffset.rect);
+      return _text = this.legend.selectAll("text").attr("x", this.legendOffset.text).style("font-size", this.definition.font.size + "px");
     };
 
     return Legend;
@@ -2757,7 +2817,9 @@
       height = Math.round(width / this.options.aspectDivisor);
       if (width > 900) {
         this.device = 'large';
-        this.options.font.size = this.options.font.size / 1.2;
+        this.definition.font = {
+          size: this.options.font.size / 1.2
+        };
         margin = {
           top: Math.round(height * 0.04),
           right: Math.round(Math.pow(width, 0.3)),
@@ -2766,7 +2828,9 @@
         };
       } else if (width > 400) {
         this.device = 'mid';
-        this.options.font.size = this.options.font.size / 1.5;
+        this.definition.font = {
+          size: this.options.font.size / 1.5
+        };
         _height = this.options.aspectDivisor / 1.25;
         height = Math.round(width / _height);
         margin = {
@@ -2777,7 +2841,9 @@
         };
       } else {
         this.device = 'small';
-        this.options.font.size = this.options.font.size / 1.6;
+        this.definition.font = {
+          size: this.options.font.size / 1.6
+        };
         _height = this.options.aspectDivisor / 2.2;
         height = Math.round(width / _height);
         margin = {
@@ -2787,9 +2853,6 @@
           left: 33
         };
       }
-      console.log('width', width);
-      console.log('device', this.device);
-      console.log('margin', margin);
       this.definition.dimensions = {
         width: width,
         height: height,
@@ -2866,6 +2929,29 @@
       }
     };
 
+    LinePlot.prototype.resize = function() {
+      var key, ref, row;
+      this.getDefinition();
+      this.outer.style("width", this.definition.dimensions.width + "px").style("height", this.definition.dimensions.height + "px");
+      this.ctls.style("height", this.definition.dimensions.height + "px");
+      this.svg.attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
+      this.svg.select("#" + this.clipPathId).select("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      this.svg.select(".line-plot-axis-x").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      this.svg.select(".line-plot-axis-y").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      this.svg.select(".line-plot-y-label").attr("x", -this.definition.dimensions.margin.top).attr("y", -this.definition.dimensions.margin.left).style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight);
+      ref = this.data;
+      for (key in ref) {
+        row = ref[key];
+        this.svg.select(".line-plot-area-" + key).attr("d", this.definition.area);
+        this.svg.select(".line-plot-path-" + key).attr("d", this.definition.line).style("stroke-width", Math.round(Math.pow(this.definition.dimensions.width, 0.1)));
+      }
+      if (this.options.y[0].maxBar != null) {
+        this.lineWrapper.select(".line-plot-max-bar").attr("x", this.definition.dimensions.leftPadding).attr("y", this.definition.y(this.options.y[0].maxBar)).attr("width", this.definition.dimensions.innerWidth);
+      }
+      this.overlay.select(".overlay").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+      return this.overlay.select(".zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
+    };
+
     LinePlot.prototype.preAppend = function() {
       var _, preError;
       preError = this.preError + "preAppend()";
@@ -2874,12 +2960,12 @@
       this.ctls = d3.select(this.options.target).append("div").attr("class", "plot-controls").style("width", '23px').style("height", this.definition.dimensions.height + "px").style("display", "inline-block").style("vertical-align", "top");
       this.svg = this.outer.append("svg").attr("class", "line-plot").attr("width", this.definition.dimensions.width).attr("height", this.definition.dimensions.height);
       this.svg.append("defs").append("clipPath").attr("id", this.clipPathId).append("rect").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")");
-      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
-      return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
+      this.svg.append("g").attr("class", "line-plot-axis-x").style("fill", "none").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).call(this.definition.xAxis).attr("transform", "translate(0, " + this.definition.dimensions.bottomPadding + ")");
+      return this.svg.append("g").attr("class", "line-plot-axis-y").style("fill", "none").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight).call(this.definition.yAxis).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", 0)");
     };
 
     LinePlot.prototype.append = function() {
-      var _, _y_offset, _y_title, _y_vert, key, preError, ref, ref1, row;
+      var _, _y_title, key, preError, ref, ref1, row;
       this.initialized = true;
       if (!this.initialized) {
         return;
@@ -2892,9 +2978,7 @@
       if (this.options.y[0].units) {
         _y_title = _y_title + " " + this.options.y[0].units;
       }
-      _y_vert = -this.definition.dimensions.margin.top;
-      _y_offset = -this.definition.dimensions.margin.left;
-      this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("fill", this.options.axisColor).attr("class", "line-plot-y-label").attr("x", _y_vert).attr("y", _y_offset).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.options.font.size).style("font-weight", this.options.font.weight);
+      this.svg.select(".line-plot-axis-y").append("text").text(_y_title).attr("fill", this.options.axisColor).attr("class", "line-plot-y-label").attr("x", -this.definition.dimensions.margin.top).attr("y", -this.definition.dimensions.margin.left).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-size", this.definition.font.size).style("font-weight", this.options.font.weight);
       this.lineWrapper = this.svg.append("g").attr("class", "line-wrapper");
       ref = this.data;
       for (key in ref) {
@@ -3472,7 +3556,8 @@
         newDataInterval: 168,
         minUpdateLength: 0,
         updateLimit: 6,
-        width: null
+        width: null,
+        responsive: false
       };
       this.options = this.lib.mergeDefaults(options, defaults);
       this.waitCounter = parseInt(this.options.futureWait / this.options.refresh);
@@ -3604,7 +3689,13 @@
       }
       this.bandDomain = this.plots[0].proto.definition.x1;
       this.appendSave();
-      return this.appendPoweredBy();
+      this.appendPoweredBy();
+      if (this.options.responsive) {
+        return $(window).on('resize', function() {
+          console.log("Resize Detected!");
+          return _.resize();
+        });
+      }
     };
 
     Handler.prototype.appendLoading = function() {
@@ -3670,7 +3761,6 @@
         _plotType = "line";
       }
       _decimals = this.i.specs.getPlotDecimals(variable);
-      console.log("New Plot (variable, decimals): ", variable, _decimals);
       if (_plotType === "bar") {
         this.plots[_key].proto = new window.Plotter.BarPlot(this, [[]], plot);
       } else {
@@ -3760,6 +3850,20 @@
 
     Handler.prototype.appendPoweredBy = function() {
       return $(this.options.target).parent().append("<p style=\"font-size: 11px; font-weight: 300\">Powered by Air Sciences Inc. | <a href=\"http://airsci.com\">www.airsci.com</a></p>");
+    };
+
+    Handler.prototype.resize = function() {
+      var plot, plotId, ref, results;
+      ref = this.plots;
+      results = [];
+      for (plotId in ref) {
+        plot = ref[plotId];
+        plot.proto.resize();
+        this.legends[plotId].resize();
+        this.i.controls.resize(plotId);
+        results.push(plot.proto.setZoomTransform());
+      }
+      return results;
     };
 
     return Handler;

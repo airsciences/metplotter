@@ -335,7 +335,8 @@ window.Plotter.Controls = class Controls
            title=\"Select Stations Map\"
           style=\"cursor: pointer\"></i>
         </li>
-        <div class=\"popover\" style=\"max-width: #{maxPopover};\">
+        <div id=\"map-pop-#{_uuid}\" class=\"popover\"
+          style=\"max-width: #{maxPopover};\">
           <div class=\"popover-content\">
             <a id=\"map-close-#{_uuid}\"
               style=\"font-size: 10px; cursor: pointer\">Close</a>
@@ -343,7 +344,9 @@ window.Plotter.Controls = class Controls
               height: #{size};\"></div>
           </div>
         </div>"
+
     $(appendTarget).prepend(html)
+
     $("#map-#{_uuid}").on('click', ->
       _.plotter.i.controls.toggleMap(plotId)
     )
@@ -664,3 +667,20 @@ window.Plotter.Controls = class Controls
         if row.id is parseInt(dataLoggerId)
           result = row.datalogger_name + " - " + row.elevation + " Ft."
     return result
+
+  resize: (plotId) ->
+    _uuid = @plotter.plots[plotId].proto.options.uuid
+
+    fontSize = "9px"
+    size = "200px"
+    maxPopover = "244px"
+
+    if $(window).width() > 400
+      fontSize = "14px"
+      size = "312px"
+      maxPopover = "356px"
+
+    $("#plot-controls-#{_uuid}").css("font-size", fontSize)
+    $("#map-pop-#{_uuid}").css("max-width", maxPopover)
+    $("#map-control-#{_uuid}").css("height", size)
+      .css("width", size)

@@ -45,7 +45,8 @@ html(lang='en')
           "updateLength": 24,
           "minUpdateLength": 10,
           "updateLimit": 6,
-          "width": null
+          "width": null,
+          "responsive": true
       };
 
       var access = {
@@ -55,27 +56,3 @@ html(lang='en')
 
       var plotter214 = new Plotter.Handler(access, options);
       plotter214.initialize();
-
-      /** Second Plotter */
-      /*
-      var options2 = {
-          "target": "#d3-plot-target-2",
-          "templateId": #{templateId},
-          "refresh": 1000,
-          "futureWait": 180000,
-          "initialLength": 168,
-          "requestPaddingInterval": 10,
-          "newDataInterval": 50,
-          "updateLength": 24,
-          "minUpdateLength": 10,
-          "updateLimit": 6,
-      };
-
-      var access2 = {
-          "token": "#{token.token}",
-          "admin": true
-      };
-
-      var plotter215 = new Plotter.Handler(access2, options2);
-      plotter215.initialize();
-      */

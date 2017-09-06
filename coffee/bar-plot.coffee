@@ -337,7 +337,8 @@ window.Plotter.BarPlot = class BarPlot
     height = Math.round(width/@options.aspectDivisor)
     if width > 900
       @device = 'large'
-      @options.font.size = @options.font.size/1.2
+      @definition.font =
+        size: @options.font.size/1.2
       margin =
         top: Math.round(height * 0.04)
         right: Math.round(Math.pow(width, 0.3))
@@ -345,7 +346,8 @@ window.Plotter.BarPlot = class BarPlot
         left: 45
     else if width > 400
       @device = 'mid'
-      @options.font.size = @options.font.size/1.5
+      @definition.font =
+        size: @options.font.size/1.5
       _height = @options.aspectDivisor/1.25
       height = Math.round(width/_height)
       margin =
@@ -355,7 +357,8 @@ window.Plotter.BarPlot = class BarPlot
         left: 38
     else
       @device = 'small'
-      @options.font.size = @options.font.size/1.6
+      @definition.font =
+        size: @options.font.size/1.6
       _height = @options.aspectDivisor/2.2
       height = Math.round(width/_height)
       margin =
@@ -363,10 +366,6 @@ window.Plotter.BarPlot = class BarPlot
         right: Math.round(Math.pow(width, 0.3))
         bottom: 17
         left: 33
-    console.log('barwidth',width)
-    console.log('bardevice',@device)
-    console.log('barmargin',margin)
-    console.log('barsize',@options.font.size)
 
     # Basic Dimention
     @definition.dimensions =
@@ -442,6 +441,84 @@ window.Plotter.BarPlot = class BarPlot
     if @options.y[0].max?
       @definition.y.max = @options.y[0].max
 
+  resize: ->
+    _ = @
+    @getDefinition()
+
+    @outer.style("width", "#{@definition.dimensions.width}px")
+      .style("height", "#{@definition.dimensions.height}px")
+
+    @ctls.style("height", "#{@definition.dimensions.height}px")
+
+    @svg.attr("width", @definition.dimensions.width)
+      .attr("height", @definition.dimensions.height)
+
+    @svg.select("##{@clipPathId}")
+      .select("rect")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
+
+    @svg.select(".bar-plot-axis-x")
+      .style("font-size", @definition.font.size)
+      .style("font-weight", @options.font.weight)
+      .call(@definition.xAxis)
+      .attr("transform",
+        "translate(0, #{@definition.dimensions.bottomPadding})"
+      )
+
+    @svg.select(".bar-plot-axis-y")
+      .style("font-size", @definition.font.size)
+      .style("font-weight", @options.font.weight)
+      .call(@definition.yAxis)
+      .attr("transform", "translate(#{@definition.dimensions.leftPadding}, 0)")
+
+    @svg.select(".bar-plot-y-label")
+      .attr("x", -@definition.dimensions.margin.top)
+      .attr("y", -@definition.dimensions.margin.left)
+      .style("font-size", @definition.font.size)
+      .style("font-weight", @options.font.weight)
+
+    for key, row of @data
+      @svg.selectAll(".bar-#{key}")
+        .attr("x", (d) -> _.definition.x(d.x))
+        .attr("width", d3.max([1, @definition.x1.bandwidth()]))
+        .attr("y", (d) -> _.definition.y(d.y))
+        .attr("height", (d) ->
+          _.definition.dimensions.innerHeight +
+          _.definition.dimensions.margin.top - _.definition.y(d.y)
+        )
+
+    if @options.y[0].maxBar?
+      @svg.select(".bar-plot-max-bar")
+        .attr("x", @definition.dimensions.leftPadding)
+        .attr("y", @definition.y(@options.y[0].maxBar))
+        .attr("width", (@definition.dimensions.innerWidth))
+
+    for key, row of @data
+      # Create Focus Circles and Labels
+      @svg.selectAll(".focus-rect-#{key}")
+        .attr("width", @definition.x1.bandwidth())
+
+    @overlay.select(".overlay")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
+
+    @overlay.select(".zoom-pane")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
+
   preAppend: ->
     preError = "#{@preError}preAppend()"
     _ = @
@@ -507,8 +584,8 @@ window.Plotter.BarPlot = class BarPlot
     # Append the X-Axis
     @svg.append("g")
       .attr("class", "bar-plot-axis-x")
-      .style("fill", "none")\
-      .style("font-size", @options.font.size)
+      .style("fill", "none")
+      .style("font-size", @definition.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.xAxis)
       .attr("transform",
@@ -519,7 +596,7 @@ window.Plotter.BarPlot = class BarPlot
     @svg.append("g")
       .attr("class", "bar-plot-axis-y")
       .style("fill", "none")
-      .style("font-size", @options.font.size)
+      .style("font-size", @definition.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.yAxis)
       .attr("transform", "translate(#{@definition.dimensions.leftPadding}, 0)")
@@ -543,19 +620,16 @@ window.Plotter.BarPlot = class BarPlot
     if @options.y[0].units
       _y_title = "#{_y_title} #{@options.y[0].units}"
 
-    _y_vert = -@definition.dimensions.margin.top
-    _y_offset = -@definition.dimensions.margin.left
-
     # Y-Axis Title
     @svg.select(".bar-plot-axis-y")
       .append("text")
       .text(_y_title)
       .attr("class", "bar-plot-y-label")
-      .attr("x", _y_vert)
-      .attr("y", _y_offset)
+      .attr("x", -@definition.dimensions.margin.top)
+      .attr("y", -@definition.dimensions.margin.left)
       .attr("dy", ".75em")
       .attr("transform", "rotate(-90)")
-      .style("font-size", @options.font.size)
+      .style("font-size", @definition.font.size)
       .style("font-weight", @options.font.weight)
       .attr("fill", @options.axisColor)
 

@@ -352,7 +352,8 @@ window.Plotter.LinePlot = class LinePlot
     height = Math.round(width/@options.aspectDivisor)
     if width > 900
       @device = 'large'
-      @options.font.size = @options.font.size / 1.2
+      @definition.font =
+        size: @options.font.size / 1.2
       margin =
         top: Math.round(height * 0.04)
         right: Math.round(Math.pow(width, 0.3))
@@ -360,7 +361,8 @@ window.Plotter.LinePlot = class LinePlot
         left: 45
     else if width > 400
       @device = 'mid'
-      @options.font.size = @options.font.size / 1.5
+      @definition.font =
+        size: @options.font.size / 1.5
       _height = (@options.aspectDivisor/1.25)
       height = Math.round(width / _height)
       margin =
@@ -370,7 +372,8 @@ window.Plotter.LinePlot = class LinePlot
         left: 38
     else
       @device = 'small'
-      @options.font.size = @options.font.size/1.6
+      @definition.font =
+        size: @options.font.size / 1.6
       _height = (@options.aspectDivisor/2.2)
       height = Math.round(width/_height)
       margin =
@@ -380,9 +383,6 @@ window.Plotter.LinePlot = class LinePlot
         left: 33
 
     # Basic Dimention
-    console.log('width',width)
-    console.log('device',@device)
-    console.log('margin',margin)
     @definition.dimensions =
       width: width
       height: height
@@ -456,6 +456,79 @@ window.Plotter.LinePlot = class LinePlot
     if @options.y[0].max?
       @definition.y.max = @options.y[0].max
 
+  resize: ->
+    @getDefinition()
+
+    @outer.style("width", "#{@definition.dimensions.width}px")
+      .style("height", "#{@definition.dimensions.height}px")
+
+    @ctls.style("height", "#{@definition.dimensions.height}px")
+
+    @svg.attr("width", @definition.dimensions.width)
+      .attr("height", @definition.dimensions.height)
+
+    @svg.select("##{@clipPathId}")
+      .select("rect")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
+
+    @svg.select(".line-plot-axis-x")
+      .style("font-size", @definition.font.size)
+      .style("font-weight", @options.font.weight)
+      .call(@definition.xAxis)
+      .attr("transform",
+        "translate(0, #{@definition.dimensions.bottomPadding})"
+      )
+
+    @svg.select(".line-plot-axis-y")
+      .style("font-size", @definition.font.size)
+      .style("font-weight", @options.font.weight)
+      .call(@definition.yAxis)
+      .attr("transform", "translate(#{@definition.dimensions.leftPadding}, 0)")
+
+    @svg.select(".line-plot-y-label")
+      .attr("x", -@definition.dimensions.margin.top)
+      .attr("y", -@definition.dimensions.margin.left)
+      .style("font-size", @definition.font.size)
+      .style("font-weight", @options.font.weight)
+
+    # Append Bands & Line Path
+    for key, row of @data
+      @svg.select(".line-plot-area-#{key}")
+        .attr("d", @definition.area)
+
+      @svg.select(".line-plot-path-#{key}")
+        .attr("d", @definition.line)
+        .style("stroke-width",
+            Math.round(Math.pow(@definition.dimensions.width, 0.1)))
+
+    if @options.y[0].maxBar?
+      @lineWrapper.select(".line-plot-max-bar")
+        .attr("x", @definition.dimensions.leftPadding)
+        .attr("y", @definition.y(@options.y[0].maxBar))
+        .attr("width", (@definition.dimensions.innerWidth))
+
+    # Append Crosshair & Zoom Listening Targets
+    @overlay.select(".overlay")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
+
+    @overlay.select(".zoom-pane")
+      .attr("width", @definition.dimensions.innerWidth)
+      .attr("height", @definition.dimensions.innerHeight)
+      .attr("transform",
+        "translate(#{@definition.dimensions.leftPadding},
+        #{@definition.dimensions.topPadding})"
+      )
+
   preAppend: ->
     preError = "#{@preError}preAppend()"
     _ = @
@@ -523,7 +596,7 @@ window.Plotter.LinePlot = class LinePlot
       .attr("class", "line-plot-axis-x")
       .style("fill", "none")
       # .style("stroke", @options.axisColor)
-      .style("font-size", @options.font.size)
+      .style("font-size", @definition.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.xAxis)
       .attr("transform",
@@ -535,7 +608,7 @@ window.Plotter.LinePlot = class LinePlot
       .attr("class", "line-plot-axis-y")
       .style("fill", "none")
       # .style("stroke", @options.axisColor)
-      .style("font-size", @options.font.size)
+      .style("font-size", @definition.font.size)
       .style("font-weight", @options.font.weight)
       .call(@definition.yAxis)
       .attr("transform", "translate(#{@definition.dimensions.leftPadding}, 0)")
@@ -559,20 +632,17 @@ window.Plotter.LinePlot = class LinePlot
     if @options.y[0].units
       _y_title = "#{_y_title} #{@options.y[0].units}"
 
-    _y_vert = -@definition.dimensions.margin.top
-    _y_offset = -@definition.dimensions.margin.left
-
     # Y-Axis Title
     @svg.select(".line-plot-axis-y")
       .append("text")
       .text(_y_title)
       .attr("fill", @options.axisColor)
       .attr("class", "line-plot-y-label")
-      .attr("x", _y_vert)
-      .attr("y", _y_offset)
+      .attr("x", -@definition.dimensions.margin.top)
+      .attr("y", -@definition.dimensions.margin.left)
       .attr("dy", ".75em")
       .attr("transform", "rotate(-90)")
-      .style("font-size", @options.font.size)
+      .style("font-size", @definition.font.size)
       .style("font-weight", @options.font.weight)
 
     # Append Bands & Line Path

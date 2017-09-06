@@ -15,18 +15,28 @@ window.Plotter.Legend = class Legend
     @plotter = plotter
     @svg = @plotter.plots[plotId].proto.svg
     @plotId = @plotter.plots[plotId].proto.options.plotId
-    @dimensions = @plotter.plots[plotId].proto.definition.dimensions
+    @definition = @plotter.plots[plotId].proto.definition
+    @dimensions = @definition.dimensions
     @plotOptions = @plotter.plots[plotId].proto.options
     @plotDevice = @plotter.plots[plotId].proto.device
 
-    if @plotDevice == 'small'
-      @legendOffset =
-        rect: @dimensions.margin.left + 5
-        text: @dimensions.margin.left + 15
-    else
-      @legendOffset = {rect:@dimensions.margin.left + 20,text:@dimensions.margin.left + 30}
+    @getDimensions()
+
     @legend = @svg.append("g")
       .attr("class", "legend")
+
+  getDimensions: ->
+    @definition = @plotter.plots[@plotId].proto.definition
+    @dimensions = @definition.dimensions
+    @plotOptions = @plotter.plots[@plotId].proto.options
+
+    @legendOffset =
+      rect: @dimensions.margin.left + 20
+      text: @dimensions.margin.left + 30
+
+    if @plotDevice == 'small'
+      @legendOffset.rect = @dimensions.margin.left + 5
+      @legendOffset.text = @dimensions.margin.left + 15
 
   set: ->
     @data = []
@@ -76,13 +86,23 @@ window.Plotter.Legend = class Legend
       .attr("x", @legendOffset.text)
       .attr("y", (d) -> d.offset * 12 + 6)
       .text((d) -> d.title)
-      .style("font-size", @plotOptions.font.size + "px")
+      .style("font-size", @definition.font.size + "px")
       .style("font-weight", 500)
-    console.log(@plotOptions.font.size + "px")
+
     _text.exit()
       .remove()
 
-    remove: ->
-      # Remove the Legend
-      @legend.selectAll(".legend")
-        .remove()
+  remove: ->
+    # Remove the Legend
+    @legend.selectAll(".legend")
+      .remove()
+
+  resize: ->
+    @getDimensions()
+
+    _rect = @legend.selectAll("rect")
+      .attr("x", @legendOffset.rect)
+
+    _text = @legend.selectAll("text")
+      .attr("x", @legendOffset.text)
+      .style("font-size", @definition.font.size + "px")

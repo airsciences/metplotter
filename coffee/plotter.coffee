@@ -34,6 +34,7 @@ window.Plotter.Handler = class Handler
       minUpdateLength: 0
       updateLimit: 6
       width: null
+      responsive: false
     @options = @lib.mergeDefaults(options, defaults)
 
     # Refresh Wait Counters
@@ -174,6 +175,12 @@ window.Plotter.Handler = class Handler
     @appendSave()
     @appendPoweredBy()
 
+    if @options.responsive
+      $(window).on('resize', ->
+        console.log("Resize Detected!")
+        _.resize()
+      )
+
   appendLoading: ->
     # Append Temp
     $(@options.target).append("<div class=\"plotter-loading\"
@@ -243,7 +250,6 @@ window.Plotter.Handler = class Handler
       _plotType = "line"
 
     _decimals = @i.specs.getPlotDecimals(variable)
-    console.log("New Plot (variable, decimals): ", variable, _decimals)
 
     if _plotType is "bar"
       @plots[_key].proto = new window.Plotter.BarPlot(@, [[]], plot)
@@ -342,3 +348,11 @@ window.Plotter.Handler = class Handler
     $(@options.target).parent().append("<p
       style=\"font-size: 11px; font-weight: 300\">Powered by Air Sciences Inc. |
       <a href=\"http://airsci.com\">www.airsci.com</a></p>")
+
+  resize: ->
+    # Resize all plots & subs
+    for plotId, plot of @plots
+      plot.proto.resize()
+      @legends[plotId].resize()
+      @i.controls.resize(plotId)
+      plot.proto.setZoomTransform()
