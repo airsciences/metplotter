@@ -32,7 +32,7 @@ window.Plotter.Controls = class Controls
     selector = "plot-controls-#{_uuid}"
     _li_style = ""
 
-    fontSize = "font-size: 9px;"
+    fontSize = "font-size: 12px;"
     if $(window).width() > 400
       fontSize = "font-size: 14px;"
 
@@ -109,8 +109,8 @@ window.Plotter.Controls = class Controls
     callback = (data) ->
       _.stations[plotId] = data.responseJSON.results
 
-      html = "<div class=\"dropdown\">
-        <li><a id=\"station-#{uuid}\" class=\"station-dropdown dropdown-toggle\"
+      html = "<li class=\"dropdown\">
+          <a id=\"station-#{uuid}\" class=\"station-dropdown dropdown-toggle\"
             role=\"button\" title=\"Select Stations\"
             data-toggle=\"dropdown\" href=\"#\">
           <i class=\"icon-list\"></i></a>
@@ -248,8 +248,7 @@ window.Plotter.Controls = class Controls
     _current = []
 
     callback = (data) ->
-      html = "<li>
-        <div class=\"dropdown\">
+      html = "<li class=\"dropdown\">
         <li><a id=\"param-#{uuid}\"
           class=\"parameter-dropdown dropdown-toggle\" role=\"button\"
           data-toggle=\"dropdown\" href=\"#\">
@@ -291,7 +290,6 @@ window.Plotter.Controls = class Controls
       html = "#{html}
               </ul>
             </li>
-          </div>
         </li>"
 
       $(appendTarget).prepend(html)
@@ -605,9 +603,8 @@ window.Plotter.Controls = class Controls
           style=\"cursor: pointer\">Add Station Plot</a></li>
       </ul>"
 
-    html = "<li>
-        <div class=\"dropdown\">
-          <li><a id=\"new-#{uuid}\" class=\"dropdown-toggle\"
+    html = "<li class=\"dropdown\">
+        <a id=\"new-#{uuid}\" class=\"dropdown-toggle\"
             title=\"Add New Plot\"
             data-toggle=\"dropdown\" role=\"button\" href=\"#\">
               <i class=\"icon-plus\"></i></a>
@@ -622,9 +619,7 @@ window.Plotter.Controls = class Controls
 
     html = "#{html}
               </ul>
-            </li>
-          </div>
-        </li>"
+            </li>"
 
     # Append & Bind Dropdown
     $(appendTarget).append(html)

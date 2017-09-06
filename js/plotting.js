@@ -1222,7 +1222,7 @@
       _uuid = _proto.options.uuid;
       selector = "plot-controls-" + _uuid;
       _li_style = "";
-      fontSize = "font-size: 9px;";
+      fontSize = "font-size: 12px;";
       if ($(window).width() > 400) {
         fontSize = "font-size: 14px;";
       }
@@ -1318,7 +1318,7 @@
       callback = function(data) {
         var _region_name, html, i, j, len, len1, ref, ref1, region, station;
         _.stations[plotId] = data.responseJSON.results;
-        html = "<div class=\"dropdown\"> <li><a id=\"station-" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" title=\"Select Stations\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
+        html = "<li class=\"dropdown\"> <a id=\"station-" + uuid + "\" class=\"station-dropdown dropdown-toggle\" role=\"button\" title=\"Select Stations\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"station-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\">";
         ref = _.stations[plotId];
         for (i = 0, len = ref.length; i < len; i++) {
           region = ref[i];
@@ -1413,7 +1413,7 @@
       _current = [];
       callback = function(data) {
         var _add, _id, _prepend, html, i, id, len, parameter, ref, ref1;
-        html = "<li> <div class=\"dropdown\"> <li><a id=\"param-" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+        html = "<li class=\"dropdown\"> <li><a id=\"param-" + uuid + "\" class=\"parameter-dropdown dropdown-toggle\" role=\"button\" data-toggle=\"dropdown\" href=\"#\"> <i class=\"icon-list\"></i></a> <ul id=\"param-dropdown-" + plotId + "\" class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
         ref = data.responseJSON.results;
         for (i = 0, len = ref.length; i < len; i++) {
           parameter = ref[i];
@@ -1438,7 +1438,7 @@
           }
           html = html + " <li><a style=\"cursor: pointer\" onclick=\"plotter.addVariable(" + plotId + ", '" + _add + "')\">" + _prepend + " " + parameter.sensortype_name + "</a></li>";
         }
-        html = html + " </ul> </li> </div> </li>";
+        html = html + " </ul> </li> </li>";
         $(appendTarget).prepend(html);
         return $('#' + uuid).dropdown();
       };
@@ -1731,12 +1731,12 @@
         }
       ];
       _ul = "<ul id=\"new-" + uuid + "-dropdown\" class=\"dropdown-menu pull-right plot-control-button\" role=\"menu\" aria-labelledby=\"new-" + uuid + "\"> <li><a id=\"new-" + uuid + "-parameter\" style=\"cursor: pointer\">Add Parameter Plot</a></li> <li><a id=\"new-" + uuid + "-station\" style=\"cursor: pointer\">Add Station Plot</a></li> </ul>";
-      html = "<li> <div class=\"dropdown\"> <li><a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" title=\"Add New Plot\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
+      html = "<li class=\"dropdown\"> <a id=\"new-" + uuid + "\" class=\"dropdown-toggle\" title=\"Add New Plot\" data-toggle=\"dropdown\" role=\"button\" href=\"#\"> <i class=\"icon-plus\"></i></a> <ul class=\"dropdown-menu pull-right\" role=\"menu\" aria-labelledby=\"" + uuid + "\">";
       for (i = 0, len = _params.length; i < len; i++) {
         row = _params[i];
         html = html + " <li><a id=\"new_" + row.variable + "_" + uuid + "\" data-variable=\"" + row.variable + "\">" + row.title + "</a></li>";
       }
-      html = html + " </ul> </li> </div> </li>";
+      html = html + " </ul> </li>";
       $(appendTarget).append(html);
       results1 = [];
       for (j = 0, len1 = _params.length; j < len1; j++) {
