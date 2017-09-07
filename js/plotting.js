@@ -1636,7 +1636,7 @@
       _popover_size = 356;
       _nwac_offset_left = 128;
       _nwac_offset_top = 256 + 12;
-      if (location.origin === "http://localhost:5000") {
+      if (location.origin.indexOf(":5000") >= 0) {
         _nwac_offset_left = 0;
         _nwac_offset_top = 12;
       }

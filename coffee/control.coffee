@@ -521,7 +521,7 @@ window.Plotter.Controls = class Controls
     _nwac_offset_top = 256 + 12
 
     # Localhost (Emulator) Specific Styling Offset
-    if location.origin is "http://localhost:5000"
+    if location.origin.indexOf(":5000") >= 0
       _nwac_offset_left = 0
       _nwac_offset_top = 12
 
