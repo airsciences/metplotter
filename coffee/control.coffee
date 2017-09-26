@@ -522,20 +522,13 @@ window.Plotter.Controls = class Controls
     _nwac_offset_left = $("#map-#{_uuid}").offset().left -
       $("#main-content").offset().left - _popover_size
 
+    if location.origin.indexOf(":5000") >= 0
+      _nwac_offset_left = $("#map-#{_uuid}").offset().left - _popover_size
+
     if $(window).width() <= 400
       _popover_size = 200
       _nwac_offset_left = $("#main-content").width() / 2 -
         $("#map-pop-#{_uuid}").width() / 2
-
-    console.log(_nwac_offset_left)
-
-    ## Localhost (Emulator) Specific Styling Offset
-    #if location.origin.indexOf(":5000") >= 0
-    #  _nwac_offset_left = 0
-    #  _nwac_offset_top = 12
-
-    #  if $(window).width() <= 400
-    #    _nwac_offset_top = 0
 
     _center = @plotter.i.controls.maps[plotId].getCenter()
     _zoom = @plotter.i.controls.maps[plotId].getZoom()
