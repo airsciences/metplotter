@@ -363,7 +363,7 @@ window.Plotter.LinePlot = class LinePlot
       @device = 'mid'
       @definition.font =
         size: @options.font.size / 1.5
-      _height = (@options.aspectDivisor/1.25)
+      _height = (@options.aspectDivisor/1.4)
       height = Math.round(width / _height)
       margin =
         top: Math.round(height * 0.04)

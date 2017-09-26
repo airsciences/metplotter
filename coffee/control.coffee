@@ -517,26 +517,32 @@ window.Plotter.Controls = class Controls
     # toggle the map div.
     _uuid = @plotter.plots[plotId].proto.options.uuid
     _popover_size = 356
-    _nwac_offset_left = 128
-    _nwac_offset_top = 256 + 12
-
-    # Localhost (Emulator) Specific Styling Offset
-    if location.origin.indexOf(":5000") >= 0
-      _nwac_offset_left = 0
-      _nwac_offset_top = 12
+    _nwac_offset_top = $("#outer-#{_uuid}").offset().top -
+      $("#main-content").offset().top
+    _nwac_offset_left = $("#map-#{_uuid}").offset().left - _popover_size
 
     if $(window).width() <= 400
       _popover_size = 200
-      _nwac_offset_left = $(window).width() / 2 - 112
-      _nwac_offset_top = 0
+      _nwac_offset_left = $("#main-content").width() / 2 -
+        $("#map-pop-#{_uuid}").width() / 2
+
+    console.log(_nwac_offset_left)
+
+    ## Localhost (Emulator) Specific Styling Offset
+    #if location.origin.indexOf(":5000") >= 0
+    #  _nwac_offset_left = 0
+    #  _nwac_offset_top = 12
+
+    #  if $(window).width() <= 400
+    #    _nwac_offset_top = 0
 
     _center = @plotter.i.controls.maps[plotId].getCenter()
     _zoom = @plotter.i.controls.maps[plotId].getZoom()
 
     _offset = $("#map-control-#{_uuid}").parent().parent().prev().offset()
     $("#map-control-#{_uuid}").parent().parent().toggle()
-      .css("left", _offset.left - _popover_size - _nwac_offset_left)
-      .css("top", _offset.top - _nwac_offset_top)
+      .css("left", _nwac_offset_left)
+      .css("top", _nwac_offset_top)
 
     google.maps.event.trigger(@plotter.i.controls.maps[plotId], 'resize')
     @plotter.i.controls.maps[plotId].setCenter(_center)

@@ -660,7 +660,7 @@
         this.definition.font = {
           size: this.options.font.size / 1.5
         };
-        _height = this.options.aspectDivisor / 1.25;
+        _height = this.options.aspectDivisor / 1.4;
         height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
@@ -1634,21 +1634,17 @@
       var _center, _nwac_offset_left, _nwac_offset_top, _offset, _popover_size, _uuid, _zoom;
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
       _popover_size = 356;
-      _nwac_offset_left = 128;
-      _nwac_offset_top = 256 + 12;
-      if (location.origin.indexOf(":5000") >= 0) {
-        _nwac_offset_left = 0;
-        _nwac_offset_top = 12;
-      }
+      _nwac_offset_top = $("#outer-" + _uuid).offset().top - $("#main-content").offset().top;
+      _nwac_offset_left = $("#map-" + _uuid).offset().left - _popover_size;
       if ($(window).width() <= 400) {
         _popover_size = 200;
-        _nwac_offset_left = $(window).width() / 2 - 112;
-        _nwac_offset_top = 0;
+        _nwac_offset_left = $("#main-content").width() / 2 - $("#map-pop-" + _uuid).width() / 2;
       }
+      console.log(_nwac_offset_left);
       _center = this.plotter.i.controls.maps[plotId].getCenter();
       _zoom = this.plotter.i.controls.maps[plotId].getZoom();
       _offset = $("#map-control-" + _uuid).parent().parent().prev().offset();
-      $("#map-control-" + _uuid).parent().parent().toggle().css("left", _offset.left - _popover_size - _nwac_offset_left).css("top", _offset.top - _nwac_offset_top);
+      $("#map-control-" + _uuid).parent().parent().toggle().css("left", _nwac_offset_left).css("top", _nwac_offset_top);
       google.maps.event.trigger(this.plotter.i.controls.maps[plotId], 'resize');
       this.plotter.i.controls.maps[plotId].setCenter(_center);
       return this.plotter.i.controls.maps[plotId].setZoom(_zoom);
@@ -2831,7 +2827,7 @@
         this.definition.font = {
           size: this.options.font.size / 1.5
         };
-        _height = this.options.aspectDivisor / 1.25;
+        _height = this.options.aspectDivisor / 1.4;
         height = Math.round(width / _height);
         margin = {
           top: Math.round(height * 0.04),
@@ -3692,7 +3688,6 @@
       this.appendPoweredBy();
       if (this.options.responsive) {
         return $(window).on('resize', function() {
-          console.log("Resize Detected!");
           return _.resize();
         });
       }

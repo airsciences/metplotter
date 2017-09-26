@@ -177,7 +177,6 @@ window.Plotter.Handler = class Handler
 
     if @options.responsive
       $(window).on('resize', ->
-        console.log("Resize Detected!")
         _.resize()
       )
 

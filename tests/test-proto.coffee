@@ -48,6 +48,9 @@ window.Plotter.Tester = class Tester
     name = "DOM Overlay Ordering:"
     for key, plot of @plotter.plots
       _target = plot.proto.options.target
-      _last = $("#{_target}").find("svg").children().last()
-      valid = _last.hasClass("zoom-pane") and _last.is("rect")
-      console.log("#{name} listener is last", valid)
+      _legend = $("#{_target}").find("svg").children().last()
+      _zoom = $("#{_target}").find("svg").children().eq(-2)
+      validLeg = _legend.hasClass("legend")
+      valid = _zoom.hasClass("zoom-pane") and _zoom.is("rect")
+      console.log("#{name} legend is over zoom pane (is true?)", validLeg)
+      console.log("#{name} zoom pane is front (is true?)", valid)

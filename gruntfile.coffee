@@ -12,10 +12,7 @@ module.exports = (grunt) ->
       options: null
       app:
         files:
-          'cached/app.js': ['js/jquery.min.js', '!js/app*.js',
-            '!js/plotting*.js']
-          'cached/plotting.js': ['js/d3.min.js', '!js/app*.js',
-            'js/plotting.js']
+          'js/plotting.min.js': ['js/plotting.js']
     watch:
       coffee:
         files: ['coffee/**']

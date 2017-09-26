@@ -71,16 +71,19 @@
     Tester.prototype.colors = function() {};
 
     Tester.prototype.domOrdering = function() {
-      var _last, _target, key, name, plot, ref, results, valid;
+      var _legend, _target, _zoom, key, name, plot, ref, results, valid, validLeg;
       name = "DOM Overlay Ordering:";
       ref = this.plotter.plots;
       results = [];
       for (key in ref) {
         plot = ref[key];
         _target = plot.proto.options.target;
-        _last = $("" + _target).find("svg").children().last();
-        valid = _last.hasClass("zoom-pane") && _last.is("rect");
-        results.push(console.log(name + " listener is last", valid));
+        _legend = $("" + _target).find("svg").children().last();
+        _zoom = $("" + _target).find("svg").children().eq(-2);
+        validLeg = _legend.hasClass("legend");
+        valid = _zoom.hasClass("zoom-pane") && _zoom.is("rect");
+        console.log(name + " legend is over zoom pane (is true?)", validLeg);
+        results.push(console.log(name + " zoom pane is front (is true?)", valid));
       }
       return results;
     };
