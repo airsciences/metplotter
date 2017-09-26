@@ -1635,7 +1635,7 @@
       _uuid = this.plotter.plots[plotId].proto.options.uuid;
       _popover_size = 356;
       _nwac_offset_top = $("#outer-" + _uuid).offset().top - $("#main-content").offset().top;
-      _nwac_offset_left = $("#map-" + _uuid).offset().left - _popover_size;
+      _nwac_offset_left = $("#map-" + _uuid).offset().left - $("#main-content").offset().left - _popover_size;
       if ($(window).width() <= 400) {
         _popover_size = 200;
         _nwac_offset_left = $("#main-content").width() / 2 - $("#map-pop-" + _uuid).width() / 2;

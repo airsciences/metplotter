@@ -519,7 +519,8 @@ window.Plotter.Controls = class Controls
     _popover_size = 356
     _nwac_offset_top = $("#outer-#{_uuid}").offset().top -
       $("#main-content").offset().top
-    _nwac_offset_left = $("#map-#{_uuid}").offset().left - _popover_size
+    _nwac_offset_left = $("#map-#{_uuid}").offset().left -
+      $("#main-content").offset().left - _popover_size
 
     if $(window).width() <= 400
       _popover_size = 200
