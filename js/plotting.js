@@ -626,9 +626,17 @@
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()) + this.definition.dimensions.margin.left, this.definition.dimensions.innerHeight]];
       return this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
-        var transform;
-        transform = _.setZoomTransform();
-        return _.plotter.i.zoom.set(transform);
+        var ref, ref1;
+        if (typeof d3.event !== 'undefined') {
+          if (d3.event.sourceEvent != null) {
+            if ((ref = d3.event.sourceEvent.type) === "mousemove" || ref === "wheel") {
+              _.plotter.i.zoom.set(d3.event.transform, _.options.plotId);
+            }
+            if ((ref1 = d3.event.sourceEvent.type) === "zoom") {
+              return _.drawZoomTransform(d3.event.transform);
+            }
+          }
+        }
       });
     };
 
@@ -894,7 +902,6 @@
       this.overlay.remove();
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget(this.transform);
-      this.appendZoomTarget(this.transform);
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       this.svg.select(".bar-plot-axis-y").call(this.definition.yAxis);
@@ -938,35 +945,35 @@
     };
 
     BarPlot.prototype.setZoomTransform = function(transform) {
-      var _, _rescaleX, _transform, key, preError, ref, row;
+      var preError;
       if (!this.initialized) {
         return;
       }
       preError = this.preError + ".setZoomTransform(transform)";
-      _ = this;
-      if (transform != null) {
-        this.transform = transform;
-      } else if (d3.event != null) {
-        this.transform = d3.event.transform;
-      }
-      _transform = this.transform;
-      _rescaleX = _transform.rescaleX(this.definition.x);
+      this.transform = transform;
+      this.svg.call(this.definition.zoom.transform, transform);
+      return transform;
+    };
+
+    BarPlot.prototype.drawZoomTransform = function(transform) {
+      var _rescaleX, key, ref, row;
+      _rescaleX = transform.rescaleX(this.definition.x);
       this.svg.select(".bar-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
       this.state.range.scale = this.getDomainScale(_rescaleX);
       this.state.mean.scale = this.getDomainMean(_rescaleX);
       this.setDataState();
       this.setIntervalState();
       this.setDataRequirement();
-      this.setZoomState(_transform.k);
+      this.setZoomState(transform.k);
       ref = this.data;
       for (key in ref) {
         row = ref[key];
         this.svg.selectAll(".bar-" + key).attr("x", function(d) {
           return _rescaleX(d.x);
-        }).attr("width", d3.max([1, Math.floor(_transform.k * this.definition.x1.bandwidth())]));
+        }).attr("width", d3.max([1, Math.floor(transform.k * this.definition.x1.bandwidth())]));
       }
-      this.appendCrosshairTarget(_transform);
-      return _transform;
+      this.appendCrosshairTarget(transform);
+      return transform;
     };
 
     BarPlot.prototype.setCrosshair = function(transform, mouse) {
@@ -2783,9 +2790,17 @@
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()) + this.definition.dimensions.margin.left, this.definition.dimensions.innerHeight]];
       this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
-        var transform;
-        transform = _.setZoomTransform();
-        return _.plotter.i.zoom.set(transform);
+        var ref, ref1;
+        if (typeof d3.event !== 'undefined') {
+          if (d3.event.sourceEvent != null) {
+            if ((ref = d3.event.sourceEvent.type) === "mousemove" || ref === "wheel") {
+              _.plotter.i.zoom.set(d3.event.transform, _.options.plotId);
+            }
+            if ((ref1 = d3.event.sourceEvent.type) === "zoom") {
+              return _.drawZoomTransform(d3.event.transform);
+            }
+          }
+        }
       });
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
@@ -3002,7 +3017,7 @@
       }
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget(this.transform);
-      return this.appendZoomTarget(this.transform);
+      return this.appendZoomTarget();
     };
 
     LinePlot.prototype.update = function() {
@@ -3034,7 +3049,6 @@
       this.overlay.remove();
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget(this.transform);
-      this.appendZoomTarget(this.transform);
       this.calculateYAxisDims(this.data);
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       ref1 = this.data;
@@ -3068,7 +3082,7 @@
       });
     };
 
-    LinePlot.prototype.appendZoomTarget = function(transform) {
+    LinePlot.prototype.appendZoomTarget = function() {
       var _, preError;
       if (!this.initialized) {
         return;
@@ -3076,34 +3090,39 @@
       preError = this.preError + "appendZoomTarget()";
       _ = this;
       this.overlay.attr("class", "zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move");
-      return this.svg.call(this.definition.zoom, transform);
+      return this.svg.call(this.definition.zoom);
     };
 
     LinePlot.prototype.setZoomTransform = function(transform) {
-      var _, _rescaleX, _transform, key, preError, ref, row;
+      var preError;
       if (!this.initialized) {
         return;
       }
       preError = this.preError + ".setZoomTransform(transform)";
-      _ = this;
-      if (transform != null) {
-        this.transform = transform;
-      } else if (d3.event != null) {
-        this.transform = d3.event.transform;
+      this.transform = transform;
+      this.svg.call(this.definition.zoom.transform, transform);
+      return transform;
+    };
+
+    LinePlot.prototype.drawZoomTransform = function(transform) {
+      var _, _rescaleX, key, preError, ref, row;
+      if (!this.initialized) {
+        return;
       }
-      _transform = this.transform;
-      _rescaleX = _transform.rescaleX(this.definition.x);
-      this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX));
+      preError = this.preError + ".drawZoomTransform()";
+      _ = this;
+      _rescaleX = transform.rescaleX(this.definition.x);
+      this.svg.select(".line-plot-axis-x").call(this.definition.xAxis.scale(_rescaleX), transform);
       this.state.range.scale = this.getDomainScale(_rescaleX);
       this.state.mean.scale = this.getDomainMean(_rescaleX);
       this.setDataState();
       this.setIntervalState();
       this.setDataRequirement();
-      this.setZoomState(_transform.k);
+      this.setZoomState(transform.k);
       this.definition.area = d3.area().defined(function(d) {
         return !isNaN(d.yMin) && d.yMin !== null && !isNaN(d.yMax) && d.yMax !== null;
       }).x(function(d) {
-        return _transform.applyX(_.definition.x(d.x));
+        return transform.applyX(_.definition.x(d.x));
       }).y0(function(d) {
         return _.definition.y(d.yMin);
       }).y1(function(d) {
@@ -3112,7 +3131,7 @@
       this.definition.line = d3.line().defined(function(d) {
         return !isNaN(d.y) && d.y !== null;
       }).x(function(d) {
-        return _transform.applyX(_.definition.x(d.x));
+        return transform.applyX(_.definition.x(d.x));
       }).y(function(d) {
         return _.definition.y(d.y);
       });
@@ -3122,8 +3141,7 @@
         this.svg.select(".line-plot-area-" + key).attr("d", this.definition.area);
         this.svg.select(".line-plot-path-" + key).attr("d", this.definition.line);
       }
-      this.appendCrosshairTarget(_transform);
-      return _transform;
+      return this.appendCrosshairTarget(transform);
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
@@ -4297,12 +4315,12 @@
       this.plotter = plotter;
     }
 
-    Zoom.prototype.set = function(transform) {
-      var i, len, plot, ref, results;
+    Zoom.prototype.set = function(transform, callingPlotId) {
+      var plot, plotId, ref, results;
       ref = this.plotter.plots;
       results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        plot = ref[i];
+      for (plotId in ref) {
+        plot = ref[plotId];
         if (plot != null) {
           results.push(plot.proto.setZoomTransform(transform));
         } else {

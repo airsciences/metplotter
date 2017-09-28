@@ -21,7 +21,7 @@ module.exports = (grunt) ->
         files: ['tests/**']
         tasks: ['coffee']
       js:
-        files: ['js/**']
+        files: ['js/plotting.js']
         tasks: ['uglify']
 
   grunt.loadNpmTasks 'grunt-contrib-coffee'

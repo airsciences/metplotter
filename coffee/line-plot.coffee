@@ -323,8 +323,16 @@ window.Plotter.LinePlot = class LinePlot
       .scaleExtent([@options.zoom.scale.min, @options.zoom.scale.max])
       .translateExtent(_extent)
       .on("zoom", () ->
-        transform = _.setZoomTransform()
-        _.plotter.i.zoom.set(transform)
+        if typeof d3.event != 'undefined'
+          if d3.event.sourceEvent?
+            # console.log("SourceEvent: ", d3.event.sourceEvent.type)
+            if d3.event.sourceEvent.type in ["mousemove", "wheel"]
+              # console.log("Plot:#{_.options.plotId} Setter Event
+              #   (type: #{d3.event.sourceEvent.type}) (transform)",
+              #   d3.event.transform)
+              _.plotter.i.zoom.set(d3.event.transform, _.options.plotId)
+            if d3.event.sourceEvent.type in ["zoom"]
+              _.drawZoomTransform(d3.event.transform)
       )
 
     @definition.line = d3.line()
@@ -738,7 +746,7 @@ window.Plotter.LinePlot = class LinePlot
 
     # Append Crosshair & Zoom Listening Targets
     @appendCrosshairTarget(@transform)
-    @appendZoomTarget(@transform)
+    @appendZoomTarget()
 
   update: ->
     preError = "#{@preError}update()"
@@ -810,7 +818,7 @@ window.Plotter.LinePlot = class LinePlot
     @overlay = @svg.append("rect")
       .attr("class", "plot-event-target")
     @appendCrosshairTarget(@transform)
-    @appendZoomTarget(@transform)
+    # @appendZoomTarget()
 
     # @appendCrosshairTarget(d3.zoomIdentity)
     # @appendZoomTarget()
@@ -865,7 +873,7 @@ window.Plotter.LinePlot = class LinePlot
         _.plotter.i.crosshairs.set(transform, mouse)
       )
 
-  appendZoomTarget: (transform) ->
+  appendZoomTarget: ->
     if !@initialized
       return
     preError = "#{@preError}appendZoomTarget()"
@@ -883,26 +891,33 @@ window.Plotter.LinePlot = class LinePlot
       .style("pointer-events", "all")
       .style("cursor", "move")
 
-    @svg.call(@definition.zoom, transform)
+    @svg.call(@definition.zoom)
 
   setZoomTransform: (transform) ->
     # Set the current zoom transform state.
     if !@initialized
       return
     preError = "#{@preError}.setZoomTransform(transform)"
+
+    # Zoom-Tests:
+    # @definition.zoom.translateBy(@svg, transform.x, transform.y)
+    # @definition.zoom.scaleTo(@svg, transform.k)
+    # console.log("  Plot:#{@options.plotId} Setting to (transform)",
+    #   transform)
+    @transform = transform
+    @svg.call(@definition.zoom.transform, transform)
+    return transform
+
+  drawZoomTransform: (transform) ->
+    if !@initialized
+      return
+    preError = "#{@preError}.drawZoomTransform()"
     _ = @
 
-    #_transform = if transform then transform else d3.event.transform
-    if transform?
-      @transform = transform
-    else if d3.event?
-      @transform = d3.event.transform
-    _transform = @transform
-
     # Zoom the X-Axis
-    _rescaleX = _transform.rescaleX(@definition.x)
+    _rescaleX = transform.rescaleX(@definition.x)
     @svg.select(".line-plot-axis-x").call(
-      @definition.xAxis.scale(_rescaleX)
+      @definition.xAxis.scale(_rescaleX), transform
     )
 
     # Set the scaleRange
@@ -911,7 +926,7 @@ window.Plotter.LinePlot = class LinePlot
     @setDataState()
     @setIntervalState()
     @setDataRequirement()
-    @setZoomState(_transform.k)
+    @setZoomState(transform.k)
 
     # Redefine & Redraw the Area
     @definition.area = d3.area()
@@ -919,7 +934,7 @@ window.Plotter.LinePlot = class LinePlot
         !isNaN(d.yMin) and d.yMin isnt null and
         !isNaN(d.yMax) and d.yMax isnt null
       )
-      .x((d) -> _transform.applyX(_.definition.x(d.x)))
+      .x((d) -> transform.applyX(_.definition.x(d.x)))
       .y0((d) -> _.definition.y(d.yMin))
       .y1((d) -> _.definition.y(d.yMax))
 
@@ -928,7 +943,7 @@ window.Plotter.LinePlot = class LinePlot
       .defined((d)->
         !isNaN(d.y) and d.y isnt null
       )
-      .x((d) -> _transform.applyX(_.definition.x(d.x)))
+      .x((d) -> transform.applyX(_.definition.x(d.x)))
       .y((d) -> _.definition.y(d.y))
 
     for key, row of @data
@@ -937,8 +952,7 @@ window.Plotter.LinePlot = class LinePlot
       @svg.select(".line-plot-path-#{key}")
         .attr("d", @definition.line)
 
-    @appendCrosshairTarget(_transform)
-    return _transform
+    @appendCrosshairTarget(transform)
 
   setCrosshair: (transform, mouse) ->
     # Set the Crosshair position

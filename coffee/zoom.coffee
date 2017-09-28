@@ -10,9 +10,10 @@ window.Plotter.Zoom = class Zoom
     @preError = "Plotter.Zoom."
     @plotter = plotter
 
-  set: (transform) ->
+  set: (transform, callingPlotId) ->
     # Set the zoom state of all plots. Triggered by a single plot.
-    for plot in @plotter.plots
-
+    for plotId, plot of @plotter.plots
       if plot?
+        # if !(plotId == callingPlotId)
+        #   console.log("setting (callingId, plotId), ", callingPlotId, plotId)
         plot.proto.setZoomTransform(transform)

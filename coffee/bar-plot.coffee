@@ -321,8 +321,16 @@ window.Plotter.BarPlot = class BarPlot
       .scaleExtent([@options.zoom.scale.min, @options.zoom.scale.max])
       .translateExtent(_extent)
       .on("zoom", () ->
-        transform = _.setZoomTransform()
-        _.plotter.i.zoom.set(transform)
+        if typeof d3.event != 'undefined'
+          if d3.event.sourceEvent?
+            # console.log("SourceEvent: ", d3.event.sourceEvent.type)
+            if d3.event.sourceEvent.type in ["mousemove", "wheel"]
+              # console.log("Plot:#{_.options.plotId} Setter Event
+              #   (type: #{d3.event.sourceEvent.type}) (transform)",
+              #   d3.event.transform)
+              _.plotter.i.zoom.set(d3.event.transform, _.options.plotId)
+            if d3.event.sourceEvent.type in ["zoom"]
+              _.drawZoomTransform(d3.event.transform)
       )
 
   setBandDomain: (bandDomain) ->
@@ -817,7 +825,7 @@ window.Plotter.BarPlot = class BarPlot
     @overlay = @svg.append("rect")
       .attr("class", "plot-event-target")
     @appendCrosshairTarget(@transform)
-    @appendZoomTarget(@transform)
+    # @appendZoomTarget(@transform)
 
     @calculateYAxisDims(@data)
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
@@ -892,17 +900,19 @@ window.Plotter.BarPlot = class BarPlot
     if !@initialized
       return
     preError = "#{@preError}.setZoomTransform(transform)"
-    _ = @
 
-    #_transform = if transform then transform else d3.event.transform
-    if transform?
-      @transform = transform
-    else if d3.event?
-      @transform = d3.event.transform
-    _transform = @transform
+    # Zoom-Tests:
+    # @definition.zoom.translateBy(@svg, transform.x, transform.y)
+    # @definition.zoom.scaleTo(@svg, transform.k)
+    # console.log("  Plot:#{@options.plotId} Setting to (transform)",
+    #   transform)
+    @transform = transform
+    @svg.call(@definition.zoom.transform, transform)
+    return transform
 
+  drawZoomTransform: (transform) ->
     # Zoom the X-Axis
-    _rescaleX = _transform.rescaleX(@definition.x)
+    _rescaleX = transform.rescaleX(@definition.x)
     #_rescaleX1 = _transform.rescaleX(@definition.x1)
     @svg.select(".bar-plot-axis-x").call(
       @definition.xAxis.scale(_rescaleX)
@@ -914,17 +924,17 @@ window.Plotter.BarPlot = class BarPlot
     @setDataState()
     @setIntervalState()
     @setDataRequirement()
-    @setZoomState(_transform.k)
+    @setZoomState(transform.k)
 
     # Redraw Bars
     for key, row of @data
       @svg.selectAll(".bar-#{key}")
         .attr("x", (d) -> _rescaleX(d.x))
         .attr("width",
-          d3.max([1, Math.floor(_transform.k * @definition.x1.bandwidth())]))
+          d3.max([1, Math.floor(transform.k * @definition.x1.bandwidth())]))
 
-    @appendCrosshairTarget(_transform)
-    return _transform
+    @appendCrosshairTarget(transform)
+    return transform
 
   setCrosshair: (transform, mouse) ->
     # Set the Crosshair position
@@ -1045,36 +1055,6 @@ window.Plotter.BarPlot = class BarPlot
                   else
                     _value[key].y.toFixed(@options.decimals) + " " +
                       @options.y[key].units)
-
-    # Tooltip Overlap Prevention
-    #if (
-    #  @options.y.variable != null and
-    #  @options.y2.variable != null and
-    #  @options.y3.variable != null
-    #)
-    #  ypos = []
-    #  @svg.selectAll('.focus-text')
-    #    .attr("transform", (d, i) ->
-    #      row =
-    #        ind: i
-    #        y: parseInt(d3.select(@).attr("y"))
-    #        offset: 0
-    #      ypos.push(row)
-    #      return ""
-    #    )
-    #    .call((sel) ->
-    #      ypos.sort((a, b) -> a.y - b.y)
-    #      ypos.forEach ((p, i) ->
-    #        if i > 0
-    #          offset = Math.max(0, (ypos[i-1].y + 18) - ypos[i].y)
-    #          if ypos[i].ind == 0
-    #            offset = -offset
-    #          ypos[i].offset = offset
-    #      )
-    #    )
-    #    .attr("transform", (d, i) ->
-    #      return "translate (0, #{ypos[i].offset})"
-    #    )
 
     return mouse
 
