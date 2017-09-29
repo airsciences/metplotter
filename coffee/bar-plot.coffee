@@ -546,31 +546,6 @@ window.Plotter.BarPlot = class BarPlot
       .style("display", "inline-block")
       .style("vertical-align", "top")
 
-    #if @data[0].length == 0
-    #  if @options.type is "station"
-    #    add_text = "Select the Plot's Station"
-    #    sub_text = "Station type plots allow comparison of different variab\
-    #      les from the same station."
-    #  else if @options.type is "parameter"
-    #    add_text = "Select the Plot's Parameter"
-    #    sub_text = "Parameter type plots allow comparison of a single parama\
-    #      ter at multiple stations"
-    #  _offset = $(@options.target).offset()
-    #  @temp = @outer.append("div")
-    #    .attr("class", "new-temp-#{@options.plotId}")
-    #    .style("position", "Relative")
-    #    .style("top",
-    #      "#{parseInt(@definition.dimensions.innerHeight/1.74)}px")
-    #    .style("left",
-    #      "#{parseInt(@definition.dimensions.innerWidth/6.5)}px")
-    #    .style("width", "#{@definition.dimensions.innerWidth}px")
-    #    .style("text-align", "center")
-
-    #  @temp.append("p")
-    #    .text(sub_text)
-    #    .style("color", "#ggg")
-    #    .style("font-size", "12px")
-
     # Create the SVG
     @svg = @outer.append("svg")
       .attr("class", "bar-plot")
@@ -754,8 +729,6 @@ window.Plotter.BarPlot = class BarPlot
             .attr("class", "bar-#{key}")
             .attr("x", (d) -> _rescaleX(d.x))
             .attr("width", d3.max([1, _bandwidth]))
-            #.attr("x", (d) -> _.definition.x(d.x))
-            #.attr("width", d3.max([1, @definition.x1.bandwidth()]))
             .attr("y", (d) -> _.definition.y(d.y))
             .attr("height", (d) ->
               _.definition.dimensions.innerHeight +
@@ -796,8 +769,6 @@ window.Plotter.BarPlot = class BarPlot
             .attr("class", "bar-#{key}")
             .attr("x", (d) -> _rescaleX(d.x))
             .attr("width", d3.max([1, _bandwidth]))
-            #.attr("x", (d) -> _.definition.x(d.x))
-            #.attr("width", d3.max([1, @definition.x1.bandwidth()]))
             .attr("y", (d) -> _.definition.y(d.y))
             .attr("height", (d) ->
               _.definition.dimensions.innerHeight +
@@ -812,8 +783,6 @@ window.Plotter.BarPlot = class BarPlot
           # transitionDurationbar
           @bars[key].attr("x", (d) -> _rescaleX(d.x))
             .attr("width", d3.max([1, _bandwidth]))
-            #.attr("x", (d) -> _.definition.x(d.x))
-            #.attr("width", d3.max([1, @definition.x1.bandwidth()]))
             .attr("y", (d) -> _.definition.y(d.y))
             .attr("height", (d) ->
               _.definition.dimensions.innerHeight +
@@ -825,17 +794,9 @@ window.Plotter.BarPlot = class BarPlot
     @overlay = @svg.append("rect")
       .attr("class", "plot-event-target")
     @appendCrosshairTarget(@transform)
-    # @appendZoomTarget(@transform)
 
     @calculateYAxisDims(@data)
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
-
-    #_rescaleX = @transform.rescaleX(@definition.x)
-    #for key, row of @data
-    #  # Redraw the Bars
-    #  @svg.selectAll(".bar-#{key}")
-    #    .attr("x", (d) -> _rescaleX(d.x))
-    #    .attr("width", Math.floor(@transform.k * @definition.x1.bandwidth()))
 
     # Redraw the Y-Axis
     @svg.select(".bar-plot-axis-y")
@@ -846,7 +807,7 @@ window.Plotter.BarPlot = class BarPlot
         .attr("y", @definition.y(@options.y[0].maxBar))
 
     # Reset the zoom state
-    @setZoomTransform(@transform)
+    @drawZoomTransform(@transform)
 
   removeTemp: ->
     @temp.remove()
@@ -875,7 +836,7 @@ window.Plotter.BarPlot = class BarPlot
         _.plotter.i.crosshairs.set(transform, mouse)
       )
 
-  appendZoomTarget: (transform) ->
+  appendZoomTarget: ->
     if !@initialized
       return
     preError = "#{@preError}appendZoomTarget()"
@@ -893,7 +854,7 @@ window.Plotter.BarPlot = class BarPlot
       .style("pointer-events", "all")
       .style("cursor", "move")
 
-    @svg.call(@definition.zoom, transform)
+    @svg.call(@definition.zoom)
 
   setZoomTransform: (transform) ->
     # Set the current zoom transform state.
@@ -901,11 +862,6 @@ window.Plotter.BarPlot = class BarPlot
       return
     preError = "#{@preError}.setZoomTransform(transform)"
 
-    # Zoom-Tests:
-    # @definition.zoom.translateBy(@svg, transform.x, transform.y)
-    # @definition.zoom.scaleTo(@svg, transform.k)
-    # console.log("  Plot:#{@options.plotId} Setting to (transform)",
-    #   transform)
     @transform = transform
     @svg.call(@definition.zoom.transform, transform)
     return transform

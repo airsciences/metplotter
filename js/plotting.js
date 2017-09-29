@@ -908,7 +908,7 @@
       if (this.options.y[0].maxBar != null) {
         this.barWrapper.select(".bar-plot-max-bar").attr("y", this.definition.y(this.options.y[0].maxBar));
       }
-      return this.setZoomTransform(this.transform);
+      return this.drawZoomTransform(this.transform);
     };
 
     BarPlot.prototype.removeTemp = function() {
@@ -933,7 +933,7 @@
       });
     };
 
-    BarPlot.prototype.appendZoomTarget = function(transform) {
+    BarPlot.prototype.appendZoomTarget = function() {
       var _, preError;
       if (!this.initialized) {
         return;
@@ -941,7 +941,7 @@
       preError = this.preError + "appendZoomTarget()";
       _ = this;
       this.overlay.attr("class", "zoom-pane").attr("width", this.definition.dimensions.innerWidth).attr("height", this.definition.dimensions.innerHeight).attr("transform", "translate(" + this.definition.dimensions.leftPadding + ", " + this.definition.dimensions.topPadding + ")").style("fill", "none").style("pointer-events", "all").style("cursor", "move");
-      return this.svg.call(this.definition.zoom, transform);
+      return this.svg.call(this.definition.zoom);
     };
 
     BarPlot.prototype.setZoomTransform = function(transform) {
@@ -2208,7 +2208,6 @@
         _.plotter.plots[plotId].proto.setData(_.plotter.plots[plotId].__data__[dataSetId]);
         _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain);
         _.plotter.plots[plotId].proto.append();
-        _.plotter.plots[plotId].proto.setZoomTransform(_transform);
         if (!(_.plotter.legends[plotId] != null)) {
           _.plotter.legends[plotId] = new window.Plotter.Legend(_.plotter, plotId);
           _.plotter.legends[plotId].draw();
@@ -3017,7 +3016,7 @@
       }
       this.overlay = this.svg.append("rect").attr("class", "plot-event-target");
       this.appendCrosshairTarget(this.transform);
-      return this.appendZoomTarget();
+      return this.appendZoomTarget(this.transform);
     };
 
     LinePlot.prototype.update = function() {
@@ -3061,7 +3060,7 @@
       if (this.options.y[0].maxBar != null) {
         this.lineWrapper.select(".line-plot-max-bar").attr("y", this.definition.y(this.options.y[0].maxBar));
       }
-      return this.setZoomTransform(this.transform);
+      return this.drawZoomTransform(this.transform);
     };
 
     LinePlot.prototype.appendCrosshairTarget = function(transform) {

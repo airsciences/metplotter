@@ -105,7 +105,7 @@ window.Plotter.InitialSync = class InitialSync
         _.plotter.plots[plotId].__data__[dataSetId])
       _.plotter.plots[plotId].proto.setBandDomain(_.plotter.bandDomain)
       _.plotter.plots[plotId].proto.append()
-      _.plotter.plots[plotId].proto.setZoomTransform(_transform)
+      # _.plotter.plots[plotId].proto.setZoomTransform(_transform)
 
       # Draw the Legend.
       if !(_.plotter.legends[plotId]?)

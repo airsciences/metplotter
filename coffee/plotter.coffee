@@ -160,6 +160,7 @@ window.Plotter.Handler = class Handler
         row.proto = new window.Plotter.LinePlot(@, row.__data__, _options)
       row.proto.preAppend()
       row.proto.append()
+      # row.proto.appendZoomTarget(row.proto.transform)
 
       # Append controls
       @i.controls.append(key)

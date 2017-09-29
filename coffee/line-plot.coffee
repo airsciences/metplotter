@@ -556,31 +556,6 @@ window.Plotter.LinePlot = class LinePlot
       .style("display", "inline-block")
       .style("vertical-align", "top")
 
-    #if @data[0].length == 0
-    #  if @options.type is "station"
-    #    add_text = "Select the Plot's Station"
-    #    sub_text = "Station type plots allow comparison of different variab\
-    #      les from the same station."
-    #  else if @options.type is "parameter"
-    #    add_text = "Select the Plot's Parameter"
-    #    sub_text = "Parameter type plots allow comparison of a single parama\
-    #      ter at multiple stations"
-    #  _offset = $(@options.target).offset()
-    #  @temp = @outer.append("div")
-    #    .attr("class", "new-temp-#{@options.plotId}")
-    #    .style("position", "Relative")
-    #    .style("top",
-    #      "#{parseInt(@definition.dimensions.innerHeight/1.74)}px")
-    #    .style("left",
-    #      "#{parseInt(@definition.dimensions.innerWidth/6.5)}px")
-    #    .style("width", "#{@definition.dimensions.innerWidth}px")
-    #    .style("text-align", "center")
-
-    #  @temp.append("p")
-    #    .text(sub_text)
-    #    .style("color", "#ggg")
-    #    .style("font-size", "12px")
-
     # Create the SVG
     @svg = @outer.append("svg")
       .attr("class", "line-plot")
@@ -746,7 +721,7 @@ window.Plotter.LinePlot = class LinePlot
 
     # Append Crosshair & Zoom Listening Targets
     @appendCrosshairTarget(@transform)
-    @appendZoomTarget()
+    @appendZoomTarget(@transform)
 
   update: ->
     preError = "#{@preError}update()"
@@ -818,10 +793,6 @@ window.Plotter.LinePlot = class LinePlot
     @overlay = @svg.append("rect")
       .attr("class", "plot-event-target")
     @appendCrosshairTarget(@transform)
-    # @appendZoomTarget()
-
-    # @appendCrosshairTarget(d3.zoomIdentity)
-    # @appendZoomTarget()
 
     @calculateYAxisDims(@data)
     @definition.y.domain([@definition.y.min, @definition.y.max]).nice()
@@ -847,7 +818,7 @@ window.Plotter.LinePlot = class LinePlot
         .attr("y", @definition.y(@options.y[0].maxBar))
 
     # Reset the zoom state
-    @setZoomTransform(@transform)
+    @drawZoomTransform(@transform)
 
   appendCrosshairTarget: (transform) ->
     # Move Crosshairs and Focus Circle Based on Mouse Location
@@ -899,11 +870,6 @@ window.Plotter.LinePlot = class LinePlot
       return
     preError = "#{@preError}.setZoomTransform(transform)"
 
-    # Zoom-Tests:
-    # @definition.zoom.translateBy(@svg, transform.x, transform.y)
-    # @definition.zoom.scaleTo(@svg, transform.k)
-    # console.log("  Plot:#{@options.plotId} Setting to (transform)",
-    #   transform)
     @transform = transform
     @svg.call(@definition.zoom.transform, transform)
     return transform
