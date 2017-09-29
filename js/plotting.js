@@ -294,7 +294,7 @@
         y: _y,
         zoom: {
           scale: {
-            min: 0.05,
+            min: 0.03,
             max: 5
           }
         },
@@ -2455,7 +2455,7 @@
         y: _y,
         zoom: {
           scale: {
-            min: 0.05,
+            min: 0.03,
             max: 5
           }
         },
@@ -3222,7 +3222,7 @@
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
               _date = this.displayDate(_value[key].x);
-              if (!isNaN(dy[key]) && (_value[key].y != null)) {
+              if (!isNaN(dy[key]) && (_value[key].y != null) && typeof _value[key].y !== 'undefined') {
                 this.focusCircle[key].attr("transform", "translate(0, 0)");
               }
             }
@@ -3233,7 +3233,7 @@
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             fdtx = cx - 120;
             this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
-            if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
+            if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null) && typeof _value[key].y !== 'undefined') {
               this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
               textAnchor = "start";
               this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).attr("text-anchor", textAnchor).text(_value[key].y ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(this.options.decimals) + " " + this.options.y[key].units : void 0);

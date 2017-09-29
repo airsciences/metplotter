@@ -45,7 +45,7 @@ window.Plotter.BarPlot = class BarPlot
       y: _y
       zoom:
         scale:
-          min: 0.05
+          min: 0.03
           max: 5
       aspectDivisor: 5
       transitionDuration: 500

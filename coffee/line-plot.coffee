@@ -45,7 +45,7 @@ window.Plotter.LinePlot = class LinePlot
       y: _y
       zoom:
         scale:
-          min: 0.05
+          min: 0.03
           max: 5
       aspectDivisor: 5
       transitionDuration: 500
@@ -982,7 +982,10 @@ window.Plotter.LinePlot = class LinePlot
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
             _date = @displayDate(_value[key].x)
-            if !isNaN(dy[key]) and _value[key].y?
+            if (
+              !isNaN(dy[key]) and _value[key].y? and
+              typeof _value[key].y != 'undefined'
+            )
               @focusCircle[key].attr("transform", "translate(0, 0)")
 
         cx = dx - _dims.leftPadding
@@ -1014,7 +1017,7 @@ window.Plotter.LinePlot = class LinePlot
 
           if (
             @options.y[key].variable != null and !isNaN(dy[key]) and
-            _value[key].y?
+            _value[key].y? and typeof _value[key].y != 'undefined'
           )
             @focusCircle[key]
               .attr("cx", dx)
