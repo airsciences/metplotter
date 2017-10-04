@@ -971,6 +971,11 @@ window.Plotter.LinePlot = class LinePlot
         i = i1 - 1
 
       if _datum[i]?
+        _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000
+        if @options.plotId = 1
+          console.log("Datetime (key, dataData, _dateHide, diff)",
+            key, _datum[i].x, _dateHide,
+            Math.abs(_datum[i].x.getTime() - x0.getTime()))
         if transform
           dx = transform.applyX(@definition.x(_datum[i].x))
         else
@@ -984,9 +989,16 @@ window.Plotter.LinePlot = class LinePlot
             _date = @displayDate(_value[key].x)
             if (
               !isNaN(dy[key]) and _value[key].y? and
-              typeof _value[key].y != 'undefined'
+              typeof _value[key].y != 'undefined' and
+              _dateHide is false
             )
-              @focusCircle[key].attr("transform", "translate(0, 0)")
+              @focusCircle[key]
+                .attr("transform", "translate(0, 0)")
+            if _dateHide
+              @focusCircle[key].style("display", "none")
+            else
+              @focusCircle[key].style("display", null)
+
 
         cx = dx - _dims.leftPadding
         if cx >= 0
@@ -1014,6 +1026,11 @@ window.Plotter.LinePlot = class LinePlot
             .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
             .text(_date)
+
+          if _dateHide
+            @focusText[key].style("display", "none")
+          else
+            @focusText[key].style("display", null)
 
           if (
             @options.y[key].variable != null and !isNaN(dy[key]) and

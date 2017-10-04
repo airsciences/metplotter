@@ -3144,7 +3144,7 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0, ypos;
+      var _, _date, _dateHide, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0, ypos;
       if (!this.initialized) {
         return;
       }
@@ -3210,6 +3210,10 @@
           i = i1 - 1;
         }
         if (_datum[i] != null) {
+          _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000;
+          if (this.options.plotId = 1) {
+            console.log("Datetime (key, dataData, _dateHide, diff)", key, _datum[i].x, _dateHide, Math.abs(_datum[i].x.getTime() - x0.getTime()));
+          }
           if (transform) {
             dx = transform.applyX(this.definition.x(_datum[i].x));
           } else {
@@ -3222,8 +3226,13 @@
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
               _date = this.displayDate(_value[key].x);
-              if (!isNaN(dy[key]) && (_value[key].y != null) && typeof _value[key].y !== 'undefined') {
+              if (!isNaN(dy[key]) && (_value[key].y != null) && typeof _value[key].y !== 'undefined' && _dateHide === false) {
                 this.focusCircle[key].attr("transform", "translate(0, 0)");
+              }
+              if (_dateHide) {
+                this.focusCircle[key].style("display", "none");
+              } else {
+                this.focusCircle[key].style("display", null);
               }
             }
           }
@@ -3233,6 +3242,11 @@
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             fdtx = cx - 120;
             this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
+            if (_dateHide) {
+              this.focusText[key].style("display", "none");
+            } else {
+              this.focusText[key].style("display", null);
+            }
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null) && typeof _value[key].y !== 'undefined') {
               this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
               textAnchor = "start";
