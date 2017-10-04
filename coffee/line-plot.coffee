@@ -972,10 +972,10 @@ window.Plotter.LinePlot = class LinePlot
 
       if _datum[i]?
         _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000
-        if @options.plotId = 1
-          console.log("Datetime (key, dataData, _dateHide, diff)",
-            key, _datum[i].x, _dateHide,
-            Math.abs(_datum[i].x.getTime() - x0.getTime()))
+        # if @options.plotId = 1
+        #   console.log("Datetime (key, dataData, _dateHide, diff)",
+        #     key, _datum[i].x, _dateHide,
+        #     Math.abs(_datum[i].x.getTime() - x0.getTime()))
         if transform
           dx = transform.applyX(@definition.x(_datum[i].x))
         else
@@ -994,6 +994,7 @@ window.Plotter.LinePlot = class LinePlot
             )
               @focusCircle[key]
                 .attr("transform", "translate(0, 0)")
+
             if _dateHide
               @focusCircle[key].style("display", "none")
             else
@@ -1027,11 +1028,6 @@ window.Plotter.LinePlot = class LinePlot
             .attr("transform", "translate(#{_dims.leftPadding}, 0)")
             .text(_date)
 
-          if _dateHide
-            @focusText[key].style("display", "none")
-          else
-            @focusText[key].style("display", null)
-
           if (
             @options.y[key].variable != null and !isNaN(dy[key]) and
             _value[key].y? and typeof _value[key].y != 'undefined'
@@ -1057,6 +1053,11 @@ window.Plotter.LinePlot = class LinePlot
                   else
                     _value[key].y.toFixed(@options.decimals) + " " +
                       @options.y[key].units)
+
+            if _dateHide
+              @focusText[key].style("display", "none")
+            else
+              @focusText[key].style("display", null)
 
     # Tooltip Overlap Prevention
     if (@options.y[1] != undefined)

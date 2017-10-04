@@ -3211,9 +3211,6 @@
         }
         if (_datum[i] != null) {
           _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000;
-          if (this.options.plotId = 1) {
-            console.log("Datetime (key, dataData, _dateHide, diff)", key, _datum[i].x, _dateHide, Math.abs(_datum[i].x.getTime() - x0.getTime()));
-          }
           if (transform) {
             dx = transform.applyX(this.definition.x(_datum[i].x));
           } else {
@@ -3242,15 +3239,15 @@
             this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             fdtx = cx - 120;
             this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
-            if (_dateHide) {
-              this.focusText[key].style("display", "none");
-            } else {
-              this.focusText[key].style("display", null);
-            }
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null) && typeof _value[key].y !== 'undefined') {
               this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
               textAnchor = "start";
               this.focusText[key].attr("x", dx + _dims.leftPadding / 10).attr("y", dy[key] - _dims.topPadding / 10).attr("text-anchor", textAnchor).text(_value[key].y ? _.options.y[0].variable === "wind_direction" ? directionLabel(_value[key].y) : _value[key].y.toFixed(this.options.decimals) + " " + this.options.y[key].units : void 0);
+              if (_dateHide) {
+                this.focusText[key].style("display", "none");
+              } else {
+                this.focusText[key].style("display", null);
+              }
             }
           }
         }
