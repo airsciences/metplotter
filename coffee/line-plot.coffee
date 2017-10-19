@@ -970,6 +970,21 @@ window.Plotter.LinePlot = class LinePlot
       if x0.getTime() >= @state.range.data[key].max.getTime()
         i = i1 - 1
 
+      chx = mouse[0]
+      @crosshairs.select(".crosshair-x")
+        .attr("x1", chx)
+        .attr("y1", _dims.topPadding)
+        .attr("x2", chx)
+        .attr("y2", _dims.innerHeight + _dims.topPadding)
+        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+
+      @crosshairs.select(".crosshair-x-under")
+        .attr("x", chx)
+        .attr("y", _dims.topPadding)
+        .attr("width", (_dims.innerWidth - chx))
+        .attr("height", _dims.innerHeight)
+        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+
       if _datum[i]?
         _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000
         # if @options.plotId = 1
@@ -1003,19 +1018,7 @@ window.Plotter.LinePlot = class LinePlot
 
         cx = dx - _dims.leftPadding
         if cx >= 0
-          @crosshairs.select(".crosshair-x")
-            .attr("x1", cx)
-            .attr("y1", _dims.topPadding)
-            .attr("x2", cx)
-            .attr("y2", _dims.innerHeight + _dims.topPadding)
-            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-          @crosshairs.select(".crosshair-x-under")
-            .attr("x", cx)
-            .attr("y", _dims.topPadding)
-            .attr("width", (_dims.innerWidth - cx))
-            .attr("height", _dims.innerHeight)
-            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
           fdtx = cx - 120
           # [Disabled] - Tooltip Flip

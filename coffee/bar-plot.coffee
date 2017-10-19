@@ -942,6 +942,21 @@ window.Plotter.BarPlot = class BarPlot
       if x0.getTime() >= @state.range.data[key].max.getTime()
         i = i1 - 1
 
+      chx = mouse[0]
+      @crosshairs.select(".crosshair-x")
+        .attr("x1", chx)
+        .attr("y1", _dims.topPadding)
+        .attr("x2", chx)
+        .attr("y2", _dims.innerHeight + _dims.topPadding)
+        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+
+      @crosshairs.select(".crosshair-x-under")
+        .attr("x", chx)
+        .attr("y", _dims.topPadding)
+        .attr("width", (_dims.innerWidth - chx))
+        .attr("height", _dims.innerHeight)
+        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+
       if _datum[i]?
         if transform
           dx = transform.applyX(@definition.x(_datum[i].x))
@@ -959,20 +974,6 @@ window.Plotter.BarPlot = class BarPlot
 
         cx = dx - _dims.leftPadding
         if cx >= 0
-          @crosshairs.select(".crosshair-x")
-            .attr("x1", cx)
-            .attr("y1", _dims.topPadding)
-            .attr("x2", cx)
-            .attr("y2", _dims.innerHeight + _dims.topPadding)
-            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
-
-          @crosshairs.select(".crosshair-x-under")
-            .attr("x", cx)
-            .attr("y", _dims.topPadding)
-            .attr("width", (_dims.innerWidth - cx))
-            .attr("height", _dims.innerHeight)
-            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
-
           fdtx = cx - 120
           # [Disabled] - Tooltip Flip
           # if cx < 150

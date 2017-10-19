@@ -977,7 +977,7 @@
     };
 
     BarPlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0;
+      var _, _date, _datum, _dims, _mouseTarget, _value, chx, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0;
       if (!this.initialized) {
         return;
       }
@@ -1042,6 +1042,9 @@
         if (x0.getTime() >= this.state.range.data[key].max.getTime()) {
           i = i1 - 1;
         }
+        chx = mouse[0];
+        this.crosshairs.select(".crosshair-x").attr("x1", chx).attr("y1", _dims.topPadding).attr("x2", chx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+        this.crosshairs.select(".crosshair-x-under").attr("x", chx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - chx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
         if (_datum[i] != null) {
           if (transform) {
             dx = transform.applyX(this.definition.x(_datum[i].x));
@@ -1062,8 +1065,6 @@
           }
           cx = dx - _dims.leftPadding;
           if (cx >= 0) {
-            this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-            this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             fdtx = cx - 120;
             this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
@@ -3144,7 +3145,7 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _dateHide, _datum, _dims, _mouseTarget, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0, ypos;
+      var _, _date, _dateHide, _datum, _dims, _mouseTarget, _value, chx, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0, ypos;
       if (!this.initialized) {
         return;
       }
@@ -3209,6 +3210,9 @@
         if (x0.getTime() >= this.state.range.data[key].max.getTime()) {
           i = i1 - 1;
         }
+        chx = mouse[0];
+        this.crosshairs.select(".crosshair-x").attr("x1", chx).attr("y1", _dims.topPadding).attr("x2", chx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+        this.crosshairs.select(".crosshair-x-under").attr("x", chx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - chx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
         if (_datum[i] != null) {
           _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000;
           if (transform) {
@@ -3235,8 +3239,6 @@
           }
           cx = dx - _dims.leftPadding;
           if (cx >= 0) {
-            this.crosshairs.select(".crosshair-x").attr("x1", cx).attr("y1", _dims.topPadding).attr("x2", cx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-            this.crosshairs.select(".crosshair-x-under").attr("x", cx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - cx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
             fdtx = cx - 120;
             this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null) && typeof _value[key].y !== 'undefined') {
