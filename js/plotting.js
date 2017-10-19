@@ -2799,7 +2799,6 @@
         var ref, ref1;
         if (typeof d3.event !== 'undefined') {
           if (d3.event.sourceEvent != null) {
-            console.log("SourceEvent: ", d3.event.sourceEvent.type);
             if ((ref = d3.event.sourceEvent.type) === "mousemove" || ref === "wheel" || ref === "touchmove") {
               _.plotter.i.zoom.set(d3.event.transform, _.options.plotId);
             }

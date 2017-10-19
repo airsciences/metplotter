@@ -325,7 +325,7 @@ window.Plotter.LinePlot = class LinePlot
       .on("zoom", () ->
         if typeof d3.event != 'undefined'
           if d3.event.sourceEvent?
-            console.log("SourceEvent: ", d3.event.sourceEvent.type)
+            # console.log("SourceEvent: ", d3.event.sourceEvent.type)
             if d3.event.sourceEvent.type in ["mousemove", "wheel", "touchmove"]
               # console.log("Plot:#{_.options.plotId} Setter Event
               #   (type: #{d3.event.sourceEvent.type}) (transform)",
