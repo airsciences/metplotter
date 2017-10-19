@@ -3896,8 +3896,7 @@
         plot.proto.resize();
         this.legends[plotId].resize();
         this.i.controls.resize(plotId);
-        plot.proto.setZoomTransform(d3.zoomIdentity);
-        results.push(console.log("Plot-" + plotId + ": pos-set-zoom-trans (transform):", plot.proto.transform));
+        results.push(plot.proto.setZoomTransform());
       }
       return results;
     };
