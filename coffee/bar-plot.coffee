@@ -92,6 +92,7 @@ window.Plotter.BarPlot = class BarPlot
     @parseDate = d3.timeParse(@options.x.format)
     @bisectDate = d3.bisector((d) -> d.x).left
     @displayDate = d3.timeFormat("%b. %e, %I:%M %p")
+    @displayDateRound = d3.timeFormat("%b. %e, %I:%M %p")
     @sortDatetimeAsc = (a, b) -> a.x - b.x
 
     # Prepare the Data & Definition
@@ -324,7 +325,7 @@ window.Plotter.BarPlot = class BarPlot
         if typeof d3.event != 'undefined'
           if d3.event.sourceEvent?
             # console.log("SourceEvent: ", d3.event.sourceEvent.type)
-            if d3.event.sourceEvent.type in ["mousemove", "wheel"]
+            if d3.event.sourceEvent.type in ["mousemove", "wheel", "touchmove"]
               # console.log("Plot:#{_.options.plotId} Setter Event
               #   (type: #{d3.event.sourceEvent.type}) (transform)",
               #   d3.event.transform)
@@ -942,20 +943,27 @@ window.Plotter.BarPlot = class BarPlot
       if x0.getTime() >= @state.range.data[key].max.getTime()
         i = i1 - 1
 
-      chx = mouse[0]
+      # Crosshairs Bound to Mouse.
       @crosshairs.select(".crosshair-x")
-        .attr("x1", chx)
+        .attr("x1", mouse[0])
         .attr("y1", _dims.topPadding)
-        .attr("x2", chx)
+        .attr("x2", mouse[0])
         .attr("y2", _dims.innerHeight + _dims.topPadding)
         .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
       @crosshairs.select(".crosshair-x-under")
-        .attr("x", chx)
+        .attr("x", mouse[0])
         .attr("y", _dims.topPadding)
-        .attr("width", (_dims.innerWidth - chx))
+        .attr("width", (_dims.innerWidth - mouse[0]))
         .attr("height", _dims.innerHeight)
         .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+
+      _test_date = @definition.x.invert(mouse[0] + _dims.leftPadding)
+      if transform
+        _test_date = @definition.x.invert(
+          transform.invertX(mouse[0] + _dims.leftPadding))
+
+      console.log("Test date: ", @displayDate(_test_date))
 
       if _datum[i]?
         if transform
@@ -969,6 +977,7 @@ window.Plotter.BarPlot = class BarPlot
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
             _date = @displayDate(_value[key].x)
+            console.log("     Date: ", _date)
             if !isNaN(dy[key]) and _value[key].y?
               @focusRect[key].attr("transform", "translate(0, 0)")
 

@@ -380,6 +380,7 @@
         return d.x;
       }).left;
       this.displayDate = d3.timeFormat("%b. %e, %I:%M %p");
+      this.displayDateRound = d3.timeFormat("%b. %e, %I:%M %p");
       this.sortDatetimeAsc = function(a, b) {
         return a.x - b.x;
       };
@@ -629,7 +630,7 @@
         var ref, ref1;
         if (typeof d3.event !== 'undefined') {
           if (d3.event.sourceEvent != null) {
-            if ((ref = d3.event.sourceEvent.type) === "mousemove" || ref === "wheel") {
+            if ((ref = d3.event.sourceEvent.type) === "mousemove" || ref === "wheel" || ref === "touchmove") {
               _.plotter.i.zoom.set(d3.event.transform, _.options.plotId);
             }
             if ((ref1 = d3.event.sourceEvent.type) === "zoom") {
@@ -977,7 +978,7 @@
     };
 
     BarPlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _datum, _dims, _mouseTarget, _value, chx, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0;
+      var _, _date, _datum, _dims, _mouseTarget, _test_date, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0;
       if (!this.initialized) {
         return;
       }
@@ -1042,9 +1043,13 @@
         if (x0.getTime() >= this.state.range.data[key].max.getTime()) {
           i = i1 - 1;
         }
-        chx = mouse[0];
-        this.crosshairs.select(".crosshair-x").attr("x1", chx).attr("y1", _dims.topPadding).attr("x2", chx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
-        this.crosshairs.select(".crosshair-x-under").attr("x", chx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - chx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+        this.crosshairs.select(".crosshair-x").attr("x1", mouse[0]).attr("y1", _dims.topPadding).attr("x2", mouse[0]).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+        this.crosshairs.select(".crosshair-x-under").attr("x", mouse[0]).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - mouse[0]).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+        _test_date = this.definition.x.invert(mouse[0] + _dims.leftPadding);
+        if (transform) {
+          _test_date = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
+        }
+        console.log("Test date: ", this.displayDate(_test_date));
         if (_datum[i] != null) {
           if (transform) {
             dx = transform.applyX(this.definition.x(_datum[i].x));
@@ -1058,6 +1063,7 @@
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
               _date = this.displayDate(_value[key].x);
+              console.log("     Date: ", _date);
               if (!isNaN(dy[key]) && (_value[key].y != null)) {
                 this.focusRect[key].attr("transform", "translate(0, 0)");
               }
@@ -2793,7 +2799,8 @@
         var ref, ref1;
         if (typeof d3.event !== 'undefined') {
           if (d3.event.sourceEvent != null) {
-            if ((ref = d3.event.sourceEvent.type) === "mousemove" || ref === "wheel") {
+            console.log("SourceEvent: ", d3.event.sourceEvent.type);
+            if ((ref = d3.event.sourceEvent.type) === "mousemove" || ref === "wheel" || ref === "touchmove") {
               _.plotter.i.zoom.set(d3.event.transform, _.options.plotId);
             }
             if ((ref1 = d3.event.sourceEvent.type) === "zoom") {
