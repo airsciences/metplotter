@@ -177,6 +177,7 @@ window.Plotter.Handler = class Handler
     @appendPoweredBy()
 
     if @options.responsive
+      @__windowWidth = $(window).width()
       $(window).on('resize', ->
         _.resize()
       )
@@ -351,9 +352,17 @@ window.Plotter.Handler = class Handler
 
   resize: ->
     # Resize all plots & subs
+    # kFactor = $(window).width() / @__windowWidth
+
     for plotId, plot of @plots
+      __plotSize = plot.proto.definition.dimensions.width
       plot.proto.resize()
+      kFactor = plot.proto.definition.dimensions.width / __plotSize
       @legends[plotId].resize()
       @i.controls.resize(plotId)
-      plot.proto.setZoomTransform()
-      #plot.proto.setZoomTransform(d3.zoomIdentity)
+      # plot.proto.setZoomTransform(d3.zoomIdentity)
+      # plot.proto.setZoomTransform(
+      #    @i.zoom.scale(kFactor, plot.proto.transform, __plotSize))
+      # plot.proto.drawZoomTransform(plot.proto.transform)
+
+    # @__windowWidth = $(window).width()

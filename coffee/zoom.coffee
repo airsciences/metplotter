@@ -17,3 +17,13 @@ window.Plotter.Zoom = class Zoom
         # if !(plotId == callingPlotId)
         #   console.log("setting (callingId, plotId), ", callingPlotId, plotId)
         plot.proto.setZoomTransform(transform)
+
+  scale: (kFactor, transform, width) ->
+    xTranslated = transform.x - (width - width * transform.k)
+    console.log("Zoom->scale (kFactor, transform, xTranslated)",
+      kFactor, transform, xTranslated)
+    kTransform = transform
+      # .translate((xTranslated * kFactor - xTranslated), 0)
+      .scale(kFactor)
+    console.log("Zoom->scale resized (transform)", kTransform)
+    return kTransform

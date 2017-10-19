@@ -3727,6 +3727,7 @@
       this.appendSave();
       this.appendPoweredBy();
       if (this.options.responsive) {
+        this.__windowWidth = $(window).width();
         return $(window).on('resize', function() {
           return _.resize();
         });
@@ -3888,15 +3889,16 @@
     };
 
     Handler.prototype.resize = function() {
-      var plot, plotId, ref, results;
+      var __plotSize, kFactor, plot, plotId, ref, results;
       ref = this.plots;
       results = [];
       for (plotId in ref) {
         plot = ref[plotId];
+        __plotSize = plot.proto.definition.dimensions.width;
         plot.proto.resize();
+        kFactor = plot.proto.definition.dimensions.width / __plotSize;
         this.legends[plotId].resize();
-        this.i.controls.resize(plotId);
-        results.push(plot.proto.setZoomTransform());
+        results.push(this.i.controls.resize(plotId));
       }
       return results;
     };
@@ -4348,6 +4350,15 @@
         }
       }
       return results;
+    };
+
+    Zoom.prototype.scale = function(kFactor, transform, width) {
+      var kTransform, xTranslated;
+      xTranslated = transform.x - (width - width * transform.k);
+      console.log("Zoom->scale (kFactor, transform, xTranslated)", kFactor, transform, xTranslated);
+      kTransform = transform.scale(kFactor);
+      console.log("Zoom->scale resized (transform)", kTransform);
+      return kTransform;
     };
 
     return Zoom;
