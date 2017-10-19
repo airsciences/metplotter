@@ -863,9 +863,10 @@ window.Plotter.BarPlot = class BarPlot
       return
     preError = "#{@preError}.setZoomTransform(transform)"
 
-    @transform = transform
-    @svg.call(@definition.zoom.transform, transform)
-    return transform
+    if transform
+      @transform = transform
+      @svg.call(@definition.zoom.transform, transform)
+      return transform
 
   drawZoomTransform: (transform) ->
     # Zoom the X-Axis
@@ -963,7 +964,7 @@ window.Plotter.BarPlot = class BarPlot
         _test_date = @definition.x.invert(
           transform.invertX(mouse[0] + _dims.leftPadding))
 
-      console.log("Test date: ", @displayDate(_test_date))
+      # console.log("Test date: ", @displayDate(_test_date))
 
       if _datum[i]?
         if transform
@@ -977,7 +978,7 @@ window.Plotter.BarPlot = class BarPlot
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
             _date = @displayDate(_value[key].x)
-            console.log("     Date: ", _date)
+            # console.log("     Date: ", _date)
             if !isNaN(dy[key]) and _value[key].y?
               @focusRect[key].attr("transform", "translate(0, 0)")
 

@@ -870,9 +870,10 @@ window.Plotter.LinePlot = class LinePlot
       return
     preError = "#{@preError}.setZoomTransform(transform)"
 
-    @transform = transform
-    @svg.call(@definition.zoom.transform, transform)
-    return transform
+    if transform
+      @transform = transform
+      @svg.call(@definition.zoom.transform, transform)
+      return transform
 
   drawZoomTransform: (transform) ->
     if !@initialized

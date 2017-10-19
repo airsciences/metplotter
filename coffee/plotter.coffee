@@ -356,3 +356,5 @@ window.Plotter.Handler = class Handler
       @legends[plotId].resize()
       @i.controls.resize(plotId)
       plot.proto.setZoomTransform()
+      console.log("Plot-#{plotId}: pos-set-zoom-trans (transform):",
+        plot.proto.transform)

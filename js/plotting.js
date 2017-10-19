@@ -951,9 +951,11 @@
         return;
       }
       preError = this.preError + ".setZoomTransform(transform)";
-      this.transform = transform;
-      this.svg.call(this.definition.zoom.transform, transform);
-      return transform;
+      if (transform) {
+        this.transform = transform;
+        this.svg.call(this.definition.zoom.transform, transform);
+        return transform;
+      }
     };
 
     BarPlot.prototype.drawZoomTransform = function(transform) {
@@ -1049,7 +1051,6 @@
         if (transform) {
           _test_date = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
         }
-        console.log("Test date: ", this.displayDate(_test_date));
         if (_datum[i] != null) {
           if (transform) {
             dx = transform.applyX(this.definition.x(_datum[i].x));
@@ -1063,7 +1064,6 @@
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
               _date = this.displayDate(_value[key].x);
-              console.log("     Date: ", _date);
               if (!isNaN(dy[key]) && (_value[key].y != null)) {
                 this.focusRect[key].attr("transform", "translate(0, 0)");
               }
@@ -3105,9 +3105,11 @@
         return;
       }
       preError = this.preError + ".setZoomTransform(transform)";
-      this.transform = transform;
-      this.svg.call(this.definition.zoom.transform, transform);
-      return transform;
+      if (transform) {
+        this.transform = transform;
+        this.svg.call(this.definition.zoom.transform, transform);
+        return transform;
+      }
     };
 
     LinePlot.prototype.drawZoomTransform = function(transform) {
@@ -3894,7 +3896,8 @@
         plot.proto.resize();
         this.legends[plotId].resize();
         this.i.controls.resize(plotId);
-        results.push(plot.proto.setZoomTransform());
+        plot.proto.setZoomTransform();
+        results.push(console.log("Plot-" + plotId + ": pos-set-zoom-trans (transform):", plot.proto.transform));
       }
       return results;
     };
