@@ -967,27 +967,33 @@ window.Plotter.LinePlot = class LinePlot
       if x0.getTime() >= @state.range.data[key].max.getTime()
         i = i1 - 1
 
-      chx = mouse[0]
+      _test_date = @definition.x.invert(mouse[0] + _dims.leftPadding)
+      if transform
+        _test_date = @definition.x.invert(
+          transform.invertX(mouse[0] + _dims.leftPadding))
+      _rounded_date = @plotter.i.crosshairs.roundDate(_test_date)
+
+      chx = @definition.x(_rounded_date)
+      if transform
+        _rescaleX = transform.rescaleX(@definition.x)
+        chx = _rescaleX(_rounded_date)
+
+      # Crosshairs Bound to Mouse.
       @crosshairs.select(".crosshair-x")
         .attr("x1", chx)
         .attr("y1", _dims.topPadding)
         .attr("x2", chx)
         .attr("y2", _dims.innerHeight + _dims.topPadding)
-        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+        # .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
       @crosshairs.select(".crosshair-x-under")
         .attr("x", chx)
         .attr("y", _dims.topPadding)
         .attr("width", (_dims.innerWidth - chx))
         .attr("height", _dims.innerHeight)
-        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+        # .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
-      _test_date = @definition.x.invert(mouse[0] + _dims.leftPadding)
-      if transform
-        _test_date = @definition.x.invert(
-          transform.invertX(mouse[0] + _dims.leftPadding))
-      _rounded_date = @displayDate(@plotter.i.crosshairs.roundDate(_test_date))
-
+      # Date Crosshair Label
       fdtx = mouse[0] - 120
       # [Disabled] - Tooltip Flip
       # if cx < 150
@@ -997,7 +1003,7 @@ window.Plotter.LinePlot = class LinePlot
         .attr("x", fdtx)
         .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
         .attr("transform", "translate(#{_dims.leftPadding}, 0)")
-        .text(_rounded_date)
+        .text(@displayDate(_rounded_date))
 
       if _datum[i]?
         _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000
