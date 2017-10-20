@@ -1067,7 +1067,6 @@
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
               _date = this.displayDate(_value[key].x);
-              console.log("     Date: ", _date);
               if (!isNaN(dy[key]) && (_value[key].y != null)) {
                 this.focusRect[key].attr("transform", "translate(0, 0)");
               }

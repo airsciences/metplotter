@@ -984,7 +984,6 @@ window.Plotter.BarPlot = class BarPlot
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
             _date = @displayDate(_value[key].x)
-            console.log("     Date: ", _date)
             if !isNaN(dy[key]) and _value[key].y?
               @focusRect[key].attr("transform", "translate(0, 0)")
 
