@@ -324,11 +324,7 @@ window.Plotter.BarPlot = class BarPlot
       .on("zoom", () ->
         if typeof d3.event != 'undefined'
           if d3.event.sourceEvent?
-            # console.log("SourceEvent: ", d3.event.sourceEvent.type)
             if d3.event.sourceEvent.type in ["mousemove", "wheel", "touchmove"]
-              # console.log("Plot:#{_.options.plotId} Setter Event
-              #   (type: #{d3.event.sourceEvent.type}) (transform)",
-              #   d3.event.transform)
               _.plotter.i.zoom.set(d3.event.transform, _.options.plotId)
             if d3.event.sourceEvent.type in ["zoom"]
               _.drawZoomTransform(d3.event.transform)

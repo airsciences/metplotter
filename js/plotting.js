@@ -3889,16 +3889,18 @@
     };
 
     Handler.prototype.resize = function() {
-      var __plotSize, kFactor, plot, plotId, ref, results;
+      var _oldWidth, kFactor, plot, plotId, ref, results;
       ref = this.plots;
       results = [];
       for (plotId in ref) {
         plot = ref[plotId];
-        __plotSize = plot.proto.definition.dimensions.width;
+        _oldWidth = plot.proto.definition.dimensions.width;
         plot.proto.resize();
-        kFactor = plot.proto.definition.dimensions.width / __plotSize;
+        kFactor = plot.proto.definition.dimensions.width / _oldWidth;
         this.legends[plotId].resize();
-        results.push(this.i.controls.resize(plotId));
+        this.i.controls.resize(plotId);
+        plot.proto.setZoomTransform(this.i.zoom.scale(kFactor, plot.proto.transform));
+        results.push(plot.proto.drawZoomTransform(plot.proto.transform));
       }
       return results;
     };
@@ -4352,13 +4354,11 @@
       return results;
     };
 
-    Zoom.prototype.scale = function(kFactor, transform, width) {
-      var kTransform, xTranslated;
-      xTranslated = transform.x - (width - width * transform.k);
-      console.log("Zoom->scale (kFactor, transform, xTranslated)", kFactor, transform, xTranslated);
-      kTransform = transform.scale(kFactor);
-      console.log("Zoom->scale resized (transform)", kTransform);
-      return kTransform;
+    Zoom.prototype.scale = function(kFactor, transform) {
+      var expectedX, translateBy;
+      expectedX = kFactor * transform.x;
+      translateBy = (expectedX - transform.x) / transform.k;
+      return transform.translate(translateBy, 0);
     };
 
     return Zoom;

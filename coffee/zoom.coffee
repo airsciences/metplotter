@@ -14,16 +14,10 @@ window.Plotter.Zoom = class Zoom
     # Set the zoom state of all plots. Triggered by a single plot.
     for plotId, plot of @plotter.plots
       if plot?
-        # if !(plotId == callingPlotId)
-        #   console.log("setting (callingId, plotId), ", callingPlotId, plotId)
         plot.proto.setZoomTransform(transform)
 
-  scale: (kFactor, transform, width) ->
-    xTranslated = transform.x - (width - width * transform.k)
-    console.log("Zoom->scale (kFactor, transform, xTranslated)",
-      kFactor, transform, xTranslated)
-    kTransform = transform
-      # .translate((xTranslated * kFactor - xTranslated), 0)
-      .scale(kFactor)
-    console.log("Zoom->scale resized (transform)", kTransform)
-    return kTransform
+  scale: (kFactor, transform) ->
+    # Scale a transform on an SVG resize
+    expectedX = kFactor * transform.x
+    translateBy = (expectedX - transform.x) / transform.k
+    return transform.translate(translateBy, 0)

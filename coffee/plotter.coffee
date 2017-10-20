@@ -352,17 +352,13 @@ window.Plotter.Handler = class Handler
 
   resize: ->
     # Resize all plots & subs
-    # kFactor = $(window).width() / @__windowWidth
-
     for plotId, plot of @plots
-      __plotSize = plot.proto.definition.dimensions.width
+      _oldWidth = plot.proto.definition.dimensions.width
+
       plot.proto.resize()
-      kFactor = plot.proto.definition.dimensions.width / __plotSize
+      kFactor = plot.proto.definition.dimensions.width / _oldWidth
+
       @legends[plotId].resize()
       @i.controls.resize(plotId)
-      # plot.proto.setZoomTransform(d3.zoomIdentity)
-      # plot.proto.setZoomTransform(
-      #    @i.zoom.scale(kFactor, plot.proto.transform, __plotSize))
-      # plot.proto.drawZoomTransform(plot.proto.transform)
-
-    # @__windowWidth = $(window).width()
+      plot.proto.setZoomTransform(@i.zoom.scale(kFactor, plot.proto.transform))
+      plot.proto.drawZoomTransform(plot.proto.transform)
