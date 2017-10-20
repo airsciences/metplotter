@@ -980,7 +980,7 @@
     };
 
     BarPlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _datum, _dims, _mouseTarget, _test_date, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0;
+      var _, _date, _datum, _dims, _mouseTarget, _rounded_date, _test_date, _value, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0;
       if (!this.initialized) {
         return;
       }
@@ -1051,6 +1051,9 @@
         if (transform) {
           _test_date = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
         }
+        _rounded_date = this.displayDate(this.plotter.i.crosshairs.roundDate(_test_date));
+        fdtx = mouse[0] - 120;
+        this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_rounded_date);
         if (_datum[i] != null) {
           if (transform) {
             dx = transform.applyX(this.definition.x(_datum[i].x));
@@ -1064,6 +1067,7 @@
             if (_value[key] != null) {
               dy[key] = this.definition.y(_value[key].y);
               _date = this.displayDate(_value[key].x);
+              console.log("     Date: ", _date);
               if (!isNaN(dy[key]) && (_value[key].y != null)) {
                 this.focusRect[key].attr("transform", "translate(0, 0)");
               }
@@ -1071,8 +1075,6 @@
           }
           cx = dx - _dims.leftPadding;
           if (cx >= 0) {
-            fdtx = cx - 120;
-            this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null)) {
               this.focusRect[key].attr("width", transform.k * this.definition.x1.bandwidth()).attr("x", dx).attr("y", dy[key]);
               textAnchor = "start";
@@ -1882,6 +1884,12 @@
         }
       }
       return results;
+    };
+
+    Crosshairs.prototype.roundDate = function(date) {
+      date.setHours(date.getHours() + Math.round(date.getMinutes() / 60));
+      date.setMinutes(0);
+      return date;
     };
 
     return Crosshairs;
@@ -3153,7 +3161,7 @@
     };
 
     LinePlot.prototype.setCrosshair = function(transform, mouse) {
-      var _, _date, _dateHide, _datum, _dims, _mouseTarget, _value, chx, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0, ypos;
+      var _, _date, _dateHide, _datum, _dims, _mouseTarget, _rounded_date, _test_date, _value, chx, cx, directionLabel, dx, dy, fdtx, i, i1, key, preError, ref, row, textAnchor, x0, ypos;
       if (!this.initialized) {
         return;
       }
@@ -3221,6 +3229,13 @@
         chx = mouse[0];
         this.crosshairs.select(".crosshair-x").attr("x1", chx).attr("y1", _dims.topPadding).attr("x2", chx).attr("y2", _dims.innerHeight + _dims.topPadding).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
         this.crosshairs.select(".crosshair-x-under").attr("x", chx).attr("y", _dims.topPadding).attr("width", _dims.innerWidth - chx).attr("height", _dims.innerHeight).attr("transform", "translate(" + _dims.leftPadding + ", 0)");
+        _test_date = this.definition.x.invert(mouse[0] + _dims.leftPadding);
+        if (transform) {
+          _test_date = this.definition.x.invert(transform.invertX(mouse[0] + _dims.leftPadding));
+        }
+        _rounded_date = this.displayDate(this.plotter.i.crosshairs.roundDate(_test_date));
+        fdtx = mouse[0] - 120;
+        this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_rounded_date);
         if (_datum[i] != null) {
           _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000;
           if (transform) {
@@ -3247,8 +3262,6 @@
           }
           cx = dx - _dims.leftPadding;
           if (cx >= 0) {
-            fdtx = cx - 120;
-            this.focusDateText.attr("x", fdtx).attr("y", _dims.topPadding + _dims.innerHeight - 3).attr("transform", "translate(" + _dims.leftPadding + ", 0)").text(_date);
             if (this.options.y[key].variable !== null && !isNaN(dy[key]) && (_value[key].y != null) && typeof _value[key].y !== 'undefined') {
               this.focusCircle[key].attr("cx", dx).attr("cy", dy[key]);
               textAnchor = "start";

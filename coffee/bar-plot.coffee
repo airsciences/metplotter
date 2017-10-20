@@ -959,8 +959,18 @@ window.Plotter.BarPlot = class BarPlot
       if transform
         _test_date = @definition.x.invert(
           transform.invertX(mouse[0] + _dims.leftPadding))
+      _rounded_date = @displayDate(@plotter.i.crosshairs.roundDate(_test_date))
 
-      # console.log("Test date: ", @displayDate(_test_date))
+      fdtx = mouse[0] - 120
+      # [Disabled] - Tooltip Flip
+      # if cx < 150
+      #   fdtx = cx + 10
+
+      @focusDateText
+        .attr("x", fdtx)
+        .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
+        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+        .text(_rounded_date)
 
       if _datum[i]?
         if transform
@@ -974,23 +984,12 @@ window.Plotter.BarPlot = class BarPlot
           if _value[key]?
             dy[key] = @definition.y(_value[key].y)
             _date = @displayDate(_value[key].x)
-            # console.log("     Date: ", _date)
+            console.log("     Date: ", _date)
             if !isNaN(dy[key]) and _value[key].y?
               @focusRect[key].attr("transform", "translate(0, 0)")
 
         cx = dx - _dims.leftPadding
         if cx >= 0
-          fdtx = cx - 120
-          # [Disabled] - Tooltip Flip
-          # if cx < 150
-          #   fdtx = cx + 10
-
-          @focusDateText
-            .attr("x", fdtx)
-            .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
-            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
-            .text(_date)
-
           if (
             @options.y[key].variable != null and !isNaN(dy[key]) and
             _value[key].y?

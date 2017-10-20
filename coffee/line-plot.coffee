@@ -982,6 +982,23 @@ window.Plotter.LinePlot = class LinePlot
         .attr("height", _dims.innerHeight)
         .attr("transform", "translate(#{_dims.leftPadding}, 0)")
 
+      _test_date = @definition.x.invert(mouse[0] + _dims.leftPadding)
+      if transform
+        _test_date = @definition.x.invert(
+          transform.invertX(mouse[0] + _dims.leftPadding))
+      _rounded_date = @displayDate(@plotter.i.crosshairs.roundDate(_test_date))
+
+      fdtx = mouse[0] - 120
+      # [Disabled] - Tooltip Flip
+      # if cx < 150
+      #   fdtx = cx + 10
+
+      @focusDateText
+        .attr("x", fdtx)
+        .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
+        .attr("transform", "translate(#{_dims.leftPadding}, 0)")
+        .text(_rounded_date)
+
       if _datum[i]?
         _dateHide = Math.abs(_datum[i].x.getTime() - x0.getTime()) > 2500000
         # if @options.plotId = 1
@@ -1015,19 +1032,6 @@ window.Plotter.LinePlot = class LinePlot
 
         cx = dx - _dims.leftPadding
         if cx >= 0
-
-
-          fdtx = cx - 120
-          # [Disabled] - Tooltip Flip
-          # if cx < 150
-          #   fdtx = cx + 10
-
-          @focusDateText
-            .attr("x", fdtx)
-            .attr("y", (_dims.topPadding + _dims.innerHeight - 3))
-            .attr("transform", "translate(#{_dims.leftPadding}, 0)")
-            .text(_date)
-
           if (
             @options.y[key].variable != null and !isNaN(dy[key]) and
             _value[key].y? and typeof _value[key].y != 'undefined'

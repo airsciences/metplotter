@@ -26,3 +26,8 @@ window.Plotter.Crosshairs = class Crosshairs
     for plot in @plotter.plots
       if plot?
         plot.proto.hideCrosshair()
+
+  roundDate: (date) ->
+    date.setHours(date.getHours() + Math.round(date.getMinutes()/60))
+    date.setMinutes(0)
+    return date
