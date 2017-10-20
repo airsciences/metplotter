@@ -3149,7 +3149,7 @@
         return _.definition.y(d.yMax);
       });
       this.definition.line = d3.line().defined(function(d) {
-        return !isNaN(d.y) && d.y !== null;
+        return !isNaN(d.y) && d.y !== null && d.y !== void 0;
       }).x(function(d) {
         return transform.applyX(_.definition.x(d.x));
       }).y(function(d) {

@@ -904,7 +904,7 @@ window.Plotter.LinePlot = class LinePlot
     # Redefine & Redraw the Line Path
     @definition.line = d3.line()
       .defined((d)->
-        !isNaN(d.y) and d.y isnt null
+        !isNaN(d.y) and d.y isnt null and d.y isnt undefined
       )
       .x((d) -> transform.applyX(_.definition.x(d.x)))
       .y((d) -> _.definition.y(d.y))
