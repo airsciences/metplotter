@@ -4209,10 +4209,10 @@
           return null;
         }
       };
-      this.stringify = function() {
+      this.stringify = function(template) {
         var __prepared;
         __prepared = {
-          templateData: this.template
+          templateData: template
         };
         return JSON.stringify(__prepared);
       };
@@ -4238,15 +4238,16 @@
     };
 
     Template.prototype.put = function() {
-      var _, args, callback, preError, target;
+      var _, _template, args, callback, preError, target;
       preError = this.preError + "put()";
       if (!this.plotter.isAdmin() && !(this.plotter.options.uuid != null)) {
         throw new Error(preError + ", not authorized for PUT requests.");
         return false;
       }
       target = this.endpoint() + ("" + this.plotter.options.templateId);
+      _template = this.removeBoundingX();
       args = {
-        template_data: this.stringify(this.template)
+        template_data: this.stringify(_template)
       };
       _ = this;
       callback = function(data) {
@@ -4277,6 +4278,17 @@
 
     Template.prototype.full = function() {
       return this.template;
+    };
+
+    Template.prototype.removeBoundingX = function() {
+      var _def, _template, i, len;
+      _template = $.extend(true, [], this.template);
+      for (i = 0, len = _template.length; i < len; i++) {
+        _def = _template[i];
+        delete _def.x.min;
+        delete _def.x.max;
+      }
+      return _template;
     };
 
     Template.prototype.forSync = function(plotId, lineId, maxDatetime, limit) {

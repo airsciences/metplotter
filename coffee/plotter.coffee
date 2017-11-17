@@ -271,6 +271,11 @@ window.Plotter.Handler = class Handler
         @i.template.template[_key].x = $.extend(
           true, {}, template.x)
         break
+    # Start of revined new plot axis (ISSUE: a bit off!)
+    # @i.template.template[_key].x.min = @lib.format(
+    #   @plots[0].proto.definition.xAxis.scale().domain()[0])
+    # @i.template.template[_key].x.max = @lib.format(
+    #   @plots[0].proto.definition.xAxis.scale().domain()[1])
     @i.template.template[_key].y = [_yOptions]
 
     _revisedOptions =  @i.template.forPlots(_key)

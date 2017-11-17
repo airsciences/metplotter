@@ -72,10 +72,10 @@ window.Plotter.Template = class Template
           working example.")
         return null
 
-    @stringify = ->
+    @stringify = (template) ->
       # Return the String Template
       __prepared =
-        templateData: @template
+        templateData: template
       return JSON.stringify(__prepared)
 
     @endpoint = ->
@@ -105,8 +105,9 @@ window.Plotter.Template = class Template
       return false
     target = @endpoint() + "#{@plotter.options.templateId}"
 
+    _template = @removeBoundingX()
     args =
-      template_data: @stringify(@template)
+      template_data: @stringify(_template)
     _ = @
 
     callback = (data) ->
@@ -134,6 +135,13 @@ window.Plotter.Template = class Template
   full: ->
     # Return the full template.
     return @template
+
+  removeBoundingX: ->
+    _template = $.extend(true, [], @template)
+    for _def in _template
+      delete _def.x.min
+      delete _def.x.max
+    return _template
 
   forSync: (plotId, lineId, maxDatetime, limit) ->
     # Prepare the template for an API request.
