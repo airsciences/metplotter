@@ -30,14 +30,3 @@ NWAC Development Emulator Listening (http://localhost:3000)...
 API-Template: req.params { plotTemplateId: '1' }
 API-Template: req.params { plotTemplateId: '1' }
 ```
-
-## Minifying the Source Code
-
-Grunt automatically concatenates and minifies the source code (coffee folder)
-into plotter.js and plotter.min.js. To manually complete the minification, run
-the following commands.
-
-```sh
-coffee --output js/plotter.js --join --compile coffee/*.coffee
-
-```
