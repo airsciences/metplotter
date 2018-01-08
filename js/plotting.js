@@ -622,8 +622,8 @@
         this.definition.x1.domain(this.data[0].map(function(d) {
           return d.x;
         }));
-        this.skipBandDomainSet = false;
       }
+      this.skipBandDomainSet = false;
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()) + this.definition.dimensions.margin.left, this.definition.dimensions.innerHeight]];
       return this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {
@@ -2803,8 +2803,8 @@
         this.definition.x1.domain(this.data[0].map(function(d) {
           return d.x;
         }));
-        this.skipBandDomainSet = false;
       }
+      this.skipBandDomainSet = false;
       this.definition.y.domain([this.definition.y.min, this.definition.y.max]).nice();
       _extent = [[-Infinity, 0], [this.definition.x(new Date()) + this.definition.dimensions.margin.left, this.definition.dimensions.innerHeight]];
       this.definition.zoom = d3.zoom().scaleExtent([this.options.zoom.scale.min, this.options.zoom.scale.max]).translateExtent(_extent).on("zoom", function() {

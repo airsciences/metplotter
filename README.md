@@ -1,9 +1,13 @@
 # nwac
+
 North West Avalanche Center - Data Visualization Tools
 
-On the plotter channel.
+https://www.nwac.us/weatherdata/
 
-***Install Node Dependencies***
+## Running the Development Environment
+
+To run the development environment, you'll need the to install the node
+dependencies required for this project.
 
 ```sh
 cd /path/to/nwac-repo
@@ -25,4 +29,15 @@ $ node nwac-emulator.js
 NWAC Development Emulator Listening (http://localhost:3000)...
 API-Template: req.params { plotTemplateId: '1' }
 API-Template: req.params { plotTemplateId: '1' }
+```
+
+## Minifying the Source Code
+
+Grunt automatically concatenates and minifies the source code (coffee folder)
+into plotter.js and plotter.min.js. To manually complete the minification, run
+the following commands.
+
+```sh
+coffee --output js/plotter.js --join --compile coffee/*.coffee
+
 ```
